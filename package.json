@@ -4,10 +4,16 @@
   "private": true,
   "description": "Local monitor that answers what is waiting on you across Jira, GitHub and Linear.",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
-    "start": "python3 server.py",
+    "start": "node server.mjs",
+    "dev": "WHOSE_TURN_DATA=.users-files/dev WHOSE_TURN_PORT=8766 node server.mjs",
     "test": "node --test \"test/**/*.test.mjs\""
+  },
+  "bin": {
+    "whose-turn": "server.mjs"
   }
 }

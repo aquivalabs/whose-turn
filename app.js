@@ -1,12 +1,6 @@
-// Whose Turn window: renders the local server's state and re-renders on every server-sent update.
+// Whose Turn window: renders the rows the local server computed and re-renders on every server-sent update.
 (() => {
-  const DAY = 86400000;
   let S = null;
-  let ME_JIRA = '';  // your Jira display name and GitHub login, as the server reports them in /api/state
-  let ME_GH = '';
-  const cfg = () => (S && S.config) || { repo: '', jira_base: '', jira_email: '', keychain_service: 'whose-turn-jira', key_pattern: '\\b[A-Z][A-Z0-9_]+-\\d+\\b', rules: {} };
-  const jiraUrl = (key) => (cfg().jira_base ? cfg().jira_base + '/browse/' + key : '');
-  const prRef = (repo, number) => (repo === cfg().repo ? '#' : repo.split('/')[1] + '#') + number;
   const ui = { feed: 'all', move: 'open', open: new Set(), modal: null, showDone: false };
   const $ = (id) => document.getElementById(id);
 
@@ -39,122 +33,6 @@
     return { text: h < 1 ? '<1h' : h < 48 ? Math.floor(h) + 'h' : Math.floor(h / 24) + 'd', old: h >= 24, hours: h };
   };
   const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
-
-  // ---------- whose turn (same rules as the dashboard)
-  const askRe = /\?|\b(please|pls|can you|could you|would you|let me know|need you|need your|thoughts|recommend|advise|confirm|clarify)\b/i;
-
-  // Why a ticket is on hold: the comment by whoever moved it to On Hold, closest to that moment;
-  // otherwise the last comment before it; otherwise the newest comment that says "on hold".
-  const firstSentence = (body) => {
-    const line = body.split('\n').map((l) => l.trim()).find((l) => l && !/^\[image\]$/.test(l)) || '';
-    let text = line.replace(/^@[\w .'-]+?\s+[—–-]\s+/, '').replace(/^.*?on hold\s*[:—–-]\s*/i, '').trim() || line;
-    text = text.split(/(?<=[.!?])\s/)[0].replace(/\*\*|`/g, '');
-    return text.length > 140 ? text.slice(0, 139) + '…' : text;
-  };
-  const holdReason = (comments, ticket) => {
-    const mine = comments.filter((x) => x.key === ticket.key);
-    const h = ticket.hold;
-    let c = null;
-    if (h && h.since) {
-      const t0 = new Date(h.since).getTime();
-      const byMover = mine.filter((x) => x.author === h.by).sort((a, b) => Math.abs(new Date(a.at) - t0) - Math.abs(new Date(b.at) - t0))[0];
-      if (byMover && Math.abs(new Date(byMover.at) - t0) < 2 * DAY) c = byMover;
-      if (!c) c = mine.filter((x) => new Date(x.at).getTime() <= t0 + 10 * 60000).sort((a, b) => String(b.at).localeCompare(String(a.at)))[0] || null;
-    }
-    if (!c) c = mine.filter((x) => /on hold/i.test(x.body)).sort((a, b) => String(b.at).localeCompare(String(a.at)))[0] || null;
-    return c ? { text: firstSentence(c.body), full: c.author + ' · ' + new Date(c.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '\n\n' + c.body.trim().slice(0, 1500), url: c.url, by: c.author } : null;
-  };
-  const recent = (list) => list.filter((x) => Date.now() - new Date(x.at) < 14 * DAY);
-
-  function turnRows(jira, prs, comments, ghAsks) {
-    const byKey = {};
-    for (const p of prs) if (p.key) (byKey[p.key] = byKey[p.key] || []).push(p);
-    const pick = (list) => (list || []).slice().sort((a, b) => (a.state === 'OPEN' ? -1 : 0) - (b.state === 'OPEN' ? -1 : 0) || String(b.updated_at).localeCompare(String(a.updated_at)))[0];
-    const asks = {};
-    for (const c of recent(comments).sort((a, b) => String(a.at).localeCompare(String(b.at)))) {
-      // Your comment answers only the people it @-mentions; everyone else stays waiting.
-      if (c.author === ME_JIRA) { if (asks[c.key]) asks[c.key] = asks[c.key].filter((x) => !c.body.includes('@' + x.c.author)); continue; }
-      if (/automation/i.test(c.author) || !c.body.includes('@' + ME_JIRA)) continue;
-      (asks[c.key] = asks[c.key] || []).push({ c, question: askRe.test(c.body.replace(/https?:\/\/\S+/g, '')) });
-    }
-    const rows = jira.map((t) => {
-      const pr = pick(byKey[t.key]);
-      const open = pr && pr.state === 'OPEN';
-      const done = t.status_category === 'done';
-      const release = pr && pr.base.startsWith(cfg().rules.release_branch_prefix || 'release/');
-      let whose = t.assignee, next = 'Not yours now', group = done ? 'done' : 'others', holdUrl = '', holdFull = '', why = '';
-      // A backlog ticket that is not on you is no longer your business: leave it out entirely.
-      if (!done && /backlog/i.test(t.status) && t.assignee !== ME_JIRA) group = 'gone';
-      const mine = (n, w) => { whose = 'You'; next = n; group = 'you'; why = w; };
-      if (group === 'gone') { /* skip */ }
-      else if (open && pr.checks === 'failing') mine('Look at the failing checks', 'PR #' + pr.pr + ' has failing checks.');
-      else if (open && pr.review === 'CHANGES_REQUESTED') mine('Address the requested changes', 'A reviewer requested changes on PR #' + pr.pr + '.');
-      else if (open && pr.unanswered) mine('Read and answer the new comment', pr.last_comment_by + ' commented on PR #' + pr.pr + ' after your last reply there.');
-      else if (/passed/i.test(t.status)) mine('Merge with a merge commit, log time, move to Done', 'Ticket status is ' + t.status + ': QA passed, the PR can go in.');
-      else if (done && open) mine('Ticket is Done but the PR is open: merge it', 'The ticket is ' + t.status + ' while PR #' + pr.pr + ' is still open.');
-      else if (!done && pr && pr.state === 'MERGED' && !open && t.assignee === ME_JIRA) mine('Log time and move to Done', 'PR #' + pr.pr + ' is merged but the ticket is still ' + t.status + ' and on you.');
-      else if (/code review/i.test(t.status) && open && pr.review === 'APPROVED') mine(release ? cfg().rules.approved_release_next : cfg().rules.approved_next, 'PR #' + pr.pr + ' into ' + pr.base + ' is approved; the ticket is still in ' + t.status + '.');
-      else if (/code review/i.test(t.status)) { whose = 'Reviewer'; next = 'Code review'; }
-      else if (/ready for qa|in qa/i.test(t.status)) next = 'QA';
-      else if (/on hold/i.test(t.status)) { const h = holdReason(comments, t); next = h ? 'On hold: ' + h.text : 'On hold'; holdUrl = h ? h.url : ''; holdFull = h ? h.full : ''; }
-      else if (!done && t.assignee === ME_JIRA) mine('Pick it up', 'Assigned to you, status ' + t.status + ', no PR step pending.');
-      return {
-        key: t.key, row_id: t.key, summary: t.summary, status: t.status, whose, next, group, done, jira_url: t.url,
-        pr: pr ? '#' + pr.pr : '', pr_url: pr ? pr.url : '', pr_state: pr ? pr.state : '', checks: pr ? pr.checks : '',
-        comment: open && pr.last_comment_by ? pr.last_comment_by + ': ' + pr.last_comment : '', comment_url: open ? pr.last_comment_url : '',
-        updated: t.updated, hold_url: holdUrl, hold_full: holdFull, why, status_since: t.status_change ? t.status_change.since : '', activity_at: [new Date(t.updated).toISOString(), pr ? pr.updated_at : ''].filter(Boolean).sort().pop(),
-      };
-    });
-    for (const key in byKey) {
-      if (jira.some((t) => t.key === key)) continue;
-      const pr = pick(byKey[key]);
-      if (pr.state !== 'OPEN') continue;
-      rows.push({ key, row_id: key, summary: pr.title, status: 'Not in your Jira list', whose: 'You', next: 'Check the ticket for this open PR', group: 'you', why: 'PR #' + pr.pr + ' is open, but its ticket is not among your Jira tickets.',
-        jira_url: jiraUrl(key), pr: '#' + pr.pr, pr_url: pr.url, pr_state: pr.state, checks: pr.checks,
-        comment: pr.last_comment_by ? pr.last_comment_by + ': ' + pr.last_comment : '', comment_url: pr.last_comment_url, updated: pr.updated_at, activity_at: pr.updated_at });
-    }
-    // GitHub: review requests and mentions on PRs and issues that are not yours.
-    for (const g of ghAsks || []) {
-      const ref = prRef(g.repo, g.number);
-      const review = g.kind === 'review requested';
-      rows.push({ key: g.key || ref, row_id: g.id, summary: g.title, status: review ? 'Review requested' : 'Mentioned', whose: 'You', group: 'you',
-        next: review ? 'Review PR ' + ref : 'Answer ' + g.who + ' on ' + ref,
-        why: review ? g.who + ' asked you to review ' + ref + ' and you are still in its reviewer list.' : g.who + ' @-mentioned you on ' + ref + '; you have not commented there since.',
-        jira_url: g.key ? jiraUrl(g.key) : g.url, pr: ref, pr_url: g.url, pr_state: '', checks: '',
-        comment: review ? '' : g.who + ': ' + g.text, comment_url: g.url, updated: g.at, activity_at: g.at });
-    }
-    for (const t of rows.slice()) {
-      if (t.done || !asks[t.key]) continue;
-      for (const { c, question } of asks[t.key]) {
-        rows.push({ key: t.key, row_id: t.key + ':' + c.id, summary: t.summary, status: t.status, whose: 'You', group: 'you',
-          next: question ? 'Answer ' + c.author + ' in Jira' : 'Read ' + c.author + '’s comment in Jira',
-          why: c.author + (question ? ' asked you a question' : ' mentioned you') + ' on ' + new Date(c.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '; you have not @-mentioned them in a reply since.',
-          jira_url: t.jira_url, pr: '', pr_url: '', pr_state: '', checks: '',
-          comment: c.author + ': ' + c.body.replace(/\s+/g, ' ').slice(0, 160), comment_url: c.url, updated: c.at, activity_at: c.at });
-      }
-    }
-    return rows;
-  }
-
-  function feedRows(activity, events, jira, comments, ghAsks) {
-    const rows = [];
-    for (const g of ghAsks || []) rows.push({ id: g.id, at: g.at, source: 'github', ref: prRef(g.repo, g.number), key: g.key, kind: g.kind, who: g.who, text: g.text, body: g.body, url: g.url });
-    for (const a of activity) rows.push({ id: 'gh:' + a.url + ':' + a.at, at: a.at, source: 'github', ref: a.pr, key: a.key, kind: a.kind, who: a.who, text: a.text, body: a.body || a.text, url: a.url });
-    for (const c of recent(comments)) {
-      const who = c.author === ME_JIRA ? 'you' : c.author;
-      const first = c.body.replace(/\s+/g, ' ').trim();
-      rows.push({ id: 'jc:' + c.id, at: c.at, source: 'jira', ref: c.key, key: c.key, kind: 'comment', who,
-        mention: c.author !== ME_JIRA && !/automation/i.test(c.author) && c.body.includes('@' + ME_JIRA),
-        text: first.length > 140 ? first.slice(0, 139) + '…' : first, body: c.body, url: c.url });
-    }
-    for (const e of events) rows.push({ id: 'jira:' + e.key + ':' + e.at + ':' + e.kind, at: e.at, source: 'jira', ref: e.key, key: e.key, kind: e.kind, who: '', text: e.text, body: '', url: e.url });
-    const near = (key, t) => events.concat(recent(comments)).some((e) => e.key === key && Math.abs(new Date(e.at) - new Date(t)) < 5 * 60000);
-    for (const t of jira) {
-      if (near(t.key, t.updated)) continue;
-      rows.push({ id: 'jira:' + t.key + ':' + t.updated, at: new Date(t.updated).toISOString(), source: 'jira', ref: t.key, key: t.key, kind: 'updated', who: '', text: t.status + ' · ' + t.assignee, body: '', url: t.url });
-    }
-    return rows.sort((a, b) => String(b.at).localeCompare(String(a.at)));
-  }
 
   // ---------- marks (kept by the server on disk)
   const marks = () => S.marks;
@@ -229,7 +107,7 @@
   };
   const keyCell = (r) => {
     const td = document.createElement('td');
-    const k = link(r.key, r.jira_url); if (k.classList) k.classList.add('wt-key');
+    const k = link(r.key, r.ticket_url); if (k.classList) k.classList.add('wt-key');
     td.append(k, span('wt-sum', r.summary));
     return td;
   };
@@ -296,7 +174,24 @@
     $('sum-others').textContent = $('tile-others').textContent = String(rows.length);
   }
 
+  const sourceOf = (id) => (S.workspace.connectors || []).find((c) => c.id === id) || { id, type: id, label: id };
+  const sourceBadge = (id) => { const s = sourceOf(id); return s.type === 'github' ? 'GH' : s.label.slice(0, 2).toUpperCase(); };
+  const sourceLink = (id) => 'Open in ' + sourceOf(id).label;
+  function renderFilters() {
+    const bar = $('feed-filters');
+    const wanted = [{ id: 'all', label: 'All' }].concat((S.workspace.connectors || []).map((c) => ({ id: c.id, label: c.label })));
+    if (bar.dataset.keys === wanted.map((w) => w.id).join(',')) return;
+    bar.dataset.keys = wanted.map((w) => w.id).join(',');
+    if (!wanted.some((w) => w.id === ui.feed)) ui.feed = 'all';
+    bar.replaceChildren(...wanted.map((w) => {
+      const b = span('wt-f', w.label); b.setAttribute('role', 'button'); b.tabIndex = 0; b.dataset.feedFilter = w.id;
+      b.setAttribute('aria-pressed', String(ui.feed === w.id));
+      onAct(b, () => { ui.feed = w.id; render(); });
+      return b;
+    }));
+  }
   function renderFeed(feed) {
+    renderFilters();
     const newCount = feed.filter(isNew).length;
     $('new-count').hidden = newCount === 0;
     $('new-count').textContent = newCount + ' new';
@@ -306,7 +201,7 @@
       if (isNew(r)) li.classList.add('is-new');
       li.addEventListener('click', () => { if (isNew(r)) setMarks({ seen: [r.id] }); });
       const tone = /fail|changes/.test(r.kind) ? ' bad' : /approved|merged/.test(r.kind) ? ' ok' : '';
-      const icon = span('wt-feed-icon' + (tone || (r.source === 'jira' ? ' jira' : '')), r.source === 'github' ? 'GH' : 'J');
+      const icon = span('wt-feed-icon' + (tone || (sourceOf(r.source).type === 'github' ? '' : ' jira')), sourceBadge(r.source));
       const body = document.createElement('div'); body.className = 'wt-feed-body';
       const top = document.createElement('div'); top.className = 'wt-feed-top';
       top.append(link(r.ref, r.url), span('wt-feed-kind' + (tone === ' bad' ? ' bad' : ''), r.kind));
@@ -328,7 +223,7 @@
         const f = document.createElement('div'); f.className = 'wt-feed-full'; f.textContent = full;
         const actions = document.createElement('div'); actions.className = 'wt-feed-actions';
         actions.append(button('wt-btn tonal', 'Open formatted', () => showModal(r)));
-        const orig = link(r.source === 'github' ? 'Open on GitHub' : 'Open in Jira', r.url); if (orig.classList) orig.classList.add('wt-btn');
+        const orig = link(sourceLink(r.source), r.url); if (orig.classList) orig.classList.add('wt-btn');
         actions.append(orig);
         body.append(f, actions);
       } else if (r.text) body.append(span('wt-feed-text', (r.source === 'github' && r.key ? r.key + ' · ' : '') + r.text));
@@ -343,44 +238,30 @@
     const href = safeUrl(r.url);
     $('modal-link').hidden = !href;
     if (href) $('modal-link').href = href;
-    $('modal-link').textContent = r.source === 'jira' ? 'Open in Jira' : 'Open on GitHub';
+    $('modal-link').textContent = sourceLink(r.source);
     $('modal-body').replaceChildren(markdown(r.body || r.text || ''));
     $('modal').hidden = false;
     $('modal-close').focus();
   }
   const closeModal = () => { $('modal').hidden = true; ui.modal = null; };
 
-  function notifyNew(turn) {
-    const open = turn.filter((r) => r.group === 'you' && !isHandled(r));
-    const fresh = open.filter((r) => !marks().notified.includes(r.row_id));
-    if (!fresh.length) return;
-    if (marks().notified.length === 0) { post('/api/marks', { notified: open.map((r) => r.row_id) }).then((m) => { S.marks = m; }); return; }
-    const first = fresh[0];
-    post('/api/notify', { title: fresh.length === 1 ? 'Your move: ' + first.key : fresh.length + ' new items are your move', body: fresh.length === 1 ? first.next : fresh.map((r) => r.key + ' — ' + r.next).join('; ') });
-    post('/api/marks', { notified: fresh.map((r) => r.row_id) }).then((m) => { S.marks = m; });
-  }
-
   function render() {
     if (!S) return;
-    const turn = turnRows(S.jira, S.prs, S.jira_comments, S.gh_asks);
+    const turn = S.turn;
     renderMove(turn);
     renderWaiting(turn);
     $('tile-done').textContent = String(turn.filter((r) => r.group === 'done').length);
     $('tile-failing').textContent = String(turn.filter((r) => r.pr_state === 'OPEN' && r.checks === 'failing').length);
-    renderFeed(feedRows(S.activity, S.events, S.jira, S.jira_comments, S.gh_asks));
+    renderFeed(S.feed);
     renderTodos();
     renderStatus();
-    return turn;
   }
 
   function renderStatus() {
     if (!S) return;
     const errs = S.errors || {};
-    const msgs = [];
-    if (errs.config) msgs.push(errs.config);
-    if (errs.jira && /token/i.test(errs.jira)) msgs.push('Jira is not connected: add your API token to Keychain with  security add-generic-password -a ' + cfg().jira_email + ' -s ' + cfg().keychain_service + ' -w  then press Refresh now.');
-    else if (errs.jira) msgs.push('Jira: ' + errs.jira);
-    if (errs.github) msgs.push('GitHub: ' + errs.github);
+    const msgs = (S.problems || []).slice();
+    for (const source of Object.keys(errs)) msgs.push(source + ': ' + errs[source]);
     $('alert').hidden = msgs.length === 0;
     $('alert').textContent = msgs.join('  ·  ');
     $('status-text').textContent = 'Live · last check ' + (S.polled_at ? ago(S.polled_at) : '—') + ' · checks every minute';
@@ -391,9 +272,6 @@
   function load() {
     return fetch('/api/state').then((r) => r.json()).then((j) => {
       S = j;
-      ME_JIRA = (S.me && S.me.jira) || '';
-      ME_GH = (S.me && S.me.github) || '';
-      if (!S.marks.base) { S.marks.base = Date.now() - 3 * DAY; post('/api/marks', { base: S.marks.base }); }
       render();
     });
   }
@@ -402,6 +280,7 @@
     es.onopen = () => $('live').classList.remove('off');
     es.onmessage = (e) => {
       const d = JSON.parse(e.data);
+      if (S && d.ws !== S.workspace.id) return;
       if (d.version !== lastVersion) { lastVersion = d.version; load(); }
       else if (S) { S.polled_at = d.polled_at; renderStatus(); }
     };
@@ -413,18 +292,13 @@
     el.addEventListener('click', fn);
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } });
   };
-  document.querySelectorAll('[data-feed-filter]').forEach((b) => onAct(b, () => {
-    ui.feed = b.dataset.feedFilter;
-    document.querySelectorAll('[data-feed-filter]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    render();
-  }));
   document.querySelectorAll('[data-move-view]').forEach((b) => onAct(b, () => {
     ui.move = b.dataset.moveView;
     document.querySelectorAll('[data-move-view]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     render();
   }));
   onAct($('mark-read'), () => {
-    const ids = feedRows(S.activity, S.events, S.jira, S.jira_comments, S.gh_asks).map((r) => r.id);
+    const ids = S.feed.map((r) => r.id);
     setMarks({ seen: ids, base: Date.now() });
   });
   onAct($('refresh'), () => { $('status-text').textContent = 'Checking now…'; post('/api/refresh'); });
@@ -434,11 +308,12 @@
   setInterval(renderStatus, 10000);
 
   // ---------- to-dos (stored by the server; Claude adds through POST /api/todos)
-  const todoText = (text, parent) => {
-    const re = new RegExp(cfg().key_pattern, 'g'); let last = 0, m;
+  const todoText = (todo, parent) => {
+    const text = todo.text;
+    const re = new RegExp(S.workspace.key_pattern, 'g'); let last = 0, m;
     while ((m = re.exec(text))) {
       if (m.index > last) parent.append(document.createTextNode(text.slice(last, m.index)));
-      parent.append(link(m[0], jiraUrl(m[0])));
+      parent.append(link(m[0], m[0] === todo.key ? todo.ticket_url : ''));
       last = m.index + m[0].length;
     }
     if (last < text.length) parent.append(document.createTextNode(text.slice(last)));
@@ -454,7 +329,7 @@
       const li = document.createElement('li'); if (t.done) li.classList.add('is-done');
       const box = button('wt-check' + (t.done ? ' on' : ''), '', () => todoAct({ action: t.done ? 'undo' : 'done', id: t.id }), t.done ? 'Mark not done' : 'Mark done');
       box.setAttribute('role', 'checkbox'); box.setAttribute('aria-checked', String(!!t.done));
-      const text = document.createElement('span'); text.className = 'wt-todo-text'; todoText(t.text, text);
+      const text = document.createElement('span'); text.className = 'wt-todo-text'; todoText(t, text);
       const meta = span('wt-todo-meta', (t.by && t.by !== 'you' ? t.by + ' · ' : '') + ago(t.created));
       const del = button('wt-todo-del', '×', () => todoAct({ action: 'delete', id: t.id }), 'Delete to-do');
       li.append(box, text, meta, del);

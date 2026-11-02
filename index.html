@@ -45,7 +45,7 @@
         </section>
 
         <section class="wt-island" id="todo">
-          <div class="wt-island-head"><h2>To do <span class="wt-count" id="todo-count"></span></h2><p class="wt-note"><span class="wt-note-text">Your own notes</span><span class="wt-hint-icon" role="button" tabindex="0" aria-label="More info" data-tip="Your personal to-dos, kept on this Mac. Add here, or ask Claude: &quot;add to my to-do: …&quot;. A ticket key like PROJ-123 in the text becomes a link.">?</span></p></div>
+          <div class="wt-island-head"><h2>To do <span class="wt-count" id="todo-count"></span></h2><p class="wt-note"><span class="wt-note-text">Your own notes</span><span class="wt-hint-icon" role="button" tabindex="0" aria-label="More info" data-tip="Your personal to-dos, kept on this machine. Add here, or ask Claude: &quot;add to my to-do: …&quot;. A ticket key like PROJ-123 in the text becomes a link.">?</span></p></div>
           <div class="wt-island-body">
             <div class="wt-todo-add"><input id="todo-input" type="text" placeholder="Add a to-do and press Enter" aria-label="New to-do" autocomplete="off"><span class="wt-seg-b wt-todo-toggle" id="todo-show-done" role="button" tabindex="0" aria-pressed="false">Done <b id="todo-done-count">0</b></span></div>
             <ul class="wt-todo-list" id="todo-list"></ul>
@@ -66,12 +66,10 @@
       </div>
 
       <aside class="wt-island wt-feed" id="feed">
-        <div class="wt-island-head"><h2>What changed</h2><p class="wt-note"><span class="wt-note-text">Newest first, GitHub and Jira</span><span class="wt-hint-icon" role="button" tabindex="0" aria-label="More info" data-tip="Newest first: comments, reviews, merges and failed checks on your PRs, and Jira changes. Each item opens where it happened.">?</span></p></div>
+        <div class="wt-island-head"><h2>What changed</h2><p class="wt-note"><span class="wt-note-text">Newest first, every source</span><span class="wt-hint-icon" role="button" tabindex="0" aria-label="More info" data-tip="Newest first: comments, reviews, merges and failed checks on your PRs, and ticket changes. Each item opens where it happened.">?</span></p></div>
         <div class="wt-island-body">
           <div class="wt-feed-bar">
-            <div class="wt-filters" role="group" aria-label="Feed source">
-              <span class="wt-f" role="button" tabindex="0" data-feed-filter="all" aria-pressed="true">All</span><span class="wt-f" role="button" tabindex="0" data-feed-filter="github" aria-pressed="false">GitHub</span><span class="wt-f" role="button" tabindex="0" data-feed-filter="jira" aria-pressed="false">Jira</span>
-            </div>
+            <div class="wt-filters" role="group" aria-label="Feed source" id="feed-filters"></div>
             <span class="wt-new-count" id="new-count" hidden></span>
             <span class="wt-mark-read" id="mark-read" role="button" tabindex="0">Mark all read</span>
           </div>

@@ -1,39 +1,95 @@
 {
   "$schema": "./review.config.schema.json",
-  "secretAllowlist": ["EXAMPLE", "AKIA0000000000000000", "you@example.com"],
+  "secretAllowlist": [
+    "EXAMPLE",
+    "AKIA0000000000000000",
+    "you@example.com"
+  ],
   "agents": [
     {
       "name": "craft",
       "enabled": true,
       "threshold": 7,
-      "skills": ["frontend-js:conventions", "meta:ockham", "meta:solid", "no-code-prose:policy"]
+      "skills": [
+        "frontend-js:conventions",
+        "frontend-css:rem",
+        "error:format",
+        "meta:ockham",
+        "meta:solid",
+        "no-code-prose:policy"
+      ]
     },
     {
       "name": "architecture",
       "enabled": true,
       "threshold": 8,
-      "skills": ["meta:solid", "error:architecture"],
+      "skills": [
+        "meta:solid",
+        "error:architecture"
+      ],
       "rules": [
-        { "id": "no-employer-values-in-code", "pattern": "atlassian\\.net|@[a-z0-9-]+\\.(com|io|net)\\b", "severity": "blocker" },
-        { "id": "no-innerhtml", "pattern": "innerHTML|insertAdjacentHTML|document\\.write", "severity": "major" }
+        {
+          "id": "no-employer-values-in-code",
+          "pattern": "atlassian\\.net|@[a-z0-9-]+\\.(com|io|net)\\b",
+          "severity": "blocker"
+        },
+        {
+          "id": "no-innerhtml",
+          "pattern": "innerHTML|insertAdjacentHTML|document\\.write",
+          "severity": "major"
+        }
       ]
     },
     {
       "name": "tests",
       "enabled": true,
       "threshold": 7,
-      "skills": ["tests:architecture"],
-      "checks": [ { "name": "suite", "command": "npm test" } ]
+      "skills": [
+        "tests:architecture"
+      ],
+      "checks": [
+        {
+          "name": "suite",
+          "command": "npm test"
+        }
+      ]
     },
     {
       "name": "docs",
       "enabled": true,
       "threshold": 8,
-      "skills": ["docs:standard", "meta:wittgenstein"],
-      "checks": [ { "name": "docs-check", "command": "python3 scripts/docs-check.py" } ]
+      "skills": [
+        "docs:standard",
+        "meta:wittgenstein"
+      ],
+      "checks": [
+        {
+          "name": "docs-check",
+          "command": "python3 scripts/docs-check.py"
+        }
+      ]
     },
-    { "name": "security", "enabled": true, "threshold": 9, "skills": [] },
-    { "name": "leak", "enabled": true, "threshold": 9, "skills": ["cerberus:leak-check"] },
-    { "name": "security-scan", "enabled": true, "threshold": 9, "skills": ["cerberus:security-scan"] }
+    {
+      "name": "security",
+      "enabled": true,
+      "threshold": 9,
+      "skills": []
+    },
+    {
+      "name": "leak",
+      "enabled": true,
+      "threshold": 9,
+      "skills": [
+        "cerberus:leak-check"
+      ]
+    },
+    {
+      "name": "security-scan",
+      "enabled": true,
+      "threshold": 9,
+      "skills": [
+        "cerberus:security-scan"
+      ]
+    }
   ]
 }

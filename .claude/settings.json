@@ -19,7 +19,9 @@
     "frontend-js@bladeforge": true,
     "critique@bladeforge": true,
     "no-code-prose@bladeforge": true,
-    "cerberus@bladeforge": true
+    "cerberus@bladeforge": true,
+    "frontend@bladeforge": true,
+    "frontend-css@bladeforge": true
   },
   "includeCoAuthoredBy": false,
   "worktree": {
