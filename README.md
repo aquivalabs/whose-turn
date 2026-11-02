@@ -117,8 +117,9 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - `POST /api/marks` takes `{ws?, seen:[ids], base:ms, handled:{row_id: iso|null}, notified:[ids]}`.
 - `POST /api/todos` takes `{ws?, action, …}`: `add {text, key?, by?}`; `done`, `undo`, `delete` with `{id}`; `edit {id, text}`.
 - `POST /api/refresh` polls now.
-- `GET /api/config`: the raw workspace list as written in the config file, the `problems`, the connector catalogue (`type`, `label`, `fields`) and the config file path. `POST /api/config` with `{workspaces: [...]}` validates the list, refuses with `INVALID_CONFIG` and the problems if anything is wrong, otherwise writes the file and reloads the workspaces in place; a workspace whose definition did not change keeps its caches.
-- `POST /api/secrets` with `{service, account, value}` stores a token in the secret store (Keychain on macOS, a 600-mode file under `<data>/secrets/` elsewhere); it never touches the config.
+- `GET /api/config`: the raw workspace list as written in the config file, the `problems`, the connector catalogue (`type`, `label`, `fields`), the workspace field catalogue (`fields`: workspace, theme, rules, statuses) and the config file path. `POST /api/config` with `{workspaces: [...], secrets?: [{ws, connector, key, value}]}` validates the list first; on a problem it answers `INVALID_CONFIG` with the problems as `BadRequest.field_violations` in `details` and stores nothing. Otherwise it stores the secrets (the account and the store entry come from the connector's own field declaration), writes the file and reloads the workspaces in place; a workspace whose definition did not change keeps its caches, new or changed ones are polled at once. The reply carries the workspace list and `secrets_stored`.
+- `POST /api/secrets` with `{service, account, value}` stores a token on its own (Keychain on macOS, a 600-mode file `<data>/secrets/<service>@<account>` elsewhere); it never touches the config.
+- Both write endpoints are reachable by any local process; see AGENTS.md for why that is accepted.
 
 ## The window
 

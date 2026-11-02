@@ -661,6 +661,7 @@
 
   window.whoseTurnBackdrop = {
     species: SPECIES_NAMES.slice(),
+    seeded: mulberry32,
     get current() { return { workspace: current.workspace, species: current.species, seed: current.seed }; },
     show: (request) => {
       const wanted = request || {};

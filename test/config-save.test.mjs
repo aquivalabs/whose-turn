@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadConfig, saveWorkspaces, validateWorkspaces } from '../lib/config.mjs';
+import { loadConfig, saveWorkspaces, normaliseWorkspaces } from '../lib/config.mjs';
 
 test('saving the workspace list keeps the other top-level keys and drops the flat legacy keys', () => {
   const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
@@ -27,7 +27,7 @@ test('saving into a missing file creates it', () => {
 });
 
 test('validation reports duplicate ids and a bad theme without writing anything', () => {
-  const { problems } = validateWorkspaces([{ id: 'a', theme: { seed: 'blue' } }, { id: 'a' }]);
+  const { problems } = normaliseWorkspaces([{ id: 'a', theme: { seed: 'blue' } }, { id: 'a' }]);
   assert.equal(problems.length, 2);
   assert.match(problems[0], /theme.seed/);
   assert.match(problems[1], /share the id/);

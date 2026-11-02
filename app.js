@@ -7,7 +7,8 @@
 
   // ---------- small DOM helpers (data is untrusted: text only, https links only)
   const safeUrl = (u) => (typeof u === 'string' && /^https:\/\//.test(u) ? u : null);
-  const span = (cls, text) => { const s = document.createElement('span'); if (cls) s.className = cls; s.textContent = text; return s; };
+  const element = (tag, cls, text) => { const node = document.createElement(tag); if (cls) node.className = cls; if (text !== undefined) node.textContent = text; return node; };
+  const span = (cls, text) => element('span', cls, text);
   const link = (text, url) => {
     const href = safeUrl(url);
     if (!href) return document.createTextNode(text || '');
@@ -250,7 +251,7 @@
   const SVG = 'http://www.w3.org/2000/svg';
   const svgNode = (name, attributes) => { const node = document.createElementNS(SVG, name); for (const key in attributes) node.setAttribute(key, String(attributes[key])); return node; };
   const hashOf = (text) => { let hash = 2166136261; for (let i = 0; i < text.length; i += 1) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); } return hash >>> 0; };
-  const seededRandom = (seed) => { let state = seed >>> 0; return () => { state = (state + 0x6d2b79f5) >>> 0; let mixed = Math.imul(state ^ (state >>> 15), state | 1); mixed ^= mixed + Math.imul(mixed ^ (mixed >>> 7), mixed | 61); return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296; }; };
+  const seededRandom = (seed) => window.whoseTurnBackdrop.seeded(seed);
   const workspaceColours = (w) => {
     const scheme = w.theme ? w.theme[isDark() ? 'dark' : 'light'] : null;
     return { fill: scheme ? scheme['--md-primary-container'] : 'var(--md-primary-container)', ink: scheme ? scheme['--md-on-primary-container'] : 'var(--md-on-primary-container)', dot: scheme ? scheme['--md-primary'] : 'var(--md-primary)' };
@@ -270,57 +271,75 @@
     svg.append(letter);
     return svg;
   };
+  const gearIcon = () => {
+    const svg = svgNode('svg', { viewBox: '0 0 24 24', class: 'wt-rail-gear', 'aria-hidden': 'true' });
+    svg.append(svgNode('path', { d: 'M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.4 1a7.5 7.5 0 0 0-1.7-1L15 3.5H9l-.3 2.6a7.5 7.5 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a7.5 7.5 0 0 0 1.7 1l.3 2.6h6l.3-2.6a7.5 7.5 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z', fill: 'currentColor' }));
+    return svg;
+  };
+  const railItem = (href, label, icon, onClick) => {
+    const item = element('a', 'wt-rail-item'); item.href = href; item.setAttribute('aria-label', label);
+    item.append(icon, span('wt-rail-label', label));
+    item.addEventListener('click', (e) => { e.preventDefault(); onClick(); });
+    return item;
+  };
   const switchWorkspace = (id) => {
     if (id === S.workspace.id) return;
     ui.ws = id;
     try { localStorage.setItem('wt-ws', id); } catch (e) { /* storage may be blocked */ }
     ui.open.clear(); lastVersion = -1; load();
   };
+  let railKey = '';
   function renderRail() {
     const rail = $('rail');
-    const items = (S.workspaces || []).map((w) => {
-      const item = document.createElement('a'); item.className = 'wt-rail-item'; item.href = '?ws=' + encodeURIComponent(w.id); item.title = w.name;
+    const key = JSON.stringify([S.workspaces.map((w) => [w.id, w.name, w.open_moves, w.theme && w.theme.light['--md-primary']]), S.workspace.id, isDark()]);
+    if (key === railKey) return;
+    railKey = key;
+    const items = S.workspaces.map((w) => {
+      const item = railItem('?ws=' + encodeURIComponent(w.id), w.name, workspaceIcon(w), () => switchWorkspace(w.id));
       item.setAttribute('aria-selected', String(w.id === S.workspace.id));
-      item.append(workspaceIcon(w), span('wt-rail-label', w.name));
       if (w.open_moves) item.append(span('wt-rail-badge', String(w.open_moves)));
-      item.addEventListener('click', (e) => { e.preventDefault(); switchWorkspace(w.id); });
       return item;
     });
-    const gear = document.createElement('a'); gear.className = 'wt-rail-item'; gear.href = '#settings'; gear.title = 'Settings';
-    const gearIcon = svgNode('svg', { viewBox: '0 0 24 24', class: 'wt-rail-gear', 'aria-hidden': 'true' });
-    gearIcon.append(svgNode('path', { d: 'M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.4 1a7.5 7.5 0 0 0-1.7-1L15 3.5H9l-.3 2.6a7.5 7.5 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a7.5 7.5 0 0 0 1.7 1l.3 2.6h6l.3-2.6a7.5 7.5 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z', fill: 'currentColor' }));
-    gear.append(gearIcon, span('wt-rail-label', 'Settings'));
-    gear.addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
-    rail.replaceChildren(...items, span('wt-rail-spacer', ''), gear);
+    rail.replaceChildren(...items, span('wt-rail-spacer', ''), railItem('#settings', 'Settings', gearIcon(), openSettings));
   }
 
-  // ---------- settings: edit the workspace list; the server validates, writes config.json and reloads
-  const settings = { list: [], selected: 0, catalogue: [], secrets: {}, file: '' };
-  const element = (tag, cls, text) => { const node = document.createElement(tag); if (cls) node.className = cls; if (text !== undefined) node.textContent = text; return node; };
-  const field = (label, hint, input) => {
+  // ---------- settings: the form is drawn from the catalogues the server sends; the server validates, stores secrets, writes config.json and reloads
+  const HEX = /^#[0-9a-f]{6}$/i;
+  const settings = { list: [], selected: 0, catalogue: [], fields: {}, secrets: new Map() };
+  const bind = (target, key) => (value) => { if (value && value.length) target[key] = value; else delete target[key]; };
+  const field = (spec, input) => {
     const wrap = element('div', 'wt-field');
-    const name = element('label', '', label);
-    wrap.append(name, input);
-    if (hint) wrap.append(element('small', '', hint));
+    wrap.append(element('label', '', spec.label + (spec.required ? ' *' : '')), input);
+    if (spec.hint) wrap.append(element('small', '', spec.hint));
     return wrap;
   };
   const textInput = (value, onChange, placeholder) => {
-    const input = element('input'); input.type = 'text'; input.value = value || ''; if (placeholder) input.placeholder = placeholder;
+    const input = element('input', 'wt-input'); input.type = 'text'; input.value = value || ''; if (placeholder) input.placeholder = placeholder;
     input.addEventListener('input', () => onChange(input.value));
     return input;
   };
   const listInput = (value, onChange) => textInput((value || []).join(', '), (text) => onChange(text.split(',').map((part) => part.trim()).filter(Boolean)));
   const colourInput = (value, onChange) => {
     const wrap = element('div', 'wt-inline');
-    const picker = element('input'); picker.type = 'color'; picker.value = /^#[0-9a-f]{6}$/i.test(value || '') ? value : '#888888';
-    const text = textInput(value, (next) => { onChange(next); if (/^#[0-9a-f]{6}$/i.test(next)) picker.value = next; }, '#rrggbb');
+    const picker = element('input', 'wt-input'); picker.type = 'color'; picker.value = HEX.test(value || '') ? value : '#888888';
+    const text = textInput(value, (next) => { onChange(next); if (HEX.test(next)) picker.value = next; }, '#rrggbb');
     picker.addEventListener('input', () => { text.value = picker.value; onChange(picker.value); });
-    const clear = button('wt-btn', 'None', () => { text.value = ''; onChange(''); });
-    wrap.append(picker, text, clear);
+    wrap.append(picker, text, button('wt-btn', 'None', () => { text.value = ''; onChange(''); }));
     return wrap;
   };
+  const secretInput = (entry, spec) => {
+    const input = element('input', 'wt-input'); input.type = 'password'; input.placeholder = 'paste to replace'; input.autocomplete = 'off';
+    input.addEventListener('input', () => settings.secrets.set(entry, Object.assign(settings.secrets.get(entry) || {}, { [spec.key]: input.value })));
+    return input;
+  };
+  const inputFor = (target, spec, entry) => {
+    if (spec.secret) return secretInput(entry, spec);
+    if (spec.colour) return colourInput(target[spec.key], bind(target, spec.key));
+    if (spec.list) return listInput(target[spec.key], bind(target, spec.key));
+    return textInput(target[spec.key], bind(target, spec.key));
+  };
+  const fieldsFor = (target, specs, entry) => specs.map((spec) => field(spec, inputFor(target, spec, entry)));
   const current = () => settings.list[settings.selected];
-  const secretKey = (connectorIndex, key) => settings.selected + ':' + connectorIndex + ':' + key;
   const renderSettingsList = () => {
     const items = settings.list.map((w, index) => {
       const li = element('li', '', w.name || w.id || 'Workspace ' + (index + 1));
@@ -329,79 +348,71 @@
       return li;
     });
     const add = element('li', 'add', '+ Add workspace');
-    add.addEventListener('click', () => { settings.list.push({ id: 'new-' + (settings.list.length + 1), name: 'New workspace', connectors: [] }); settings.selected = settings.list.length - 1; renderSettings(); });
+    add.addEventListener('click', () => { settings.list.push(normaliseForForm({ id: 'new-' + (settings.list.length + 1), name: 'New workspace' })); settings.selected = settings.list.length - 1; renderSettings(); });
     $('settings-list').replaceChildren(...items, add);
   };
-  const connectorCard = (entry, connectorIndex) => {
-    const w = current();
+  const connectorCard = (w, entry, index) => {
     const spec = settings.catalogue.find((c) => c.type === entry.type) || { type: entry.type, label: entry.type, fields: [] };
     const card = element('div', 'wt-connector');
     const head = element('div', 'wt-connector-head');
-    head.append(element('strong', '', spec.label), button('wt-btn danger', 'Remove', () => { w.connectors.splice(connectorIndex, 1); renderSettings(); }));
-    card.append(head);
-    card.append(field('Entry id', 'only needed when one type appears twice', textInput(entry.id, (v) => { if (v) entry.id = v; else delete entry.id; }, spec.type)));
-    card.append(field('Label', 'shown in the feed filter', textInput(entry.label, (v) => { if (v) entry.label = v; else delete entry.label; }, spec.label)));
-    spec.fields.forEach((f) => {
-      if (f.secret) {
-        const input = element('input'); input.type = 'password'; input.placeholder = 'paste to replace'; input.autocomplete = 'off';
-        input.addEventListener('input', () => { settings.secrets[secretKey(connectorIndex, f.key)] = { value: input.value, account: entry[f.account] || '', service: entry[f.service] || f.default_service }; });
-        card.append(field(f.label, f.hint, input));
-      } else if (f.list) {
-        card.append(field(f.label, f.hint, listInput(entry[f.key], (v) => { if (v.length) entry[f.key] = v; else delete entry[f.key]; })));
-      } else {
-        card.append(field(f.label + (f.required ? ' *' : ''), f.hint, textInput(entry[f.key], (v) => { if (v) entry[f.key] = v; else delete entry[f.key]; })));
-      }
-    });
+    head.append(element('strong', '', spec.label), button('wt-btn danger', 'Remove', () => { w.connectors.splice(index, 1); settings.secrets.delete(entry); renderSettings(); }));
+    card.append(head, field({ label: 'Entry id', hint: 'only needed when one type appears twice' }, textInput(entry.id, bind(entry, 'id'), spec.type)),
+      field({ label: 'Label', hint: 'shown in the feed filter' }, textInput(entry.label, bind(entry, 'label'), spec.label)),
+      ...fieldsFor(entry, spec.fields, entry));
     return card;
   };
   const renderSettingsForm = () => {
     const form = $('settings-form');
     const w = current();
     if (!w) { form.replaceChildren(element('p', 'wt-empty', 'No workspaces yet. Add one on the left.')); return; }
-    w.connectors = Array.isArray(w.connectors) ? w.connectors : Object.keys(w.connectors || {}).map((type) => Object.assign({ type }, w.connectors[type]));
-    w.rules = w.rules || {}; w.rules.statuses = w.rules.statuses || {}; w.theme = w.theme || {};
-    const parts = [];
-    parts.push(element('h4', '', 'Workspace'));
-    parts.push(field('Id *', 'short, used in the API and on disk', textInput(w.id, (v) => { w.id = v; renderSettingsList(); })));
-    parts.push(field('Name', '', textInput(w.name, (v) => { w.name = v; renderSettingsList(); })));
-    parts.push(field('Ticket key pattern', 'regex for keys in PR titles and to-dos; empty for any Jira-style key', textInput(w.key_pattern, (v) => { if (v) w.key_pattern = v; else delete w.key_pattern; })));
-    parts.push(element('h4', '', 'Theme'));
-    parts.push(field('Seed colour', 'the scheme is derived from it; none keeps the default blue', colourInput(w.theme.seed, (v) => { if (v) w.theme.seed = v; else delete w.theme.seed; })));
-    parts.push(field('Accent colour', 'optional second hue', colourInput(w.theme.accent, (v) => { if (v) w.theme.accent = v; else delete w.theme.accent; })));
-    parts.push(element('h4', '', 'Connectors'));
-    w.connectors.forEach((entry, index) => parts.push(connectorCard(entry, index)));
+    const onIdOrName = (key) => (value) => { bind(w, key)(value); renderSettingsList(); };
+    const workspaceFields = settings.fields.workspace.map((spec) => field(spec, ['id', 'name'].includes(spec.key) ? textInput(w[spec.key], onIdOrName(spec.key)) : inputFor(w, spec)));
     const adder = element('div', 'wt-settings-actions');
     settings.catalogue.forEach((c) => adder.append(button('wt-btn', '+ ' + c.label, () => { w.connectors.push({ type: c.type }); renderSettings(); })));
-    parts.push(adder);
-    parts.push(element('h4', '', 'Rules'));
-    const rule = (key, label, hint) => parts.push(field(label, hint, textInput(w.rules[key], (v) => { if (v) w.rules[key] = v; else delete w.rules[key]; })));
-    rule('approved_next', 'Approved PR', 'next step when a PR in code review is approved');
-    rule('approved_release_next', 'Approved release PR', 'same, for a PR into a release branch');
-    rule('release_branch_prefix', 'Release branch prefix', 'default release/');
-    rule('passed_next', 'Status passed', 'next step when the ticket passed QA');
-    rule('merged_next', 'PR merged', 'next step when the PR is merged and the ticket is still on you');
-    const statusGroup = (key, label) => parts.push(field(label, 'comma-separated words matched inside the status name', listInput(w.rules.statuses[key], (v) => { if (v.length) w.rules.statuses[key] = v; else delete w.rules.statuses[key]; })));
-    statusGroup('code_review', 'Code review statuses'); statusGroup('qa', 'QA statuses'); statusGroup('passed', 'Passed statuses'); statusGroup('on_hold', 'On hold statuses'); statusGroup('backlog', 'Backlog statuses');
-    parts.push(field('Automation authors', 'comment authors to ignore, comma-separated', listInput(w.rules.automation_authors, (v) => { if (v.length) w.rules.automation_authors = v; else delete w.rules.automation_authors; })));
     const actions = element('div', 'wt-settings-actions');
     actions.append(button('wt-btn danger', 'Delete workspace', () => { settings.list.splice(settings.selected, 1); settings.selected = Math.max(0, settings.selected - 1); renderSettings(); }));
-    parts.push(actions);
-    form.replaceChildren(...parts);
+    form.replaceChildren(
+      element('h4', '', 'Workspace'), ...workspaceFields,
+      element('h4', '', 'Theme'), ...fieldsFor(w.theme, settings.fields.theme),
+      element('h4', '', 'Connectors'), ...w.connectors.map((entry, index) => connectorCard(w, entry, index)), adder,
+      element('h4', '', 'Rules'), ...fieldsFor(w.rules, settings.fields.rules), ...fieldsFor(w.rules.statuses, settings.fields.statuses),
+      actions,
+    );
   };
-  const tidy = (w) => {
-    const copy = JSON.parse(JSON.stringify(w));
-    if (copy.theme && !Object.keys(copy.theme).length) delete copy.theme;
-    if (copy.rules) { if (copy.rules.statuses && !Object.keys(copy.rules.statuses).length) delete copy.rules.statuses; if (!Object.keys(copy.rules).length) delete copy.rules; }
+  const normaliseForForm = (w) => {
+    const copy = structuredClone(w);
+    copy.connectors = Array.isArray(copy.connectors) ? copy.connectors : Object.keys(copy.connectors || {}).map((type) => Object.assign({ type }, copy.connectors[type]));
+    copy.rules = copy.rules || {}; copy.rules.statuses = copy.rules.statuses || {}; copy.theme = copy.theme || {};
     return copy;
   };
+  const forSaving = (w) => {
+    const copy = structuredClone(w);
+    if (!Object.keys(copy.theme).length) delete copy.theme;
+    if (!Object.keys(copy.rules.statuses).length) delete copy.rules.statuses;
+    if (!Object.keys(copy.rules).length) delete copy.rules;
+    return copy;
+  };
+  const pendingSecrets = () => {
+    const out = [];
+    settings.list.forEach((w) => w.connectors.forEach((entry) => {
+      const typed = settings.secrets.get(entry) || {};
+      Object.keys(typed).forEach((key) => { if (typed[key]) out.push({ ws: w.id, connector: entry.id || entry.type, key, value: typed[key] }); });
+    }));
+    return out;
+  };
   const showProblems = (list) => { $('settings-problems').hidden = !list.length; $('settings-problems').textContent = list.join('  ·  '); };
+  const problemsOf = (error) => {
+    const violations = (error.details || []).find((d) => d['@type'] === 'BadRequest');
+    const info = (error.details || []).find((d) => d['@type'] === 'ErrorInfo');
+    return violations ? violations.field_violations.map((v) => v.description) : [error.message + (info && info.metadata && info.metadata.detail ? ': ' + info.metadata.detail : '')];
+  };
   function renderSettings() { renderSettingsList(); renderSettingsForm(); }
   function openSettings() {
     fetch('/api/config').then((r) => r.json()).then((j) => {
-      settings.list = (j.workspaces || []).map((w) => JSON.parse(JSON.stringify(w)));
-      settings.catalogue = j.connectors || []; settings.file = j.config_file || ''; settings.secrets = {};
+      settings.list = (j.workspaces || []).map(normaliseForForm);
+      settings.catalogue = j.connectors || []; settings.fields = j.fields; settings.secrets = new Map();
       settings.selected = Math.max(0, settings.list.findIndex((w) => w.id === S.workspace.id));
-      $('settings-file').textContent = settings.file;
+      $('settings-file').textContent = j.config_file || '';
       showProblems(j.problems || []);
       renderSettings();
       $('settings').hidden = false;
@@ -409,14 +420,11 @@
     });
   }
   const closeSettings = () => { $('settings').hidden = true; };
-  const saveSettings = () => {
-    const secretPosts = Object.values(settings.secrets).filter((s) => s.value && s.account).map((s) => post('/api/secrets', { service: s.service, account: s.account, value: s.value }));
-    Promise.all(secretPosts).then(() => post('/api/config', { workspaces: settings.list.map(tidy) })).then((j) => {
-      if (j.error) { showProblems(((j.error.details || [])[0] || {}).metadata?.problems || [j.error.message]); return; }
-      closeSettings();
-      lastVersion = -1; load();
-    });
-  };
+  const saveSettings = () => post('/api/config', { workspaces: settings.list.map(forSaving), secrets: pendingSecrets() }).then((j) => {
+    if (j.error) { showProblems(problemsOf(j.error)); return; }
+    closeSettings();
+    lastVersion = -1; load();
+  });
 
   function render() {
     if (!S) return;
@@ -450,7 +458,7 @@
   };
   const themed = { theme: null, key: '', applied: [] };
   const paintTheme = () => {
-    const elements = ['.wt', '.wt-shell'].map((selector) => document.querySelector(selector)).filter(Boolean);
+    const elements = ['.wt', '.wt-shell', '.wt-rail'].map((selector) => document.querySelector(selector)).filter(Boolean);
     elements.forEach((element) => themed.applied.forEach((name) => element.style.removeProperty(name)));
     const variables = themed.theme ? themed.theme[isDark() ? 'dark' : 'light'] : null;
     themed.applied = variables ? Object.keys(variables) : [];

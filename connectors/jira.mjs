@@ -3,12 +3,14 @@ import { toIsoUtc, mapLimit } from '../lib/text.mjs';
 
 const TOKEN_TTL = 10 * 60 * 1000;
 
+const DEFAULT_SERVICE = 'whose-turn-jira';
+
 export const id = 'jira';
 export const label = 'Jira';
 export const fields = [
   { key: 'base', label: 'Site', hint: 'https://your-site.atlassian.net', required: true },
   { key: 'email', label: 'Account email', hint: 'the account the API token belongs to', required: true },
-  { key: 'token', label: 'API token', hint: 'stored in the secret store, never in the config', secret: true, account: 'email', service: 'token_service', default_service: 'whose-turn-jira' },
+  { key: 'token', label: 'API token', hint: 'stored in the secret store, never in the config', secret: { account: 'email', service: 'token_service', default: DEFAULT_SERVICE } },
   { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-jira' },
   { key: 'jql', label: 'JQL', hint: 'which tickets to watch; leave empty for the default' },
 ];
@@ -103,7 +105,7 @@ const statusEntered = async (api, cache, key, updated, status) => {
 
 const jiraToken = async (settings, secrets, cache) => {
   if (!cache.token || Date.now() - cache.tokenAt > TOKEN_TTL) {
-    const service = settings.token_service || 'whose-turn-jira';
+    const service = settings.token_service || DEFAULT_SERVICE;
     cache.token = await secrets.get(service, settings.email);
     cache.tokenAt = Date.now();
     if (!cache.token) {
