@@ -64,7 +64,8 @@
   const marks = () => S.marks;
   const isHandled = (r) => { const m = marks().handled[r.row_id]; return !!m && String(r.activity_at || '') <= m; };
   const isNew = (r) => new Date(r.at).getTime() > (marks().base || 0) && !marks().seen.includes(r.id);
-  const setMarks = (body) => post('/api/marks', { ws: S.workspace.id, ...body }).then((m) => { S.marks = m; render(); });
+  const postWs = (url, body) => post(url, { ws: S.workspace.id, ...body });
+  const setMarks = (body) => postWs('/api/marks', body).then((m) => { S.marks = m; render(); });
 
   // ---------- Markdown to DOM (no HTML from data)
   const inline = (text, parent) => {
@@ -139,8 +140,7 @@
   };
 
   function renderMove(turn) {
-    const inProgress = (r) => Number(r.next !== 'Continue the work');
-    const you = turn.filter((r) => r.group === 'you').sort((a, b) => inProgress(a) - inProgress(b) || String(a.updated).localeCompare(String(b.updated)));
+    const you = turn.filter((r) => r.group === 'you').sort((a, b) => Number(b.started) - Number(a.started) || String(a.updated).localeCompare(String(b.updated)));
     const showHandled = ui.move === 'handled';
     const rows = showHandled ? you.filter(isHandled) : you.slice().sort((a, b) => Number(isHandled(a)) - Number(isHandled(b)));
     const openCount = you.filter((r) => !isHandled(r)).length;
@@ -380,28 +380,24 @@
   let railKey = '';
   let dragged = '';
   const reorderWorkspaces = (ids) => fetch('/api/config').then((r) => r.json()).then((config) => {
-    const byId = new Map((config.workspaces || []).map((w) => [w.id, w]));
-    const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
-    const rest = (config.workspaces || []).filter((w) => !ids.includes(w.id));
-    return post('/api/config', { workspaces: [...ordered, ...rest], secrets: [] });
+    const position = (w) => { const at = ids.indexOf(w.id); return at < 0 ? ids.length : at; };
+    return post('/api/config', { workspaces: [...config.workspaces].sort((a, b) => position(a) - position(b)), secrets: [] });
   }).then((j) => {
     if (j && j.error) { $('status-text').textContent = j.error.message || 'The order was not saved'; return; }
     railKey = ''; lastVersion = -1; load();
   });
   const dropBefore = (e, item) => e.clientY - item.getBoundingClientRect().top < item.offsetHeight / 2;
-  const clearDropMarks = (rail) => rail.querySelectorAll('.is-dragging, .is-drop-before, .is-drop-after').forEach((n) => n.classList.remove('is-dragging', 'is-drop-before', 'is-drop-after'));
+  const clearDropMarks = (rail) => rail.querySelectorAll('.is-dragging, [data-drop]').forEach((n) => { n.classList.remove('is-dragging'); delete n.dataset.drop; });
   const draggable = (item, w, rail) => {
     item.draggable = true;
     item.addEventListener('dragstart', (e) => { dragged = w.id; item.classList.add('is-dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', w.id); });
     item.addEventListener('dragend', () => { dragged = ''; clearDropMarks(rail); });
-    item.addEventListener('dragenter', (e) => { if (dragged && dragged !== w.id) e.preventDefault(); });
     item.addEventListener('dragover', (e) => {
       if (!dragged || dragged === w.id) return;
       e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-      const before = dropBefore(e, item);
-      item.classList.toggle('is-drop-before', before); item.classList.toggle('is-drop-after', !before);
+      item.dataset.drop = dropBefore(e, item) ? 'before' : 'after';
     });
-    item.addEventListener('dragleave', () => item.classList.remove('is-drop-before', 'is-drop-after'));
+    item.addEventListener('dragleave', () => { delete item.dataset.drop; });
     item.addEventListener('drop', (e) => {
       if (!dragged || dragged === w.id) return;
       e.preventDefault();
@@ -721,7 +717,7 @@
     }
     if (last < text.length) parent.append(document.createTextNode(text.slice(last)));
   };
-  const todoAct = (body) => post('/api/todos', { ws: S.workspace.id, ...body }).then((list) => { if (Array.isArray(list)) { S.todos = list; renderTodos(); } });
+  const todoAct = (body) => postWs('/api/todos', body).then((list) => { if (Array.isArray(list)) { S.todos = list; renderTodos(); } });
   function renderTodos() {
     const all = S.todos || [];
     const open = all.filter((t) => !t.done), done = all.filter((t) => t.done);

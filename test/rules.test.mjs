@@ -93,3 +93,10 @@ test('an open ticket on me says Continue the work when it is in progress and Pic
   const todo = only(rows({ tickets: [ticket({ status: 'Todo', status_category: 'new' })] }), (candidate) => candidate.row_id === 'PROJ-1');
   assert.equal(todo.next, 'Pick it up');
 });
+
+test('a row on me carries started so the window can order in-progress work first without reading the text', () => {
+  const started = only(rows({ tickets: [ticket({ status: 'In Progress', status_category: 'indeterminate' })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(started.started, true);
+  const todo = only(rows({ tickets: [ticket({ status: 'Todo', status_category: 'new' })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(todo.started, false);
+});
