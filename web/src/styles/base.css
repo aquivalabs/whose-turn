@@ -86,7 +86,7 @@
   html.force-light .wt-head { color: #001a41; }
   .wt-tile { background: rgba(var(--glass), calc(var(--glass-a) + .1)); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border: 1px solid var(--glass-edge); }
   .wt-tile.is-you { background: var(--md-primary); border-color: transparent; }
-  .wt th { background: rgba(var(--glass), .7); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .wt th { background: rgba(var(--glass), .32); -webkit-backdrop-filter: blur(10px) saturate(140%); backdrop-filter: blur(10px) saturate(140%); border-bottom-color: var(--glass-edge); }
   .wt-filters { background: rgba(var(--glass), .4); }
   @media (prefers-reduced-transparency: reduce) { .wt-island, .wt-tile, .wt th { background: var(--md-s-low); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 
