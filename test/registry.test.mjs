@@ -38,3 +38,12 @@ test('events of every workspace, including ones built on reload, reach the regis
   assert.deepEqual(seen, ['a', 'z']);
   assert.deepEqual(registry.workspaces.map((workspace) => workspace.id), ['a', 'z']);
 });
+
+test('a save that only reorders keeps every workspace object and follows the new order', async () => {
+  const { registry, built } = harness();
+  const [a, b] = registry.workspaces;
+  const created = await registry.save([{ id: 'b', name: 'B' }, { id: 'a', name: 'A' }]);
+  assert.deepEqual(created, []);
+  assert.deepEqual(registry.workspaces, [b, a]);
+  assert.equal(built.length, 2);
+});

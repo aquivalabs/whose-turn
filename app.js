@@ -375,7 +375,41 @@
     try { localStorage.setItem('wt-ws', id); } catch (e) { /* storage may be blocked */ }
     ui.open.clear(); lastVersion = -1; load();
   };
+  // Dragging a workspace icon reorders the config: the same raw entries, only in the new order, so secrets and caches stay.
   let railKey = '';
+  let dragged = '';
+  const reorderWorkspaces = (ids) => fetch('/api/config').then((r) => r.json()).then((config) => {
+    const byId = new Map((config.workspaces || []).map((w) => [w.id, w]));
+    const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
+    const rest = (config.workspaces || []).filter((w) => !ids.includes(w.id));
+    return post('/api/config', { workspaces: [...ordered, ...rest], secrets: [] });
+  }).then((j) => {
+    if (j && j.error) { $('status-text').textContent = j.error.message || 'The order was not saved'; return; }
+    railKey = ''; lastVersion = -1; load();
+  });
+  const dropBefore = (e, item) => e.clientY - item.getBoundingClientRect().top < item.offsetHeight / 2;
+  const clearDropMarks = (rail) => rail.querySelectorAll('.is-dragging, .is-drop-before, .is-drop-after').forEach((n) => n.classList.remove('is-dragging', 'is-drop-before', 'is-drop-after'));
+  const draggable = (item, w, rail) => {
+    item.draggable = true;
+    item.addEventListener('dragstart', (e) => { dragged = w.id; item.classList.add('is-dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', w.id); });
+    item.addEventListener('dragend', () => { dragged = ''; clearDropMarks(rail); });
+    item.addEventListener('dragenter', (e) => { if (dragged && dragged !== w.id) e.preventDefault(); });
+    item.addEventListener('dragover', (e) => {
+      if (!dragged || dragged === w.id) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+      const before = dropBefore(e, item);
+      item.classList.toggle('is-drop-before', before); item.classList.toggle('is-drop-after', !before);
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('is-drop-before', 'is-drop-after'));
+    item.addEventListener('drop', (e) => {
+      if (!dragged || dragged === w.id) return;
+      e.preventDefault();
+      const ids = S.workspaces.map((x) => x.id).filter((id) => id !== dragged);
+      ids.splice(ids.indexOf(w.id) + (dropBefore(e, item) ? 0 : 1), 0, dragged);
+      clearDropMarks(rail);
+      reorderWorkspaces(ids);
+    });
+  };
   function renderRail() {
     const rail = $('rail');
     const key = JSON.stringify([S.workspaces.map((w) => [w.id, w.name, w.open_moves, w.theme && w.theme.light['--md-primary']]), S.workspace.id, isDark()]);
@@ -385,6 +419,7 @@
       const item = railItem('?ws=' + encodeURIComponent(w.id), w.name, workspaceIcon(w), () => switchWorkspace(w.id));
       item.setAttribute('aria-selected', String(w.id === S.workspace.id));
       if (w.open_moves) item.append(span('wt-rail-badge', String(w.open_moves)));
+      draggable(item, w, rail);
       return item;
     });
     rail.replaceChildren(...items, span('wt-rail-spacer', ''), railItem('#settings', 'Settings', gearIcon(), openSettings));

@@ -211,6 +211,9 @@
   .wt-rail:hover, .wt-rail:focus-within { width: 232px; box-shadow: 12px 0 32px rgba(0, 0, 0, .12); }
   .wt-rail-item { position: relative; display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 4px; border-radius: 12px; cursor: pointer; white-space: nowrap; user-select: none; color: inherit; text-decoration: none; }
   .wt-rail-item:focus-visible { outline: 2px solid var(--md-primary); outline-offset: -2px; }
+  .wt-rail-item.is-dragging { opacity: .4; }
+  .wt-rail-item.is-drop-before { box-shadow: 0 -2px 0 0 var(--md-primary); }
+  .wt-rail-item.is-drop-after { box-shadow: 0 2px 0 0 var(--md-primary); }
   .wt-rail-icon { flex: none; width: 36px; height: 36px; border-radius: 10px; display: block; }
   .wt-rail-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity .12s ease; }
   .wt-rail:hover .wt-rail-label, .wt-rail:focus-within .wt-rail-label { opacity: 1; }
