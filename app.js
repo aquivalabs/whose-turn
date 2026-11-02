@@ -1,7 +1,8 @@
 // Whose Turn window: renders the rows the local server computed and re-renders on every server-sent update.
 (() => {
   let S = null;
-  const ui = { feed: 'all', move: 'open', open: new Set(), modal: null, showDone: false };
+  const ui = { feed: 'all', move: 'open', open: new Set(), modal: null, showDone: false, ws: '' };
+  try { ui.ws = new URLSearchParams(location.search).get('ws') || localStorage.getItem('wt-ws') || ''; } catch (e) { /* storage may be blocked */ }
   const $ = (id) => document.getElementById(id);
 
   // ---------- small DOM helpers (data is untrusted: text only, https links only)
@@ -245,8 +246,22 @@
   }
   const closeModal = () => { $('modal').hidden = true; ui.modal = null; };
 
+  function renderTabs() {
+    const tabs = $('tabs');
+    const list = S.workspaces || [];
+    if (list.length < 2) { tabs.replaceChildren(); return; }
+    tabs.replaceChildren(...list.map((w) => {
+      const b = span('wt-seg-b', w.name); b.setAttribute('role', 'tab'); b.tabIndex = 0;
+      b.setAttribute('aria-selected', String(w.id === S.workspace.id)); b.setAttribute('aria-pressed', String(w.id === S.workspace.id));
+      if (w.open_moves) { const count = document.createElement('b'); count.textContent = String(w.open_moves); b.append(count); }
+      onAct(b, () => { if (w.id === S.workspace.id) return; ui.ws = w.id; try { localStorage.setItem('wt-ws', w.id); } catch (e) { /* ignore */ } ui.open.clear(); lastVersion = -1; load(); });
+      return b;
+    }));
+  }
+
   function render() {
     if (!S) return;
+    renderTabs();
     const turn = S.turn;
     renderMove(turn);
     renderWaiting(turn);
@@ -270,8 +285,11 @@
   // ---------- data flow: load state, then reload on every server push
   let lastVersion = -1;
   function load() {
-    return fetch('/api/state').then((r) => r.json()).then((j) => {
+    return fetch('/api/state' + (ui.ws ? '?ws=' + encodeURIComponent(ui.ws) : '')).then((r) => r.json()).then((j) => {
+      if (j.error) { ui.ws = ''; return load(); }
       S = j;
+      ui.ws = S.workspace.id;
+      document.title = 'Whose Turn · ' + S.workspace.name;
       render();
     });
   }
