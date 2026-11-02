@@ -12,6 +12,8 @@ Tasks, bugs and open questions live in the maintainer's Linear project `whose-tu
 
 Every change starts from an issue and lives on a branch named `rma-<number>-<slug>`; the PR title starts with the same id. One issue, one branch. Work found along the way gets its own issue before it is pushed.
 
+**No inline fixes, however small and however fast the conversation goes.** A request that arrives mid-session ("add a button", "this wraps badly", "hide the backlog") is filed as an issue first, then branched from `main`, then committed with the issue id in the first line, then `main` is fast-forwarded to it when the work is checked. The issue is the history: a fix with no issue is a fix nobody can find a month later, and the backlog only fills up if every idea is written down the moment it is said. Several ideas in one message are several issues. The maintainer's own "send to backlog" button and the `whose_turn_feedback` MCP tool (RMA-104) exist for exactly this: a bug or an improvement goes to the project's Linear with its context, and the work starts from there.
+
 ## Decisions in force (2026-11-02)
 - **Connectors.** One connector per source type (`github`, `jira`, `linear`, …). A connector takes a workspace's account and filters and returns normalized tickets, PRs, asks and events. It holds no rules and knows no employer. RMA-80.
 - **Rules on the server, once.** "Whose turn" is evaluated in one place on the server. The window only renders the rows it receives. The rule texts a team cares about (what to do when a PR is approved, which branches are release branches) come from the workspace config. RMA-80.
