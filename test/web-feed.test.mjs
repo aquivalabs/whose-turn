@@ -59,3 +59,15 @@ test('the header counts and the config order come from one place each', async ()
   assert.deepEqual(movedIds(['a', 'b', 'c'], 'c', 'a', true), ['c', 'a', 'b']);
   assert.deepEqual(movedIds(['a', 'b', 'c'], 'a', 'b', false), ['b', 'a', 'c']);
 });
+
+test('a rail glyph is the initials of a multi-word name or the first two letters of a single word', async () => {
+  const { glyphOf, glyphSize } = await import('../web/src/lib/icons.js');
+  assert.equal(glyphOf('Whose Turn'), 'WT');
+  assert.equal(glyphOf('Northwind Web'), 'NW');
+  assert.equal(glyphOf('Atlas Mobile App'), 'AMA');
+  assert.equal(glyphOf('Sprut'), 'SP');
+  assert.equal(glyphOf('marketplaces'), 'MA');
+  assert.equal(glyphOf('garden-bot'), 'GB');
+  assert.equal(glyphOf(''), '?');
+  assert.deepEqual(['WT', 'AMA', 'X'].map(glyphSize), [14, 11, 17]);
+});

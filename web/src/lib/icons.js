@@ -5,7 +5,15 @@ export const BUG = 'M19 8h-1.8a5.9 5.9 0 0 0-1.3-1.9l1.6-1.6-1.4-1.4-1.9 1.9A5.7
 
 const hashOf = (text) => { let hash = 2166136261; for (let i = 0; i < text.length; i += 1) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); } return hash >>> 0; };
 
-/** The dots and the letter of a workspace icon, from a seeded random so the icon is stable per workspace. */
+/** Two or three letters that stand for a workspace: the initials of its words, or the first letters of a single word; one letter alone made projects look alike (RMA-137). */
+export const glyphOf = (name) => {
+  const words = String(name || '').trim().split(/[\s_-]+/).filter(Boolean);
+  const letters = words.length >= 2 ? words.slice(0, 3).map((w) => w.charAt(0)) : (words[0] || '?').slice(0, 2).split('');
+  return letters.join('').toUpperCase();
+};
+export const glyphSize = (glyph) => ({ 1: 17, 2: 14, 3: 11 }[glyph.length] || 11);
+
+/** The dots and the glyph of a workspace icon, from a seeded random so the icon is stable per workspace. */
 export const workspaceIconParts = (workspace, seeded) => {
   const random = seeded(hashOf(workspace.id));
   const dots = [];
@@ -14,5 +22,6 @@ export const workspaceIconParts = (workspace, seeded) => {
     const angle = random() * Math.PI * 2, distance = 9 + random() * 7;
     dots.push({ cx: (18 + Math.cos(angle) * distance).toFixed(1), cy: (18 + Math.sin(angle) * distance).toFixed(1), r: (1.6 + random() * 2.2).toFixed(1), opacity: (0.35 + random() * 0.4).toFixed(2) });
   }
-  return { dots, letter: (workspace.name || workspace.id).trim().charAt(0).toUpperCase() };
+  const glyph = glyphOf(workspace.name || workspace.id);
+  return { dots, glyph, fontSize: glyphSize(glyph) };
 };

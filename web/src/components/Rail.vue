@@ -41,7 +41,7 @@ const onDrop = (e, w) => {
       <svg viewBox="0 0 36 36" class="wt-rail-icon" aria-hidden="true">
         <rect x="0" y="0" width="36" height="36" rx="10" :fill="colours[w.id].fill" />
         <circle v-for="(d, i) in parts[w.id].dots" :key="i" :cx="d.cx" :cy="d.cy" :r="d.r" :fill="colours[w.id].dot" :opacity="d.opacity" />
-        <text x="18" y="24" text-anchor="middle" font-size="17" font-weight="600" font-family="Roboto, Inter, system-ui, sans-serif" :fill="colours[w.id].ink">{{ parts[w.id].letter }}</text>
+        <text x="18" :y="parts[w.id].fontSize >= 17 ? 24 : 23" text-anchor="middle" :font-size="parts[w.id].fontSize" font-weight="700" letter-spacing="-0.5" font-family="Roboto, Inter, system-ui, sans-serif" :fill="colours[w.id].ink">{{ parts[w.id].glyph }}</text>
       </svg>
       <span class="wt-rail-label">{{ w.name }}</span>
       <span v-if="w.open_moves" class="wt-rail-badge">{{ w.open_moves }}</span>
