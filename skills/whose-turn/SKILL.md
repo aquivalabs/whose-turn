@@ -20,7 +20,7 @@ The user may ask to add a workspace, a connector or a rule text ("add a workspac
 
 ## Hand-offs from the window
 
-The user can press "→ agent" on a row, a feed item or the whole workspace. The plugin's prompt hook delivers those items into the next message as `<handoff>` blocks; when they are in context, start from them, they are what the user is talking about. `curl -s http://127.0.0.1:8765/api/inbox` shows what is pending; do not take items by curl, the hook and the `whose_turn_inbox` MCP tool do that under their own consumer names.
+The user can paste a "Copy for AI" text from the window (a ticket with its comments and PRs, or a whole workspace); when a message starts with `## <KEY> ·` or `## Workspace`, that is it: answer about that item. The user can also hand items over through the queue. The plugin's prompt hook delivers those items into the next message as `<handoff>` blocks; when they are in context, start from them, they are what the user is talking about. `curl -s http://127.0.0.1:8765/api/inbox` shows what is pending; do not take items by curl, the hook and the `whose_turn_inbox` MCP tool do that under their own consumer names.
 
 ## To-dos
 

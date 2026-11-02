@@ -36,16 +36,16 @@
   };
   const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
 
-  // ---------- hand-off: give a row, a feed item or the workspace to an agent through the server's inbox
-  const GIVE_LABEL = '→ agent';
-  const give = (b, payload) => post('/api/inbox', Object.assign({ ws: S.workspace.id }, payload)).then((j) => {
-    if (j.error) { b.textContent = 'Failed'; return; }
-    b.textContent = 'Queued'; b.classList.add('sent');
-    setTimeout(() => { b.textContent = GIVE_LABEL; b.classList.remove('sent'); }, 2500);
-  }).catch(() => { b.textContent = 'Failed'; });
-  const giveButton = (kind, ref) => {
-    const b = button('wt-btn tonal wt-give-btn', GIVE_LABEL, () => give(b, { kind, ref }), 'Hand this to an agent');
-    b.title = 'Arrives in your next Claude Code message, or through the whose_turn_inbox MCP tool in any agent';
+  // ---------- copy for AI: the server renders a row, a feed item, the workspace or everything as Markdown; the window puts it on the clipboard
+  const COPY_LABEL = 'Copy for AI';
+  const copyText = (b, query, label) => fetch('/api/handoff?' + new URLSearchParams(query)).then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+    .then((text) => navigator.clipboard.writeText(text))
+    .then(() => { b.textContent = 'Copied'; b.classList.add('sent'); setTimeout(() => { b.textContent = label; b.classList.remove('sent'); }, 2000); })
+    .catch(() => { b.textContent = 'Failed'; setTimeout(() => { b.textContent = label; }, 2000); });
+  const copyButton = (kind, ref, label) => {
+    const text = label || COPY_LABEL;
+    const b = button('wt-btn tonal wt-give-btn', text, () => copyText(b, { ws: S.workspace.id, kind, ref }, text), 'Copy with context, to paste into any assistant');
+    b.title = 'Copies this with its context as text, ready to paste into Claude or any other assistant';
     return b;
   };
 
@@ -150,7 +150,7 @@
       const comment = document.createElement('td'); comment.className = 'wt-hide-narrow';
       if (r.comment) { comment.className += ' wt-quote'; comment.append(link(r.comment, r.comment_url)); }
       const act = document.createElement('td');
-      act.append(giveButton('row', r.row_id), ' ', button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
+      act.append(copyButton('row', r.row_id, 'Copy'), ' ', button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
         () => setMarks({ handled: { [r.row_id]: showHandled ? null : new Date().toISOString() } }),
         (showHandled ? 'Move back to open: ' : 'Mark as handled: ') + r.key));
       tr.append(keyCell(r), next, prCell(r), comment, act);
@@ -183,7 +183,7 @@
         wrap.append(l, q);
         next.append(wrap);
       } else next.textContent = r.next;
-      const act = document.createElement('td'); act.append(giveButton('row', r.row_id));
+      const act = document.createElement('td'); act.append(copyButton('row', r.row_id, 'Copy'));
       tr.append(keyCell(r), st, who, next, prCell(r), act);
       return tr;
     }));
@@ -238,7 +238,7 @@
         if (r.key && r.source === 'github') body.append(span('wt-feed-text', r.key));
         const f = document.createElement('div'); f.className = 'wt-feed-full'; f.textContent = full;
         const actions = document.createElement('div'); actions.className = 'wt-feed-actions';
-        actions.append(button('wt-btn tonal', 'Open formatted', () => showModal(r)), giveButton('feed', r.id));
+        actions.append(button('wt-btn tonal', 'Open formatted', () => showModal(r)), copyButton('feed', r.id));
         const orig = link(sourceLink(r.source), r.url); if (orig.classList) orig.classList.add('wt-btn');
         actions.append(orig);
         body.append(f, actions);
@@ -528,7 +528,8 @@
     setMarks({ seen: ids, base: Date.now() });
   });
   onAct($('refresh'), () => { $('status-text').textContent = 'Checking now…'; post('/api/refresh'); });
-  onAct($('give-workspace'), () => give($('give-workspace'), { kind: 'workspace' }));
+  onAct($('give-workspace'), () => copyText($('give-workspace'), { ws: S.workspace.id, kind: 'workspace' }, 'Copy workspace for AI'));
+  onAct($('copy-all'), () => copyText($('copy-all'), { all: '1' }, 'Copy all for AI'));
   onAct($('modal-close'), closeModal);
   onAct($('settings-save'), saveSettings);
   onAct($('settings-close'), closeSettings);
