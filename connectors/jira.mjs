@@ -5,6 +5,13 @@ const TOKEN_TTL = 10 * 60 * 1000;
 
 export const id = 'jira';
 export const label = 'Jira';
+export const fields = [
+  { key: 'base', label: 'Site', hint: 'https://your-site.atlassian.net', required: true },
+  { key: 'email', label: 'Account email', hint: 'the account the API token belongs to', required: true },
+  { key: 'token', label: 'API token', hint: 'stored in the secret store, never in the config', secret: true, account: 'email', service: 'token_service', default_service: 'whose-turn-jira' },
+  { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-jira' },
+  { key: 'jql', label: 'JQL', hint: 'which tickets to watch; leave empty for the default' },
+];
 
 const SIMPLE_MARKS = { code: '`', strong: '**' };
 

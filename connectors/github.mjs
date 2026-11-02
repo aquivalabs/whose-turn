@@ -8,6 +8,13 @@ const API = 'https://api.github.com';
 
 export const id = 'github';
 export const label = 'GitHub';
+export const fields = [
+  { key: 'repo', label: 'Repository', hint: 'owner/name whose PRs are yours', required: true },
+  { key: 'org', label: 'Organisation', hint: 'notifications are kept only from this org; defaults to the repository owner' },
+  { key: 'me', label: 'Your login', hint: 'left empty, it is asked from the API once' },
+  { key: 'account', label: 'gh account', hint: 'which logged-in gh account to use' },
+  { key: 'bots', label: 'Bot logins', hint: 'comma-separated; their comments never count as a reply', list: true },
+];
 
 const TOKEN_TTL = 10 * 60 * 1000;
 

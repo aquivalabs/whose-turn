@@ -117,6 +117,8 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - `POST /api/marks` takes `{ws?, seen:[ids], base:ms, handled:{row_id: iso|null}, notified:[ids]}`.
 - `POST /api/todos` takes `{ws?, action, …}`: `add {text, key?, by?}`; `done`, `undo`, `delete` with `{id}`; `edit {id, text}`.
 - `POST /api/refresh` polls now.
+- `GET /api/config`: the raw workspace list as written in the config file, the `problems`, the connector catalogue (`type`, `label`, `fields`) and the config file path. `POST /api/config` with `{workspaces: [...]}` validates the list, refuses with `INVALID_CONFIG` and the problems if anything is wrong, otherwise writes the file and reloads the workspaces in place; a workspace whose definition did not change keeps its caches.
+- `POST /api/secrets` with `{service, account, value}` stores a token in the secret store (Keychain on macOS, a 600-mode file under `<data>/secrets/` elsewhere); it never touches the config.
 
 ## The window
 
@@ -130,6 +132,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - To do: an input, checkboxes, a "Done N" toggle; ticket keys become links. Claude adds items through the API.
 - Status line: live dot, "last check Xs ago", Refresh now, and a banner for source or config errors.
 - A rail down the left edge lists the workspaces, like a browser's side tabs: icons only, names on hover. Each icon is generated from the workspace id and tinted by its palette, with the open "your move" count as a badge. The choice is remembered in the browser and `?ws=<id>` opens one directly.
+- The gear at the bottom of the rail opens the settings sheet: the workspace list on the left, one workspace's form on the right (id, name, key pattern, theme colours, connector entries with the fields each connector declares, rule texts and status words). Save writes the config file through `/api/config`; a token typed into a secret field goes to `/api/secrets` first and never into the file.
 
 ## Claude Code plugin
 

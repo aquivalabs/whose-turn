@@ -286,8 +286,137 @@
       item.addEventListener('click', (e) => { e.preventDefault(); switchWorkspace(w.id); });
       return item;
     });
-    rail.replaceChildren(...items, span('wt-rail-spacer', ''));
+    const gear = document.createElement('a'); gear.className = 'wt-rail-item'; gear.href = '#settings'; gear.title = 'Settings';
+    const gearIcon = svgNode('svg', { viewBox: '0 0 24 24', class: 'wt-rail-gear', 'aria-hidden': 'true' });
+    gearIcon.append(svgNode('path', { d: 'M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.4 1a7.5 7.5 0 0 0-1.7-1L15 3.5H9l-.3 2.6a7.5 7.5 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a7.5 7.5 0 0 0 1.7 1l.3 2.6h6l.3-2.6a7.5 7.5 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z', fill: 'currentColor' }));
+    gear.append(gearIcon, span('wt-rail-label', 'Settings'));
+    gear.addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
+    rail.replaceChildren(...items, span('wt-rail-spacer', ''), gear);
   }
+
+  // ---------- settings: edit the workspace list; the server validates, writes config.json and reloads
+  const settings = { list: [], selected: 0, catalogue: [], secrets: {}, file: '' };
+  const element = (tag, cls, text) => { const node = document.createElement(tag); if (cls) node.className = cls; if (text !== undefined) node.textContent = text; return node; };
+  const field = (label, hint, input) => {
+    const wrap = element('div', 'wt-field');
+    const name = element('label', '', label);
+    wrap.append(name, input);
+    if (hint) wrap.append(element('small', '', hint));
+    return wrap;
+  };
+  const textInput = (value, onChange, placeholder) => {
+    const input = element('input'); input.type = 'text'; input.value = value || ''; if (placeholder) input.placeholder = placeholder;
+    input.addEventListener('input', () => onChange(input.value));
+    return input;
+  };
+  const listInput = (value, onChange) => textInput((value || []).join(', '), (text) => onChange(text.split(',').map((part) => part.trim()).filter(Boolean)));
+  const colourInput = (value, onChange) => {
+    const wrap = element('div', 'wt-inline');
+    const picker = element('input'); picker.type = 'color'; picker.value = /^#[0-9a-f]{6}$/i.test(value || '') ? value : '#888888';
+    const text = textInput(value, (next) => { onChange(next); if (/^#[0-9a-f]{6}$/i.test(next)) picker.value = next; }, '#rrggbb');
+    picker.addEventListener('input', () => { text.value = picker.value; onChange(picker.value); });
+    const clear = button('wt-btn', 'None', () => { text.value = ''; onChange(''); });
+    wrap.append(picker, text, clear);
+    return wrap;
+  };
+  const current = () => settings.list[settings.selected];
+  const secretKey = (connectorIndex, key) => settings.selected + ':' + connectorIndex + ':' + key;
+  const renderSettingsList = () => {
+    const items = settings.list.map((w, index) => {
+      const li = element('li', '', w.name || w.id || 'Workspace ' + (index + 1));
+      li.setAttribute('aria-selected', String(index === settings.selected));
+      li.addEventListener('click', () => { settings.selected = index; renderSettings(); });
+      return li;
+    });
+    const add = element('li', 'add', '+ Add workspace');
+    add.addEventListener('click', () => { settings.list.push({ id: 'new-' + (settings.list.length + 1), name: 'New workspace', connectors: [] }); settings.selected = settings.list.length - 1; renderSettings(); });
+    $('settings-list').replaceChildren(...items, add);
+  };
+  const connectorCard = (entry, connectorIndex) => {
+    const w = current();
+    const spec = settings.catalogue.find((c) => c.type === entry.type) || { type: entry.type, label: entry.type, fields: [] };
+    const card = element('div', 'wt-connector');
+    const head = element('div', 'wt-connector-head');
+    head.append(element('strong', '', spec.label), button('wt-btn danger', 'Remove', () => { w.connectors.splice(connectorIndex, 1); renderSettings(); }));
+    card.append(head);
+    card.append(field('Entry id', 'only needed when one type appears twice', textInput(entry.id, (v) => { if (v) entry.id = v; else delete entry.id; }, spec.type)));
+    card.append(field('Label', 'shown in the feed filter', textInput(entry.label, (v) => { if (v) entry.label = v; else delete entry.label; }, spec.label)));
+    spec.fields.forEach((f) => {
+      if (f.secret) {
+        const input = element('input'); input.type = 'password'; input.placeholder = 'paste to replace'; input.autocomplete = 'off';
+        input.addEventListener('input', () => { settings.secrets[secretKey(connectorIndex, f.key)] = { value: input.value, account: entry[f.account] || '', service: entry[f.service] || f.default_service }; });
+        card.append(field(f.label, f.hint, input));
+      } else if (f.list) {
+        card.append(field(f.label, f.hint, listInput(entry[f.key], (v) => { if (v.length) entry[f.key] = v; else delete entry[f.key]; })));
+      } else {
+        card.append(field(f.label + (f.required ? ' *' : ''), f.hint, textInput(entry[f.key], (v) => { if (v) entry[f.key] = v; else delete entry[f.key]; })));
+      }
+    });
+    return card;
+  };
+  const renderSettingsForm = () => {
+    const form = $('settings-form');
+    const w = current();
+    if (!w) { form.replaceChildren(element('p', 'wt-empty', 'No workspaces yet. Add one on the left.')); return; }
+    w.connectors = Array.isArray(w.connectors) ? w.connectors : Object.keys(w.connectors || {}).map((type) => Object.assign({ type }, w.connectors[type]));
+    w.rules = w.rules || {}; w.rules.statuses = w.rules.statuses || {}; w.theme = w.theme || {};
+    const parts = [];
+    parts.push(element('h4', '', 'Workspace'));
+    parts.push(field('Id *', 'short, used in the API and on disk', textInput(w.id, (v) => { w.id = v; renderSettingsList(); })));
+    parts.push(field('Name', '', textInput(w.name, (v) => { w.name = v; renderSettingsList(); })));
+    parts.push(field('Ticket key pattern', 'regex for keys in PR titles and to-dos; empty for any Jira-style key', textInput(w.key_pattern, (v) => { if (v) w.key_pattern = v; else delete w.key_pattern; })));
+    parts.push(element('h4', '', 'Theme'));
+    parts.push(field('Seed colour', 'the scheme is derived from it; none keeps the default blue', colourInput(w.theme.seed, (v) => { if (v) w.theme.seed = v; else delete w.theme.seed; })));
+    parts.push(field('Accent colour', 'optional second hue', colourInput(w.theme.accent, (v) => { if (v) w.theme.accent = v; else delete w.theme.accent; })));
+    parts.push(element('h4', '', 'Connectors'));
+    w.connectors.forEach((entry, index) => parts.push(connectorCard(entry, index)));
+    const adder = element('div', 'wt-settings-actions');
+    settings.catalogue.forEach((c) => adder.append(button('wt-btn', '+ ' + c.label, () => { w.connectors.push({ type: c.type }); renderSettings(); })));
+    parts.push(adder);
+    parts.push(element('h4', '', 'Rules'));
+    const rule = (key, label, hint) => parts.push(field(label, hint, textInput(w.rules[key], (v) => { if (v) w.rules[key] = v; else delete w.rules[key]; })));
+    rule('approved_next', 'Approved PR', 'next step when a PR in code review is approved');
+    rule('approved_release_next', 'Approved release PR', 'same, for a PR into a release branch');
+    rule('release_branch_prefix', 'Release branch prefix', 'default release/');
+    rule('passed_next', 'Status passed', 'next step when the ticket passed QA');
+    rule('merged_next', 'PR merged', 'next step when the PR is merged and the ticket is still on you');
+    const statusGroup = (key, label) => parts.push(field(label, 'comma-separated words matched inside the status name', listInput(w.rules.statuses[key], (v) => { if (v.length) w.rules.statuses[key] = v; else delete w.rules.statuses[key]; })));
+    statusGroup('code_review', 'Code review statuses'); statusGroup('qa', 'QA statuses'); statusGroup('passed', 'Passed statuses'); statusGroup('on_hold', 'On hold statuses'); statusGroup('backlog', 'Backlog statuses');
+    parts.push(field('Automation authors', 'comment authors to ignore, comma-separated', listInput(w.rules.automation_authors, (v) => { if (v.length) w.rules.automation_authors = v; else delete w.rules.automation_authors; })));
+    const actions = element('div', 'wt-settings-actions');
+    actions.append(button('wt-btn danger', 'Delete workspace', () => { settings.list.splice(settings.selected, 1); settings.selected = Math.max(0, settings.selected - 1); renderSettings(); }));
+    parts.push(actions);
+    form.replaceChildren(...parts);
+  };
+  const tidy = (w) => {
+    const copy = JSON.parse(JSON.stringify(w));
+    if (copy.theme && !Object.keys(copy.theme).length) delete copy.theme;
+    if (copy.rules) { if (copy.rules.statuses && !Object.keys(copy.rules.statuses).length) delete copy.rules.statuses; if (!Object.keys(copy.rules).length) delete copy.rules; }
+    return copy;
+  };
+  const showProblems = (list) => { $('settings-problems').hidden = !list.length; $('settings-problems').textContent = list.join('  ·  '); };
+  function renderSettings() { renderSettingsList(); renderSettingsForm(); }
+  function openSettings() {
+    fetch('/api/config').then((r) => r.json()).then((j) => {
+      settings.list = (j.workspaces || []).map((w) => JSON.parse(JSON.stringify(w)));
+      settings.catalogue = j.connectors || []; settings.file = j.config_file || ''; settings.secrets = {};
+      settings.selected = Math.max(0, settings.list.findIndex((w) => w.id === S.workspace.id));
+      $('settings-file').textContent = settings.file;
+      showProblems(j.problems || []);
+      renderSettings();
+      $('settings').hidden = false;
+      $('settings-close').focus();
+    });
+  }
+  const closeSettings = () => { $('settings').hidden = true; };
+  const saveSettings = () => {
+    const secretPosts = Object.values(settings.secrets).filter((s) => s.value && s.account).map((s) => post('/api/secrets', { service: s.service, account: s.account, value: s.value }));
+    Promise.all(secretPosts).then(() => post('/api/config', { workspaces: settings.list.map(tidy) })).then((j) => {
+      if (j.error) { showProblems(((j.error.details || [])[0] || {}).metadata?.problems || [j.error.message]); return; }
+      closeSettings();
+      lastVersion = -1; load();
+    });
+  };
 
   function render() {
     if (!S) return;
@@ -378,8 +507,11 @@
   });
   onAct($('refresh'), () => { $('status-text').textContent = 'Checking now…'; post('/api/refresh'); });
   onAct($('modal-close'), closeModal);
+  onAct($('settings-save'), saveSettings);
+  onAct($('settings-close'), closeSettings);
+  $('settings').addEventListener('click', (e) => { if (e.target === $('settings')) closeSettings(); });
   $('modal').addEventListener('click', (e) => { if (e.target === $('modal')) closeModal(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); closeSettings(); } });
   setInterval(renderStatus, 10000);
 
   // ---------- to-dos (stored by the server; Claude adds through POST /api/todos)
