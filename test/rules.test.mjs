@@ -34,6 +34,9 @@ test('a backlog ticket is left out, on me or not, unless it has an open PR', () 
   assert.equal(only(rows({ tickets: [ticket({ status: 'Backlog', assignee: 'Someone Else' })] }), (candidate) => candidate.row_id === 'PROJ-1').group, 'gone');
   assert.equal(only(rows({ tickets: [ticket({ status: 'Backlog' })] }), (candidate) => candidate.row_id === 'PROJ-1').group, 'gone');
   assert.equal(only(rows({ tickets: [ticket({ status: 'Backlog' })], prs: [pr({ checks: 'failing' })] }), (candidate) => candidate.row_id === 'PROJ-1').next, 'Look at the failing checks');
+  const listed = only(rows({ tickets: [ticket({ status: 'Backlog' })] }, { ...DEFAULT_RULES, backlog_rows: 'list' }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(listed.group, 'others');
+  assert.equal(listed.next, 'Backlog');
 });
 
 test('a question that @-mentions me is my move until I @-mention the asker back', () => {
