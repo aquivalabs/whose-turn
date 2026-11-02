@@ -62,9 +62,7 @@ State lives next to the config, per workspace: `workspaces/<id>/state.json` (las
 | `lib/api.mjs` | the local HTTP API, SSE stream and static files |
 | `lib/http-client.mjs`, `lib/secrets.mjs`, `lib/notify.mjs`, `lib/store.mjs`, `lib/errors.mjs`, `lib/text.mjs` | ETag fetch, secret lookup, desktop notification, files on disk, the error envelope, text helpers |
 | `connectors/` | one module per source type; `demo.mjs` is a source of invented data (scenarios `northwind`, `atlas`, `garden`) that shows every state without any account |
-| `index.html`, `app.js`, `style.css` | the window |
-| `backdrop.js` | the dot-drawn animal on the window's backdrop |
-| `vendor/` | Tippy.js 6.3.7 and Popper 2.11.8, pinned, served locally |
+| `web/` | the window: a Vue 3 app built with Vite (`web/src/App.vue`, one component per island in `web/src/components/`, pure logic in `web/src/lib/`, the dot-drawn animal in `web/src/backdrop.js`, Tippy.js 6.3.7 and Popper 2.11.8 pinned in `web/public/vendor/`); `npm run build` writes `dist/`, which the server serves and git ignores (ADR 0001) |
 | `install.sh` | macOS launch agent `local.whose-turn`: start at login, restart on crash, log to `~/Library/Logs/whose-turn.log` |
 | `open.sh` | opens the window as a Chrome app window |
 | `.claude-plugin/`, `hooks/`, `commands/`, `skills/`, `bin/` | the Claude Code plugin |
@@ -137,7 +135,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 ## The window
 
 - Material 3 plus glass: tonal surfaces seeded from the workspace's `theme.seed`, or one blue without it; translucent blurred islands with 12 px corners, dark and light schemes, a gradient header with stat tiles.
-- Under the glass, an animal drawn in dots (`backdrop.js`): one of twelve species, built from shapes whose proportions come from a seeded random. Each workspace gets its own seed for the session, so switching tabs changes the animal; `window.whoseTurnBackdrop.show({ workspace, seed, species })` picks one and `.species` lists the names (the hook for pinning an animal per workspace, RMA-94).
+- Under the glass, an animal drawn in dots (`web/src/backdrop.js`): one of twelve species, built from shapes whose proportions come from a seeded random. Each workspace gets its own seed for the session, so switching tabs changes the animal; `window.whoseTurnBackdrop.show({ workspace, seed, species })` picks one and `.species` lists the names (the hook for pinning an animal per workspace, RMA-94).
 - Two columns. Left: Your move, To do, Waiting on others. Right: the feed. The page never scrolls; each island scrolls inside, with sticky table headers.
 - Every header is one line, truncated with an ellipsis. Anything that hides more text gets a "?" icon at the end. Tooltips are Tippy: instant, also on click, interactive, keep line breaks.
 - Your move: one row per thing to do, with a "?" for why it is there, an age chip (amber after 24 h) and a Handled button. Handled rows sink to the bottom, dimmed, with Undo; the switch in the head shows them alone.
@@ -180,7 +178,8 @@ with `WHOSE_TURN_PORT` in its environment when the monitor is not on 8765. Every
 ## Developing
 
 - `npm install` once: it points `core.hooksPath` at `.githooks/`.
-- `npm run dev` starts the server on port 8766 with data and config in `.users-files/dev/` (gitignored), so nothing touches the real config.
+- `npm run dev` starts the server on port 8766 with data and config in `.users-files/dev/` (gitignored), so nothing touches the real config. It serves the last `npm run build`; for live reloading of the window run `npm run dev:web` next to it and open port 5173, which proxies the API to 8766.
+- A fresh checkout has no window until `npm run build`; the server then says so on `/` while the API keeps working. A released package ships `dist/` built (RMA-126).
 - `npm test` runs the suite. `python3 scripts/docs-check.py` is the docs gate; `/review` is the review gate; both run on push.
 - Restart after a code change: `kill $(lsof -tnP -iTCP:8765 -sTCP:LISTEN)` kills whatever listens on the port; the launch agent brings the monitor back.
 - The first poll after a restart takes about a minute while the PR cache is rebuilt.

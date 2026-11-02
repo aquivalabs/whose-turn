@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { paletteFrom, contrastRatio } from '../lib/palette.mjs';
 import { loadConfig } from '../lib/config.mjs';
 
-const STYLESHEET = readFileSync(new URL('../style.css', import.meta.url), 'utf8');
+const STYLESHEET = readFileSync(new URL('../web/src/styles/tokens.css', import.meta.url), 'utf8');
 const KEPT_FROM_STYLESHEET = /warn|error|font|-r-|^--glass-/;
 
 const schemeVariables = () => {
