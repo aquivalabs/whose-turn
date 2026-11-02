@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.js';
 import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.js';
-import { normaliseForForm, forSaving, pendingSecrets } from '../web/src/lib/settings.js';
+import { normaliseForForm, forSaving, pendingSecrets, ruleText } from '../web/src/lib/settings.js';
 
 const marks = { seen: ['b'], base: new Date('2026-11-01T00:00:00Z').getTime(), handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
 const items = [
@@ -81,4 +81,12 @@ test('a rail glyph is the initials of a multi-word name or the first two letters
   assert.equal(glyphOf('garden-bot'), 'GB');
   assert.equal(glyphOf(''), '?');
   assert.deepEqual(['WT', 'AMA', 'X'].map(glyphSize), [14, 11, 17]);
+});
+
+test('a rules-table row reads as when and then texts for the settings sheet', () => {
+  assert.deepEqual(ruleText({ when: { 'ticket.status': ['qa', 'on_hold'], 'pr.base': { prefix: 'release/' }, unanswered_count: { gte: 2 } }, then: { whose: 'you', next: 'Merge it' } }), {
+    when: 'ticket.status in qa, on_hold and pr.base starts with "release/" and unanswered_count ≥ 2', then: 'you: Merge it',
+  });
+  assert.deepEqual(ruleText({ when: {}, then: { whose: 'hidden' } }), { when: 'anything else', then: 'hidden' });
+  assert.equal(ruleText({ when: { 'ticket.hold_reason': { present: true } }, then: { whose: 'them', next: 'x' } }).when, 'ticket.hold_reason is present');
 });

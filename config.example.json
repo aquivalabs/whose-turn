@@ -55,6 +55,37 @@
         },
         "automation_authors": [
           "automation"
+        ],
+        "table": [
+          {
+            "when": {
+              "unanswered_count": {
+                "gte": 2
+              }
+            },
+            "then": {
+              "whose": "you",
+              "next": "Answer {comment.author} and the others on {ticket.key}",
+              "why": "{unanswered_count} @-mentions of you wait for a reply."
+            }
+          },
+          {
+            "when": {
+              "pr.open": true,
+              "pr.base": {
+                "prefix": "release/"
+              },
+              "pr.checks": [
+                "running",
+                "none"
+              ]
+            },
+            "then": {
+              "whose": "them",
+              "next": "Wait for the release checks on PR #{pr.number}"
+            }
+          },
+          "default"
         ]
       }
     },

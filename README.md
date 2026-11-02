@@ -91,7 +91,9 @@ On a 403 or 429 rate limit the poll delay doubles up to 15 minutes, then returns
 
 ## Rules: whose turn
 
-Each ticket is joined with its PR by the ticket key in the PR title. Status words and the texts of the next step come from the workspace's `rules`; the defaults are in `lib/config.mjs`. The first match wins:
+Each ticket is joined with its PR by the ticket key in the PR title. The server computes a set of facts per ticket (`pr.checks`, `ticket.status`, `ticket.assignee`, `unanswered_count` and the rest, listed by `GET /api/config` under `facts`) and walks the workspace's rules table: the first row whose conditions hold decides whose turn it is and the next step. The full contract is in [docs/mechanisms/rules-table.md](docs/mechanisms/rules-table.md).
+
+The default table, in `lib/default-table.mjs`, takes its status words and next-step texts from the workspace's `rules` (defaults in `lib/config.mjs`). In order:
 
 1. Open PR has failing checks: your move, "Look at the failing checks".
 2. Changes requested: "Address the requested changes".
@@ -103,9 +105,23 @@ Each ticket is joined with its PR by the ticket key in the PR title. Status word
 8. `statuses.code_review`, not approved: the reviewer's turn. `statuses.qa`: QA's turn. `statuses.on_hold`: their turn, with the reason.
 9. On you, in an in-progress status and nothing above: "Continue the work".
 10. On you and nothing above: "Pick it up".
-11. `statuses.backlog` without an open PR: hidden, whoever it is on; with `backlog_rows: "list"` it is shown under Waiting on others instead, which turns that panel into a plain task list for a project you run alone.
+11. `statuses.backlog` without an open PR: hidden, whoever it is on; with `backlog_rows: "list"` it is shown under Waiting on others instead, which turns that panel into a plain task list for a project you run alone. This row is checked first.
 
-Every row carries a numeric `rank`, set where the rule above matches and lowest first: 0 failing checks, 1 requested changes, 2 work in progress, 3 everything else. Your move sorts by `rank`, then oldest first; the window never reads the next-step text to order rows. Under the table, a folded Recently done list shows the last 15 tickets that are done, most recently done first.
+A workspace sets its own rows in `rules.table`. The list replaces the default table; the text `"default"` in it stands for the default rows at that spot. A condition is a value, a list of values, a number comparison (`gt`, `gte`, `lt`, `lte`) or a `prefix`; `whose` is `you`, `reviewer`, `qa`, `them` or `hidden`; `next` and `why` may quote facts as `{fact}`:
+
+```json
+"rules": {
+  "table": [
+    { "when": { "unanswered_count": { "gte": 2 } }, "then": { "whose": "you", "next": "Answer {comment.author} and the others on {ticket.key}" } },
+    { "when": { "pr.open": true, "pr.base": { "prefix": "release/" }, "pr.checks": ["running", "none"] }, "then": { "whose": "them", "next": "Wait for the release checks on PR #{pr.number}" } },
+    "default"
+  ]
+}
+```
+
+Claude edits the table through `POST /api/config`, which refuses a table with an unknown fact or operator and names the row. The settings sheet lists the rows in force, read-only.
+
+Every row carries a numeric `rank` from its table row's `then.rank`, lowest first: 0 failing checks, 1 requested changes, 2 work in progress, 3 everything else. Your move sorts by `rank`, then oldest first; the window never reads the next-step text to order rows. Under the table, a folded Recently done list shows the last 15 tickets that are done, most recently done first.
 
 Extra rows, one per item:
 

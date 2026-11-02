@@ -27,14 +27,23 @@
         "web/src/backdrop.js"
       ],
       "doc": "docs/mechanisms/species-dsl.md"
+    },
+    {
+      "id": "rules-table",
+      "paths": [
+        "lib/rules.mjs",
+        "lib/facts.mjs",
+        "lib/table.mjs",
+        "lib/default-table.mjs"
+      ],
+      "doc": "docs/mechanisms/rules-table.md"
     }
   ],
-  "acknowledgedEmptyMechanisms": true,
   "surfaceRules": {
     "lineCap": 200,
     "paths": [
       "AGENTS.md"
     ]
   },
-  "_comment": "No mechanism is declared yet on purpose: server.py is being rewritten in Node (RMA-80). Declare connectors, rules and workspace config as mechanisms when that lands."
+  "_comment": "Mechanisms are declared as they stabilise (AGENTS.md, Gates). Next candidates: the connector contract and the workspace config."
 }

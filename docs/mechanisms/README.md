@@ -29,7 +29,7 @@ understand what would break if the mechanism's behavior changed, and knows what 
 ## Directory convention
 
 One file per mechanism, named after the mechanism's config `id`: `docs/mechanisms/<mechanism-id>.md`. See
-The first page is written when the first mechanism is declared in `.claude/docs.config.json`.
+`.claude/docs.config.json` for the declared ids.
 
 ## No index, deliberately
 

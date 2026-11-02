@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compileRules, turnRows, feedRows, myMoves, holdReason } from '../lib/rules.mjs';
+import { compileRules, turnRows, feedRows, myMoves } from '../lib/rules.mjs';
+import { holdReason } from '../lib/facts.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 import { ticket, pr, comment, ask } from './fixtures/rules.mjs';
 

@@ -39,3 +39,22 @@ export const movedIds = (ids, dragged, target, before) => {
   rest.splice(rest.indexOf(target) + (before ? 0 : 1), 0, dragged);
   return rest;
 };
+
+const OPERATOR_SIGNS = { gt: '>', gte: '≥', lt: '<', lte: '≤', prefix: 'starts with' };
+const presentText = (fact, operand) => `${fact} is ${operand ? 'present' : 'absent'}`;
+
+const conditionText = (fact, condition) => {
+  if (Array.isArray(condition)) {
+    return `${fact} in ${condition.join(', ')}`;
+  }
+  if (condition && typeof condition === 'object') {
+    return Object.entries(condition).map(([operator, operand]) => (operator === 'present' ? presentText(fact, operand) : `${fact} ${OPERATOR_SIGNS[operator]} ${JSON.stringify(operand)}`)).join(' and ');
+  }
+  return `${fact} = ${condition}`;
+};
+
+/** One rules-table row as two plain texts for the read-only list in the settings sheet. */
+export const ruleText = (row) => ({
+  when: Object.entries(row.when).map(([fact, condition]) => conditionText(fact, condition)).join(' and ') || 'anything else',
+  then: row.then.whose === 'hidden' ? 'hidden' : `${row.then.whose}: ${row.then.next}`,
+});

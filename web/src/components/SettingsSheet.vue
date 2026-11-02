@@ -3,7 +3,7 @@
 import { ref, computed, watch } from 'vue';
 import { S, ui, reload } from '../store.js';
 import { getJson, post, problemsOf } from '../lib/api.js';
-import { normaliseForForm, forSaving, pendingSecrets } from '../lib/settings.js';
+import { normaliseForForm, forSaving, pendingSecrets, ruleText } from '../lib/settings.js';
 import FieldRow from './FieldRow.vue';
 const list = ref([]);
 const selected = ref(0);
@@ -11,8 +11,10 @@ const catalogue = ref([]);
 const fields = ref({ workspace: [], theme: [], rules: [], statuses: [] });
 const configFile = ref('');
 const problems = ref([]);
+const tables = ref({});
 const typed = new Map();
 const current = computed(() => list.value[selected.value]);
+const ruleRows = computed(() => ((current.value && tables.value[current.value.id]) || []).map(ruleText));
 const specOf = (entry) => catalogue.value.find((c) => c.type === entry.type) || { type: entry.type, label: entry.type, fields: [] };
 const setSecret = (entry, key, value) => typed.set(entry, Object.assign(typed.get(entry) || {}, { [key]: value }));
 const addWorkspace = () => { list.value.push(normaliseForForm({ id: 'new-' + (list.value.length + 1), name: 'New workspace' })); selected.value = list.value.length - 1; };
@@ -23,7 +25,7 @@ const open = () => getJson('/api/config').then((j) => {
   list.value = (j.workspaces || []).map(normaliseForForm);
   catalogue.value = j.connectors || []; fields.value = j.fields; typed.clear();
   selected.value = Math.max(0, list.value.findIndex((w) => w.id === S.workspace.id));
-  configFile.value = j.config_file || ''; problems.value = j.problems || [];
+  configFile.value = j.config_file || ''; problems.value = j.problems || []; tables.value = j.tables || {};
 });
 const close = () => { ui.settings = false; };
 const save = () => post('/api/config', { workspaces: list.value.map(forSaving), secrets: pendingSecrets(list.value, typed) }).then((j) => {
@@ -65,6 +67,15 @@ watch(() => ui.settings, (isOpen) => { if (isOpen) open(); });
             <h4>Rules</h4>
             <FieldRow v-for="spec in fields.rules" :key="spec.key" :spec="spec" :target="current.rules" />
             <FieldRow v-for="spec in fields.statuses" :key="spec.key" :spec="spec" :target="current.rules.statuses" />
+            <h4>Whose turn table</h4>
+            <p class="wt-rules-table__note">The rows in force, first match wins. Read-only here: ask Claude to change rules.table through /api/config.</p>
+            <ol v-if="ruleRows.length" class="wt-rules-table">
+              <li v-for="(rule, index) in ruleRows" :key="index" class="wt-rules-table__row">
+                <span class="wt-rules-table__when">{{ rule.when }}</span>
+                <span class="wt-rules-table__then">{{ rule.then }}</span>
+              </li>
+            </ol>
+            <p v-else class="wt-empty">Save the workspace to see its rows.</p>
             <div class="wt-settings-actions"><span class="wt-btn danger" role="button" tabindex="0" @click="removeWorkspace">Delete workspace</span></div>
           </template>
         </div>
@@ -72,3 +83,10 @@ watch(() => ui.settings, (isOpen) => { if (isOpen) open(); });
     </div>
   </div>
 </template>
+<style scoped>
+.wt-rules-table { margin: 0; padding: 0 0 0 28px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.wt-rules-table__row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--md-outline-variant); }
+.wt-rules-table__when { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--md-on-surface-variant); overflow-wrap: anywhere; }
+.wt-rules-table__then { overflow-wrap: anywhere; }
+.wt-rules-table__note { margin: 0; color: var(--md-on-surface-variant); }
+</style>
