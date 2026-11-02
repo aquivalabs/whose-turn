@@ -426,7 +426,9 @@
   const feedbackProblems = (list) => { $('feedback-problems').hidden = !list.length; $('feedback-problems').textContent = list.join('  ·  '); };
   // The reporter usually has no Linear account, so the sheet lists what this machine filed with the state the server read for it.
   const REPORT_PILL = { open: 'info', done: 'ok', dropped: 'warn' };
-  const reportPage = (id) => location.origin + '/report?id=' + encodeURIComponent(id);
+  // The monitor's own pages are same-origin http, which link() refuses on purpose; they get a relative href instead.
+  const pageLink = (text, path) => { const anchor = element('a', '', text); anchor.href = path; anchor.target = '_blank'; anchor.rel = 'noopener'; return anchor; };
+  const reportPage = (id) => '/report?id=' + encodeURIComponent(id);
   const renderReports = (list) => {
     const box = $('feedback-reports');
     box.replaceChildren();
@@ -435,7 +437,7 @@
     box.append(element('h4', '', 'Your reports'));
     for (const r of list) {
       const row = element('div', 'wt-feedback-report');
-      row.append(link(r.id, reportPage(r.id)), span('wt-feedback-report-title', r.title), span('wt-pill ' + (REPORT_PILL[r.outcome] || 'info'), r.state || 'filed'), span('wt-feed-when', ago(r.changed_at || r.filed_at)));
+      row.append(pageLink(r.id, reportPage(r.id)), span('wt-feedback-report-title', r.title), span('wt-pill ' + (REPORT_PILL[r.outcome] || 'info'), r.state || 'filed'), span('wt-feed-when', ago(r.changed_at || r.filed_at)));
       box.append(row);
     }
   };
@@ -458,7 +460,7 @@
     post('/api/feedback', payload).then((j) => {
       $('feedback-send').textContent = 'Send';
       if (j.error) { feedbackProblems(problemsOf(j.error)); return; }
-      $('feedback-done').hidden = false; $('feedback-done').replaceChildren(document.createTextNode('Filed as '), link(j.issue.identifier, reportPage(j.issue.identifier)), document.createTextNode(' · ' + j.issue.title));
+      $('feedback-done').hidden = false; $('feedback-done').replaceChildren(document.createTextNode('Filed as '), pageLink(j.issue.identifier, reportPage(j.issue.identifier)), document.createTextNode(' · ' + j.issue.title));
       $('feedback-text').value = '';
       renderReports(j.reports || []);
     }).catch(() => { $('feedback-send').textContent = 'Send'; feedbackProblems(['The monitor did not answer.']); });
