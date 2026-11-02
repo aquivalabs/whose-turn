@@ -1,0 +1,6 @@
+{
+  "name": "whose-turn",
+  "version": "0.2.0",
+  "description": "Local monitor of your Jira tickets and GitHub PRs: whose turn it is, what changed, your own to-dos, and a summary at the start of each session. Employer-specific values live in a workspace config on the machine, not in the plugin.",
+  "author": { "name": "rmasl" }
+}

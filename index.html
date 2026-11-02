@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whose Turn</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wt-shell">
+  <div class="wt-status">
+    <span class="wt-live" id="live"></span>
+    <span id="status-text">Connecting…</span>
+    <span class="wt-btn" id="refresh" role="button" tabindex="0">Refresh now</span>
+  </div>
+  <div class="wt-alert" id="alert" hidden></div>
+
+  <div class="wt wt-fit" id="wt">
+    <header class="wt-island wt-head" id="summary">
+      <div class="wt-title">
+        <h1>Whose Turn</h1>
+        <p><b id="sum-mine">—</b> waiting on you, <b id="sum-others">—</b> waiting on someone else.</p>
+      </div>
+      <div class="wt-tiles" id="tiles">
+        <div class="wt-tile is-you"><span>Your move</span><strong id="tile-mine">—</strong></div>
+        <div class="wt-tile"><span>Waiting on others</span><strong id="tile-others">—</strong></div>
+        <div class="wt-tile is-fail"><span>Open PRs with failing checks</span><strong id="tile-failing">—</strong></div>
+        <div class="wt-tile"><span>Done in the last 30 days</span><strong id="tile-done">—</strong></div>
+      </div>
+    </header>
+
+    <div class="wt-layout">
+      <div class="wt-main">
+        <section class="wt-island" id="your-move">
+          <div class="wt-island-head"><h2>Your move <span class="wt-seg wt-move-view" role="group" aria-label="Show"><span class="wt-seg-b" role="button" tabindex="0" data-move-view="open" aria-pressed="true">Open <b id="move-open">—</b></span><span class="wt-seg-b" role="button" tabindex="0" data-move-view="handled" aria-pressed="false">Handled <b id="move-handled">—</b></span></span></h2><p class="wt-note"><span class="wt-note-text">Next step is yours</span><span class="wt-hint-icon" role="button" tabindex="0" aria-label="More info" data-tip="Each row is something where the next step is yours. Ticket, PR and comment open in a new tab.">?</span></p></div>
+          <div class="wt-island-body">
+            <div class="wt-scroll">
+              <table>
+                <thead><tr><th>Ticket</th><th>Next step</th><th>PR</th><th class="wt-hide-narrow">Last comment</th><th class="wt-act-col"><span class="wt-sr">Mark</span></th></tr></thead>
+                <tbody id="move-body"></tbody>
+              </table>
+            </div>
+            <p class="wt-empty" id="move-empty" hidden></p>
+          </div>
+        </section>
+
+        <section class="wt-island" id="todo">
+          <div class="wt-island-head"><h2>To do <span class="wt-count" id="todo-count"></span></h2><p class="wt-note"><span class="wt-note-text">Your own notes</span><span class="wt-hint-icon" role="button" tabindex="0" aria-label="More info" data-tip="Your personal to-dos, kept on this Mac. Add here, or ask Claude: &quot;add to my to-do: …&quot;. A ticket key like PROJ-123 in the text becomes a link.">?</span></p></div>
+          <div class="wt-island-body">
+            <div class="wt-todo-add"><input id="todo-input" type="text" placeholder="Add a to-do and press Enter" aria-label="New to-do" autocomplete="off"><span class="wt-seg-b wt-todo-toggle" id="todo-show-done" role="button" tabindex="0" aria-pressed="false">Done <b id="todo-done-count">0</b></span></div>
+            <ul class="wt-todo-list" id="todo-list"></ul>
+          </div>
+        </section>
+
+        <section class="wt-island" id="waiting">
+          <div class="wt-island-head"><h2>Waiting on others</h2><p class="wt-note"><span class="wt-note-text">Someone else holds the next step</span><span class="wt-hint-icon" role="button" tabindex="0" aria-label="More info" data-tip="Tickets you touched in the last 30 days where someone else holds the next step: QA, a reviewer, the customer, or a new owner.">?</span></p></div>
+          <div class="wt-island-body">
+            <div class="wt-scroll">
+              <table>
+                <thead><tr><th>Ticket</th><th>Status</th><th>With</th><th class="wt-hide-narrow">Waiting for</th><th>PR</th></tr></thead>
+                <tbody id="waiting-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="wt-island wt-feed" id="feed">
+        <div class="wt-island-head"><h2>What changed</h2><p class="wt-note"><span class="wt-note-text">Newest first, GitHub and Jira</span><span class="wt-hint-icon" role="button" tabindex="0" aria-label="More info" data-tip="Newest first: comments, reviews, merges and failed checks on your PRs, and Jira changes. Each item opens where it happened.">?</span></p></div>
+        <div class="wt-island-body">
+          <div class="wt-feed-bar">
+            <div class="wt-filters" role="group" aria-label="Feed source">
+              <span class="wt-f" role="button" tabindex="0" data-feed-filter="all" aria-pressed="true">All</span><span class="wt-f" role="button" tabindex="0" data-feed-filter="github" aria-pressed="false">GitHub</span><span class="wt-f" role="button" tabindex="0" data-feed-filter="jira" aria-pressed="false">Jira</span>
+            </div>
+            <span class="wt-new-count" id="new-count" hidden></span>
+            <span class="wt-mark-read" id="mark-read" role="button" tabindex="0">Mark all read</span>
+          </div>
+          <ol class="wt-feed-list" id="feed-list"></ol>
+        </div>
+      </aside>
+    </div>
+
+    <div class="wt-modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="wt-modal-card">
+        <div class="wt-modal-head">
+          <h3 id="modal-title"></h3>
+          <a class="wt-btn" id="modal-link" href="#" target="_blank" rel="noopener"></a>
+          <span class="wt-btn tonal" id="modal-close" role="button" tabindex="0">Close</span>
+        </div>
+        <div class="wt-modal-body wt-md" id="modal-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/vendor/popper.min.js"></script>
+<script src="/vendor/tippy-bundle.umd.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

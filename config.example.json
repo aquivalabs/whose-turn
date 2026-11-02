@@ -1,0 +1,23 @@
+{
+  "port": 8765,
+  "poll_seconds": 60,
+  "history_days": 14,
+  "github": {
+    "repo": "your-org/your-repo",
+    "org": "your-org",
+    "me": "",
+    "bots": ["github-actions", "dependabot", "[bot]"]
+  },
+  "jira": {
+    "base": "https://your-site.atlassian.net",
+    "email": "you@example.com",
+    "keychain_service": "whose-turn-jira",
+    "key_pattern": "\\b[A-Z][A-Z0-9_]+-\\d+\\b",
+    "jql": "(assignee = currentUser() AND statusCategory != Done) OR (assignee was currentUser() AND updated >= -30d) ORDER BY updated DESC"
+  },
+  "rules": {
+    "release_branch_prefix": "release/",
+    "approved_next": "Merge it",
+    "approved_release_next": "Hand over to QA"
+  }
+}

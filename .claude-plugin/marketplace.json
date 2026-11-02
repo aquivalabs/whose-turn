@@ -1,0 +1,7 @@
+{
+  "name": "whose-turn-dev",
+  "owner": { "name": "rmasl" },
+  "plugins": [
+    { "name": "whose-turn", "source": "./", "description": "Whose Turn monitor for Jira and GitHub, served from this checkout for development." }
+  ]
+}
