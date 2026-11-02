@@ -26,5 +26,20 @@
   "includeCoAuthoredBy": false,
   "worktree": {
     "baseRef": "head"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/language-guard.sh\"",
+            "timeout": 10,
+            "statusMessage": "Language guard..."
+          }
+        ]
+      }
+    ]
   }
 }

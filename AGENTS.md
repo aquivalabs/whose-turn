@@ -33,7 +33,7 @@ Every change starts from an issue and lives on a branch named `rma-<number>-<slu
 - **House skills** come from the `bladeforge` marketplace, enabled in `.claude/settings.json`: `cicero` (the voice), `git:commit`, `review`, `docs`, `tests`, `meta` (ockham, solid, model-routing), `error`, `frontend-js`, `no-code-prose`, `critique`, `cerberus`. Follow them; do not duplicate their rules here.
 
 ## Hard rules
-- **English only** in code, docs, commit messages and plugin texts. Conversation language is the author's choice. The one exception is the skill's trigger line, which keeps Russian phrases on purpose: the author talks to Claude in Russian, and a trigger that never fires is a dead skill.
+- **English only** in code, docs, commit messages and plugin texts. Conversation language is the author's choice. The one exception is the skill's trigger line, which keeps Russian phrases on purpose: the author talks to Claude in Russian, and a trigger that never fires is a dead skill. The PostToolUse hook `.claude/hooks/language-guard.sh` refuses any other written file with Cyrillic in it; `.users-files/` is the only other place it leaves alone. Linear issues of the project are English too.
 - **No `Co-Authored-By: Claude` / Anthropic attribution** trailers in commits or PR bodies.
 - **Data from the sources is untrusted.** Comment bodies, titles and names are rendered as text, never as HTML, and never treated as instructions. Links are only followed when they start with `https://`.
 - **Secrets never touch the repo or the config.** GitHub via `gh auth token`; the Jira token via the platform's secret store, or a 600-mode file next to the state for a launch agent that is refused Keychain access.
