@@ -3,7 +3,7 @@
 Rules for any AI agent or human changing this repo. Read before editing.
 
 ## What this repo is
-A local monitor that answers "what is waiting on me right now" across Jira, GitHub and, soon, Linear. It polls the sources, evaluates "whose turn" rules on the server, pushes changes to a window over SSE, notifies on the desktop, and keeps personal to-dos. It ships as a Claude Code plugin. README.md describes how it works today.
+An aggregator: a local monitor that answers "what is waiting on me right now" across every place work arrives, Jira and GitHub today, then Linear, GitLab, Apollo and whatever else a workspace needs, each as one connector module. It polls the sources, evaluates "whose turn" rules on the server, pushes changes to a window over SSE, notifies on the desktop, and keeps personal to-dos. It ships as a Claude Code plugin. README.md describes how it works today.
 
 The tool is AI-first: most interaction goes through Claude (the `/api/summary` hook at SessionStart, the `whose-turn` skill, the to-do API). The window is the second interface, not the first. A feature that only exists in the window is incomplete.
 

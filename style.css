@@ -1,5 +1,5 @@
 
-  /* Material 3 tonal scheme seeded from the blue #2c5697 (to become a per-workspace setting). Cards are surface containers, no borders; state layers on hover. */
+  /* Material 3 tonal scheme seeded from the blue #2c5697; a workspace theme overrides it from lib/palette.mjs. Cards are surface containers, no borders; state layers on hover. */
   .wt, .wt-shell { --md-primary: #2c5697; --md-on-primary: #ffffff; --md-primary-container: #d8e2ff; --md-on-primary-container: #001a41;
     --md-secondary-container: #dae2f9; --md-on-secondary-container: #131c2b;
     --md-tertiary-container: #c8f0ec; --md-on-tertiary-container: #00201e;
@@ -8,7 +8,7 @@
     --md-surface: #f9f9ff; --md-s-low: #ffffff; --md-s: #f1f3f9; --md-s-high: #e7e9f0; --md-s-highest: #e0e2ea;
     --md-on-surface: #191c20; --md-on-surface-variant: #44474e; --md-outline: #74777f; --md-outline-variant: #d3d6de;
     --md-state: 25, 28, 32;
-    --glass: 255, 255, 255; --glass-a: .62; --glass-edge: rgba(255, 255, 255, .7); --glass-hi: rgba(255, 255, 255, .9);
+    --glass: 255, 255, 255; --glass-a: .52; --glass-edge: rgba(255, 255, 255, .7); --glass-hi: rgba(255, 255, 255, .9);
     --blob-1: rgba(44, 86, 151, .30); --blob-2: rgba(0, 169, 224, .22); --blob-3: rgba(23, 223, 220, .16);
     --md-font: Roboto, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     --md-r-card: 12px; --md-r-chip: 8px; }
@@ -112,13 +112,14 @@
       radial-gradient(60% 55% at 12% 8%, var(--blob-1), transparent 70%),
       radial-gradient(45% 50% at 92% 30%, var(--blob-2), transparent 70%),
       radial-gradient(55% 60% at 55% 105%, var(--blob-3), transparent 70%); }
-  .wt-island { background: rgba(var(--glass), var(--glass-a)); -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%);
+  .wt-island { background: rgba(var(--glass), var(--glass-a)); -webkit-backdrop-filter: blur(8px) saturate(150%); backdrop-filter: blur(8px) saturate(150%);
     border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), 0 8px 24px rgba(0, 0, 0, .18); }
-  .wt-head { background: linear-gradient(135deg, rgba(44, 86, 151, .55), rgba(0, 169, 224, .22)); color: var(--md-on-primary-container); }
+  .wt-head { background: linear-gradient(135deg, var(--blob-1), var(--blob-2)); color: var(--md-on-primary-container); }
+  .wt-backdrop { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; border-radius: 20px; pointer-events: none; }
   html.force-light .wt-head { color: #001a41; }
-  .wt-tile { background: rgba(var(--glass), calc(var(--glass-a) + .1)); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--glass-edge); }
+  .wt-tile { background: rgba(var(--glass), calc(var(--glass-a) + .1)); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border: 1px solid var(--glass-edge); }
   .wt-tile.is-you { background: var(--md-primary); border-color: transparent; }
-  .wt th { background: rgba(var(--glass), .7); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .wt th { background: rgba(var(--glass), .7); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .wt-filters { background: rgba(var(--glass), .4); }
   @media (prefers-reduced-transparency: reduce) { .wt-island, .wt-tile, .wt th { background: var(--md-s-low); -webkit-backdrop-filter: none; backdrop-filter: none; } }
 

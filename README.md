@@ -34,6 +34,8 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `…jira.token_service` | the secret-store entry holding the token, default `whose-turn-jira` |
 | `…jira.jql` | which tickets to watch |
 | `workspaces[].rules` | the team's process, see Rules below |
+| `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark Material 3 scheme from it (`lib/palette.mjs`); without it the stylesheet's blue stays |
+| `workspaces[].theme.accent` | optional second hex that sets the tertiary hue; defaults to the seed's hue turned by 80 degrees |
 
 A flat config with `github`, `jira` and `rules` at the top level still loads as one workspace named `default`.
 
@@ -49,10 +51,12 @@ State lives next to the config, per workspace: `workspaces/<id>/state.json` (las
 | `lib/config.mjs` | data directory, defaults, the workspace list |
 | `lib/workspace.mjs` | one workspace: polls its connectors, merges results, derives events, evaluates rules, notifies |
 | `lib/rules.mjs` | the "whose turn" rules and the feed |
+| `lib/palette.mjs` | a workspace's light and dark scheme from its theme seed |
 | `lib/api.mjs` | the local HTTP API, SSE stream and static files |
 | `lib/http-client.mjs`, `lib/secrets.mjs`, `lib/notify.mjs`, `lib/store.mjs`, `lib/errors.mjs`, `lib/text.mjs` | ETag fetch, secret lookup, desktop notification, files on disk, the error envelope, text helpers |
 | `connectors/` | one module per source type |
 | `index.html`, `app.js`, `style.css` | the window |
+| `backdrop.js` | the dot-drawn animal on the window's backdrop |
 | `vendor/` | Tippy.js 6.3.7 and Popper 2.11.8, pinned, served locally |
 | `install.sh` | macOS launch agent `local.whose-turn`: start at login, restart on crash, log to `~/Library/Logs/whose-turn.log` |
 | `open.sh` | opens the window as a Chrome app window |
@@ -106,7 +110,7 @@ Handled marks hide a row until something newer happens on it. Desktop notificati
 
 Requests must carry the local `Host`; a POST must be `application/json`. An error is a `google.rpc.Status` envelope: `{"error":{"code","status","message","details":[{"@type":"ErrorInfo","reason"}]}}`; branch on `reason`.
 
-- `GET /api/workspaces`: `[{id, name, key_pattern, connectors:[{id, type, label}]}]`.
+- `GET /api/workspaces`: `[{id, name, key_pattern, connectors:[{id, type, label}], open_moves, theme}]`; `theme` is `{light, dark}`, each a map of CSS variable to value, or `null` without a seed. `/api/summary` leaves `theme` out.
 - `GET /api/state?ws=<id>`: one workspace, default the first: `turn` (the rows, each with `group`, `next`, `why`, `url`, `ticket_url`, `source`), `feed`, `marks`, `todos` (each with `ticket_url`), `errors`, `polled_at`, `me` (your name per source), `workspace`, plus `workspaces` and `problems`. With `&full=1` the merged raw collections come too: `tickets`, `comments`, `prs`, `activity`, `asks`, `events`.
 - `GET /api/summary`: across all workspaces: `moves` (each with `ws`), `new_events`, `todos`, `polled_at`, `errors`, and `workspaces` with the same per workspace.
 - `GET /api/stream`: SSE. One `data:` event per poll per workspace, `{ws, version, polled_at}`. The window reloads state when its workspace's `version` changes.
@@ -116,7 +120,8 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 
 ## The window
 
-- Material 3 plus glass: tonal surfaces seeded from one blue, later a per-workspace setting; translucent blurred islands with 12 px corners, dark and light schemes, a gradient header with stat tiles.
+- Material 3 plus glass: tonal surfaces seeded from the workspace's `theme.seed`, or one blue without it; translucent blurred islands with 12 px corners, dark and light schemes, a gradient header with stat tiles.
+- Under the glass, an animal drawn in dots (`backdrop.js`): one of twelve species, built from shapes whose proportions come from a seeded random. Each workspace gets its own seed for the session, so switching tabs changes the animal; `window.whoseTurnBackdrop.show({ workspace, seed, species })` picks one and `.species` lists the names (the hook for pinning an animal per workspace, RMA-94).
 - Two columns. Left: Your move, To do, Waiting on others. Right: the feed. The page never scrolls; each island scrolls inside, with sticky table headers.
 - Every header is one line, truncated with an ellipsis. Anything that hides more text gets a "?" icon at the end. Tooltips are Tippy: instant, also on click, interactive, keep line breaks.
 - Your move: one row per thing to do, with a "?" for why it is there, an age chip (amber after 24 h) and a Handled button. An Open / Handled switch sits in the header.

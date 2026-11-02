@@ -282,6 +282,31 @@
     $('status-text').textContent = 'Live · last check ' + (S.polled_at ? ago(S.polled_at) : '—') + ' · checks every minute';
   }
 
+  // ---------- theme: the server derives the workspace scheme, the window sets the variables for the current colour scheme
+  const DARK = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => {
+    const root = document.documentElement.classList;
+    if (root.contains('force-dark') || root.contains('force-light')) return root.contains('force-dark');
+    return DARK.matches;
+  };
+  const themed = { theme: null, key: '', applied: [] };
+  const paintTheme = () => {
+    const elements = ['.wt', '.wt-shell'].map((selector) => document.querySelector(selector)).filter(Boolean);
+    elements.forEach((element) => themed.applied.forEach((name) => element.style.removeProperty(name)));
+    const variables = themed.theme ? themed.theme[isDark() ? 'dark' : 'light'] : null;
+    themed.applied = variables ? Object.keys(variables) : [];
+    elements.forEach((element) => themed.applied.forEach((name) => element.style.setProperty(name, variables[name])));
+    if (window.whoseTurnBackdrop) window.whoseTurnBackdrop.repaint();
+  };
+  const applyTheme = (theme) => {
+    const key = theme ? JSON.stringify(theme) : '';
+    if (key === themed.key) return;
+    themed.key = key;
+    themed.theme = theme && theme.light && theme.dark ? theme : null;
+    paintTheme();
+  };
+  DARK.addEventListener('change', paintTheme);
+
   // ---------- data flow: load state, then reload on every server push
   let lastVersion = -1;
   function load() {
@@ -289,6 +314,8 @@
       if (j.error) { ui.ws = ''; return load(); }
       S = j;
       ui.ws = S.workspace.id;
+      applyTheme(S.workspace.theme);
+      if (window.whoseTurnBackdrop) window.whoseTurnBackdrop.show({ workspace: S.workspace.id });
       document.title = 'Whose Turn · ' + S.workspace.name;
       render();
     });
