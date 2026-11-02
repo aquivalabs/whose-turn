@@ -39,7 +39,8 @@ Nothing that names an employer, an account or a team process lives in this repos
 
 A flat config with `github`, `jira` and `rules` at the top level still loads as one workspace named `default`.
 
-Secrets never go into the config. GitHub uses `gh auth token`. The Jira API token lives in the macOS Keychain under the service and the account email; `set-jira-token.sh <email>` puts it there from the clipboard. Elsewhere, or for a launch agent that is refused Keychain access, the token is read from `<data>/secrets/<service>`, a file you create with mode 600.
+Secrets never go into the config. GitHub uses `gh auth token`. The Jira API token lives in the macOS Keychain under the service and the account email; paste it into the settings sheet or send it through the API, and the server stores it. Elsewhere, or for a launch agent that is refused Keychain access, the server keeps it in `<data>/secrets/<service>@<account>` with mode 600.
+
 
 State lives next to the config, per workspace: `workspaces/<id>/state.json` (last poll), `marks.json` (read, handled, notified), `todos.json`.
 
@@ -60,7 +61,6 @@ State lives next to the config, per workspace: `workspaces/<id>/state.json` (las
 | `vendor/` | Tippy.js 6.3.7 and Popper 2.11.8, pinned, served locally |
 | `install.sh` | macOS launch agent `local.whose-turn`: start at login, restart on crash, log to `~/Library/Logs/whose-turn.log` |
 | `open.sh` | opens the window as a Chrome app window |
-| `set-jira-token.sh` | clipboard to Keychain, then clears the clipboard |
 | `.claude-plugin/`, `hooks/`, `commands/`, `skills/`, `bin/` | the Claude Code plugin |
 | `test/` | `node:test` suite: rules, config, ADF conversion |
 
@@ -119,7 +119,8 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - `POST /api/refresh` polls now.
 - `GET /api/config`: the raw workspace list as written in the config file, the `problems`, the connector catalogue (`type`, `label`, `fields`), the workspace field catalogue (`fields`: workspace, theme, rules, statuses) and the config file path. `POST /api/config` with `{workspaces: [...], secrets?: [{ws, connector, key, value}]}` validates the list first; on a problem it answers `INVALID_CONFIG` with the problems as `BadRequest.field_violations` in `details` and stores nothing. Otherwise it stores the secrets (the account and the store entry come from the connector's own field declaration), writes the file and reloads the workspaces in place; a workspace whose definition did not change keeps its caches, new or changed ones are polled at once. The reply carries the workspace list and `secrets_stored`.
 - `POST /api/secrets` with `{service, account, value}` stores a token on its own (Keychain on macOS, a 600-mode file `<data>/secrets/<service>@<account>` elsewhere); it never touches the config.
-- Both write endpoints are reachable by any local process; see AGENTS.md for why that is accepted.
+- Both write endpoints are reachable by any local process. A stored token is bound to its service, account and endpoint: a save that would point an existing token at a new endpoint, account or store entry is refused with `INVALID_CONFIG` unless the same request carries the token again, so a process without the token cannot redirect it. See AGENTS.md.
+- Both write endpoints are reachable by any local process. A stored token is bound to its service, account and endpoint: a save that would point an existing token at a new endpoint, account or store entry is refused with `INVALID_CONFIG` unless the same request carries the token again, so a process without the token cannot redirect it. See AGENTS.md.
 
 ## The window
 
@@ -153,5 +154,5 @@ For development, add this checkout as a local marketplace: `claude plugin market
 - `npm test` runs the suite. `python3 scripts/docs-check.py` is the docs gate; `/review` is the review gate; both run on push.
 - Restart after a code change: `kill $(lsof -tnP -iTCP:8765 -sTCP:LISTEN)` kills whatever listens on the port; the launch agent brings the monitor back.
 - The first poll after a restart takes about a minute while the PR cache is rebuilt.
-- macOS gotcha: `security add-generic-password … -w` run through a non-interactive shell silently stores an empty password. Pass the value as `-w "$value"`, as `set-jira-token.sh` does.
+- macOS gotcha: `security add-generic-password … -w` run through a non-interactive shell silently stores an empty password; the server passes the value as an argument, which is why it works from a launch agent.
 - A sandboxed agent shell cannot read Keychain. The launch agent can.

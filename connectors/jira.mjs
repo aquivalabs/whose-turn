@@ -7,6 +7,7 @@ const DEFAULT_SERVICE = 'whose-turn-jira';
 
 export const id = 'jira';
 export const label = 'Jira';
+export const endpointKey = 'base';
 export const fields = [
   { key: 'base', label: 'Site', hint: 'https://your-site.atlassian.net', required: true },
   { key: 'email', label: 'Account email', hint: 'the account the API token belongs to', required: true },
