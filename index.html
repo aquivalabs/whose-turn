@@ -84,6 +84,25 @@
       </aside>
     </div>
 
+    <div class="wt-modal" id="feedback" hidden role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+      <div class="wt-modal-card wt-feedback-card">
+        <div class="wt-modal-head">
+          <h3 id="feedback-title">To the Whose Turn backlog</h3>
+          <span class="wt-modal-meta" id="feedback-project"></span>
+          <span class="wt-btn tonal" id="feedback-send" role="button" tabindex="0">Send</span>
+          <span class="wt-btn" id="feedback-close" role="button" tabindex="0">Close</span>
+        </div>
+        <div class="wt-alert" id="feedback-problems" hidden></div>
+        <div class="wt-settings-form wt-feedback-form">
+          <div class="wt-field"><label>Kind</label><span class="wt-seg" id="feedback-kind"><span class="wt-seg-b" role="button" tabindex="0" data-kind="bug" aria-pressed="true">Bug</span><span class="wt-seg-b" role="button" tabindex="0" data-kind="improvement" aria-pressed="false">Improvement</span><span class="wt-seg-b" role="button" tabindex="0" data-kind="idea" aria-pressed="false">Idea</span></span></div>
+          <div class="wt-field"><label>Title *</label><input id="feedback-title-input" class="wt-input" type="text" maxlength="200" placeholder="One line, what is wrong or what you want"></div>
+          <div class="wt-field"><label>Details</label><textarea id="feedback-body" class="wt-input" rows="6" placeholder="Steps, what you expected, anything that helps"></textarea></div>
+          <div class="wt-field"><label>Context</label><label class="wt-inline"><input id="feedback-context" type="checkbox" checked> attach this workspace's summary (moves, waiting rows, to-dos)</label></div>
+          <p class="wt-empty" id="feedback-done" hidden></p>
+        </div>
+      </div>
+    </div>
+
     <div class="wt-modal" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
       <div class="wt-modal-card wt-settings-card">
         <div class="wt-modal-head">

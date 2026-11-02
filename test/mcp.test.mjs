@@ -40,6 +40,6 @@ test('the MCP server initialises, lists its tools and answers a summary call thr
   child.kill();
   api.close();
   assert.equal(replies[0].result.serverInfo.name, 'whose-turn');
-  assert.deepEqual(replies[1].result.tools.map((tool) => tool.name), ['whose_turn_summary', 'whose_turn_state', 'whose_turn_todos', 'whose_turn_config', 'whose_turn_inbox']);
+  assert.deepEqual(replies[1].result.tools.map((tool) => tool.name), ['whose_turn_summary', 'whose_turn_state', 'whose_turn_todos', 'whose_turn_config', 'whose_turn_feedback', 'whose_turn_inbox']);
   assert.equal(JSON.parse(replies[2].result.content[0].text).moves[0].key, 'PROJ-1');
 });

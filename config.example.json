@@ -91,5 +91,11 @@
         }
       ]
     }
-  ]
+  ],
+  "feedback": {
+    "workspace": "your-space",
+    "team": "PROJ",
+    "project": "monitor",
+    "token_service": "whose-turn-feedback"
+  }
 }

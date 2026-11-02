@@ -22,6 +22,10 @@ The user may ask to add a workspace, a connector or a rule text ("add a workspac
 
 The user can paste a "Copy for AI" text from the window (a ticket with its comments and PRs, or a whole workspace); when a message starts with `## <KEY> ·` or `## Workspace`, that is it: answer about that item. The user can also hand items over through the queue. The plugin's prompt hook delivers those items into the next message as `<handoff>` blocks; when they are in context, start from them, they are what the user is talking about. `curl -s http://127.0.0.1:8765/api/inbox` shows what is pending; do not take items by curl, the hook and the `whose_turn_inbox` MCP tool do that under their own consumer names.
 
+## Bugs and ideas about the monitor itself
+
+When the user says the monitor misbehaves or wants something from it ("file a whose-turn bug", "I want the dashboard to…"), file it: `curl -s -X POST http://127.0.0.1:8765/api/feedback -H 'Content-Type: application/json' -d @-` with `{"kind":"bug"|"improvement"|"idea","title":"…","body":"…","from":"Claude"}` on stdin, or the `whose_turn_feedback` MCP tool. Title in one line, body in the user's words. Say the issue id back in one line.
+
 ## To-dos
 
 The monitor keeps the user's personal to-dos (shown in the window's "To do" block).

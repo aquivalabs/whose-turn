@@ -21,6 +21,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | key | meaning |
 |---|---|
 | `port`, `poll_seconds`, `history_days` | the port, how often to poll, how far back the feed reaches |
+| `feedback.workspace`, `team`, `project` | where the "to the backlog" button and the `whose_turn_feedback` MCP tool file bugs and improvements about the monitor: a Linear workspace slug, team key and project name; the key with issue-creation rights goes to the secret store under `feedback.token_service` (default `whose-turn-feedback`) and the workspace slug |
 | `workspaces[].id`, `name` | a short id used in the API and the display name |
 | `workspaces[].key_pattern` | regex for ticket keys in PR titles and to-dos; the default matches any Jira-style key |
 | `workspaces[].connectors` | an object keyed by type, or a list of `{type, id?, label?, …}` entries when one type appears twice |
@@ -122,6 +123,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - `POST /api/marks` takes `{ws?, seen:[ids], base:ms, handled:{row_id: iso|null}, notified:[ids]}`.
 - `POST /api/todos` takes `{ws?, action, …}`: `add {text, key?, by?}`; `done`, `undo`, `delete` with `{id}`; `edit {id, text}`.
 - `POST /api/refresh` polls now.
+- `GET /api/feedback` says whether feedback is configured; `POST /api/feedback` with `{kind: bug|improvement|idea, title, body?, ws?, kind_ref?: {kind, ref}, from?}` creates a Linear issue in the configured project with the matching label and, when `kind_ref` names a row, a feed item or a workspace, that hand-off context in the description. The reply carries the issue id and url.
 - `GET /api/handoff?ws=<id>&kind=row|feed|thread|workspace&ref=<row_id, feed id or ticket key>` renders that item with its context as Markdown for pasting into any assistant (`thread` is every feed event of one ticket, newest first, with the ticket's row, PRs and comments); `GET /api/handoff?all=1` renders every workspace. This is what the window's "Copy for AI" buttons put on the clipboard.
 - `POST /api/inbox` with `{ws, kind: 'row' | 'feed' | 'workspace', ref}` hands an item to an agent through a queue (for MCP clients and the plugin hook): the server queues it in `<data>/inbox.json` with a few words of snapshot and keeps `<data>/inbox.pending` as a marker while the queue is not empty. `{action: 'take', consumer}` returns the items this consumer has not seen yet, each with its context built at that moment (the row with its why and links, the last five comments and the PRs of its ticket, bodies capped; a feed item with its body; or the whole workspace with its rules, moves, waiting rows and to-dos), and marks them delivered to that consumer only, so every agent sees an item once. An item leaves the queue a day after its first delivery or a week after it was queued. `GET /api/inbox?consumer=<name>` lists without taking; `{action: 'clear'}` empties the queue.
 - `GET /api/config`: the raw workspace list as written in the config file, the `problems`, the connector catalogue (`type`, `label`, `fields`), the workspace field catalogue (`fields`: workspace, theme, rules, statuses) and the config file path. `POST /api/config` with `{workspaces: [...], secrets?: [{ws, connector, key, value}]}` validates the list first; on a problem it answers `INVALID_CONFIG` with the problems as `BadRequest.field_violations` in `details` and stores nothing. Otherwise it stores the secrets (the account and the store entry come from the connector's own field declaration), writes the file and reloads the workspaces in place; a workspace whose definition did not change keeps its caches, new or changed ones are polled at once. The reply carries the workspace list and `secrets_stored`.
@@ -143,6 +145,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - To do: an input, checkboxes, a "Done N" toggle; ticket keys become links. Claude adds items through the API.
 - Status line: live dot, "last check Xs ago", Refresh now, and a banner for source or config errors.
 - A rail down the left edge lists the workspaces, like a browser's side tabs: icons only, names on hover. Each icon is generated from the workspace id and tinted by its palette, with the open "your move" count as a badge. The choice is remembered in the browser and `?ws=<id>` opens one directly.
+- The bug icon above the gear opens the backlog sheet: kind, title, details, and the current workspace's summary attached; Send files it into the monitor's own Linear project and shows the issue link.
 - The gear at the bottom of the rail opens the settings sheet: the workspace list on the left, one workspace's form on the right (id, name, key pattern, theme colours, connector entries with the fields each connector declares, rule texts and status words). Save writes the config file through `/api/config`; a token typed into a secret field goes to `/api/secrets` first and never into the file.
 
 ## Claude Code plugin
@@ -152,7 +155,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 | `hooks/hooks.json` and `bin/session-summary.sh` | at SessionStart, kicks the launch agent if it is down and injects "N your move · M unread · K to-do" plus details into context, marked as data from other people |
 | `bin/inbox-hook.mjs` | at every prompt, checks the marker file and, only when items wait, takes them as consumer `claude-code-hook` and puts their context into the message in `<handoff>` blocks marked as data, within a 20000-character budget |
 | `bin/lib.mjs` | shared by the scripts: the monitor's address, the data directory, a short-timeout JSON fetch |
-| `bin/mcp.mjs` | an MCP server over stdio, registered by the plugin as `whose-turn`: tools `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_inbox`, all through the local API |
+| `bin/mcp.mjs` | an MCP server over stdio, registered by the plugin as `whose-turn`: tools `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_feedback`, `whose_turn_inbox`, all through the local API |
 | `commands/whose-turn.md` | `/whose-turn` opens the window |
 | `skills/whose-turn/SKILL.md` | answers "what's on me" from `/api/summary`, and adds or finishes to-dos through `/api/todos` |
 | `bin/statusline.sh` | optional status line, not wired yet |

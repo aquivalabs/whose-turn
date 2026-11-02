@@ -232,6 +232,10 @@
   .wt-rail-gear { width: 36px; height: 36px; flex: none; display: grid; place-items: center; color: var(--md-on-surface-variant); }
   /* Settings sheet: the workspace list on the left, one workspace's form on the right. */
   .wt-settings-card { width: min(1040px, 100%); height: min(760px, 100%); }
+  .wt-feedback-card { width: min(640px, 100%); }
+  .wt-feedback-form textarea.wt-input { resize: vertical; min-height: 6rem; font-family: inherit; }
+  .wt-feedback-form .wt-inline input[type="checkbox"] { width: 16px; height: 16px; }
+  .wt-rail-feedback { color: var(--md-primary); }
   .wt-settings-card .wt-alert { margin: 12px 20px 0; }
   .wt-settings-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 0; flex: 1; min-height: 0; }
   .wt-settings-list { margin: 0; padding: 12px; list-style: none; border-right: 1px solid var(--md-outline-variant); overflow: auto; display: flex; flex-direction: column; gap: 4px; }
