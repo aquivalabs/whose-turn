@@ -1,0 +1,21 @@
+{
+  "$schema": "./tests.config.schema.json",
+  "schemaVersion": 1,
+  "_comment": "A record of the gates, not their source: package.json holds the command, .githooks/pre-push and .github/workflows hold when it runs.",
+  "tiers": {
+    "node": {
+      "include": ["test/**/*.test.mjs"],
+      "environment": "node"
+    },
+    "excluded": []
+  },
+  "coverage": {
+    "_comment": "Not armed. The server is being rewritten in Node (RMA-80); the first real suite comes with it, and the ratchet is set from a measured run, not chosen.",
+    "uncoveredLineCap": 0,
+    "floorPercent": 0,
+    "perPath": {}
+  },
+  "blockedRules": [],
+  "armedRules": [],
+  "timeBudgetMs": { "node": 5000 }
+}

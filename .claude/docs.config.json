@@ -1,0 +1,28 @@
+{
+  "$schema": "./docs.config.schema.json",
+  "schemaVersion": "1",
+  "layers": {
+    "adr": {
+      "root": "docs/adr/",
+      "index": "README.md",
+      "requiredFields": [
+        "Status",
+        "Context",
+        "Decision",
+        "Consequences"
+      ],
+      "numbered": true
+    },
+    "mechanisms": "docs/mechanisms/",
+    "frozen": "docs/plans/"
+  },
+  "mechanisms": [],
+  "acknowledgedEmptyMechanisms": true,
+  "surfaceRules": {
+    "lineCap": 200,
+    "paths": [
+      "AGENTS.md"
+    ]
+  },
+  "_comment": "No mechanism is declared yet on purpose: server.py is being rewritten in Node (RMA-80). Declare connectors, rules and workspace config as mechanisms when that lands."
+}

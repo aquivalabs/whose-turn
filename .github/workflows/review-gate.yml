@@ -1,0 +1,20 @@
+name: review-gate
+# The same full gate `.githooks/pre-push` runs, run again where a push cannot be trusted to have run it.
+# Why the merge commit's hash matches the local attestation only for a branch that contains main: CLAUDE.md, "Gates".
+on:
+  pull_request:
+jobs:
+  review-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure origin/main ref
+        run: git fetch origin main:refs/remotes/origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Review gate (attestation + secret scan)
+        # Self-contained: fetch + run the latest published harness; not tied to any repo scripts.
+        run: npx -y -p bladeforge-review-harness@latest review-gate --base origin/main

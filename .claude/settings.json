@@ -1,0 +1,28 @@
+{
+  "extraKnownMarketplaces": {
+    "bladeforge": {
+      "source": {
+        "source": "github",
+        "repo": "aquivalabs/BladeForge"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "docs@bladeforge": true,
+    "review@bladeforge": true,
+    "review-workflow@bladeforge": true,
+    "tests@bladeforge": true,
+    "cicero@bladeforge": true,
+    "git@bladeforge": true,
+    "meta@bladeforge": true,
+    "error@bladeforge": true,
+    "frontend-js@bladeforge": true,
+    "critique@bladeforge": true,
+    "no-code-prose@bladeforge": true,
+    "cerberus@bladeforge": true
+  },
+  "includeCoAuthoredBy": false,
+  "worktree": {
+    "baseRef": "head"
+  }
+}

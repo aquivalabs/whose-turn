@@ -1,4 +1,10 @@
 .DS_Store
 __pycache__/
 *.pyc
+node_modules/
+
+# Workspace config never lives in the repo; see README.
 config.json
+
+# The user's own non-tracked zone (notes, translations, session handoffs).
+.users-files/
