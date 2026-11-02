@@ -27,8 +27,11 @@ test('a bug goes to the configured team and project with the Bug label, the body
   assert.deepEqual(input.labelIds, ['l-bug']);
   assert.match(input.description, /drops a line/);
   assert.match(input.description, /"ws": "demo"/);
+  await createFeedback({ settings, secrets, http, cache }, { kind: 'bug', title: 'With text', context: '## PROJ-1 · a row\nStatus: Open' });
+  assert.match(calls[2].variables.input.description, /## PROJ-1 · a row/);
+  assert.doesNotMatch(calls[2].variables.input.description, /```json/);
   await createFeedback({ settings, secrets, http, cache }, { kind: 'improvement', title: 'Second' });
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 4);
 });
 
 test('no title, no config or no key each refuse with a plain message', async () => {
