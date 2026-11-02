@@ -45,11 +45,11 @@ test('no title, no config or no key each refuse with a plain message', async () 
 });
 
 const reportsDir = () => mkdtempSync(join(tmpdir(), 'wt-reports-'));
-const liveHttp = { fetchJson: async (url, options) => {
-  assert.deepEqual(options.body.variables, { team: 'PROJ', numbers: [500] });
-  return { data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'Chevron wraps on narrow feed', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state: { name: 'Done', type: 'completed' }, comments: { nodes: [{ body: 'Fixed in 1.2; the chevron stays on the line now.', createdAt: '2026-11-02T12:00:00.000Z', user: { name: 'Maintainer' } }] } }] } } };
-} };
-const offlineHttp = { fetchJson: async () => { throw new Error('offline'); } };
+const live = (state, comments = []) => ({ fetchJson: async (url, options) => (options.body.query.includes('query Answers')
+  ? { data: { issue: { comments: { nodes: comments } } } }
+  : { data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'Chevron wraps on narrow feed', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state }] } } }) });
+const offline = { fetchJson: async () => { throw new Error('offline'); } };
+const filed = (dir) => openReports(dir).add({ id: 'PROJ-500', number: 500, title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
 
 test('a filed issue is remembered on disk and survives a reopen', async () => {
   const dir = reportsDir();
@@ -61,25 +61,26 @@ test('a filed issue is remembered on disk and survives a reopen', async () => {
   assert.match(stored.filed_at, /^\d{4}-/);
 });
 
-test('reports come back with the state Linear gives, done for a closed one, or as filed when Linear cannot be asked', async () => {
+test('the list carries the state and outcome Linear gives, or the entry as filed when Linear cannot be asked', async () => {
   const dir = reportsDir();
-  openReports(dir).add({ id: 'PROJ-500', number: 500, title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
-  const [report] = await openReports(dir).states({ settings, secrets, http: liveHttp });
+  filed(dir);
+  const [report] = await openReports(dir).states({ settings, secrets, http: live({ name: 'Done', type: 'completed' }) });
   assert.equal(report.state, 'Done');
-  assert.equal(report.done, true);
+  assert.equal(report.outcome, 'done');
   assert.equal(report.title, 'Chevron wraps on narrow feed');
-  assert.deepEqual(report.answers, [{ at: '2026-11-02T12:00:00.000Z', by: 'Maintainer', text: 'Fixed in 1.2; the chevron stays on the line now.' }]);
-  assert.equal(report.unanswered, false);
-  const [plain] = await openReports(dir).states({ settings, secrets, http: offlineHttp });
-  assert.equal(plain.state, undefined);
+  const [plain] = await openReports(dir).states({ settings, secrets, http: offline });
+  assert.equal(plain.outcome, undefined);
   assert.equal(plain.title, 'The chevron wraps');
 });
 
-test('a closed report without a comment is flagged as unanswered', async () => {
+test('the detail of one report carries the comments as answers, and flags a closed issue without one', async () => {
   const dir = reportsDir();
-  openReports(dir).add({ id: 'PROJ-500', number: 500, title: 'x', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
-  const silent = { fetchJson: async () => ({ data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'x', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state: { name: 'Canceled', type: 'canceled' }, comments: { nodes: [] } }] } } }) };
-  const [report] = await openReports(dir).states({ settings, secrets, http: silent });
-  assert.equal(report.unanswered, true);
-  assert.deepEqual(report.answers, []);
+  filed(dir);
+  const answered = await openReports(dir).detail({ settings, secrets, http: live({ name: 'Done', type: 'completed' }, [{ body: 'Fixed in 1.2.', createdAt: '2026-11-02T12:00:00.000Z', user: { name: 'Maintainer' } }]) }, 'PROJ-500');
+  assert.deepEqual(answered.answers, [{ at: '2026-11-02T12:00:00.000Z', by: 'Maintainer', text: 'Fixed in 1.2.' }]);
+  assert.equal(answered.unanswered, false);
+  const silent = await openReports(dir).detail({ settings, secrets, http: live({ name: 'Canceled', type: 'canceled' }) }, 'PROJ-500');
+  assert.equal(silent.outcome, 'dropped');
+  assert.equal(silent.unanswered, true);
+  assert.equal(await openReports(dir).detail({ settings, secrets, http: offline }, 'PROJ-999'), null);
 });
