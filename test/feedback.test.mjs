@@ -47,7 +47,7 @@ test('no title, no config or no key each refuse with a plain message', async () 
 const reportsDir = () => mkdtempSync(join(tmpdir(), 'wt-reports-'));
 const liveHttp = { fetchJson: async (url, options) => {
   assert.deepEqual(options.body.variables, { team: 'PROJ', numbers: [500] });
-  return { data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'Chevron wraps on narrow feed', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state: { name: 'Done', type: 'completed' } }] } } };
+  return { data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'Chevron wraps on narrow feed', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state: { name: 'Done', type: 'completed' }, comments: { nodes: [{ body: 'Fixed in 1.2; the chevron stays on the line now.', createdAt: '2026-11-02T12:00:00.000Z', user: { name: 'Maintainer' } }] } }] } } };
 } };
 const offlineHttp = { fetchJson: async () => { throw new Error('offline'); } };
 
@@ -68,7 +68,18 @@ test('reports come back with the state Linear gives, done for a closed one, or a
   assert.equal(report.state, 'Done');
   assert.equal(report.done, true);
   assert.equal(report.title, 'Chevron wraps on narrow feed');
+  assert.deepEqual(report.answers, [{ at: '2026-11-02T12:00:00.000Z', by: 'Maintainer', text: 'Fixed in 1.2; the chevron stays on the line now.' }]);
+  assert.equal(report.unanswered, false);
   const [plain] = await openReports(dir).states({ settings, secrets, http: offlineHttp });
   assert.equal(plain.state, undefined);
   assert.equal(plain.title, 'The chevron wraps');
+});
+
+test('a closed report without a comment is flagged as unanswered', async () => {
+  const dir = reportsDir();
+  openReports(dir).add({ id: 'PROJ-500', number: 500, title: 'x', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
+  const silent = { fetchJson: async () => ({ data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'x', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state: { name: 'Canceled', type: 'canceled' }, comments: { nodes: [] } }] } } }) };
+  const [report] = await openReports(dir).states({ settings, secrets, http: silent });
+  assert.equal(report.unanswered, true);
+  assert.deepEqual(report.answers, []);
 });
