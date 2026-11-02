@@ -99,7 +99,7 @@ Each ticket is joined with its PR by the ticket key in the PR title. Status word
 7. Status is one of `statuses.code_review` and the PR is approved: `approved_release_next` for a branch starting with `release_branch_prefix`, otherwise `approved_next`.
 8. `statuses.code_review`, not approved: the reviewer's turn. `statuses.qa`: QA's turn. `statuses.on_hold`: their turn, with the reason.
 9. On you and nothing above: "Pick it up".
-10. `statuses.backlog` and not on you: hidden.
+10. `statuses.backlog` without an open PR: hidden, whoever it is on.
 
 Extra rows, one per item:
 
