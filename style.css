@@ -235,7 +235,8 @@
   .wt-feedback-card { width: min(640px, 100%); }
   .wt-feedback-text { resize: vertical; min-height: 7rem; font-family: inherit; font-size: 14px; line-height: 1.45; }
   .wt-feedback-note { margin: 0; font-size: 12px; color: var(--md-on-surface-variant); }
-  .wt-report::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--md-error); margin-right: 6px; }
+  .wt-report { gap: 6px; color: var(--md-error); border-color: var(--md-error); }
+  .wt-report svg { width: 16px; height: 16px; }
   .wt-feedback-form .wt-inline input[type="checkbox"] { width: 16px; height: 16px; }
   .wt-rail-feedback { color: var(--md-primary); }
   .wt-settings-card .wt-alert { margin: 12px 20px 0; }
