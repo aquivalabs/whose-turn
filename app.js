@@ -293,15 +293,17 @@
       top.append(link(r.ref, r.url), span('wt-feed-kind' + (tone === ' bad' ? ' bad' : ''), r.kind));
       if (r.who) top.append(span('wt-feed-who', r.who));
       if (r.mention) top.append(span('wt-at-you', '@you'));
-      top.append(span('wt-feed-when', ago(r.at)));
+      const right = span('wt-feed-right', '');
+      right.append(span('wt-feed-when', ago(r.at)));
       const full = String(r.body || '');
       const written = /comment|approved|changes|commented|mentioned|review requested/.test(r.kind) && full.trim() !== '';
       const open = written && ui.open.has(r.id);
       if (written) {
-        const t = button('wt-feed-toggle', '▾', () => { if (ui.open.has(r.id)) ui.open.delete(r.id); else ui.open.add(r.id); if (isNew(r)) setMarks({ seen: [r.id] }); else render(); }, open ? 'Collapse' : 'Expand');
+        const t = button('wt-feed-toggle', '', () => { if (ui.open.has(r.id)) ui.open.delete(r.id); else ui.open.add(r.id); if (isNew(r)) setMarks({ seen: [r.id] }); else render(); }, open ? 'Collapse' : 'Expand');
         t.setAttribute('aria-expanded', String(open));
-        top.append(t);
+        right.append(t);
       }
+      top.append(right);
       body.append(top);
       if (open) {
         li.classList.add('is-open');

@@ -99,7 +99,8 @@
   .wt-feed-icon.ok { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); }
   .wt-feed-body { display: grid; gap: 2px; min-width: 0; }
   .wt-feed-top { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; font-size: 14px; }
-  .wt-feed-when { color: var(--md-on-surface-variant); margin-left: auto; white-space: nowrap; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .wt-feed-when { color: var(--md-on-surface-variant); white-space: nowrap; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .wt-feed-right { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; flex: none; }
   .wt-feed-kind { font-weight: 500; }
   .wt-feed-kind.bad { color: var(--md-error); }
   .wt-feed-who { color: var(--md-on-surface-variant); }
