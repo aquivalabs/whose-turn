@@ -64,7 +64,7 @@
   const marks = () => S.marks;
   const isHandled = (r) => { const m = marks().handled[r.row_id]; return !!m && String(r.activity_at || '') <= m; };
   const isNew = (r) => new Date(r.at).getTime() > (marks().base || 0) && !marks().seen.includes(r.id);
-  const setMarks = (body) => post('/api/marks', body).then((m) => { S.marks = m; render(); });
+  const setMarks = (body) => post('/api/marks', { ws: S.workspace.id, ...body }).then((m) => { S.marks = m; render(); });
 
   // ---------- Markdown to DOM (no HTML from data)
   const inline = (text, parent) => {
@@ -685,7 +685,7 @@
     }
     if (last < text.length) parent.append(document.createTextNode(text.slice(last)));
   };
-  const todoAct = (body) => post('/api/todos', body).then((list) => { if (Array.isArray(list)) { S.todos = list; renderTodos(); } });
+  const todoAct = (body) => post('/api/todos', { ws: S.workspace.id, ...body }).then((list) => { if (Array.isArray(list)) { S.todos = list; renderTodos(); } });
   function renderTodos() {
     const all = S.todos || [];
     const open = all.filter((t) => !t.done), done = all.filter((t) => t.done);
