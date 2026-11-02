@@ -1,0 +1,98 @@
+{
+  "abstract": true,
+  "params": {
+    "groundY": 0.7,
+    "bodyRadiusX": "range(0.5, 0.56)",
+    "bodyRadiusY": "range(0.26, 0.31)",
+    "legLength": "range(0.4, 0.5)",
+    "legWidth": 0.07,
+    "stride": 0,
+    "bodyY": "groundY - bodyRadiusY - legLength",
+    "headRadiusX": "range(0.19, 0.22)",
+    "headRadiusY": "range(0.16, 0.18)",
+    "headX": "bodyRadiusX * 0.95",
+    "headY": "bodyY - bodyRadiusY * 0.8",
+    "neckWidth": "headRadiusY * 0.9",
+    "snoutLength": 0.16,
+    "snoutRadius": 0.08,
+    "earHeight": "range(0.16, 0.22)",
+    "earWidth": 0.09,
+    "earSpread": "range(0.1, 0.3)",
+    "eyeSize": 0.028,
+    "tailLength": "range(0.35, 0.45)",
+    "tailLift": "range(0.05, 0.2)",
+    "tailWidth": 0.06
+  },
+  "defs": {
+    "ears": [
+      { "repeat": { "values": [-0.5, 0.3], "as": "shift", "body": [
+        { "polygon": [
+          ["headX + headRadiusX * shift - earWidth", "headY - headRadiusY * 0.5"],
+          ["headX + headRadiusX * shift - earWidth * 0.2", "headY - headRadiusY * 0.75 - earHeight"],
+          ["headX + headRadiusX * shift + earWidth", "headY - headRadiusY * 0.7"]
+        ] }
+      ] } }
+    ]
+  },
+  "body": [
+    { "ellipse": [0, "bodyY", "bodyRadiusX", "bodyRadiusY"], "part": "body" },
+    { "tube": [["bodyRadiusX * 0.5", "bodyY - bodyRadiusY * 0.2"], ["headX - headRadiusX * 0.3", "headY + headRadiusY * 0.2"]], "radii": ["bodyRadiusY * 0.8", "neckWidth"], "part": "neck" },
+    { "ellipse": ["headX", "headY", "headRadiusX", "headRadiusY"], "part": "head" },
+    { "ellipse": ["headX + headRadiusX * 0.75", "headY + headRadiusY * 0.35", "snoutLength", "snoutRadius"], "part": "head" },
+    { "use": "ears", "part": "head" },
+    { "circle": ["headX + headRadiusX * 0.4", "headY - headRadiusY * 0.15", "eyeSize"], "cut": true, "part": "eye" },
+    { "tube": [
+      ["-bodyRadiusX * 0.85", "bodyY - bodyRadiusY * 0.2"],
+      ["-bodyRadiusX * 0.85 - tailLength * 0.5", "bodyY - bodyRadiusY * 0.2 - tailLift * 0.5"],
+      ["-bodyRadiusX * 0.85 - tailLength", "bodyY - bodyRadiusY * 0.2 - tailLift"]
+    ], "radii": ["tailWidth", "tailWidth * 0.9", "tailWidth * 0.6"], "part": "tail" },
+    { "repeat": { "values": [-0.72, -0.5, 0.4, 0.68], "as": "along", "body": [
+      { "let": { "swing": "if(index % 2 == 0, stride, -stride)", "legX": "along * bodyRadiusX", "hipY": "bodyY + bodyRadiusY * 0.5" } },
+      { "tube": [["legX", "hipY"], ["legX + swing", "(hipY + groundY) / 2"], ["legX + swing * 1.2", "groundY"]], "radii": ["legWidth * 1.25", "legWidth * 0.9", "legWidth * 0.8"] }
+    ] }, "part": "legs" }
+  ],
+  "poses": {
+    "standing": { "weight": 3 },
+    "walking": { "weight": 2, "params": { "stride": "range(0.06, 0.14)" } },
+    "sleeping": {
+      "weight": 1,
+      "params": { "legLength": 0.02, "headX": "bodyRadiusX * 0.8", "headY": "groundY - headRadiusY", "tailLift": 0.02 },
+      "drop": ["legs", "eye", "neck"],
+      "body": [
+        { "ellipse": ["bodyRadiusX * 0.55", "groundY - 0.05", "bodyRadiusX * 0.28", 0.06] },
+        { "tube": [["headX + headRadiusX * 0.2", "headY - headRadiusY * 0.1"], ["headX + headRadiusX * 0.4", "headY"], ["headX + headRadiusX * 0.6", "headY - headRadiusY * 0.1"]], "radii": 0.012, "cut": true }
+      ]
+    },
+    "sitting": {
+      "weight": 1,
+      "params": { "headX": "bodyRadiusY * 0.5", "headY": "groundY - bodyRadiusX * 1.55 - headRadiusY * 0.4" },
+      "drop": ["body", "neck", "legs", "tail"],
+      "body": [
+        { "ellipse": ["bodyRadiusY * 0.2", "groundY - bodyRadiusX * 0.85", "bodyRadiusY * 1.05", "bodyRadiusX * 0.9", 0.12] },
+        { "ellipse": ["-bodyRadiusY * 0.55", "groundY - bodyRadiusY * 0.55", "bodyRadiusY * 1.2", "bodyRadiusY * 0.62"] },
+        { "tube": [["bodyRadiusY * 0.75", "groundY - bodyRadiusX * 1.0"], ["bodyRadiusY * 0.8", "groundY"]], "radii": "legWidth * 1.1" },
+        { "tube": [["-bodyRadiusY * 1.2", "groundY - 0.05"], ["-bodyRadiusY * 1.2 - tailLength", "groundY - 0.03"]], "radii": ["tailWidth", "tailWidth * 0.6"] }
+      ]
+    },
+    "front": {
+      "weight": 1,
+      "params": { "headX": 0, "headY": "groundY - bodyRadiusX * 1.1 - headRadiusY * 0.9" },
+      "drop": ["body", "neck", "head", "eye", "legs", "tail"],
+      "body": [
+        { "ellipse": [0, "groundY - bodyRadiusX * 0.7", "bodyRadiusY * 1.25", "bodyRadiusX * 0.75"] },
+        { "ellipse": ["headX", "headY", "headRadiusX * 1.15", "headRadiusY * 1.1"] },
+        { "ellipse": ["headX", "headY + headRadiusY * 0.45", "snoutRadius * 1.5", "snoutRadius"] },
+        { "repeat": { "values": [-1, 1], "as": "side", "body": [
+          { "polygon": [
+            ["headX + side * headRadiusX * 1.05", "headY - headRadiusY * 0.3"],
+            ["headX + side * headRadiusX * (0.75 + earSpread)", "headY - headRadiusY * 0.8 - earHeight"],
+            ["headX + side * headRadiusX * 0.3", "headY - headRadiusY * 1.0"]
+          ] },
+          { "circle": ["headX + side * headRadiusX * 0.5", "headY - headRadiusY * 0.15", "eyeSize * 1.2"], "cut": true },
+          { "tube": [["side * bodyRadiusY * 0.55", "groundY - bodyRadiusX * 0.4"], ["side * bodyRadiusY * 0.55", "groundY"]], "radii": "legWidth * 1.3" }
+        ] } },
+        { "circle": ["headX", "headY + headRadiusY * 0.3", "snoutRadius * 0.35"], "cut": true }
+      ]
+    }
+  }
+}

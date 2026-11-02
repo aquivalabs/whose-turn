@@ -1,0 +1,19 @@
+{
+  "extends": "bird",
+  "params": {
+    "bodyRadiusX": "range(0.5, 0.56)",
+    "bodyRadiusY": "range(0.27, 0.3)",
+    "bodyAngle": -0.1,
+    "legLength": 0.16,
+    "headRadius": 0.15,
+    "headX": "bodyRadiusX * 0.7",
+    "headY": "bodyY - bodyRadiusY - 0.12",
+    "neckWidth": 0.1,
+    "beakLength": 0.17,
+    "beakHeight": 0.07,
+    "tailLength": 0.2,
+    "tailSpread": 0.1,
+    "tailDrop": -0.12,
+    "wingWidth": 0.15
+  }
+}

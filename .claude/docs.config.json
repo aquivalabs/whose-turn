@@ -16,7 +16,19 @@
     "mechanisms": "docs/mechanisms/",
     "frozen": "docs/plans/"
   },
-  "mechanisms": [],
+  "mechanisms": [
+    {
+      "id": "species-dsl",
+      "paths": [
+        "web/src/species/base/*.json",
+        "web/src/lib/species.js",
+        "web/src/lib/silhouette.js",
+        "web/src/lib/random.js",
+        "web/src/backdrop.js"
+      ],
+      "doc": "docs/mechanisms/species-dsl.md"
+    }
+  ],
   "acknowledgedEmptyMechanisms": true,
   "surfaceRules": {
     "lineCap": 200,

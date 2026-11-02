@@ -1,0 +1,27 @@
+{
+  "extends": "quadruped",
+  "params": {
+    "bodyRadiusX": "range(0.56, 0.62)",
+    "bodyRadiusY": "range(0.36, 0.4)",
+    "legLength": "range(0.2, 0.26)",
+    "legWidth": 0.08,
+    "headRadiusX": 0.25,
+    "headRadiusY": 0.23,
+    "headX": "bodyRadiusX * 0.95",
+    "headY": "bodyY + 0.02",
+    "neckWidth": 0.22,
+    "snoutLength": 0.12,
+    "snoutRadius": 0.12,
+    "earHeight": 0.1,
+    "earWidth": 0.1,
+    "earSpread": 0.1,
+    "tailLength": 0.14,
+    "tailLift": "range(0.15, 0.25)",
+    "tailWidth": 0.035
+  },
+  "poses": {
+    "sitting": {
+      "weight": 0
+    }
+  }
+}

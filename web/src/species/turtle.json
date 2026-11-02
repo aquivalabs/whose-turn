@@ -1,0 +1,20 @@
+{
+  "body": [
+    { "let": { "shellHeight": "range(0.45, 0.6)", "shellWidth": "range(0.66, 0.76)", "neckReach": "range(0.85, 1.0)",
+      "dome": { "map": { "count": 25, "as": "step", "let": { "angle": "PI + (step / 24) * PI" }, "value": ["cos(angle) * shellWidth", "0.25 + sin(angle) * shellHeight"] } },
+      "scuteY": "0.25 - shellHeight * 0.45" } },
+    { "polygon": "dome" },
+    { "ellipse": [0, 0.27, "shellWidth + 0.07", 0.08] },
+    { "tube": [["shellWidth - 0.1", 0.24], ["neckReach - 0.15", 0.1]], "radii": 0.09 },
+    { "ellipse": ["neckReach", 0.08, 0.17, 0.12, -0.1] },
+    { "ellipse": ["-shellWidth * 0.62", 0.42, 0.12, 0.16, 0.3] },
+    { "ellipse": ["shellWidth * 0.6", 0.42, 0.12, 0.16, -0.3] },
+    { "polygon": [["-shellWidth - 0.02", 0.22], ["-shellWidth - 0.2", 0.3], ["-shellWidth - 0.02", 0.3]] },
+    { "tube": [["-shellWidth * 0.95", 0.2], ["-shellWidth * 0.5", "scuteY"], ["shellWidth * 0.5", "scuteY"], ["shellWidth * 0.95", 0.2]], "radii": 0.015, "cut": true },
+    { "tube": [["-shellWidth * 0.25", "scuteY"], ["-shellWidth * 0.3", 0.2]], "radii": 0.015, "cut": true },
+    { "tube": [["shellWidth * 0.25", "scuteY"], ["shellWidth * 0.3", 0.2]], "radii": 0.015, "cut": true },
+    { "tube": [["-shellWidth * 0.2", "scuteY"], [0, "0.25 - shellHeight * 0.95"]], "radii": 0.014, "cut": true },
+    { "tube": [["shellWidth * 0.2", "scuteY"], [0, "0.25 - shellHeight * 0.95"]], "radii": 0.014, "cut": true },
+    { "circle": ["neckReach + 0.06", 0.04, 0.028], "cut": true }
+  ]
+}

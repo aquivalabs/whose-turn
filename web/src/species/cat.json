@@ -1,0 +1,41 @@
+{
+  "poses": {
+    "sitting": {
+      "weight": 0.55,
+      "body": [
+        { "let": {
+          "headX": "range(0.12, 0.28)", "headY": "range(-0.58, -0.45)", "earHeight": "range(0.26, 0.4)", "earTilt": "range(-0.08, 0.08)", "curlsForward": "chance(0.5)",
+          "tailPoints": { "if": "curlsForward",
+            "then": [[-0.5, 0.78], [-0.2, 0.92], [0.25, 0.9], ["range(0.45, 0.6)", "range(0.7, 0.85)"]],
+            "else": [[-0.55, 0.7], [-0.88, 0.62], ["-range(0.9, 1.05)", 0.3], ["-range(0.75, 0.95)", "range(-0.05, 0.15)"]] }
+        } },
+        { "ellipse": [-0.15, 0.45, "vary(0.48)", "vary(0.4)"] },
+        { "ellipse": [0.1, 0.05, "vary(0.3)", 0.5, -0.15] },
+        { "ellipse": ["headX", "headY", "vary(0.27, 0.08)", "vary(0.23, 0.08)"] },
+        { "polygon": [["headX - 0.25", "headY - 0.04"], ["headX - 0.2 + earTilt", "headY - 0.12 - earHeight"], ["headX - 0.02", "headY - 0.18"]] },
+        { "polygon": [["headX + 0.04", "headY - 0.18"], ["headX + 0.22 + earTilt", "headY - 0.12 - earHeight"], ["headX + 0.27", "headY - 0.03"]] },
+        { "tube": [[0.14, 0.3], [0.16, 0.86]], "radii": 0.07 },
+        { "tube": [[0.3, 0.3], [0.33, 0.86]], "radii": 0.065 },
+        { "tube": "tailPoints", "radii": [0.075, 0.07, 0.065, 0.055] },
+        { "ellipse": ["headX - 0.1", "headY - 0.01", 0.045, 0.03], "cut": true },
+        { "ellipse": ["headX + 0.1", "headY - 0.01", 0.045, 0.03], "cut": true }
+      ]
+    },
+    "walking": {
+      "weight": 0.45,
+      "body": [
+        { "let": { "tailHeight": "range(0.6, 0.95)", "tailHook": "range(-0.25, 0.15)", "stride": "range(0.05, 0.16)", "headY": "range(-0.32, -0.18)" } },
+        { "ellipse": [-0.05, 0.05, "vary(0.58, 0.08)", "vary(0.22)"] },
+        { "ellipse": [0.62, "headY", 0.21, 0.19] },
+        { "polygon": [[0.45, "headY - 0.08"], [0.47, "headY - 0.38"], [0.6, "headY - 0.17"]] },
+        { "polygon": [[0.64, "headY - 0.17"], [0.76, "headY - 0.38"], [0.8, "headY - 0.06"]] },
+        { "tube": [[-0.45, 0.1], ["-0.45 - stride", 0.42], ["-0.42 - stride", 0.68]], "radii": [0.08, 0.055, 0.05] },
+        { "tube": [[-0.25, 0.12], ["-0.22 + stride", 0.45], ["-0.2 + stride", 0.68]], "radii": [0.07, 0.05, 0.05] },
+        { "tube": [[0.3, 0.12], ["0.3 + stride", 0.45], ["0.32 + stride", 0.68]], "radii": [0.07, 0.05, 0.05] },
+        { "tube": [[0.42, 0.12], ["0.42 - stride", 0.45], ["0.43 - stride", 0.68]], "radii": [0.07, 0.05, 0.05] },
+        { "tube": [[-0.58, -0.02], [-0.85, -0.25], [-0.85, "-tailHeight + 0.2"], ["-0.7 + tailHook", "-tailHeight"]], "radii": [0.06, 0.055, 0.05, 0.045] },
+        { "ellipse": [0.68, "headY - 0.02", 0.035, 0.022], "cut": true }
+      ]
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "abstract": true,
+  "params": {
+    "groundY": 0.8,
+    "bodyRadiusX": "range(0.4, 0.46)",
+    "bodyRadiusY": "range(0.27, 0.32)",
+    "bodyAngle": -0.45,
+    "legLength": "range(0.28, 0.34)",
+    "bodyY": "groundY - legLength - bodyRadiusY",
+    "headRadius": "range(0.15, 0.18)",
+    "headX": "bodyRadiusX * 0.55",
+    "headY": "bodyY - bodyRadiusY * 0.95 - headRadius * 0.4",
+    "neckWidth": "headRadius * 0.85",
+    "beakLength": "range(0.17, 0.23)",
+    "beakHeight": 0.09,
+    "tailLength": "range(0.3, 0.4)",
+    "tailSpread": 0.14,
+    "tailDrop": 0.18,
+    "legWidth": 0.022,
+    "wingWidth": 0.12
+  },
+  "body": [
+    { "ellipse": [0, "bodyY", "bodyRadiusX", "bodyRadiusY", "bodyAngle"], "part": "body" },
+    { "tube": [["bodyRadiusX * 0.25", "bodyY - bodyRadiusY * 0.4"], ["headX", "headY + headRadius * 0.4"]], "radii": ["bodyRadiusY * 0.7", "neckWidth"], "part": "neck" },
+    { "circle": ["headX", "headY", "headRadius"], "part": "head" },
+    { "polygon": [["headX + headRadius * 0.7", "headY - beakHeight * 0.6"], ["headX + headRadius + beakLength", "headY + beakHeight * 0.3"], ["headX + headRadius * 0.7", "headY + beakHeight * 0.7"]], "part": "head" },
+    { "circle": ["headX + headRadius * 0.3", "headY - headRadius * 0.15", 0.025], "cut": true, "part": "eye" },
+    { "polygon": [["-bodyRadiusX * 0.6", "bodyY - tailSpread * 0.4"], ["-bodyRadiusX * 0.6 - tailLength", "bodyY + tailDrop - tailSpread"], ["-bodyRadiusX * 0.6 - tailLength * 0.95", "bodyY + tailDrop + tailSpread * 0.4"], ["-bodyRadiusX * 0.3", "bodyY + tailSpread * 0.6"]], "part": "tail" },
+    { "tube": [["-bodyRadiusX * 0.55", "bodyY - bodyRadiusY * 0.15"], ["-bodyRadiusX * 0.1", "bodyY + bodyRadiusY * 0.3"], ["bodyRadiusX * 0.35", "bodyY - bodyRadiusY * 0.05"]], "radii": 0.012, "cut": true, "part": "wing" },
+    { "repeat": { "values": [-0.08, 0.1], "as": "legShift", "body": [
+      { "tube": [["legShift", "bodyY + bodyRadiusY * 0.6"], ["legShift", "groundY"]], "radii": "legWidth" },
+      { "ellipse": ["legShift + 0.05", "groundY", 0.07, 0.02] }
+    ] }, "part": "legs" }
+  ],
+  "poses": {
+    "perched": { "weight": 3 },
+    "sleeping": {
+      "weight": 1,
+      "params": { "headX": "bodyRadiusX * 0.35", "headY": "bodyY - bodyRadiusY * 0.55", "beakLength": 0.1, "bodyAngle": -0.2 },
+      "drop": ["neck", "eye", "wing"],
+      "body": [
+        { "tube": [["headX + headRadius * 0.4", "headY - headRadius * 0.1"], ["headX + headRadius * 0.65", "headY - headRadius * 0.05"]], "radii": 0.012, "cut": true }
+      ]
+    },
+    "front": {
+      "weight": 1,
+      "params": { "headX": 0, "headY": "bodyY - bodyRadiusX * 0.8 - headRadius * 0.2" },
+      "drop": ["body", "neck", "head", "eye", "tail", "wing", "legs"],
+      "body": [
+        { "ellipse": [0, "bodyY - 0.02", "bodyRadiusY * 1.25", "bodyRadiusX * 0.95"] },
+        { "circle": ["headX", "headY", "headRadius * 1.1"] },
+        { "polygon": [["headX - beakHeight", "headY + headRadius * 0.15"], ["headX + beakHeight", "headY + headRadius * 0.15"], ["headX", "headY + headRadius * 0.15 + beakLength * 0.6"]] },
+        { "repeat": { "values": [-1, 1], "as": "side", "body": [
+          { "circle": ["headX + side * headRadius * 0.45", "headY - headRadius * 0.2", 0.027], "cut": true },
+          { "ellipse": ["side * bodyRadiusY * 1.15", "bodyY + 0.02", "wingWidth * 0.9", "bodyRadiusX * 0.6", "side * -0.15"] },
+          { "tube": [["side * 0.1", "groundY - legLength"], ["side * 0.1", "groundY"]], "radii": "legWidth" },
+          { "ellipse": ["side * 0.12", "groundY", 0.07, 0.02] }
+        ] } }
+      ]
+    }
+  }
+}

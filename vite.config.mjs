@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     outDir: resolve(import.meta.dirname, 'dist'),
     emptyOutDir: true,
-    rollupOptions: { input: { index: resolve(import.meta.dirname, 'web/index.html'), report: resolve(import.meta.dirname, 'web/report.html') } },
+    rollupOptions: { input: { index: resolve(import.meta.dirname, 'web/index.html'), report: resolve(import.meta.dirname, 'web/report.html'), sheet: resolve(import.meta.dirname, 'web/sheet.html') } },
   },
   server: { port: 5173, strictPort: true, proxy: { '/api': { target: server, changeOrigin: true, headers: { origin: server } } } },
 });

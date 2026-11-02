@@ -1,0 +1,32 @@
+{
+  "abstract": true,
+  "params": {
+    "length": "range(0.85, 0.95)",
+    "height": "range(0.36, 0.42)",
+    "arch": 0,
+    "dorsalHeight": "range(0.2, 0.28)",
+    "finLength": 0.22,
+    "flukeSpan": 0.32,
+    "eyeX": 0.58,
+    "eyeSize": 0.035
+  },
+  "body": [
+    { "blob": [
+      ["length", "arch * 0.6"],
+      ["length * 0.55", "-height * 0.8 - arch * 0.2"],
+      ["-length * 0.2", "-height * 0.7 - arch * 0.2"],
+      ["-length * 0.75", "-height * 0.12 + arch * 0.6"],
+      ["-length * 0.75", "height * 0.12 + arch * 0.6"],
+      ["-length * 0.2", "height * 0.8 - arch * 0.4"],
+      ["length * 0.5", "height * 0.75 - arch * 0.2"]
+    ] },
+    { "polygon": [["-length * 0.7", "arch * 0.6"], ["-length - flukeSpan * 0.55", "arch * 0.6 - flukeSpan"], ["-length - flukeSpan * 0.3", "arch * 0.6"], ["-length - flukeSpan * 0.55", "arch * 0.6 + flukeSpan"]], "part": "fluke" },
+    { "polygon": [["length * 0.3", "-height * 0.75 - arch * 0.2"], ["-length * 0.2", "-height * 0.7 - arch * 0.2 - dorsalHeight"], ["-length * 0.35", "-height * 0.65 - arch * 0.2"]] },
+    { "ellipse": ["length * 0.2", "height * 0.6 - arch * 0.3", "finLength", 0.06, 0.6] },
+    { "circle": ["length * eyeX", "-height * 0.1 + arch * 0.4", "eyeSize"], "cut": true }
+  ],
+  "poses": {
+    "cruising": { "weight": 3 },
+    "leaping": { "weight": 0, "params": { "arch": 0.38 } }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "body": [
+    { "let": { "earSize": "range(0.9, 1.15)", "trunkCurl": "range(-0.1, 0.25)", "headY": "range(-0.32, -0.2)", "legLength": "range(0.76, 0.86)" } },
+    { "ellipse": [-0.15, 0, "vary(0.6, 0.06)", "vary(0.4, 0.06)"] },
+    { "ellipse": [0.45, "headY", 0.3, 0.3] },
+    { "tube": [[-0.73, -0.1], [-0.8, 0.15], [-0.8, 0.38]], "radii": [0.025, 0.02, 0.035] },
+    { "repeat": { "values": [-0.6, -0.36, 0.05, 0.26], "as": "legX", "body": [
+      { "tube": [["legX", 0.2], ["legX", "legLength"]], "radii": 0.12 }
+    ] } },
+    { "tube": [[0.6, "headY + 0.28"], [0.78, "headY + 0.38"], [0.92, "headY + 0.3"]], "radii": 0.035, "cut": true },
+    { "tube": [[0.68, "headY - 0.02"], [0.84, "headY + 0.25"], [0.86, "headY + 0.6"], ["0.9 + trunkCurl", "headY + 0.92"], ["1.02 + trunkCurl", "headY + 0.85"]], "radii": [0.12, 0.1, 0.075, 0.055, 0.045] },
+    { "let": { "earPoints": { "map": { "values": [[0.12, -0.52], [0.38, -0.6], [0.48, -0.22], [0.38, 0.16], [0.14, 0.1], [0.02, -0.2]], "as": "point",
+      "value": ["0.27 + (point[0] - 0.27) * earSize", "headY + 0.05 + (point[1] + 0.2) * earSize"] } } } },
+    { "blob": "earPoints" },
+    { "tube": ["earPoints[1]", "earPoints[2]", "earPoints[3]"], "radii": 0.022, "cut": true },
+    { "circle": [0.58, "headY - 0.04", 0.035], "cut": true }
+  ]
+}

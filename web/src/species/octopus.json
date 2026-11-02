@@ -1,0 +1,13 @@
+{
+  "body": [
+    { "let": { "mantleRadius": "range(0.38, 0.46)", "mantleLift": "range(0.35, 0.5)", "armCount": "int(7, 8)", "sway": "range(0.2, 0.5)" } },
+    { "ellipse": [0, "-mantleLift", "mantleRadius", "mantleRadius * 1.25"] },
+    { "ellipse": [0, 0.05, "mantleRadius * 1.1", 0.3] },
+    { "repeat": { "count": "armCount", "body": [
+      { "let": { "spread": "lerp(-0.65, 0.65, index / (armCount - 1))", "wave": "if(index % 2 == 0, sway, -sway) * range(0.6, 1.2)", "reach": "range(0.5, 0.7)" } },
+      { "tube": [["spread * 0.45", 0.1], ["spread * 0.9 + wave * 0.3", "reach * 0.5"], ["spread * 1.2 + wave", "reach"], ["spread * 1.1 + wave * 1.4", "reach + 0.18"]], "radii": [0.1, 0.075, 0.05, 0.02] }
+    ] } },
+    { "circle": ["-mantleRadius * 0.4", "-mantleLift + 0.15", 0.07], "cut": true },
+    { "circle": ["mantleRadius * 0.4", "-mantleLift + 0.15", 0.07], "cut": true }
+  ]
+}

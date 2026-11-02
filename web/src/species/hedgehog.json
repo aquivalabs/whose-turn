@@ -1,0 +1,33 @@
+{
+  "body": [
+    { "let": { "bodyY": "range(0.05, 0.15)", "bodyRadiusX": "range(0.6, 0.72)", "bodyRadiusY": "range(0.3, 0.38)", "spikeCount": "int(11, 17)", "spikeLength": "range(0.3, 0.45)", "sweep": "range(0.2, 0.55)", "frontAngle": "PI * range(1.62, 1.75)" } },
+    { "ellipse": [0, "bodyY", "bodyRadiusX", "bodyRadiusY"] },
+    { "repeat": { "count": "spikeCount", "body": [
+      { "let": {
+        "angle": "lerp(PI * 0.88, frontAngle, index / (spikeCount - 1)) + range(-0.04, 0.04)",
+        "baseX": "cos(angle) * bodyRadiusX * 0.9",
+        "baseY": "bodyY + sin(angle) * bodyRadiusY * 0.9",
+        "directionX": "cos(angle) - sweep",
+        "directionY": "sin(angle) * 1.2",
+        "directionLength": "hypot(directionX, directionY)",
+        "length": "spikeLength * range(0.7, 1.25)",
+        "halfWidth": "range(0.07, 0.1)",
+        "tangentX": "-directionY / directionLength",
+        "tangentY": "directionX / directionLength"
+      } },
+      { "polygon": [
+        ["baseX - tangentX * halfWidth", "baseY - tangentY * halfWidth"],
+        ["baseX + directionX / directionLength * (length + 0.08)", "baseY + directionY / directionLength * (length + 0.08)"],
+        ["baseX + tangentX * halfWidth", "baseY + tangentY * halfWidth"]
+      ] }
+    ] } },
+    { "let": { "snoutX": "bodyRadiusX * 0.85", "snoutReach": "range(0.28, 0.42)" } },
+    { "ellipse": ["snoutX - 0.05", "bodyY + 0.12", 0.3, 0.2, 0.3] },
+    { "polygon": [["snoutX - 0.05", "bodyY - 0.02"], ["snoutX + snoutReach", "bodyY + 0.25"], ["snoutX - 0.1", "bodyY + 0.3"]] },
+    { "circle": ["snoutX + snoutReach - 0.02", "bodyY + 0.25", 0.055] },
+    { "repeat": { "values": [-0.42, -0.15, 0.22, 0.45], "as": "legX", "body": [
+      { "tube": [["legX", "bodyY + bodyRadiusY * 0.7"], ["legX + 0.04", "bodyY + bodyRadiusY + range(0.08, 0.14)"]], "radii": 0.06 }
+    ] } },
+    { "circle": ["snoutX + 0.04", "bodyY + 0.08", 0.04], "cut": true }
+  ]
+}

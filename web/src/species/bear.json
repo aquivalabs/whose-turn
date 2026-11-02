@@ -1,0 +1,17 @@
+{
+  "body": [
+    { "let": { "humpHeight": "range(0.18, 0.3)", "headDrop": "range(-0.08, 0.12)", "legLength": "range(0.68, 0.8)" } },
+    { "ellipse": [-0.1, 0, "vary(0.62, 0.06)", "vary(0.38, 0.06)"] },
+    { "ellipse": [0.2, -0.12, 0.32, "humpHeight + 0.1"] },
+    { "ellipse": [0.62, "-0.02 + headDrop", 0.27, 0.23, 0.15] },
+    { "ellipse": [0.82, "0.08 + headDrop", 0.12, 0.09, 0.5] },
+    { "circle": [0.5, "-0.24 + headDrop", 0.1] },
+    { "circle": [0.68, "-0.26 + headDrop", 0.09] },
+    { "circle": [-0.72, -0.08, 0.07] },
+    { "circle": [0.7, "-0.04 + headDrop", 0.03], "cut": true },
+    { "repeat": { "values": [-0.55, -0.3, 0.15, 0.36], "as": "legX", "body": [
+      { "tube": [["legX", 0.15], ["legX + range(-0.04, 0.04)", "legLength"]], "radii": [0.14, 0.12] },
+      { "ellipse": ["legX + 0.06", "legLength + 0.03", 0.14, 0.06] }
+    ] } }
+  ]
+}

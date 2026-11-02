@@ -1,0 +1,19 @@
+{
+  "defs": {
+    "ear": [
+      { "ellipse": ["baseX + sin(angle) * length", "baseY - cos(angle) * length", 0.085, "length", "angle"] }
+    ]
+  },
+  "body": [
+    { "let": { "earLength": "range(0.38, 0.52)", "earLean": "range(-0.5, 0.05)", "floppy": "chance(0.3)", "headX": "range(0.36, 0.46)", "headY": "range(-0.18, -0.05)" } },
+    { "ellipse": [-0.2, 0.35, "vary(0.46, 0.08)", "vary(0.38, 0.08)"] },
+    { "ellipse": [0.08, 0.22, 0.38, 0.33] },
+    { "ellipse": ["headX", "headY", 0.24, 0.2, 0.2] },
+    { "use": "ear", "with": { "baseX": "headX - 0.06", "baseY": "headY - 0.12", "angle": "earLean", "length": "earLength" } },
+    { "use": "ear", "with": { "baseX": "headX + 0.04", "baseY": "headY - 0.1", "angle": "earLean + if(floppy, 1.2, 0.25)", "length": "earLength * if(floppy, 0.85, 0.95)" } },
+    { "circle": [-0.68, 0.2, "range(0.11, 0.15)"] },
+    { "ellipse": [-0.08, 0.72, 0.3, 0.07] },
+    { "tube": [[0.3, 0.35], [0.36, 0.72]], "radii": 0.06 },
+    { "circle": ["headX + 0.06", "headY - 0.04", 0.035], "cut": true }
+  ]
+}

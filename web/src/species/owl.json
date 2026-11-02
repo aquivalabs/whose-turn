@@ -1,0 +1,25 @@
+{
+  "body": [
+    { "let": { "tuftHeight": "range(0.3, 0.5)", "eyeSize": "range(0.13, 0.17)", "lookX": "range(-0.04, 0.04)" } },
+    { "ellipse": [0, 0.15, "vary(0.46, 0.08)", "vary(0.6, 0.06)"] },
+    { "ellipse": [0, -0.4, 0.44, 0.33] },
+    { "polygon": [[-0.42, -0.5], [-0.5, "-0.5 - tuftHeight"], [-0.16, -0.66]] },
+    { "polygon": [[0.42, -0.5], [0.5, "-0.5 - tuftHeight"], [0.16, -0.66]] },
+    { "ellipse": [-0.42, 0.2, 0.15, 0.42, 0.18] },
+    { "ellipse": [0.42, 0.2, 0.15, 0.42, -0.18] },
+    { "tube": [[-1.15, 0.82], [0, 0.8], [1.15, "range(0.78, 0.88)"]], "radii": 0.05 },
+    { "tube": [[-0.14, 0.7], [-0.16, 0.82]], "radii": 0.045 },
+    { "tube": [[0.14, 0.7], [0.16, 0.82]], "radii": 0.045 },
+    { "circle": [-0.2, -0.4, "eyeSize"], "cut": true },
+    { "circle": [0.2, -0.4, "eyeSize"], "cut": true },
+    { "circle": ["-0.2 + lookX", -0.4, "eyeSize * 0.42"] },
+    { "circle": ["0.2 + lookX", -0.4, "eyeSize * 0.42"] },
+    { "polygon": [[-0.05, -0.27], [0.05, -0.27], [0, -0.14]], "cut": true },
+    { "repeat": { "count": 3, "as": "row", "body": [
+      { "repeat": { "values": [-1, 0, 1], "as": "column", "body": [
+        { "let": { "featherX": "column * 0.16 + (row % 2) * 0.08 - 0.04", "featherY": "0.05 + row * 0.15" } },
+        { "tube": [["featherX - 0.05", "featherY"], ["featherX", "featherY + 0.04"], ["featherX + 0.05", "featherY"]], "radii": 0.014, "cut": true }
+      ] } }
+    ] } }
+  ]
+}

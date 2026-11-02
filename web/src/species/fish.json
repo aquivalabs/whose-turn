@@ -1,0 +1,4 @@
+{
+  "extends": "swimmer",
+  "params": { "height": "range(0.4, 0.48)", "dorsalHeight": 0.22, "eyeX": 0.62, "eyeSize": 0.05 }
+}

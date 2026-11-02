@@ -1,0 +1,29 @@
+{
+  "extends": "quadruped",
+  "drop": ["neck"],
+  "params": {
+    "bodyRadiusX": "range(0.6, 0.68)",
+    "bodyRadiusY": "range(0.3, 0.34)",
+    "legLength": "range(0.6, 0.7)",
+    "legWidth": 0.055,
+    "headRadiusX": 0.17,
+    "headRadiusY": 0.14,
+    "headX": "bodyRadiusX * 0.95 + 0.22",
+    "headY": "bodyY - bodyRadiusY - 0.32",
+    "neckWidth": 0.1,
+    "snoutLength": 0.24,
+    "snoutRadius": 0.09,
+    "earHeight": 0.1,
+    "earWidth": 0.05,
+    "tailLength": 0.3,
+    "tailLift": "range(-0.6, -0.4)",
+    "tailWidth": 0.07
+  },
+  "body": [
+    { "tube": [["bodyRadiusX * 0.55", "bodyY - bodyRadiusY * 0.9"], ["bodyRadiusX * 0.7", "bodyY - bodyRadiusY - 0.2"], ["headX - 0.06", "headY - headRadiusY * 0.8"]], "radii": [0.1, 0.075, 0.045], "part": "neck" }
+  ],
+  "poses": {
+    "sitting": { "weight": 0 },
+    "front": { "weight": 0 }
+  }
+}
