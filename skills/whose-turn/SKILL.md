@@ -20,7 +20,7 @@ The user may ask to add a workspace, a connector or a rule text ("add a workspac
 
 ## Hand-offs from the window
 
-The user can press "→ agent" on a row, a feed item or the whole workspace. The plugin's prompt hook delivers those items into the next message as "Whose Turn hand-off" context; `curl -s http://127.0.0.1:8765/api/inbox` shows what is still pending and `?take=1` marks it delivered. When such a hand-off is in context, start from it: it is what the user is talking about.
+The user can press "→ agent" on a row, a feed item or the whole workspace. The plugin's prompt hook delivers those items into the next message as `<handoff>` blocks; when they are in context, start from them, they are what the user is talking about. `curl -s http://127.0.0.1:8765/api/inbox` shows what is pending; do not take items by curl, the hook and the `whose_turn_inbox` MCP tool do that under their own consumer names.
 
 ## To-dos
 

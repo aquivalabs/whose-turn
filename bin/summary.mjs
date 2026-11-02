@@ -2,11 +2,10 @@
 /** Formats /api/summary for the SessionStart hook ("hook") or the status line ("status"). Source data is wrapped as untrusted text. */
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { port, getJson, flat } from './lib.mjs';
 
 const mode = process.argv[2] || 'hook';
-const port = process.env.WHOSE_TURN_PORT || '8765';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const flat = (text, limit = 200) => String(text || '').replace(/[\u0000-\u001f\u007f]+/g, ' ').slice(0, limit);
 
 const offline = () => {
   if (mode === 'status') {
@@ -17,16 +16,13 @@ const offline = () => {
 };
 
 let summary;
-let handed = 0;
 try {
-  const response = await fetch(`http://127.0.0.1:${port}/api/summary`, { signal: AbortSignal.timeout(3000) });
-  summary = await response.json();
-  const inbox = await fetch(`http://127.0.0.1:${port}/api/inbox`, { signal: AbortSignal.timeout(3000) });
-  handed = ((await inbox.json()).items || []).length;
+  summary = await getJson('/api/summary');
 } catch {
   offline();
   process.exit(0);
 }
+const handed = summary.handed || 0;
 
 const moves = summary.moves || [];
 const todos = summary.todos || [];

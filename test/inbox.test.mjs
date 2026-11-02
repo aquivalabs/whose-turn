@@ -1,18 +1,26 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { openInbox } from '../lib/inbox.mjs';
+import { openInbox, MARKER } from '../lib/inbox.mjs';
 
-test('an item waits until taken, the same item given twice is kept once, and a take survives a reopen', () => {
+const give = (inbox, ref, snapshot = {}) => inbox.add({ ws: 'w', ws_name: 'W', kind: 'row', ref, snapshot });
+
+test('each consumer sees an item once; the same item given twice is kept once; the marker file follows the queue', () => {
   const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
   const inbox = openInbox(dir);
-  inbox.add({ ws: 'w', kind: 'row', ref: 'PROJ-1', context: { row: { key: 'PROJ-1' } } });
-  inbox.add({ ws: 'w', kind: 'row', ref: 'PROJ-1', context: { row: { key: 'PROJ-1', next: 'newer' } } });
-  inbox.add({ ws: 'w', kind: 'workspace', ref: 'w', context: {} });
-  assert.deepEqual(inbox.pending().map((item) => item.ref), ['PROJ-1', 'w']);
-  assert.equal(inbox.pending()[0].context.row.next, 'newer');
-  assert.equal(inbox.take().length, 2);
-  assert.deepEqual(openInbox(dir).pending(), []);
+  give(inbox, 'PROJ-1', { next: 'old' });
+  give(inbox, 'PROJ-1', { next: 'new' });
+  give(inbox, 'PROJ-2');
+  assert.deepEqual(inbox.pending().map((item) => item.ref), ['PROJ-1', 'PROJ-2']);
+  assert.equal(inbox.pending()[0].snapshot.next, 'new');
+  assert.ok(existsSync(join(dir, MARKER)));
+  assert.equal(inbox.take('hook').length, 2);
+  assert.equal(inbox.take('hook').length, 0);
+  assert.equal(inbox.take('mcp:codex').length, 2);
+  assert.equal(openInbox(dir).pending('hook').length, 0);
+  assert.equal(openInbox(dir).pending('mcp:other').length, 2);
+  inbox.clear();
+  assert.ok(!existsSync(join(dir, MARKER)));
 });

@@ -37,14 +37,14 @@
   const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
 
   // ---------- hand-off: give a row, a feed item or the workspace to an agent through the server's inbox
-  const giveButton = (kind, ref, label) => {
-    const b = button('wt-btn tonal wt-give-btn', label || '→ agent', () => {
-      post('/api/inbox', { ws: S.workspace.id, kind, ref }).then((j) => {
-        if (j.error) { b.textContent = 'Failed'; return; }
-        b.textContent = 'Queued'; b.classList.add('sent');
-        setTimeout(() => { b.textContent = label || '→ agent'; b.classList.remove('sent'); }, 2500);
-      });
-    }, 'Hand this to an agent');
+  const GIVE_LABEL = '→ agent';
+  const give = (b, payload) => post('/api/inbox', Object.assign({ ws: S.workspace.id }, payload)).then((j) => {
+    if (j.error) { b.textContent = 'Failed'; return; }
+    b.textContent = 'Queued'; b.classList.add('sent');
+    setTimeout(() => { b.textContent = GIVE_LABEL; b.classList.remove('sent'); }, 2500);
+  }).catch(() => { b.textContent = 'Failed'; });
+  const giveButton = (kind, ref) => {
+    const b = button('wt-btn tonal wt-give-btn', GIVE_LABEL, () => give(b, { kind, ref }), 'Hand this to an agent');
     b.title = 'Arrives in your next Claude Code message, or through the whose_turn_inbox MCP tool in any agent';
     return b;
   };
@@ -528,14 +528,7 @@
     setMarks({ seen: ids, base: Date.now() });
   });
   onAct($('refresh'), () => { $('status-text').textContent = 'Checking now…'; post('/api/refresh'); });
-  onAct($('give-workspace'), () => {
-    const b = $('give-workspace');
-    post('/api/inbox', { ws: S.workspace.id, kind: 'workspace' }).then((j) => {
-      if (j.error) { b.textContent = 'Failed'; return; }
-      b.textContent = 'Queued'; b.classList.add('sent');
-      setTimeout(() => { b.textContent = '→ agent'; b.classList.remove('sent'); }, 2500);
-    });
-  });
+  onAct($('give-workspace'), () => give($('give-workspace'), { kind: 'workspace' }));
   onAct($('modal-close'), closeModal);
   onAct($('settings-save'), saveSettings);
   onAct($('settings-close'), closeSettings);

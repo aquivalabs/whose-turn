@@ -35,7 +35,7 @@ test('the MCP server initialises, lists its tools and answers a summary call thr
     { jsonrpc: '2.0', id: 1, method: 'initialize', params: {} },
     { jsonrpc: '2.0', method: 'notifications/initialized' },
     { jsonrpc: '2.0', id: 2, method: 'tools/list' },
-    { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'whose_turn_summary', arguments: {} } },
+    { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "whose_turn_summary", arguments: {} } },
   ]);
   child.kill();
   api.close();
