@@ -424,9 +424,26 @@
 
   // ---------- feedback: a bug, an improvement or an idea about the monitor goes to its own Linear backlog
   const feedbackProblems = (list) => { $('feedback-problems').hidden = !list.length; $('feedback-problems').textContent = list.join('  ·  '); };
+  // The reporter usually has no Linear account, so the sheet lists what this machine filed with the state the server read for it.
+  const renderReports = (list) => {
+    const box = $('feedback-reports');
+    box.replaceChildren();
+    box.hidden = !list.length;
+    if (!list.length) return;
+    box.append(element('h4', '', 'Your reports'));
+    for (const r of list) {
+      const row = element('div', 'wt-feedback-report');
+      const state = span('wt-feedback-state' + (r.state_type === 'completed' || r.state_type === 'canceled' ? ' is-done' : ''), r.state || 'filed');
+      row.append(link(r.id, r.url), span('wt-feedback-report-title', r.title), state, span('wt-feed-when', ago(r.changed_at || r.filed_at)));
+      box.append(row);
+    }
+  };
+  const loadFeedback = () => fetch('/api/feedback').then((r) => r.json()).then((j) => {
+    $('feedback-project').textContent = j.configured ? 'Linear · ' + j.project : 'not configured: set feedback in the config';
+    renderReports(j.reports || []);
+  });
   function openFeedback() {
-    fetch('/api/feedback').then((r) => r.json()).then((j) => {
-      $('feedback-project').textContent = j.configured ? 'Linear · ' + j.project : 'not configured: set feedback in the config';
+    loadFeedback().then(() => {
       feedbackProblems([]); $('feedback-done').hidden = true;
       $('feedback').hidden = false; $('feedback-text').focus();
     });
@@ -442,6 +459,7 @@
       if (j.error) { feedbackProblems(problemsOf(j.error)); return; }
       $('feedback-done').hidden = false; $('feedback-done').replaceChildren(document.createTextNode('Filed as '), link(j.issue.identifier, j.issue.url), document.createTextNode(' · ' + j.issue.title));
       $('feedback-text').value = '';
+      loadFeedback();
     }).catch(() => { $('feedback-send').textContent = 'Send'; feedbackProblems(['The monitor did not answer.']); });
   };
 

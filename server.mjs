@@ -8,6 +8,7 @@ import { createSecrets } from './lib/secrets.mjs';
 import { createWorkspace } from './lib/workspace.mjs';
 import { createRegistry } from './lib/registry.mjs';
 import { openInbox } from './lib/inbox.mjs';
+import { openReports } from './lib/feedback.mjs';
 import { startApi } from './lib/api.mjs';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
@@ -15,6 +16,7 @@ const http = createHttpClient();
 const first = loadConfig();
 const secrets = createSecrets(first.dataDir);
 const inbox = openInbox(first.dataDir);
+const reports = openReports(first.dataDir);
 let pollSeconds = first.pollSeconds;
 
 const registry = createRegistry({
@@ -48,7 +50,7 @@ const saveConfig = async (rawWorkspaces) => {
   await Promise.all(created.map((workspace) => workspace.poll()));
 };
 
-await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http });
+await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports });
 console.log(`whose-turn on http://127.0.0.1:${first.port} · data ${first.dataDir} · workspaces ${registry.workspaces.map((workspace) => workspace.id).join(', ') || 'none'}`);
 for (const problem of registry.problems) {
   console.error(problem);

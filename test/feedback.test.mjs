@@ -40,3 +40,27 @@ test('no title, no config or no key each refuse with a plain message', async () 
   await assert.rejects(createFeedback({ settings: null, secrets, http, cache: {} }, { title: 'x' }), /not configured/);
   await assert.rejects(createFeedback({ settings: { ...settings, workspace: 'elsewhere' }, secrets, http, cache: {} }, { title: 'x' }), /No Linear key for feedback/);
 });
+
+test('reports are remembered on disk and come back with the state Linear reports, or as filed when Linear cannot be asked', async () => {
+  const { mkdtempSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { openReports, reportStates } = await import('../lib/feedback.mjs');
+  const dir = mkdtempSync(join(tmpdir(), 'wt-reports-'));
+  openReports(dir).add({ id: 'PROJ-500', url: 'https://linear.app/your-space/issue/PROJ-500', title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
+  const stored = openReports(dir).list();
+  assert.equal(stored.length, 1);
+  const http = { fetchJson: async (url, options) => {
+    assert.deepEqual(options.body.variables, { team: 'PROJ', numbers: [500] });
+    return { data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'Chevron wraps on narrow feed', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state: { name: 'Done', type: 'completed' } }] } } };
+  } };
+  const cache = {};
+  const [report] = await reportStates({ settings, secrets, http, cache }, stored);
+  assert.equal(report.state, 'Done');
+  assert.equal(report.state_type, 'completed');
+  assert.equal(report.title, 'Chevron wraps on narrow feed');
+  assert.equal((await reportStates({ settings, secrets, http: { fetchJson: async () => { throw new Error('offline'); } }, cache }, stored))[0].state, 'Done');
+  const [plain] = await reportStates({ settings, secrets, http: { fetchJson: async () => { throw new Error('offline'); } }, cache: {} }, stored);
+  assert.equal(plain.state, '');
+  assert.equal(plain.title, 'The chevron wraps');
+});

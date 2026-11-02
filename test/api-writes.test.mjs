@@ -9,7 +9,7 @@ const registry = { workspaces: [], rawWorkspaces: [], problems: [], subscribe: (
 const post = (path, body) => fetch(`http://127.0.0.1:${port}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
 test('a workspace write without ws is refused instead of landing in the first workspace', async () => {
-  const server = await startApi({ port, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {} });
+  const server = await startApi({ port, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
   try {
     for (const path of ['/api/marks', '/api/todos']) {
       const response = await post(path, { seen: ['x'], action: 'add', text: 'y' });
