@@ -68,6 +68,10 @@
       "connectors": {
         "github": {
           "repo": "you/your-project"
+        },
+        "linear": {
+          "workspace": "your-space",
+          "team": "PROJ"
         }
       }
     },

@@ -34,6 +34,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `…jira.token_service` | the secret-store entry holding the token, default `whose-turn-jira` |
 | `…jira.jql` | which tickets to watch |
 | `workspaces[].rules` | the team's process, see Rules below |
+| `…connectors.linear.workspace`, `team`, `project` | the Linear workspace slug (the part after linear.app/), and optionally one team key or one project name; the personal API key goes to the secret store under the workspace slug |
 | `…connectors.demo.scenario` | `northwind` (a web team with Jira-like tickets and PRs), `atlas` (a mobile team with other status names) or `garden` (a side project, PRs only); invented data, no network |
 | `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark Material 3 scheme from it (`lib/palette.mjs`); without it the stylesheet's blue stays |
 | `workspaces[].theme.accent` | optional second hex that sets the tertiary hue; defaults to the seed's hue turned by 80 degrees |
@@ -74,6 +75,8 @@ State lives next to the config, per workspace: `workspaces/<id>/state.json` (las
 - `/notifications?participating=true` gives review requests and @-mentions on PRs and issues that are not yours, filtered to the org.
 - Every GET carries an ETag; a 304 does not count against the 5000/h limit. Steady state is about 1 to 10 requests a minute per workspace.
 - The token is sent only to `https://api.github.com/`.
+
+**Linear**, GraphQL with a personal API key: two queries per poll, your open issues and your issues completed in the last 30 days, optionally one team or one project, with up to 50 comments and the state history of each; the moment an issue entered its current state comes from that history. Mentions in comments become `@Name`.
 
 **Jira Cloud REST**, email plus API token, Basic auth:
 
