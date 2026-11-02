@@ -433,8 +433,7 @@
     box.append(element('h4', '', 'Your reports'));
     for (const r of list) {
       const row = element('div', 'wt-feedback-report');
-      const state = span('wt-feedback-state' + (r.state_type === 'completed' || r.state_type === 'canceled' ? ' is-done' : ''), r.state || 'filed');
-      row.append(link(r.id, r.url), span('wt-feedback-report-title', r.title), state, span('wt-feed-when', ago(r.changed_at || r.filed_at)));
+      row.append(link(r.id, r.url), span('wt-feedback-report-title', r.title), span('wt-pill ' + (r.done ? 'ok' : 'info'), r.state || 'filed'), span('wt-feed-when', ago(r.changed_at || r.filed_at)));
       box.append(row);
     }
   };
@@ -459,7 +458,7 @@
       if (j.error) { feedbackProblems(problemsOf(j.error)); return; }
       $('feedback-done').hidden = false; $('feedback-done').replaceChildren(document.createTextNode('Filed as '), link(j.issue.identifier, j.issue.url), document.createTextNode(' · ' + j.issue.title));
       $('feedback-text').value = '';
-      loadFeedback();
+      renderReports(j.reports || []);
     }).catch(() => { $('feedback-send').textContent = 'Send'; feedbackProblems(['The monitor did not answer.']); });
   };
 

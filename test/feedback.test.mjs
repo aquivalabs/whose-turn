@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createFeedback } from '../lib/feedback.mjs';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createFeedback, openReports } from '../lib/feedback.mjs';
 
 const settings = { workspace: 'your-space', team: 'PROJ', project: 'monitor' };
 const secrets = { get: async (service, account) => (service === 'whose-turn-feedback' && account === 'your-space' ? 'lin_api_write' : '') };
@@ -41,26 +44,31 @@ test('no title, no config or no key each refuse with a plain message', async () 
   await assert.rejects(createFeedback({ settings: { ...settings, workspace: 'elsewhere' }, secrets, http, cache: {} }, { title: 'x' }), /No Linear key for feedback/);
 });
 
-test('reports are remembered on disk and come back with the state Linear reports, or as filed when Linear cannot be asked', async () => {
-  const { mkdtempSync } = await import('node:fs');
-  const { tmpdir } = await import('node:os');
-  const { join } = await import('node:path');
-  const { openReports, reportStates } = await import('../lib/feedback.mjs');
-  const dir = mkdtempSync(join(tmpdir(), 'wt-reports-'));
-  openReports(dir).add({ id: 'PROJ-500', url: 'https://linear.app/your-space/issue/PROJ-500', title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
-  const stored = openReports(dir).list();
-  assert.equal(stored.length, 1);
-  const http = { fetchJson: async (url, options) => {
-    assert.deepEqual(options.body.variables, { team: 'PROJ', numbers: [500] });
-    return { data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'Chevron wraps on narrow feed', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state: { name: 'Done', type: 'completed' } }] } } };
-  } };
-  const cache = {};
-  const [report] = await reportStates({ settings, secrets, http, cache }, stored);
+const reportsDir = () => mkdtempSync(join(tmpdir(), 'wt-reports-'));
+const liveHttp = { fetchJson: async (url, options) => {
+  assert.deepEqual(options.body.variables, { team: 'PROJ', numbers: [500] });
+  return { data: { issues: { nodes: [{ identifier: 'PROJ-500', title: 'Chevron wraps on narrow feed', url: 'u', updatedAt: '2026-11-02T12:00:00.000Z', state: { name: 'Done', type: 'completed' } }] } } };
+} };
+const offlineHttp = { fetchJson: async () => { throw new Error('offline'); } };
+
+test('a filed issue is remembered on disk and survives a reopen', async () => {
+  const dir = reportsDir();
+  const { http } = stub();
+  await createFeedback({ settings, secrets, http, cache: {}, reports: openReports(dir) }, { kind: 'bug', title: 'The chevron wraps' });
+  const [stored] = openReports(dir).list();
+  assert.equal(stored.id, 'PROJ-500');
+  assert.equal(stored.kind, 'bug');
+  assert.match(stored.filed_at, /^\d{4}-/);
+});
+
+test('reports come back with the state Linear gives, done for a closed one, or as filed when Linear cannot be asked', async () => {
+  const dir = reportsDir();
+  openReports(dir).add({ id: 'PROJ-500', number: 500, title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
+  const [report] = await openReports(dir).states({ settings, secrets, http: liveHttp });
   assert.equal(report.state, 'Done');
-  assert.equal(report.state_type, 'completed');
+  assert.equal(report.done, true);
   assert.equal(report.title, 'Chevron wraps on narrow feed');
-  assert.equal((await reportStates({ settings, secrets, http: { fetchJson: async () => { throw new Error('offline'); } }, cache }, stored))[0].state, 'Done');
-  const [plain] = await reportStates({ settings, secrets, http: { fetchJson: async () => { throw new Error('offline'); } }, cache: {} }, stored);
-  assert.equal(plain.state, '');
+  const [plain] = await openReports(dir).states({ settings, secrets, http: offlineHttp });
+  assert.equal(plain.state, undefined);
   assert.equal(plain.title, 'The chevron wraps');
 });

@@ -158,7 +158,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 | `hooks/hooks.json` and `bin/session-summary.sh` | at SessionStart, kicks the launch agent if it is down and injects "N your move · M unread · K to-do" plus details into context, marked as data from other people |
 | `bin/inbox-hook.mjs` | at every prompt, checks the marker file and, only when items wait, takes them as consumer `claude-code-hook` and puts their context into the message in `<handoff>` blocks marked as data, within a 20000-character budget |
 | `bin/lib.mjs` | shared by the scripts: the monitor's address, the data directory, a short-timeout JSON fetch |
-| `bin/mcp.mjs` | an MCP server over stdio, registered by the plugin as `whose-turn`: tools `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_feedback`, `whose_turn_inbox`, all through the local API |
+| `bin/mcp.mjs` | an MCP server over stdio, registered by the plugin as `whose-turn`: tools `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_feedback`, `whose_turn_reports`, `whose_turn_inbox`, all through the local API |
 | `commands/whose-turn.md` | `/whose-turn` opens the window |
 | `skills/whose-turn/SKILL.md` | answers "what's on me" from `/api/summary`, and adds or finishes to-dos through `/api/todos` |
 | `bin/statusline.sh` | optional status line, not wired yet |
