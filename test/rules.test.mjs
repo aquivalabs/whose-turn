@@ -85,3 +85,11 @@ test('the feed marks a mention of me and hides a ticket update that a comment al
   assert.deepEqual(feed.map((row) => row.id), ['comment:jira:c1']);
   assert.equal(feed[0].mention, true);
 });
+
+test('an open ticket on me says Continue the work when it is in progress and Pick it up when it is not started', () => {
+  const started = only(rows({ tickets: [ticket({ status: 'In Progress', status_category: 'indeterminate' })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(started.next, 'Continue the work');
+  assert.equal(started.group, 'you');
+  const todo = only(rows({ tickets: [ticket({ status: 'Todo', status_category: 'new' })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(todo.next, 'Pick it up');
+});

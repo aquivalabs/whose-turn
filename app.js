@@ -139,7 +139,8 @@
   };
 
   function renderMove(turn) {
-    const you = turn.filter((r) => r.group === 'you').sort((a, b) => String(a.updated).localeCompare(String(b.updated)));
+    const inProgress = (r) => Number(r.next !== 'Continue the work');
+    const you = turn.filter((r) => r.group === 'you').sort((a, b) => inProgress(a) - inProgress(b) || String(a.updated).localeCompare(String(b.updated)));
     const showHandled = ui.move === 'handled';
     const rows = showHandled ? you.filter(isHandled) : you.slice().sort((a, b) => Number(isHandled(a)) - Number(isHandled(b)));
     const openCount = you.filter((r) => !isHandled(r)).length;

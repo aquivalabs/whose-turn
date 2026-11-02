@@ -13,7 +13,7 @@ test('the northwind scenario exercises every rule once the window has seen it', 
   assert.equal(next['NW-151'], 'Look at the failing checks');
   assert.equal(next['NW-137'], 'Address the requested changes');
   assert.equal(next['NW-142'], 'Merge it and close the ticket');
-  assert.equal(next['NW-171'], 'Pick it up');
+  assert.equal(next['NW-171'], 'Continue the work');
   assert.match(next['NW-104'], /^On hold: waiting for the vendor/);
   assert.equal(rows.find((row) => row.row_id === 'NW-160').group, 'gone');
   assert.equal(next['NW-151:c4'], 'Answer Pat Owner in the ticket');
