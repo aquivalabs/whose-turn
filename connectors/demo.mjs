@@ -5,6 +5,7 @@ export const id = 'demo';
 export const label = 'Demo';
 export const fields = [
   { key: 'scenario', label: 'Scenario', hint: 'northwind, atlas or garden', required: true },
+  { key: 'part', label: 'Part', hint: 'tickets (the tracker side), code (PRs and asks), or empty for both' },
 ];
 
 const HOUR = 3600000;
@@ -123,5 +124,12 @@ export const poll = async ({ settings, cache }) => {
     throw new Error(`Unknown demo scenario "${settings.scenario}"; use northwind, atlas or garden`);
   }
   cache.polls = (cache.polls || 0) + 1;
-  return { ...scenario(cache.polls), ticket_base: SITE, errors: {} };
+  const data = scenario(cache.polls);
+  if (settings.part === 'tickets') {
+    return { me: data.me, tickets: data.tickets, comments: data.comments, ticket_base: SITE, errors: {} };
+  }
+  if (settings.part === 'code') {
+    return { me: data.me, prs: data.prs, activity: data.activity, asks: data.asks, errors: {} };
+  }
+  return { ...data, ticket_base: SITE, errors: {} };
 };

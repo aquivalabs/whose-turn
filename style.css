@@ -252,6 +252,24 @@
   .wt-btn.danger { color: var(--md-error); border-color: var(--md-error); }
   .wt-seg-b:focus-visible { outline: 2px solid var(--md-primary); outline-offset: -2px; }
   .wt-act-col { width: 1%; }
+  td.wt-actions { white-space: nowrap; }
+  td.wt-actions > * { vertical-align: middle; }
+  td.wt-actions .wt-ai { margin-right: 6px; }
+  /* Collapsible islands: a chevron in the head folds the body away; the choice is remembered in the browser. */
+  .wt-collapse { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; color: var(--md-on-surface-variant); font-size: 18px; line-height: 1; transition: transform .15s ease; margin-left: 6px; }
+  .wt-collapse:hover { background: rgba(var(--md-state), .08); }
+  .wt-island.is-collapsed .wt-collapse { transform: rotate(-90deg); }
+  .wt .wt-island.is-collapsed .wt-island-body, .wt-fit .wt-main .wt-island.is-collapsed .wt-island-body, .wt-fit #todo.is-collapsed .wt-island-body { display: none; }
+  .wt-fit #todo.is-collapsed, .wt-fit #your-move.is-collapsed, .wt-fit #waiting.is-collapsed { flex: 0 0 auto; max-height: none; }
+  .wt-fit .wt-main > .wt-island.is-collapsed { flex: 0 0 auto; max-height: none; }
+  .wt-fit .wt-feed.is-collapsed { height: auto; }
+  .wt-head .wt-collapse { position: absolute; top: 8px; right: 8px; color: inherit; }
+  .wt-head { position: relative; }
+  .wt-head.is-collapsed { grid-template-columns: 1fr; padding: 4px 8px; }
+  .wt-head.is-collapsed .wt-title { padding: 4px 8px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .wt-head.is-collapsed .wt-title h1 { font-size: 18px; line-height: 28px; }
+  .wt-head.is-collapsed .wt-tiles, .wt-head.is-collapsed .wt-give { display: none; }
+  .wt-head.is-collapsed .wt-collapse { top: 6px; }
   .wt-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .wt-mark { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; border: 1px solid var(--md-outline); color: var(--md-on-surface); }
   .wt-mark:hover { background: rgba(var(--md-state), .08); }

@@ -160,8 +160,8 @@
       if (showHandled) next.append(span('wt-handled-note', 'Marked ' + ago(marks().handled[r.row_id])));
       const comment = document.createElement('td'); comment.className = 'wt-hide-narrow';
       if (r.comment) { comment.className += ' wt-quote'; comment.append(link(r.comment, r.comment_url)); }
-      const act = document.createElement('td');
-      act.append(copyButton('row', r.row_id), ' ', button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
+      const act = document.createElement('td'); act.className = 'wt-actions';
+      act.append(copyButton('row', r.row_id), button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
         () => setMarks({ handled: { [r.row_id]: showHandled ? null : new Date().toISOString() } }),
         (showHandled ? 'Move back to open: ' : 'Mark as handled: ') + r.key));
       tr.append(keyCell(r), next, prCell(r), comment, act);
@@ -194,7 +194,7 @@
         wrap.append(l, q);
         next.append(wrap);
       } else next.textContent = r.next;
-      const act = document.createElement('td'); act.append(copyButton('row', r.row_id));
+      const act = document.createElement('td'); act.className = 'wt-actions'; act.append(copyButton('row', r.row_id));
       tr.append(keyCell(r), st, who, next, prCell(r), act);
       return tr;
     }));
@@ -206,7 +206,9 @@
   const sourceLink = (id) => 'Open in ' + sourceOf(id).label;
   function renderFilters() {
     const bar = $('feed-filters');
-    const wanted = [{ id: 'all', label: 'All' }].concat((S.workspace.connectors || []).map((c) => ({ id: c.id, label: c.label })));
+    const connectors = S.workspace.connectors || [];
+    const wanted = connectors.length > 1 ? [{ id: 'all', label: 'All' }].concat(connectors.map((c) => ({ id: c.id, label: c.label }))) : [];
+    bar.hidden = wanted.length === 0;
     if (bar.dataset.keys === wanted.map((w) => w.id).join(',')) return;
     bar.dataset.keys = wanted.map((w) => w.id).join(',');
     if (!wanted.some((w) => w.id === ui.feed)) ui.feed = 'all';
@@ -511,7 +513,10 @@
     renderMove(turn);
     renderWaiting(turn);
     $('tile-done').textContent = String(turn.filter((r) => r.group === 'done').length);
-    $('tile-failing').textContent = String(turn.filter((r) => r.pr_state === 'OPEN' && r.checks === 'failing').length);
+    const failing = turn.filter((r) => r.pr_state === 'OPEN' && r.checks === 'failing').length;
+    $('tile-failing').textContent = String(failing);
+    $('sum-failing').textContent = String(failing);
+    $('sum-failing-wrap').hidden = failing === 0;
     renderFeed(S.feed);
     renderTodos();
     renderStatus();
@@ -576,6 +581,22 @@
     };
     es.onerror = () => { $('live').classList.add('off'); $('status-text').textContent = 'Disconnected from the local server, retrying…'; };
   }
+
+  // ---------- collapsible islands: the chevron in each head, the choice kept in the browser
+  const collapsed = new Set();
+  try { JSON.parse(localStorage.getItem('wt-collapsed') || '[]').forEach((id) => collapsed.add(id)); } catch (e) { /* storage may be blocked */ }
+  const applyCollapsed = () => document.querySelectorAll('.wt-island[id]').forEach((island) => island.classList.toggle('is-collapsed', collapsed.has(island.id)));
+  document.querySelectorAll('.wt-island[id]').forEach((island) => {
+    const toggle = button('wt-collapse', '▾', () => {
+      if (collapsed.has(island.id)) collapsed.delete(island.id); else collapsed.add(island.id);
+      try { localStorage.setItem('wt-collapsed', JSON.stringify([...collapsed])); } catch (e) { /* ignore */ }
+      applyCollapsed();
+    }, 'Collapse or expand ' + island.id);
+    toggle.dataset.tip = 'Fold this panel; it stays folded until you open it again';
+    const head = island.querySelector('.wt-island-head p.wt-note') || island;
+    head.append(toggle);
+  });
+  applyCollapsed();
 
   // ---------- controls
   const onAct = (el, fn) => {
