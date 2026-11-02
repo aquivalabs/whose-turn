@@ -2,8 +2,9 @@
 import * as github from './github.mjs';
 import * as jira from './jira.mjs';
 import * as demo from './demo.mjs';
+import * as linear from './linear.mjs';
 
-export const CONNECTORS = { github, jira, demo };
+export const CONNECTORS = { github, jira, linear, demo };
 
 export const connectorCatalogue = () => Object.values(CONNECTORS).map((connector) => ({ type: connector.id, label: connector.label, fields: connector.fields }));
 
