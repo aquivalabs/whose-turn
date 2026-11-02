@@ -36,6 +36,19 @@
   };
   const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
 
+  // ---------- hand-off: give a row, a feed item or the workspace to an agent through the server's inbox
+  const giveButton = (kind, ref, label) => {
+    const b = button('wt-btn tonal wt-give-btn', label || '→ agent', () => {
+      post('/api/inbox', { ws: S.workspace.id, kind, ref }).then((j) => {
+        if (j.error) { b.textContent = 'Failed'; return; }
+        b.textContent = 'Queued'; b.classList.add('sent');
+        setTimeout(() => { b.textContent = label || '→ agent'; b.classList.remove('sent'); }, 2500);
+      });
+    }, 'Hand this to an agent');
+    b.title = 'Arrives in your next Claude Code message, or through the whose_turn_inbox MCP tool in any agent';
+    return b;
+  };
+
   // ---------- marks (kept by the server on disk)
   const marks = () => S.marks;
   const isHandled = (r) => { const m = marks().handled[r.row_id]; return !!m && String(r.activity_at || '') <= m; };
@@ -137,7 +150,7 @@
       const comment = document.createElement('td'); comment.className = 'wt-hide-narrow';
       if (r.comment) { comment.className += ' wt-quote'; comment.append(link(r.comment, r.comment_url)); }
       const act = document.createElement('td');
-      act.append(button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
+      act.append(giveButton('row', r.row_id), ' ', button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
         () => setMarks({ handled: { [r.row_id]: showHandled ? null : new Date().toISOString() } }),
         (showHandled ? 'Move back to open: ' : 'Mark as handled: ') + r.key));
       tr.append(keyCell(r), next, prCell(r), comment, act);
@@ -170,7 +183,8 @@
         wrap.append(l, q);
         next.append(wrap);
       } else next.textContent = r.next;
-      tr.append(keyCell(r), st, who, next, prCell(r));
+      const act = document.createElement('td'); act.append(giveButton('row', r.row_id));
+      tr.append(keyCell(r), st, who, next, prCell(r), act);
       return tr;
     }));
     $('sum-others').textContent = $('tile-others').textContent = String(rows.length);
@@ -224,7 +238,7 @@
         if (r.key && r.source === 'github') body.append(span('wt-feed-text', r.key));
         const f = document.createElement('div'); f.className = 'wt-feed-full'; f.textContent = full;
         const actions = document.createElement('div'); actions.className = 'wt-feed-actions';
-        actions.append(button('wt-btn tonal', 'Open formatted', () => showModal(r)));
+        actions.append(button('wt-btn tonal', 'Open formatted', () => showModal(r)), giveButton('feed', r.id));
         const orig = link(sourceLink(r.source), r.url); if (orig.classList) orig.classList.add('wt-btn');
         actions.append(orig);
         body.append(f, actions);
@@ -514,6 +528,14 @@
     setMarks({ seen: ids, base: Date.now() });
   });
   onAct($('refresh'), () => { $('status-text').textContent = 'Checking now…'; post('/api/refresh'); });
+  onAct($('give-workspace'), () => {
+    const b = $('give-workspace');
+    post('/api/inbox', { ws: S.workspace.id, kind: 'workspace' }).then((j) => {
+      if (j.error) { b.textContent = 'Failed'; return; }
+      b.textContent = 'Queued'; b.classList.add('sent');
+      setTimeout(() => { b.textContent = '→ agent'; b.classList.remove('sent'); }, 2500);
+    });
+  });
   onAct($('modal-close'), closeModal);
   onAct($('settings-save'), saveSettings);
   onAct($('settings-close'), closeSettings);

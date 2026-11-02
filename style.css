@@ -195,6 +195,10 @@
   .wt-rail-badge { position: absolute; left: 30px; top: 2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--md-primary); color: var(--md-on-primary); font-size: 10px; font-weight: 700; line-height: 18px; text-align: center; }
   .wt-rail:hover .wt-rail-badge, .wt-rail:focus-within .wt-rail-badge { position: static; flex: none; }
   .wt-rail-spacer { flex: 1; }
+  /* Hand-off: the small arrow button that gives a row, a feed item or the workspace to an agent. */
+  .wt-give { margin-top: 6px !important; }
+  .wt-give-btn { font-size: 12px; height: 26px; padding: 0 10px; white-space: nowrap; }
+  .wt-give-btn.sent { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); border-color: transparent; }
   .wt-rail-gear { width: 36px; height: 36px; flex: none; display: grid; place-items: center; color: var(--md-on-surface-variant); }
   /* Settings sheet: the workspace list on the left, one workspace's form on the right. */
   .wt-settings-card { width: min(1040px, 100%); height: min(760px, 100%); }

@@ -22,6 +22,7 @@
       <div class="wt-title">
         <h1>Whose Turn</h1>
         <p><b id="sum-mine">—</b> waiting on you, <b id="sum-others">—</b> waiting on someone else.</p>
+        <p class="wt-give"><span class="wt-btn tonal wt-give-btn" id="give-workspace" role="button" tabindex="0" title="Hand this workspace to an agent: its moves, waiting rows, to-dos and rules arrive in your next Claude Code message, or through the MCP tool in any agent">→ agent</span></p>
       </div>
       <div class="wt-tiles" id="tiles">
         <div class="wt-tile is-you"><span>Your move</span><strong id="tile-mine">—</strong></div>
@@ -59,7 +60,7 @@
           <div class="wt-island-body">
             <div class="wt-scroll">
               <table>
-                <thead><tr><th>Ticket</th><th>Status</th><th>With</th><th class="wt-hide-narrow">Waiting for</th><th>PR</th></tr></thead>
+                <thead><tr><th>Ticket</th><th>Status</th><th>With</th><th class="wt-hide-narrow">Waiting for</th><th>PR</th><th class="wt-act-col"><span class="wt-sr">Hand to an agent</span></th></tr></thead>
                 <tbody id="waiting-body"></tbody>
               </table>
             </div>

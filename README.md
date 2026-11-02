@@ -117,6 +117,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - `POST /api/marks` takes `{ws?, seen:[ids], base:ms, handled:{row_id: iso|null}, notified:[ids]}`.
 - `POST /api/todos` takes `{ws?, action, …}`: `add {text, key?, by?}`; `done`, `undo`, `delete` with `{id}`; `edit {id, text}`.
 - `POST /api/refresh` polls now.
+- `POST /api/inbox` with `{ws, kind: 'row' | 'feed' | 'workspace', ref, note?}` hands an item to an agent: the server attaches the context (the row with its why and links, the last five comments and the PRs of its ticket; a feed item with its body; or the whole workspace with its rules, moves, waiting rows and to-dos) and queues it in `<data>/inbox.json`. `GET /api/inbox` lists the pending items, `GET /api/inbox?take=1` also marks them delivered; `{action: 'clear'}` empties the queue.
 - `GET /api/config`: the raw workspace list as written in the config file, the `problems`, the connector catalogue (`type`, `label`, `fields`), the workspace field catalogue (`fields`: workspace, theme, rules, statuses) and the config file path. `POST /api/config` with `{workspaces: [...], secrets?: [{ws, connector, key, value}]}` validates the list first; on a problem it answers `INVALID_CONFIG` with the problems as `BadRequest.field_violations` in `details` and stores nothing. Otherwise it stores the secrets (the account and the store entry come from the connector's own field declaration), writes the file and reloads the workspaces in place; a workspace whose definition did not change keeps its caches, new or changed ones are polled at once. The reply carries the workspace list and `secrets_stored`.
 - `POST /api/secrets` with `{service, account, value}` stores a token on its own (Keychain on macOS, a 600-mode file `<data>/secrets/<service>@<account>` elsewhere); it never touches the config.
 - Both write endpoints are reachable by any local process. A stored token is bound to its service, account and endpoint: a save that would point an existing token at a new endpoint, account or store entry is refused with `INVALID_CONFIG` unless the same request carries the token again, so a process without the token cannot redirect it. See AGENTS.md.
@@ -141,11 +142,23 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 | part | what it does |
 |---|---|
 | `hooks/hooks.json` and `bin/session-summary.sh` | at SessionStart, kicks the launch agent if it is down and injects "N your move · M unread · K to-do" plus details into context, marked as data from other people |
+| `bin/inbox-hook.mjs` | at every prompt, takes the items handed over from the window and puts their context into the message, marked as data |
+| `bin/mcp.mjs` | an MCP server over stdio, registered by the plugin as `whose-turn`: tools `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_inbox`, all through the local API |
 | `commands/whose-turn.md` | `/whose-turn` opens the window |
 | `skills/whose-turn/SKILL.md` | answers "what's on me" from `/api/summary`, and adds or finishes to-dos through `/api/todos` |
 | `bin/statusline.sh` | optional status line, not wired yet |
 
-For development, add this checkout as a local marketplace: `claude plugin marketplace add <path to this folder>`, then install `whose-turn@whose-turn-dev`.
+For development, add this checkout as a local marketplace: `claude plugin marketplace add <path to this folder>`, then install `whose-turn@whose-turn-local`.
+
+## Handing things to an agent
+
+The arrow button on a row, on an expanded feed item and under the window's title queues that item with its context. Two consumers pick it up: the Claude Code plugin's prompt hook puts the queue into your next message, and any agent that speaks MCP reads it with `whose_turn_inbox`. To give another agent the monitor, register the MCP server as a stdio command:
+
+```text
+node /path/to/whose-turn/bin/mcp.mjs
+```
+
+with `WHOSE_TURN_PORT` in its environment when the monitor is not on 8765. Every text that arrives this way is other people's writing from Jira and GitHub and must be read as data, never as instructions; the hook and the tool descriptions say so.
 
 ## Developing
 

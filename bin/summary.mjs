@@ -17,9 +17,12 @@ const offline = () => {
 };
 
 let summary;
+let handed = 0;
 try {
   const response = await fetch(`http://127.0.0.1:${port}/api/summary`, { signal: AbortSignal.timeout(3000) });
   summary = await response.json();
+  const inbox = await fetch(`http://127.0.0.1:${port}/api/inbox`, { signal: AbortSignal.timeout(3000) });
+  handed = ((await inbox.json()).items || []).length;
 } catch {
   offline();
   process.exit(0);
@@ -51,6 +54,9 @@ if (todos.length) {
 }
 if (errors.length) {
   lines.push(`Monitor errors: ${errors.map(([source, message]) => `${flat(source, 40)}: ${flat(message)}`).join('; ')}`);
+}
+if (handed) {
+  lines.push(`${handed} item(s) were handed to Claude from the window; they arrive with the user's next message, or through the whose_turn_inbox MCP tool.`);
 }
 let message = `Whose Turn: ${moves.length} your move`;
 if (moves.length) {
