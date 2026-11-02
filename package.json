@@ -11,9 +11,17 @@
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "start": "node server.mjs",
     "dev": "WHOSE_TURN_DATA=.users-files/dev WHOSE_TURN_PORT=8766 node server.mjs",
-    "test": "node --test \"test/**/*.test.mjs\""
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "dev:web": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "bin": {
     "whose-turn": "server.mjs"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.0",
+    "vite": "^6.0.0",
+    "vue": "^3.5.0"
   }
 }

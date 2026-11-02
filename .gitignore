@@ -8,3 +8,6 @@ config.json
 
 # The user's own non-tracked zone (notes, translations, session handoffs).
 .users-files/
+
+# The built window; CI builds it for a release, the server serves it when present.
+dist/
