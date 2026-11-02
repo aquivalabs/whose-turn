@@ -1,6 +1,6 @@
 
   /* Material 3 tonal scheme seeded from the blue #2c5697; a workspace theme overrides it from lib/palette.mjs. Cards are surface containers, no borders; state layers on hover. */
-  .wt, .wt-shell, .wt-rail, .wt-report { --md-primary: #2c5697; --md-on-primary: #ffffff; --md-primary-container: #d8e2ff; --md-on-primary-container: #001a41;
+  .wt, .wt-shell, .wt-rail, .wt-report-page { --md-primary: #2c5697; --md-on-primary: #ffffff; --md-primary-container: #d8e2ff; --md-on-primary-container: #001a41;
     --md-secondary-container: #dae2f9; --md-on-secondary-container: #131c2b;
     --md-tertiary-container: #c8f0ec; --md-on-tertiary-container: #00201e;
     --md-warn-container: #ffdea6; --md-on-warn-container: #271900;
@@ -12,7 +12,7 @@
     --blob-1: rgba(44, 86, 151, .30); --blob-2: rgba(0, 169, 224, .22); --blob-3: rgba(23, 223, 220, .16);
     --md-font: Roboto, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     --md-r-card: 12px; --md-r-chip: 8px; }
-  @media (prefers-color-scheme: dark) { .wt, .wt-shell, .wt-rail, .wt-report { --md-primary: #adc6ff; --md-on-primary: #0f2f60; --md-primary-container: #2b4678; --md-on-primary-container: #d8e2ff;
+  @media (prefers-color-scheme: dark) { .wt, .wt-shell, .wt-rail, .wt-report-page { --md-primary: #adc6ff; --md-on-primary: #0f2f60; --md-primary-container: #2b4678; --md-on-primary-container: #d8e2ff;
     --md-secondary-container: #3e4759; --md-on-secondary-container: #dae2f9;
     --md-tertiary-container: #1f504c; --md-on-tertiary-container: #b4efe9;
     --md-warn-container: #5c4300; --md-on-warn-container: #ffdea6;
@@ -336,7 +336,7 @@
   html, body { height: 100%; margin: 0; }
   body { background: #f3f4f8; overflow: hidden; }
   body.wt-report-body { overflow: auto; }
-  .wt-report { box-sizing: border-box; max-width: 720px; margin: 40px auto; padding: 28px 32px; background: var(--md-surface); color: var(--md-on-surface); border: 1px solid var(--md-outline-variant); border-radius: 16px; font-family: var(--md-font); font-size: 14px; line-height: 1.5; }
+  .wt-report-page { box-sizing: border-box; max-width: 720px; margin: 40px auto; padding: 28px 32px; background: var(--md-surface); color: var(--md-on-surface); border: 1px solid var(--md-outline-variant); border-radius: 16px; font-family: var(--md-font); font-size: 14px; line-height: 1.5; }
   .wt-report-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .wt-report-head h1 { flex: 1; min-width: 0; margin: 0; font-size: 20px; font-weight: 600; }
   .wt-report-id { font-weight: 700; color: var(--md-primary); }
