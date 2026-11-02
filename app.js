@@ -618,7 +618,11 @@
     const ids = S.feed.map((r) => r.id);
     setMarks({ seen: ids, base: Date.now() });
   });
-  onAct($('refresh'), () => { $('status-text').textContent = 'Checking now…'; post('/api/refresh'); });
+  onAct($('refresh'), () => {
+    $('status-text').textContent = 'Checking now…';
+    post('/api/refresh');
+    if (window.whoseTurnBackdrop) window.whoseTurnBackdrop.show({ workspace: S.workspace.id, seed: Math.floor(Math.random() * 4294967296) });
+  });
   $('give-workspace').replaceWith(Object.assign(aiButton({ ws: '', kind: 'workspace' }, 'wt-ai-big'), { id: 'give-workspace' }));
   $('give-workspace').addEventListener('click', (e) => { e.stopPropagation(); copyText($('give-workspace'), { ws: S.workspace.id, kind: 'workspace' }); }, true);
   $('copy-all').replaceWith(Object.assign(aiButton({ all: '1' }), { id: 'copy-all' }));

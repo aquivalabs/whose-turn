@@ -670,6 +670,7 @@
         sessionSeeds[workspace] = randomSeed();
       }
       const seed = wanted.seed !== undefined ? Number(wanted.seed) >>> 0 : sessionSeeds[workspace];
+      sessionSeeds[workspace] = seed;
       const species = SPECIES[wanted.species] ? wanted.species : '';
       if (workspace === current.workspace && seed === current.seed && species === current.wantedSpecies && current.built) {
         return window.whoseTurnBackdrop.current;
