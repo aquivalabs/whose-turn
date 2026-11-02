@@ -387,33 +387,29 @@
       if (w.open_moves) item.append(span('wt-rail-badge', String(w.open_moves)));
       return item;
     });
-    const bugIcon = svgNode('svg', { viewBox: '0 0 24 24', class: 'wt-rail-gear wt-rail-feedback', 'aria-hidden': 'true' });
-    bugIcon.append(svgNode('path', { d: 'M19 8h-1.8a5.9 5.9 0 0 0-1.3-1.9l1.6-1.6-1.4-1.4-1.9 1.9A5.7 5.7 0 0 0 12 4.5a5.7 5.7 0 0 0-2.2.5L7.9 3.1 6.5 4.5l1.6 1.6A5.9 5.9 0 0 0 6.8 8H5v2h1.2a7 7 0 0 0 0 1v1H5v2h1.3a6 6 0 0 0 11.4 0H19v-2h-1.2v-1a7 7 0 0 0 0-1H19V8zm-7 10a4 4 0 0 1-4-4v-3a4 4 0 0 1 8 0v3a4 4 0 0 1-4 4zm-1-7h2v5h-2z', fill: 'currentColor' }));
-    rail.replaceChildren(...items, span('wt-rail-spacer', ''), railItem('#feedback', 'Report to the Whose Turn backlog', bugIcon, openFeedback), railItem('#settings', 'Settings', gearIcon(), openSettings));
+    rail.replaceChildren(...items, span('wt-rail-spacer', ''), railItem('#settings', 'Settings', gearIcon(), openSettings));
   }
 
   // ---------- feedback: a bug, an improvement or an idea about the monitor goes to its own Linear backlog
-  const feedback = { kind: 'bug' };
   const feedbackProblems = (list) => { $('feedback-problems').hidden = !list.length; $('feedback-problems').textContent = list.join('  ·  '); };
   function openFeedback() {
     fetch('/api/feedback').then((r) => r.json()).then((j) => {
       $('feedback-project').textContent = j.configured ? 'Linear · ' + j.project : 'not configured: set feedback in the config';
-      feedbackProblems([]); $('feedback-done').hidden = true; $('feedback-title-input').value = ''; $('feedback-body').value = '';
-      $('feedback').hidden = false; $('feedback-title-input').focus();
+      feedbackProblems([]); $('feedback-done').hidden = true;
+      $('feedback').hidden = false; $('feedback-text').focus();
     });
   }
   const closeFeedback = () => { $('feedback').hidden = true; };
   const sendFeedback = () => {
-    const title = $('feedback-title-input').value.trim();
-    if (!title) { feedbackProblems(['A title is needed.']); return; }
-    const payload = { kind: feedback.kind, title, body: $('feedback-body').value, from: 'the window', ws: S.workspace.id };
-    if ($('feedback-context').checked) payload.kind_ref = { kind: 'workspace', ref: S.workspace.id };
-    $('feedback-send').textContent = 'Sending…';
+    const text = $('feedback-text').value.trim();
+    if (!text) { feedbackProblems(['Write at least one line.']); return; }
+    const payload = { text, from: 'the window', ws: S.workspace.id, kind_ref: { kind: 'workspace', ref: S.workspace.id } };
+    $('feedback-send').textContent = 'Composing…';
     post('/api/feedback', payload).then((j) => {
       $('feedback-send').textContent = 'Send';
       if (j.error) { feedbackProblems(problemsOf(j.error)); return; }
       $('feedback-done').hidden = false; $('feedback-done').replaceChildren(document.createTextNode('Filed as '), link(j.issue.identifier, j.issue.url), document.createTextNode(' · ' + j.issue.title));
-      $('feedback-title-input').value = ''; $('feedback-body').value = '';
+      $('feedback-text').value = '';
     }).catch(() => { $('feedback-send').textContent = 'Send'; feedbackProblems(['The monitor did not answer.']); });
   };
 
@@ -669,7 +665,8 @@
   onAct($('feedback-send'), sendFeedback);
   onAct($('feedback-close'), closeFeedback);
   $('feedback').addEventListener('click', (e) => { if (e.target === $('feedback')) closeFeedback(); });
-  document.querySelectorAll('#feedback-kind [data-kind]').forEach((b) => onAct(b, () => { feedback.kind = b.dataset.kind; document.querySelectorAll('#feedback-kind [data-kind]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }));
+  onAct($('report'), openFeedback);
+  $('feedback-text').addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); sendFeedback(); } });
   onAct($('settings-save'), saveSettings);
   onAct($('settings-close'), closeSettings);
   $('settings').addEventListener('click', (e) => { if (e.target === $('settings')) closeSettings(); });

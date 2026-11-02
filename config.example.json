@@ -96,6 +96,16 @@
     "workspace": "your-space",
     "team": "PROJ",
     "project": "monitor",
-    "token_service": "whose-turn-feedback"
+    "token_service": "whose-turn-feedback",
+    "composer": {
+      "command": "claude",
+      "args": [
+        "-p",
+        "--output-format",
+        "json",
+        "--model",
+        "claude-haiku-5-5"
+      ]
+    }
   }
 }

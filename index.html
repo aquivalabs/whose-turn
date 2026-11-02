@@ -13,6 +13,7 @@
     <span class="wt-live" id="live"></span>
     <span id="status-text">Connecting…</span>
     <span class="wt-btn" id="refresh" role="button" tabindex="0">Refresh now</span>
+    <span class="wt-btn wt-report" id="report" role="button" tabindex="0" title="A bug or a wish about this monitor, straight to its backlog">Report</span>
     <span id="copy-all"></span><span class="wt-give-hint">AI: copy everything</span>
   </div>
   <div class="wt-alert" id="alert" hidden></div>
@@ -94,10 +95,8 @@
         </div>
         <div class="wt-alert" id="feedback-problems" hidden></div>
         <div class="wt-settings-form wt-feedback-form">
-          <div class="wt-field"><label>Kind</label><span class="wt-seg" id="feedback-kind"><span class="wt-seg-b" role="button" tabindex="0" data-kind="bug" aria-pressed="true">Bug</span><span class="wt-seg-b" role="button" tabindex="0" data-kind="improvement" aria-pressed="false">Improvement</span><span class="wt-seg-b" role="button" tabindex="0" data-kind="idea" aria-pressed="false">Idea</span></span></div>
-          <div class="wt-field"><label>Title *</label><input id="feedback-title-input" class="wt-input" type="text" maxlength="200" placeholder="One line, what is wrong or what you want"></div>
-          <div class="wt-field"><label>Details</label><textarea id="feedback-body" class="wt-input" rows="6" placeholder="Steps, what you expected, anything that helps"></textarea></div>
-          <div class="wt-field"><label>Context</label><label class="wt-inline"><input id="feedback-context" type="checkbox" checked> attach this workspace's summary (moves, waiting rows, to-dos)</label></div>
+          <textarea id="feedback-text" class="wt-input wt-feedback-text" rows="5" placeholder="Describe the problem or the wish in your own words. Cmd+Enter sends." autocomplete="off"></textarea>
+          <p class="wt-feedback-note">An assistant turns it into a proper issue (title, kind, description) and files it in the Whose Turn backlog with this workspace's summary attached.</p>
           <p class="wt-empty" id="feedback-done" hidden></p>
         </div>
       </div>
