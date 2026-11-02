@@ -688,3 +688,6 @@
   DARK.addEventListener('change', paint);
   window.addEventListener('resize', debounce(paint, 200));
 })();
+
+// ES exports next to the window global, so modules import instead of reaching through window.
+export const { show, repaint, seeded } = window.whoseTurnBackdrop;

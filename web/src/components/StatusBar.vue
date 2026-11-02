@@ -1,12 +1,12 @@
 <script setup>
 // The line above the dashboard: Report, the live dot and the last check, Refresh, and the copy-everything sparkle.
 import { computed } from 'vue';
-import { S, ui, refresh } from '../store.js';
+import { S, ui, now, refresh } from '../store.js';
 import { ago } from '../lib/time.js';
 import { BUG } from '../lib/icons.js';
 import AiButton from './AiButton.vue';
 const emit = defineEmits(['report']);
-const status = computed(() => { void ui.tick; return ui.status || ('Live · last check ' + (S.polled_at ? ago(S.polled_at) : '—') + ' · checks every minute'); });
+const status = computed(() => { void now.value; return ui.status || ('Live · last check ' + (S.polled_at ? ago(S.polled_at) : '—') + ' · checks every minute'); });
 </script>
 <template>
   <div class="wt-status">

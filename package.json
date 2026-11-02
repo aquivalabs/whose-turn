@@ -13,8 +13,7 @@
     "dev": "WHOSE_TURN_DATA=.users-files/dev WHOSE_TURN_PORT=8766 node server.mjs",
     "test": "node --test \"test/**/*.test.mjs\"",
     "dev:web": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "vite build"
   },
   "bin": {
     "whose-turn": "server.mjs"

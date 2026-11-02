@@ -28,10 +28,11 @@ test('your rows put in-progress work first and handled rows last; the handled vi
     { row_id: 'PROJ-5', group: 'others', updated: '2026-11-02' },
   ];
   const open = yourRows(turn, marks, 'open');
-  assert.deepEqual(open.rows.map((r) => r.row_id), ['PROJ-9', 'PROJ-3', 'PROJ-2']);
+  assert.deepEqual(open.rows.map((item) => item.row.row_id), ['PROJ-9', 'PROJ-3', 'PROJ-2']);
+  assert.deepEqual(open.rows.map((item) => item.handled), [false, false, true]);
   assert.equal(open.open, 2);
   assert.equal(open.handled, 1);
-  assert.deepEqual(yourRows(turn, marks, 'handled').rows.map((r) => r.row_id), ['PROJ-2']);
+  assert.deepEqual(yourRows(turn, marks, 'handled').rows.map((item) => item.row.row_id), ['PROJ-2']);
   assert.equal(isHandled(turn[1], marks), true);
   assert.deepEqual(waitingRows(turn).map((r) => r.row_id), ['PROJ-5']);
 });
@@ -42,4 +43,19 @@ test('the settings form shapes a raw workspace both ways and lists only the secr
   assert.deepEqual(forSaving(form), { id: 'a', connectors: [{ type: 'github', repo: 'x/y' }] });
   const typed = new Map([[form.connectors[0], { token: 'abc', other: '' }]]);
   assert.deepEqual(pendingSecrets([form], typed), [{ ws: 'a', connector: 'github', key: 'token', value: 'abc' }]);
+});
+
+test('the header counts and the config order come from one place each', async () => {
+  const { turnCounts } = await import('../web/src/lib/moves.js');
+  const { orderWorkspaces, movedIds } = await import('../web/src/lib/settings.js');
+  const turn = [
+    { row_id: 'a', group: 'you', activity_at: '2026-11-02T00:00:00.000Z' },
+    { row_id: 'PROJ-2', group: 'you', activity_at: '2026-11-01T00:00:00.000Z' },
+    { row_id: 'b', group: 'others', pr_state: 'OPEN', checks: 'failing' },
+    { row_id: 'c', group: 'done' },
+  ];
+  assert.deepEqual(turnCounts(turn, marks), { mine: 1, others: 1, failing: 1, done: 1 });
+  assert.deepEqual(orderWorkspaces([{ id: 'a' }, { id: 'b' }, { id: 'c' }], ['c', 'a']).map((w) => w.id), ['c', 'a', 'b']);
+  assert.deepEqual(movedIds(['a', 'b', 'c'], 'c', 'a', true), ['c', 'a', 'b']);
+  assert.deepEqual(movedIds(['a', 'b', 'c'], 'a', 'b', false), ['b', 'a', 'c']);
 });

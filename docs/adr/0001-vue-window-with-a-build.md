@@ -13,9 +13,9 @@ Options on the table: keep plain JavaScript and only adopt a naming rule plus ES
 ## Decision
 
 The window is rewritten in plain Vue 3 single-file components, built with Vite:
-- one component per island, BEM names inside scoped styles, the palette and glass tokens kept as CSS variables set from `workspace.theme`;
+- one component per island; the stylesheet ported from the old window stays global for now (`web/src/styles/base.css`, flat `wt-` names) so the look is identical through the migration, and the island rules move into scoped blocks with BEM names as RMA-127; the palette and glass tokens are CSS variables set from `workspace.theme`;
 - the window's pure logic lives in `web/src/lib/` and is tested with `node:test`, like the server;
-- `npm run build` writes `dist/`, which is gitignored; the server serves `dist/` when it exists and the previous static files otherwise, so the two windows coexist until the migration is complete;
+- `npm run build` writes `dist/`, which is gitignored; the server serves `dist/` through `lib/static.mjs` (hashed assets cached by the browser, pages never) and shows a plain notice on an unbuilt checkout while the API keeps working; the old static window is gone;
 - the plugin never builds on the user's machine: a tagged release builds `dist/` in CI and publishes the package, and the marketplace plugin installs that published version (RMA-126);
 - Quasar is not used: it carries a design system of its own, and the window already has one;
 - the server keeps zero runtime dependencies; Vue and Vite are dev dependencies.

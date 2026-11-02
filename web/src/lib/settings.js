@@ -26,3 +26,16 @@ export const pendingSecrets = (list, typed) => {
 
 /** Set a field, or drop it when emptied, so the saved config stays minimal. */
 export const setOrDrop = (target, key, value) => { if (value && value.length) target[key] = value; else delete target[key]; };
+
+/** The raw workspace entries in the order of the given ids; entries not named keep their place at the end. */
+export const orderWorkspaces = (raw, ids) => {
+  const position = (w) => { const at = ids.indexOf(w.id); return at < 0 ? ids.length : at; };
+  return [...raw].sort((a, b) => position(a) - position(b));
+};
+
+/** The ids after dropping one workspace before or after another. */
+export const movedIds = (ids, dragged, target, before) => {
+  const rest = ids.filter((id) => id !== dragged);
+  rest.splice(rest.indexOf(target) + (before ? 0 : 1), 0, dragged);
+  return rest;
+};

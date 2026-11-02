@@ -3,7 +3,7 @@
 import { ref, onMounted } from 'vue';
 import { getJson } from '../lib/api.js';
 import { when } from '../lib/time.js';
-const PILL = { open: 'info', done: 'ok', dropped: 'warn' };
+import { outcomeTone } from '../lib/moves.js';
 const id = new URLSearchParams(location.search).get('id') || '';
 const report = ref(null);
 const note = ref(id ? 'Loading…' : 'No report id in the link.');
@@ -18,7 +18,7 @@ onMounted(() => {
   <main class="wt-app wt-report-page">
     <p v-if="!report" class="wt-empty">{{ note }}</p>
     <template v-else>
-      <header class="wt-report-head"><span class="wt-report-id">{{ report.id }}</span><h1>{{ report.title }}</h1><span class="wt-pill" :class="PILL[report.outcome] || 'info'">{{ report.state || 'filed, not yet seen' }}</span></header>
+      <header class="wt-report-head"><span class="wt-report-id">{{ report.id }}</span><h1>{{ report.title }}</h1><span class="wt-pill" :class="outcomeTone(report.outcome)">{{ report.state || 'filed, not yet seen' }}</span></header>
       <p class="wt-report-meta">{{ report.kind || 'report' }} · filed {{ when(report.filed_at) }}<template v-if="report.changed_at"> · last change {{ when(report.changed_at) }}</template></p>
       <section class="wt-report-section"><h2>What you reported</h2><p class="wt-report-text">{{ report.body || '(no text kept)' }}</p></section>
       <section class="wt-report-section">

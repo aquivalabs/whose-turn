@@ -1,5 +1,7 @@
 // The feed's pure logic: unread, search, grouping by ticket. Rendering lives in Feed.vue.
-export const isNew = (item, marks) => new Date(item.at).getTime() > (marks.base || 0) && !marks.seen.includes(item.id);
+// marks.seen may be the server's array or a Set the window built once per render.
+const seen = (marks, id) => (marks.seen instanceof Set ? marks.seen.has(id) : marks.seen.includes(id));
+export const isNew = (item, marks) => new Date(item.at).getTime() > (marks.base || 0) && !seen(marks, item.id);
 
 export const matchesQuery = (item, query) => {
   const words = String(query || '').toLowerCase().split(/\s+/).filter(Boolean);
@@ -8,7 +10,7 @@ export const matchesQuery = (item, query) => {
   return words.every((word) => hay.includes(word));
 };
 
-export const groupOf = (item) => item.key || item.ref || item.id;
+const groupOf = (item) => item.key || item.ref || item.id;
 
 /** One group per ticket, newest first, with its unread count. */
 export const groupFeed = (items, marks) => {
@@ -25,4 +27,4 @@ export const groupFeed = (items, marks) => {
 };
 
 export const toneOf = (kind) => (/fail|changes/.test(kind) ? 'bad' : /approved|merged/.test(kind) ? 'ok' : '');
-export const hasBody = (item) => /comment|approved|changes|commented|mentioned|review requested/.test(item.kind) && String(item.body || '').trim() !== '';
+export const hasBody = (item) => /comment|approved|changes|mentioned|review requested/.test(item.kind) && String(item.body || '').trim() !== '';

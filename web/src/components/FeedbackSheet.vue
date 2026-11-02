@@ -4,7 +4,7 @@ import { ref, watch, nextTick } from 'vue';
 import { S, ui } from '../store.js';
 import { getJson, post, problemsOf } from '../lib/api.js';
 import { ago } from '../lib/time.js';
-const PILL = { open: 'info', done: 'ok', dropped: 'warn' };
+import { outcomeTone } from '../lib/moves.js';
 const text = ref('');
 const field = ref(null);
 const sending = ref(false);
@@ -46,7 +46,7 @@ watch(() => ui.feedback, (open) => { if (open) { problems.value = []; done.value
           <div v-for="r in reports" :key="r.id" class="wt-feedback-report">
             <a :href="reportPage(r.id)" target="_blank" rel="noopener">{{ r.id }}</a>
             <span class="wt-feedback-report-title">{{ r.title }}</span>
-            <span class="wt-pill" :class="PILL[r.outcome] || 'info'">{{ r.state || 'filed' }}</span>
+            <span class="wt-pill" :class="outcomeTone(r.outcome)">{{ r.state || 'filed' }}</span>
             <span class="wt-feed-when">{{ ago(r.changed_at || r.filed_at) }}</span>
           </div>
         </div>

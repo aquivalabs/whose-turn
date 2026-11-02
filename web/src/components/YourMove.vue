@@ -1,44 +1,41 @@
 <script setup>
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed } from 'vue';
-import { S, ui, setMarks } from '../store.js';
-import { yourRows, isHandled } from '../lib/moves.js';
+import { S, ui, now, setMarks } from '../store.js';
+import { yourRows } from '../lib/moves.js';
 import { age, ago, when } from '../lib/time.js';
 import Island from './Island.vue';
-import RowCells from './RowCells.vue';
+import Segmented from './Segmented.vue';
+import TicketCell from './TicketCell.vue';
+import PrCell from './PrCell.vue';
 import ExtLink from './ExtLink.vue';
 import AiButton from './AiButton.vue';
-const view = computed(() => yourRows(S.turn, S.marks, ui.move));
-const handled = (r) => isHandled(r, S.marks);
-const mark = (r) => setMarks({ handled: { [r.row_id]: handled(r) ? null : new Date().toISOString() } });
+const view = computed(() => { void now.value; const v = yourRows(S.turn, S.marks, ui.move); return { ...v, rows: v.rows.map((item) => ({ ...item, age: age(item.row.activity_at) })) }; });
+const options = computed(() => [{ id: 'open', label: 'Open', count: view.value.open }, { id: 'handled', label: 'Handled', count: view.value.handled }]);
+const mark = (item) => setMarks({ handled: { [item.row.row_id]: item.handled ? null : new Date().toISOString() } });
 </script>
 <template>
   <Island id="your-move" title="Your move" note="Next step is yours" tip="Each row is something where the next step is yours. Ticket, PR and comment open in a new tab.">
-    <template #head>
-      <span class="wt-seg wt-move-view" role="group" aria-label="Show">
-        <span class="wt-seg-b" role="button" tabindex="0" :aria-pressed="String(ui.move === 'open')" @click="ui.move = 'open'" @keydown.enter.prevent="ui.move = 'open'">Open <b>{{ view.open }}</b></span>
-        <span class="wt-seg-b" role="button" tabindex="0" :aria-pressed="String(ui.move === 'handled')" @click="ui.move = 'handled'" @keydown.enter.prevent="ui.move = 'handled'">Handled <b>{{ view.handled }}</b></span>
-      </span>
-    </template>
+    <template #head><Segmented v-model="ui.move" :options="options" label="Show" class="wt-move-view" /></template>
     <div class="wt-scroll">
       <table>
         <thead><tr><th>Ticket</th><th>Next step</th><th>PR</th><th class="wt-hide-narrow">Last comment</th><th class="wt-act-col"><span class="wt-sr">Mark</span></th></tr></thead>
         <tbody>
-          <tr v-for="r in view.rows" :key="r.row_id" :class="{ 'is-handled': handled(r) }">
-            <RowCells :row="r" part="key" />
+          <tr v-for="item in view.rows" :key="item.row.row_id" :class="{ 'is-handled': item.handled }">
+            <TicketCell :row="item.row" />
             <td>
               <span class="wt-hint-row">
-                <span class="wt-next">{{ r.next }}</span>
-                <span v-if="age(r.activity_at).text" class="wt-age" :class="{ old: age(r.activity_at).old }" :data-tip="'Waiting since ' + when(r.activity_at)">{{ age(r.activity_at).text }}</span>
-                <span v-if="r.why" class="wt-hint-icon" role="button" tabindex="0" aria-label="Why this is your move" :data-tip="r.why">?</span>
-                <span v-if="handled(r)" class="wt-handled-chip" :data-tip="'Marked ' + ago(S.marks.handled[r.row_id]) + '. Comes back in 7 days if it is still open, or sooner when something new happens.'">handled</span>
+                <span class="wt-next">{{ item.row.next }}</span>
+                <span v-if="item.age.text" class="wt-age" :class="{ old: item.age.old }" :data-tip="'Waiting since ' + when(item.row.activity_at)">{{ item.age.text }}</span>
+                <span v-if="item.row.why" class="wt-hint-icon" role="button" tabindex="0" aria-label="Why this is your move" :data-tip="item.row.why">?</span>
+                <span v-if="item.handled" class="wt-handled-chip" :data-tip="'Marked ' + ago(S.marks.handled[item.row.row_id]) + '. Comes back in 7 days if it is still open, or sooner when something new happens.'">handled</span>
               </span>
             </td>
-            <RowCells :row="r" part="pr" />
-            <td class="wt-hide-narrow" :class="{ 'wt-quote': r.comment }"><ExtLink v-if="r.comment" :text="r.comment" :url="r.comment_url" /></td>
+            <PrCell :row="item.row" />
+            <td class="wt-hide-narrow" :class="{ 'wt-quote': item.row.comment }"><ExtLink v-if="item.row.comment" :text="item.row.comment" :url="item.row.comment_url" /></td>
             <td class="wt-actions">
-              <AiButton :query="{ ws: S.workspace.id, kind: 'row', ref: r.row_id }" />
-              <span class="wt-mark" :class="{ undo: handled(r) }" role="button" tabindex="0" :aria-label="(handled(r) ? 'Move back to open: ' : 'Mark as handled: ') + r.key" @click.stop="mark(r)" @keydown.enter.prevent.stop="mark(r)">{{ handled(r) ? 'Undo' : 'Handled' }}</span>
+              <AiButton :query="{ ws: S.workspace.id, kind: 'row', ref: item.row.row_id }" />
+              <span class="wt-mark" :class="{ undo: item.handled }" role="button" tabindex="0" :aria-label="(item.handled ? 'Move back to open: ' : 'Mark as handled: ') + item.row.key" @click.stop="mark(item)" @keydown.enter.prevent.stop="mark(item)">{{ item.handled ? 'Undo' : 'Handled' }}</span>
             </td>
           </tr>
         </tbody>
