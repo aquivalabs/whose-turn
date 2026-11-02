@@ -252,7 +252,10 @@
     meta.append(span('wt-feed-group-count' + (g.unread ? ' new' : ''), g.unread ? g.unread + ' new' : String(g.items.length)), span('', kinds), span('wt-feed-when', ago(g.newest)));
     if (row && row.group === 'you') meta.append(span('wt-at-you', 'your move'));
     body.append(keyLine, meta);
-    head.append(caret, body);
+    const copy = aiButton({ ws: S.workspace.id, kind: 'thread', ref: g.id });
+    copy.classList.add('wt-feed-group-copy');
+    copy.addEventListener('click', (e) => e.stopPropagation());
+    head.append(caret, body, copy);
     head.addEventListener('click', () => { if (ui.openGroups.has(g.id)) ui.openGroups.delete(g.id); else ui.openGroups.add(g.id); render(); });
     return head;
   };

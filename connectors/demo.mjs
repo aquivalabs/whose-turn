@@ -9,7 +9,8 @@ export const fields = [
 ];
 
 const HOUR = 3600000;
-const ago = (hours) => toIsoUtc(Date.now() - hours * HOUR);
+let base = Date.now();
+const ago = (hours) => toIsoUtc(base - hours * HOUR);
 const SITE = 'https://demo.example/browse/';
 const REPO = 'https://github.com/example/';
 
@@ -124,6 +125,8 @@ export const poll = async ({ settings, cache }) => {
     throw new Error(`Unknown demo scenario "${settings.scenario}"; use northwind, atlas or garden`);
   }
   cache.polls = (cache.polls || 0) + 1;
+  cache.base = cache.base || Date.now();
+  base = cache.base;
   const data = scenario(cache.polls);
   if (settings.part === 'tickets') {
     return { me: data.me, tickets: data.tickets, comments: data.comments, ticket_base: SITE, errors: {} };

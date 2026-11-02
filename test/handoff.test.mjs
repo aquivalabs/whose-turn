@@ -21,3 +21,12 @@ test('a workspace hand-off lists the waiting rows; an unknown ref is null; the s
   assert.equal(buildHandOff('row', 'nope', source), null);
   assert.deepEqual(snapshotOf('feed', 'f1', source), { ref: '#7', kind: 'merged', text: 'merged' });
 });
+
+test('a thread hand-off gathers every feed event of one ticket, newest first, with the ticket row', () => {
+  const threadSource = { ...source, feed: [{ id: 'f1', ref: '#7', kind: 'merged', text: 'merged', key: 'PROJ-1', at: '2026-11-01T12:00:00Z', body: '' }, { id: 'f2', ref: 'PROJ-1', kind: 'comment', who: 'Sam', text: 'hello', key: 'PROJ-1', at: '2026-11-01T13:00:00Z', body: 'hello there' }, { id: 'f3', ref: 'PROJ-2', kind: 'updated', key: 'PROJ-2', at: '2026-11-01T14:00:00Z', body: '' }] };
+  const context = buildHandOff('thread', 'PROJ-1', threadSource);
+  assert.deepEqual(context.items.map((item) => item.id), ['f1', 'f2']);
+  assert.equal(context.row.key, 'PROJ-1');
+  assert.deepEqual(snapshotOf('thread', 'PROJ-1', threadSource), { thread: 'PROJ-1', events: 2 });
+  assert.equal(buildHandOff('thread', 'nope', threadSource), null);
+});
