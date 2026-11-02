@@ -670,11 +670,11 @@
     es.onerror = () => { $('live').classList.add('off'); $('status-text').textContent = 'Disconnected from the local server, retrying…'; };
   }
 
-  // ---------- collapsible islands: the chevron in each head, the choice kept in the browser
+  // ---------- collapsible islands: the chevron in each head, the choice kept in the browser; the workspace header never collapses
   const collapsed = new Set();
   try { JSON.parse(localStorage.getItem('wt-collapsed') || '[]').forEach((id) => collapsed.add(id)); } catch (e) { /* storage may be blocked */ }
-  const applyCollapsed = () => document.querySelectorAll('.wt-island[id]').forEach((island) => island.classList.toggle('is-collapsed', collapsed.has(island.id)));
-  document.querySelectorAll('.wt-island[id]').forEach((island) => {
+  const applyCollapsed = () => document.querySelectorAll('.wt-island[id]:not(.wt-head)').forEach((island) => island.classList.toggle('is-collapsed', collapsed.has(island.id)));
+  document.querySelectorAll('.wt-island[id]:not(.wt-head)').forEach((island) => {
     const toggle = button('wt-collapse', '▾', () => {
       if (collapsed.has(island.id)) collapsed.delete(island.id); else collapsed.add(island.id);
       try { localStorage.setItem('wt-collapsed', JSON.stringify([...collapsed])); } catch (e) { /* ignore */ }
