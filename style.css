@@ -263,8 +263,9 @@
   .wt-fit #todo.is-collapsed, .wt-fit #your-move.is-collapsed, .wt-fit #waiting.is-collapsed { flex: 0 0 auto; max-height: none; }
   .wt-fit .wt-main > .wt-island.is-collapsed { flex: 0 0 auto; max-height: none; }
   .wt-fit .wt-feed.is-collapsed { height: auto; align-self: start; }
-  .wt-fit .wt-main:has(#waiting.is-collapsed) #your-move { max-height: none; flex: 1 1 0; }
-  .wt-fit .wt-main:has(#waiting.is-collapsed):has(#your-move.is-collapsed) #todo { max-height: none; flex: 1 1 0; }
+  .wt-fit .wt-main:has(#waiting.is-collapsed) #your-move:not(.is-collapsed) { max-height: none; flex: 1 1 0; }
+  .wt-fit .wt-main:has(#waiting.is-collapsed):has(#your-move.is-collapsed) #todo:not(.is-collapsed) { max-height: none; flex: 1 1 0; }
+  .wt-fit .wt-main > .wt-island.is-collapsed { flex: 0 0 auto !important; max-height: none !important; }
   .wt-head .wt-collapse { position: absolute; top: 8px; right: 8px; color: inherit; }
   .wt-head { position: relative; }
   .wt-head.is-collapsed { grid-template-columns: 1fr; padding: 4px 8px; }
