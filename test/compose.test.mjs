@@ -15,6 +15,7 @@ test('the assistant answer becomes title, kind and body; the prompt carries the 
   assert.equal(issue.title, 'Chevron wraps on narrow feed');
   assert.match(prompt, /the arrow in the feed/);
   assert.match(prompt, /## Workspace Demo/);
+  assert.match(prompt, /in English whatever language the remark is in/);
 });
 
 test('a failing or malformed CLI falls back to the first line as the title and a keyword kind', async () => {
