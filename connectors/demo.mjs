@@ -3,6 +3,7 @@ import { toIsoUtc } from '../lib/text.mjs';
 
 export const id = 'demo';
 export const label = 'Demo';
+export const links = () => [{ label: 'Demo tracker', url: 'https://demo.example/' }];
 export const fields = [
   { key: 'scenario', label: 'Scenario', hint: 'northwind, atlas or garden', required: true },
   { key: 'part', label: 'Part', hint: 'tickets (the tracker side), code (PRs and asks), or empty for both' },

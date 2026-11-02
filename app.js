@@ -141,7 +141,7 @@
   function renderMove(turn) {
     const you = turn.filter((r) => r.group === 'you').sort((a, b) => String(a.updated).localeCompare(String(b.updated)));
     const showHandled = ui.move === 'handled';
-    const rows = you.filter((r) => isHandled(r) === showHandled);
+    const rows = showHandled ? you.filter(isHandled) : you.slice().sort((a, b) => Number(isHandled(a)) - Number(isHandled(b)));
     const openCount = you.filter((r) => !isHandled(r)).length;
     $('move-open').textContent = String(openCount);
     $('move-handled').textContent = String(you.length - openCount);
@@ -150,20 +150,22 @@
     $('move-empty').textContent = showHandled ? 'Nothing marked as handled.' : 'Nothing is waiting on you.';
     $('move-body').replaceChildren(...rows.map((r) => {
       const tr = document.createElement('tr');
+      const handled = isHandled(r);
+      if (handled) tr.classList.add('is-handled');
       const next = document.createElement('td');
       const line = document.createElement('span'); line.className = 'wt-hint-row';
       line.append(span('wt-next', r.next));
       const ag = age(r.activity_at);
       if (ag.text) { const s = span('wt-age' + (ag.old ? ' old' : ''), ag.text); s.dataset.tip = 'Waiting since ' + new Date(r.activity_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); line.append(s); }
       if (r.why) { const q = span('wt-hint-icon', '?'); q.dataset.tip = r.why; q.setAttribute('role', 'button'); q.tabIndex = 0; q.setAttribute('aria-label', 'Why this is your move'); line.append(q); }
+      if (handled) { const chip = span('wt-handled-chip', 'handled'); chip.dataset.tip = 'Marked ' + ago(marks().handled[r.row_id]) + '. Comes back in 7 days if it is still open, or sooner when something new happens.'; line.append(chip); }
       next.append(line);
-      if (showHandled) next.append(span('wt-handled-note', 'Marked ' + ago(marks().handled[r.row_id])));
       const comment = document.createElement('td'); comment.className = 'wt-hide-narrow';
       if (r.comment) { comment.className += ' wt-quote'; comment.append(link(r.comment, r.comment_url)); }
       const act = document.createElement('td'); act.className = 'wt-actions';
-      act.append(copyButton('row', r.row_id), button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
-        () => setMarks({ handled: { [r.row_id]: showHandled ? null : new Date().toISOString() } }),
-        (showHandled ? 'Move back to open: ' : 'Mark as handled: ') + r.key));
+      act.append(copyButton('row', r.row_id), button('wt-mark' + (handled ? ' undo' : ''), handled ? 'Undo' : 'Handled',
+        () => setMarks({ handled: { [r.row_id]: handled ? null : new Date().toISOString() } }),
+        (handled ? 'Move back to open: ' : 'Mark as handled: ') + r.key));
       tr.append(keyCell(r), next, prCell(r), comment, act);
       return tr;
     }));
@@ -511,9 +513,14 @@
     lastVersion = -1; load();
   });
 
+  function renderLinks() {
+    $('links').replaceChildren(...(S.workspace.links || []).map((l) => { const a = link(l.label, l.url); if (a.classList) a.title = l.url; return a; }));
+  }
+
   function render() {
     if (!S) return;
     renderRail();
+    renderLinks();
     const turn = S.turn;
     renderMove(turn);
     renderWaiting(turn);

@@ -7,6 +7,7 @@ const DEFAULT_SERVICE = 'whose-turn-jira';
 
 export const id = 'jira';
 export const label = 'Jira';
+export const links = (settings) => (settings.base ? [{ label: 'Jira', url: String(settings.base).replace(/\/$/, '') }] : []);
 export const endpointKey = 'base';
 export const fields = [
   { key: 'base', label: 'Site', hint: 'https://your-site.atlassian.net', required: true },

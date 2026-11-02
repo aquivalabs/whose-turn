@@ -283,6 +283,15 @@
   .wt-mark.undo::before { display: none; }
   .wt-mark:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
   .wt-handled-note { display: block; color: var(--md-on-surface-variant); font-size: 11px; margin-top: 4px; }
+  tr.is-handled td { opacity: .55; }
+  tr.is-handled .wt-next { text-decoration: line-through; text-decoration-color: var(--md-outline); }
+  tr.is-handled td.wt-actions { opacity: 1; }
+  .wt-handled-chip { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: .04em; background: var(--md-s-highest); color: var(--md-on-surface-variant); margin-left: 6px; vertical-align: middle; }
+  /* Quick links: the project's places, chips next to the AI button in the header. */
+  .wt-links { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-left: 10px; }
+  .wt-links a { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 500; text-decoration: none; color: inherit; background: rgba(var(--glass), .55); border: 1px solid var(--glass-edge); }
+  .wt-links a:hover { background: rgba(var(--glass), .85); }
+  .wt-head.is-collapsed .wt-links { display: none; }
 
   @media (min-width: 901px) {
     .wt.wt-fit { height: var(--wt-h, calc(100vh - 120px)); grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }

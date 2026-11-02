@@ -7,6 +7,7 @@ const TOKEN_TTL = 10 * 60 * 1000;
 
 export const id = 'linear';
 export const label = 'Linear';
+export const links = (settings) => (settings.workspace ? [{ label: 'Linear', url: `https://linear.app/${settings.workspace}${settings.team ? `/team/${settings.team}` : ''}` }] : []);
 export const fields = [
   { key: 'workspace', label: 'Workspace slug', hint: 'the part after linear.app/ in your issue links', required: true },
   { key: 'api_key', label: 'API key', hint: 'a personal API key, stored in the secret store, never in the config', secret: { account: 'workspace', service: 'token_service', default: DEFAULT_SERVICE } },

@@ -55,3 +55,8 @@ test('the port comes from the environment before the file', () => {
   writeFileSync(join(dir, 'config.json'), JSON.stringify({ port: 9000 }));
   assert.equal(loadConfig({ WHOSE_TURN_DATA: dir, WHOSE_TURN_PORT: '9001' }).port, 9001);
 });
+
+test('quick links accept "Label https://…" strings and {label, url} objects, and drop anything that is not an http link', () => {
+  const config = withConfig({ workspaces: [{ id: 'w', links: ['Docs https://docs.example', { label: 'Board', url: 'https://board.example' }, 'nope', { url: 'ftp://x' }] }] });
+  assert.deepEqual(config.workspaces[0].links, [{ label: 'Docs', url: 'https://docs.example' }, { label: 'Board', url: 'https://board.example' }]);
+});

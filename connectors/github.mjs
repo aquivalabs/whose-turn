@@ -8,6 +8,7 @@ const API = 'https://api.github.com';
 
 export const id = 'github';
 export const label = 'GitHub';
+export const links = (settings) => (settings.repo ? [{ label: 'GitHub', url: `https://github.com/${settings.repo}` }] : []);
 export const fields = [
   { key: 'repo', label: 'Repository', hint: 'owner/name whose PRs are yours', required: true },
   { key: 'org', label: 'Organisation', hint: 'notifications are kept only from this org; defaults to the repository owner' },

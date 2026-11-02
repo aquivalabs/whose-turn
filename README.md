@@ -33,6 +33,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `…jira.email` | the account the API token belongs to |
 | `…jira.token_service` | the secret-store entry holding the token, default `whose-turn-jira` |
 | `…jira.jql` | which tickets to watch |
+| `workspaces[].links` | quick links shown in the header, as `"Label https://…"` strings or `{label, url}`; the repository, the Jira site and the Linear team come from the connectors by themselves |
 | `workspaces[].rules` | the team's process, see Rules below |
 | `…connectors.linear.workspace`, `team`, `project` | the Linear workspace slug (the part after linear.app/), and optionally one team key or one project name; the personal API key goes to the secret store under the workspace slug |
 | `…connectors.demo.scenario` | `northwind` (a web team with Jira-like tickets and PRs), `atlas` (a mobile team with other status names) or `garden` (a side project, PRs only); invented data, no network |
@@ -108,7 +109,7 @@ Extra rows, one per item:
 
 The On Hold reason is the comment by whoever moved the ticket to On Hold, closest to that moment. If there is none, the last comment before it. As a last resort, the newest comment saying "on hold". Shown on one line, with the full comment in a tooltip and a link.
 
-Handled marks hide a row until something newer happens on it. Desktop notifications fire for new "your move" rows. The first run only records the existing rows.
+A handled row stays in the list, dimmed and marked, until something newer happens on it; after seven days the mark expires and the row comes back if it is still open. Desktop notifications fire for new "your move" rows. The first run only records the existing rows.
 
 ## API, `127.0.0.1:<port>`
 
@@ -134,7 +135,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - Under the glass, an animal drawn in dots (`backdrop.js`): one of twelve species, built from shapes whose proportions come from a seeded random. Each workspace gets its own seed for the session, so switching tabs changes the animal; `window.whoseTurnBackdrop.show({ workspace, seed, species })` picks one and `.species` lists the names (the hook for pinning an animal per workspace, RMA-94).
 - Two columns. Left: Your move, To do, Waiting on others. Right: the feed. The page never scrolls; each island scrolls inside, with sticky table headers.
 - Every header is one line, truncated with an ellipsis. Anything that hides more text gets a "?" icon at the end. Tooltips are Tippy: instant, also on click, interactive, keep line breaks.
-- Your move: one row per thing to do, with a "?" for why it is there, an age chip (amber after 24 h) and a Handled button. An Open / Handled switch sits in the header.
+- Your move: one row per thing to do, with a "?" for why it is there, an age chip (amber after 24 h) and a Handled button. Handled rows sink to the bottom, dimmed, with Undo; the switch in the head shows them alone.
 - Waiting on others: who holds the ticket and for how long, from the changelog (amber after 3 days). For On Hold, the one-line reason with a tooltip.
 - Every panel folds with the chevron in its head, the header down to one line with the counts; the choice is remembered in the browser.
 - The AI button, a small sparkle on every row, on a feed group head (the whole thread of that ticket), on an expanded feed item, under the title and in the top bar, copies that item, the thread, the workspace or everything as Markdown with its context, ready to paste into any assistant.
