@@ -74,9 +74,11 @@
         <div class="wt-island-body">
           <div class="wt-feed-bar">
             <div class="wt-filters" role="group" aria-label="Feed source" id="feed-filters"></div>
+            <span class="wt-seg wt-feed-view" role="group" aria-label="Feed view"><span class="wt-seg-b" role="button" tabindex="0" data-feed-view="ticket" aria-pressed="true">By ticket</span><span class="wt-seg-b" role="button" tabindex="0" data-feed-view="flat" aria-pressed="false">Flat</span></span>
             <span class="wt-new-count" id="new-count" hidden></span>
             <span class="wt-mark-read" id="mark-read" role="button" tabindex="0">Mark all read</span>
           </div>
+          <div class="wt-feed-search"><input id="feed-search" class="wt-input" type="search" placeholder="Search the feed: key, author, words…" aria-label="Search the feed" autocomplete="off"><span class="wt-feed-search-count" id="feed-search-count"></span></div>
           <ol class="wt-feed-list" id="feed-list"></ol>
         </div>
       </aside>

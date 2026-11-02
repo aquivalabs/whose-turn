@@ -1,7 +1,8 @@
 // Whose Turn window: renders the rows the local server computed and re-renders on every server-sent update.
 (() => {
   let S = null;
-  const ui = { feed: 'all', move: 'open', open: new Set(), modal: null, showDone: false, ws: '' };
+  const ui = { feed: 'all', feedView: 'ticket', feedQuery: '', openGroups: new Set(), move: 'open', open: new Set(), modal: null, showDone: false, ws: '' };
+  try { ui.feedView = localStorage.getItem('wt-feed-view') || 'ticket'; } catch (e) { /* storage may be blocked */ }
   try { ui.ws = new URLSearchParams(location.search).get('ws') || localStorage.getItem('wt-ws') || ''; } catch (e) { /* storage may be blocked */ }
   const $ = (id) => document.getElementById(id);
 
@@ -206,13 +207,67 @@
       return b;
     }));
   }
+  const matchesQuery = (r) => {
+    const words = ui.feedQuery.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!words.length) return true;
+    const hay = [r.ref, r.key, r.kind, r.who, r.text, r.body].join(' ').toLowerCase();
+    return words.every((word) => hay.includes(word));
+  };
+  const groupOf = (r) => r.key || r.ref || r.id;
+  const feedGroups = (rows) => {
+    const groups = new Map();
+    for (const r of rows) {
+      const id = groupOf(r);
+      if (!groups.has(id)) groups.set(id, { id, items: [], newest: r.at, unread: 0 });
+      const g = groups.get(id);
+      g.items.push(r);
+      if (r.at > g.newest) g.newest = r.at;
+      if (isNew(r)) g.unread += 1;
+    }
+    return [...groups.values()].sort((a, b) => String(b.newest).localeCompare(String(a.newest)));
+  };
+  const groupHead = (g) => {
+    const row = (S.turn || []).find((r) => r.key === g.id);
+    const head = document.createElement('div'); head.className = 'wt-feed-group-head';
+    const caret = span('wt-feed-group-caret', '›');
+    const body = document.createElement('div');
+    const keyLine = document.createElement('div'); keyLine.className = 'wt-feed-group-key';
+    const k = link(g.id, row ? row.ticket_url : g.items[0].url); if (k.classList) k.classList.add('wt-key');
+    keyLine.append(k);
+    if (row) keyLine.append(span('wt-feed-group-sum', row.summary));
+    const meta = document.createElement('div'); meta.className = 'wt-feed-group-meta';
+    const kinds = [...new Set(g.items.map((r) => r.kind))].slice(0, 3).join(' · ');
+    meta.append(span('wt-feed-group-count' + (g.unread ? ' new' : ''), g.unread ? g.unread + ' new' : String(g.items.length)), span('', kinds), span('wt-feed-when', ago(g.newest)));
+    if (row && row.group === 'you') meta.append(span('wt-at-you', 'your move'));
+    body.append(keyLine, meta);
+    head.append(caret, body);
+    head.addEventListener('click', () => { if (ui.openGroups.has(g.id)) ui.openGroups.delete(g.id); else ui.openGroups.add(g.id); render(); });
+    return head;
+  };
   function renderFeed(feed) {
     renderFilters();
     const newCount = feed.filter(isNew).length;
     $('new-count').hidden = newCount === 0;
     $('new-count').textContent = newCount + ' new';
-    const rows = feed.filter((r) => ui.feed === 'all' || r.source === ui.feed).slice(0, 120);
-    $('feed-list').replaceChildren(...rows.map((r) => {
+    const bySource = feed.filter((r) => ui.feed === 'all' || r.source === ui.feed);
+    const rows = bySource.filter(matchesQuery).slice(0, 200);
+    $('feed-search-count').textContent = ui.feedQuery ? rows.length + ' of ' + bySource.length : '';
+    document.querySelectorAll('[data-feed-view]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.feedView === ui.feedView)));
+    if (ui.feedView === 'ticket') {
+      $('feed-list').replaceChildren(...feedGroups(rows).map((g) => {
+        const li = document.createElement('li'); li.className = 'wt-feed-group';
+        if (g.unread) li.classList.add('is-new');
+        const open = ui.openGroups.has(g.id) || Boolean(ui.feedQuery);
+        if (open) li.classList.add('is-open');
+        li.append(groupHead(g));
+        if (open) { const children = document.createElement('ul'); children.className = 'wt-feed-children'; children.append(...g.items.map(feedItem)); li.append(children); }
+        return li;
+      }));
+      return;
+    }
+    $('feed-list').replaceChildren(...rows.map(feedItem));
+  }
+  function feedItem(r) {
       const li = document.createElement('li');
       if (isNew(r)) li.classList.add('is-new');
       li.addEventListener('click', () => { if (isNew(r)) setMarks({ seen: [r.id] }); });
@@ -245,7 +300,6 @@
       } else if (r.text) body.append(span('wt-feed-text', (r.source === 'github' && r.key ? r.key + ' · ' : '') + r.text));
       li.append(icon, body);
       return li;
-    }));
   }
 
   function showModal(r) {
@@ -523,6 +577,12 @@
     document.querySelectorAll('[data-move-view]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     render();
   }));
+  document.querySelectorAll('[data-feed-view]').forEach((b) => onAct(b, () => {
+    ui.feedView = b.dataset.feedView;
+    try { localStorage.setItem('wt-feed-view', ui.feedView); } catch (e) { /* ignore */ }
+    render();
+  }));
+  $('feed-search').addEventListener('input', (e) => { ui.feedQuery = e.target.value.trim(); render(); });
   onAct($('mark-read'), () => {
     const ids = S.feed.map((r) => r.id);
     setMarks({ seen: ids, base: Date.now() });
