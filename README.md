@@ -129,7 +129,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - Feed: newest first, one filter button per connector entry, unread items highlighted until clicked plus "Mark all read". Only written things expand. "Open formatted" renders the Markdown safely from DOM nodes, never innerHTML. A "@you" tag marks mentions.
 - To do: an input, checkboxes, a "Done N" toggle; ticket keys become links. Claude adds items through the API.
 - Status line: live dot, "last check Xs ago", Refresh now, and a banner for source or config errors.
-- A tab strip in the top bar switches between workspaces when there is more than one; each tab shows its open "your move" count, the choice is remembered in the browser and `?ws=<id>` opens one directly.
+- A rail down the left edge lists the workspaces, like a browser's side tabs: icons only, names on hover. Each icon is generated from the workspace id and tinted by its palette, with the open "your move" count as a badge. The choice is remembered in the browser and `?ws=<id>` opens one directly.
 
 ## Claude Code plugin
 

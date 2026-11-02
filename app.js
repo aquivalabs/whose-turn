@@ -246,22 +246,52 @@
   }
   const closeModal = () => { $('modal').hidden = true; ui.modal = null; };
 
-  function renderTabs() {
-    const tabs = $('tabs');
-    const list = S.workspaces || [];
-    if (list.length < 2) { tabs.replaceChildren(); return; }
-    tabs.replaceChildren(...list.map((w) => {
-      const b = span('wt-seg-b', w.name); b.setAttribute('role', 'tab'); b.tabIndex = 0;
-      b.setAttribute('aria-selected', String(w.id === S.workspace.id)); b.setAttribute('aria-pressed', String(w.id === S.workspace.id));
-      if (w.open_moves) { const count = document.createElement('b'); count.textContent = String(w.open_moves); b.append(count); }
-      onAct(b, () => { if (w.id === S.workspace.id) return; ui.ws = w.id; try { localStorage.setItem('wt-ws', w.id); } catch (e) { /* ignore */ } ui.open.clear(); lastVersion = -1; load(); });
-      return b;
-    }));
+  // ---------- the rail: one generated icon per workspace, seeded by its id, tinted by its palette
+  const SVG = 'http://www.w3.org/2000/svg';
+  const svgNode = (name, attributes) => { const node = document.createElementNS(SVG, name); for (const key in attributes) node.setAttribute(key, String(attributes[key])); return node; };
+  const hashOf = (text) => { let hash = 2166136261; for (let i = 0; i < text.length; i += 1) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); } return hash >>> 0; };
+  const seededRandom = (seed) => { let state = seed >>> 0; return () => { state = (state + 0x6d2b79f5) >>> 0; let mixed = Math.imul(state ^ (state >>> 15), state | 1); mixed ^= mixed + Math.imul(mixed ^ (mixed >>> 7), mixed | 61); return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296; }; };
+  const workspaceColours = (w) => {
+    const scheme = w.theme ? w.theme[isDark() ? 'dark' : 'light'] : null;
+    return { fill: scheme ? scheme['--md-primary-container'] : 'var(--md-primary-container)', ink: scheme ? scheme['--md-on-primary-container'] : 'var(--md-on-primary-container)', dot: scheme ? scheme['--md-primary'] : 'var(--md-primary)' };
+  };
+  const workspaceIcon = (w) => {
+    const colours = workspaceColours(w);
+    const random = seededRandom(hashOf(w.id));
+    const svg = svgNode('svg', { viewBox: '0 0 36 36', class: 'wt-rail-icon', 'aria-hidden': 'true' });
+    svg.append(svgNode('rect', { x: 0, y: 0, width: 36, height: 36, rx: 10, fill: colours.fill }));
+    const dots = 3 + Math.floor(random() * 3);
+    for (let i = 0; i < dots; i += 1) {
+      const angle = random() * Math.PI * 2, distance = 9 + random() * 7;
+      svg.append(svgNode('circle', { cx: (18 + Math.cos(angle) * distance).toFixed(1), cy: (18 + Math.sin(angle) * distance).toFixed(1), r: (1.6 + random() * 2.2).toFixed(1), fill: colours.dot, opacity: (0.35 + random() * 0.4).toFixed(2) }));
+    }
+    const letter = svgNode('text', { x: 18, y: 24, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 600, 'font-family': 'Roboto, Inter, system-ui, sans-serif', fill: colours.ink });
+    letter.textContent = (w.name || w.id).trim().charAt(0).toUpperCase();
+    svg.append(letter);
+    return svg;
+  };
+  const switchWorkspace = (id) => {
+    if (id === S.workspace.id) return;
+    ui.ws = id;
+    try { localStorage.setItem('wt-ws', id); } catch (e) { /* storage may be blocked */ }
+    ui.open.clear(); lastVersion = -1; load();
+  };
+  function renderRail() {
+    const rail = $('rail');
+    const items = (S.workspaces || []).map((w) => {
+      const item = document.createElement('a'); item.className = 'wt-rail-item'; item.href = '?ws=' + encodeURIComponent(w.id); item.title = w.name;
+      item.setAttribute('aria-selected', String(w.id === S.workspace.id));
+      item.append(workspaceIcon(w), span('wt-rail-label', w.name));
+      if (w.open_moves) item.append(span('wt-rail-badge', String(w.open_moves)));
+      item.addEventListener('click', (e) => { e.preventDefault(); switchWorkspace(w.id); });
+      return item;
+    });
+    rail.replaceChildren(...items, span('wt-rail-spacer', ''));
   }
 
   function render() {
     if (!S) return;
-    renderTabs();
+    renderRail();
     const turn = S.turn;
     renderMove(turn);
     renderWaiting(turn);
@@ -305,7 +335,7 @@
     themed.theme = theme && theme.light && theme.dark ? theme : null;
     paintTheme();
   };
-  DARK.addEventListener('change', paintTheme);
+  DARK.addEventListener('change', () => { paintTheme(); if (S) renderRail(); });
 
   // ---------- data flow: load state, then reload on every server push
   let lastVersion = -1;
