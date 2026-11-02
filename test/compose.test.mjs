@@ -24,3 +24,13 @@ test('a failing or malformed CLI falls back to the first line as the title and a
   assert.equal(missing.kind, 'improvement');
   await assert.rejects(composeIssue('   '), /at least one line/);
 });
+
+test('the configured bug words of another language count, as stems, next to the English defaults', async () => {
+  const fail = async () => { throw new Error('ENOENT'); };
+  const configured = await composeIssue('der Knopf ist kaputtgegangen', { run: fail, bugWords: ['kaputt'] });
+  assert.equal(configured.kind, 'bug');
+  const unconfigured = await composeIssue('der Knopf ist kaputtgegangen', { run: fail });
+  assert.equal(unconfigured.kind, 'improvement');
+  const inside = await composeIssue('a debugger session', { run: fail });
+  assert.equal(inside.kind, 'improvement');
+});

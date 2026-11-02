@@ -23,6 +23,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `port`, `poll_seconds`, `history_days` | the port, how often to poll, how far back the feed reaches |
 | `feedback.workspace`, `team`, `project` | where the "to the backlog" button and the `whose_turn_feedback` MCP tool file bugs and improvements about the monitor: a Linear workspace slug, team key and project name; the key with issue-creation rights goes to the secret store under `feedback.token_service` (default `whose-turn-feedback`) and the workspace slug |
 | `feedback.composer` | the user's own agent that turns a remark into an issue: `{command, args}` of a CLI that reads the prompt on stdin and prints JSON (`{title, kind, body}`, or a wrapper with a `result` string that contains it); default `claude -p --output-format json --model claude-haiku-5-5`, so Claude Code on the user's subscription; `codex exec` or anything alike works the same way |
+| `feedback.bug_words` | extra words, in any language, that make the fallback composer (used when the agent CLI gives no usable answer) call a remark a bug; matched as stems at a word start; the English defaults bug, broken, crash, error, fail, wrong always apply |
 | `workspaces[].id`, `name` | a short id used in the API and the display name |
 | `workspaces[].key_pattern` | regex for ticket keys in PR titles and to-dos; the default matches any Jira-style key |
 | `workspaces[].connectors` | an object keyed by type, or a list of `{type, id?, label?, …}` entries when one type appears twice |
