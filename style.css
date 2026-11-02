@@ -214,10 +214,18 @@
   .wt-rail-badge { position: absolute; left: 30px; top: 2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--md-primary); color: var(--md-on-primary); font-size: 10px; font-weight: 700; line-height: 18px; text-align: center; }
   .wt-rail:hover .wt-rail-badge, .wt-rail:focus-within .wt-rail-badge { position: static; flex: none; }
   .wt-rail-spacer { flex: 1; }
-  /* Copy for AI: the small button that puts a row, a feed item or a workspace on the clipboard as text. */
-  .wt-give { margin-top: 6px !important; }
-  .wt-give-btn { font-size: 12px; height: 26px; padding: 0 10px; white-space: nowrap; }
-  .wt-give-btn.sent { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); border-color: transparent; }
+  /* The AI button: one sparkle everywhere; it copies the item with its context as text for an assistant. */
+  .wt-ai { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; color: var(--md-primary); background: rgba(var(--md-state), .06); vertical-align: middle; transition: background .12s ease, transform .12s ease; }
+  .wt-ai svg { width: 15px; height: 15px; }
+  .wt-ai:hover { background: var(--md-secondary-container); transform: scale(1.08); }
+  .wt-ai:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 1px; }
+  .wt-ai.sent { background: var(--md-tertiary-container); color: var(--md-on-tertiary-container); }
+  .wt-ai.failed { background: var(--md-error-container); color: var(--md-on-error-container); }
+  .wt-ai-big { width: 32px; height: 32px; background: rgba(var(--glass), .7); }
+  .wt-ai-big svg { width: 18px; height: 18px; }
+  .wt-give { margin-top: 8px !important; display: flex; align-items: center; gap: 8px; }
+  .wt-give-hint { font-size: 12px; opacity: .8; }
+  .wt-status .wt-give-hint { margin-left: -4px; }
   .wt-rail-gear { width: 36px; height: 36px; flex: none; display: grid; place-items: center; color: var(--md-on-surface-variant); }
   /* Settings sheet: the workspace list on the left, one workspace's form on the right. */
   .wt-settings-card { width: min(1040px, 100%); height: min(760px, 100%); }

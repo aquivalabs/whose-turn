@@ -13,7 +13,11 @@
           "org": "your-org",
           "me": "",
           "account": "",
-          "bots": ["github-actions", "dependabot", "[bot]"]
+          "bots": [
+            "github-actions",
+            "dependabot",
+            "[bot]"
+          ]
         },
         "jira": {
           "base": "https://your-site.atlassian.net",
@@ -29,22 +33,59 @@
         "passed_next": "Merge it and close the ticket",
         "merged_next": "Close the ticket",
         "statuses": {
-          "passed": ["passed"],
-          "code_review": ["code review", "in review"],
-          "qa": ["ready for qa", "in qa", "testing"],
-          "on_hold": ["on hold", "blocked"],
-          "backlog": ["backlog"]
+          "passed": [
+            "passed"
+          ],
+          "code_review": [
+            "code review",
+            "in review"
+          ],
+          "qa": [
+            "ready for qa",
+            "in qa",
+            "testing"
+          ],
+          "on_hold": [
+            "on hold",
+            "blocked"
+          ],
+          "backlog": [
+            "backlog"
+          ]
         },
-        "automation_authors": ["automation"]
+        "automation_authors": [
+          "automation"
+        ]
       }
     },
     {
       "id": "personal",
       "name": "Personal",
-      "theme": { "seed": "#3d7a5c", "accent": "#c27a2c" },
+      "theme": {
+        "seed": "#3d7a5c",
+        "accent": "#c27a2c"
+      },
       "connectors": {
-        "github": { "repo": "you/your-project" }
+        "github": {
+          "repo": "you/your-project"
+        }
       }
+    },
+    {
+      "id": "demo",
+      "name": "Demo",
+      "key_pattern": "\\bNW-\\d+\\b",
+      "theme": {
+        "seed": "#3d7a5c",
+        "accent": "#c27a2c"
+      },
+      "connectors": [
+        {
+          "type": "demo",
+          "scenario": "northwind",
+          "label": "Demo tracker"
+        }
+      ]
     }
   ]
 }

@@ -13,7 +13,7 @@
     <span class="wt-live" id="live"></span>
     <span id="status-text">Connecting…</span>
     <span class="wt-btn" id="refresh" role="button" tabindex="0">Refresh now</span>
-    <span class="wt-btn" id="copy-all" role="button" tabindex="0" title="Copies every workspace as text, ready to paste into any assistant">Copy all for AI</span>
+    <span id="copy-all"></span><span class="wt-give-hint">AI: copy everything</span>
   </div>
   <div class="wt-alert" id="alert" hidden></div>
 
@@ -23,7 +23,7 @@
       <div class="wt-title">
         <h1>Whose Turn</h1>
         <p><b id="sum-mine">—</b> waiting on you, <b id="sum-others">—</b> waiting on someone else.</p>
-        <p class="wt-give"><span class="wt-btn tonal wt-give-btn" id="give-workspace" role="button" tabindex="0" title="Copies this workspace as text: your moves, who holds what, your to-dos. Paste it into Claude or any other assistant and add what you want.">Copy workspace for AI</span></p>
+        <p class="wt-give"><span id="give-workspace"></span><span class="wt-give-hint">AI: copy this workspace</span></p>
       </div>
       <div class="wt-tiles" id="tiles">
         <div class="wt-tile is-you"><span>Your move</span><strong id="tile-mine">—</strong></div>

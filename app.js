@@ -37,18 +37,28 @@
   };
   const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then((r) => r.json());
 
-  // ---------- copy for AI: the server renders a row, a feed item, the workspace or everything as Markdown; the window puts it on the clipboard
-  const COPY_LABEL = 'Copy for AI';
-  const copyText = (b, query, label) => fetch('/api/handoff?' + new URLSearchParams(query)).then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+  // ---------- the AI button: one small sparkle everywhere; it copies the item with its context as text for any assistant
+  const AI_HINT = 'Copy for AI: this with its context as text, ready to paste into Claude or any other assistant';
+  const sparkle = () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9L12 2.5zM5 15l.9 2.6 2.6.9-2.6.9L5 22l-.9-2.6-2.6-.9 2.6-.9L5 15zm14-2l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2z');
+    path.setAttribute('fill', 'currentColor');
+    svg.append(path);
+    return svg;
+  };
+  const copyText = (b, query) => fetch('/api/handoff?' + new URLSearchParams(query)).then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
     .then((text) => navigator.clipboard.writeText(text))
-    .then(() => { b.textContent = 'Copied'; b.classList.add('sent'); setTimeout(() => { b.textContent = label; b.classList.remove('sent'); }, 2000); })
-    .catch(() => { b.textContent = 'Failed'; setTimeout(() => { b.textContent = label; }, 2000); });
-  const copyButton = (kind, ref, label) => {
-    const text = label || COPY_LABEL;
-    const b = button('wt-btn tonal wt-give-btn', text, () => copyText(b, { ws: S.workspace.id, kind, ref }, text), 'Copy with context, to paste into any assistant');
-    b.title = 'Copies this with its context as text, ready to paste into Claude or any other assistant';
+    .then(() => { b.classList.add('sent'); b.dataset.tip = 'Copied'; setTimeout(() => { b.classList.remove('sent'); b.dataset.tip = AI_HINT; }, 1600); })
+    .catch(() => { b.classList.add('failed'); b.dataset.tip = 'Could not copy'; setTimeout(() => { b.classList.remove('failed'); b.dataset.tip = AI_HINT; }, 1600); });
+  const aiButton = (query, extraClass) => {
+    const b = button('wt-ai' + (extraClass ? ' ' + extraClass : ''), '', () => copyText(b, query), 'Copy for AI');
+    b.dataset.tip = AI_HINT;
+    b.append(sparkle());
     return b;
   };
+  const copyButton = (kind, ref) => aiButton({ ws: S.workspace.id, kind, ref });
 
   // ---------- marks (kept by the server on disk)
   const marks = () => S.marks;
@@ -151,7 +161,7 @@
       const comment = document.createElement('td'); comment.className = 'wt-hide-narrow';
       if (r.comment) { comment.className += ' wt-quote'; comment.append(link(r.comment, r.comment_url)); }
       const act = document.createElement('td');
-      act.append(copyButton('row', r.row_id, 'Copy'), ' ', button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
+      act.append(copyButton('row', r.row_id), ' ', button('wt-mark' + (showHandled ? ' undo' : ''), showHandled ? 'Undo' : 'Handled',
         () => setMarks({ handled: { [r.row_id]: showHandled ? null : new Date().toISOString() } }),
         (showHandled ? 'Move back to open: ' : 'Mark as handled: ') + r.key));
       tr.append(keyCell(r), next, prCell(r), comment, act);
@@ -184,7 +194,7 @@
         wrap.append(l, q);
         next.append(wrap);
       } else next.textContent = r.next;
-      const act = document.createElement('td'); act.append(copyButton('row', r.row_id, 'Copy'));
+      const act = document.createElement('td'); act.append(copyButton('row', r.row_id));
       tr.append(keyCell(r), st, who, next, prCell(r), act);
       return tr;
     }));
@@ -588,8 +598,9 @@
     setMarks({ seen: ids, base: Date.now() });
   });
   onAct($('refresh'), () => { $('status-text').textContent = 'Checking now…'; post('/api/refresh'); });
-  onAct($('give-workspace'), () => copyText($('give-workspace'), { ws: S.workspace.id, kind: 'workspace' }, 'Copy workspace for AI'));
-  onAct($('copy-all'), () => copyText($('copy-all'), { all: '1' }, 'Copy all for AI'));
+  $('give-workspace').replaceWith(Object.assign(aiButton({ ws: '', kind: 'workspace' }, 'wt-ai-big'), { id: 'give-workspace' }));
+  $('give-workspace').addEventListener('click', (e) => { e.stopPropagation(); copyText($('give-workspace'), { ws: S.workspace.id, kind: 'workspace' }); }, true);
+  $('copy-all').replaceWith(Object.assign(aiButton({ all: '1' }), { id: 'copy-all' }));
   onAct($('modal-close'), closeModal);
   onAct($('settings-save'), saveSettings);
   onAct($('settings-close'), closeSettings);

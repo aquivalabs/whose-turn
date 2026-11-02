@@ -34,6 +34,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `…jira.token_service` | the secret-store entry holding the token, default `whose-turn-jira` |
 | `…jira.jql` | which tickets to watch |
 | `workspaces[].rules` | the team's process, see Rules below |
+| `…connectors.demo.scenario` | `northwind` (a web team with Jira-like tickets and PRs), `atlas` (a mobile team with other status names) or `garden` (a side project, PRs only); invented data, no network |
 | `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark Material 3 scheme from it (`lib/palette.mjs`); without it the stylesheet's blue stays |
 | `workspaces[].theme.accent` | optional second hex that sets the tertiary hue; defaults to the seed's hue turned by 80 degrees |
 
@@ -55,7 +56,7 @@ State lives next to the config, per workspace: `workspaces/<id>/state.json` (las
 | `lib/palette.mjs` | a workspace's light and dark scheme from its theme seed |
 | `lib/api.mjs` | the local HTTP API, SSE stream and static files |
 | `lib/http-client.mjs`, `lib/secrets.mjs`, `lib/notify.mjs`, `lib/store.mjs`, `lib/errors.mjs`, `lib/text.mjs` | ETag fetch, secret lookup, desktop notification, files on disk, the error envelope, text helpers |
-| `connectors/` | one module per source type |
+| `connectors/` | one module per source type; `demo.mjs` is a source of invented data (scenarios `northwind`, `atlas`, `garden`) that shows every state without any account |
 | `index.html`, `app.js`, `style.css` | the window |
 | `backdrop.js` | the dot-drawn animal on the window's backdrop |
 | `vendor/` | Tippy.js 6.3.7 and Popper 2.11.8, pinned, served locally |
@@ -132,6 +133,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - Every header is one line, truncated with an ellipsis. Anything that hides more text gets a "?" icon at the end. Tooltips are Tippy: instant, also on click, interactive, keep line breaks.
 - Your move: one row per thing to do, with a "?" for why it is there, an age chip (amber after 24 h) and a Handled button. An Open / Handled switch sits in the header.
 - Waiting on others: who holds the ticket and for how long, from the changelog (amber after 3 days). For On Hold, the one-line reason with a tooltip.
+- The AI button, a small sparkle on every row, on an expanded feed item, under the title and in the top bar, copies that item, the workspace or everything as Markdown with its context, ready to paste into any assistant.
 - Feed: grouped by ticket by default, the ticket with the newest event on top, with the event count or the unread count on its head; a group opens into its events. A search box filters by any words across key, author, kind and text, and opens the matching groups. "Flat" shows the plain newest-first list. One filter button per connector entry, unread items highlighted until clicked plus "Mark all read". Only written things expand. "Open formatted" renders the Markdown safely from DOM nodes, never innerHTML. A "@you" tag marks mentions.
 - To do: an input, checkboxes, a "Done N" toggle; ticket keys become links. Claude adds items through the API.
 - Status line: live dot, "last check Xs ago", Refresh now, and a banner for source or config errors.
@@ -154,7 +156,7 @@ For development, add this checkout as a local marketplace: `claude plugin market
 
 ## Handing things to an assistant
 
-**Copy for AI** is the everyday path: the button on a row, on an expanded feed item, under the window's title ("Copy workspace for AI") and in the top bar ("Copy all for AI") puts a Markdown text on the clipboard: the ticket, its status and next step with the why, the links, its pull requests and the latest comments; or a whole workspace with your moves, who holds what and your to-dos. Paste it into Claude, ChatGPT or anything else and add what you want.
+**The AI button** is the everyday path: the sparkle on a row, on an expanded feed item, under the window's title (this workspace) and in the top bar (everything) puts a Markdown text on the clipboard: the ticket, its status and next step with the why, the links, its pull requests and the latest comments; or a whole workspace with your moves, who holds what and your to-dos. Paste it into Claude, ChatGPT or anything else and add what you want.
 
 The queue is for agents that pull on their own: `POST /api/inbox` hands an item over, every consumer sees it once (the Claude Code plugin's prompt hook takes it into your next message; any MCP client reads it with `whose_turn_inbox` under its own client name), and the context is built when the item is taken. To give another agent the monitor, register the MCP server as a stdio command:
 
