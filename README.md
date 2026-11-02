@@ -98,7 +98,7 @@ Handled marks hide a row until something newer happens on it. Desktop notificati
 
 ## The window
 
-- Material 3 plus glass: tonal surfaces seeded from a brand blue, translucent blurred islands with 12 px corners, dark and light schemes, a gradient header with stat tiles.
+- Material 3 plus glass: tonal surfaces seeded from one blue, later a per-workspace setting, translucent blurred islands with 12 px corners, dark and light schemes, a gradient header with stat tiles.
 - Two columns. Left: Your move, To do, Waiting on others. Right: the feed. The page never scrolls; each island scrolls inside, with sticky table headers.
 - Every header is one line, truncated with an ellipsis. Anything that hides more text gets a "?" icon at the end. Tooltips are Tippy: instant, also on click, interactive, keep line breaks.
 - Your move: one row per thing to do, with a "?" for why it is there, an age chip (amber after 24 h) and a Handled button. An Open / Handled switch sits in the header.
