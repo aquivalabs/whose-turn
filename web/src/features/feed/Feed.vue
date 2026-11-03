@@ -175,7 +175,6 @@ const markAll = async () => {
               :item="item"
               :source="sourceOf(item.source)"
               :fresh="fresh(item)"
-              :lit="Boolean(group.unread)"
               :expanded="ui.open.has(item.id)"
               @open="emit('open', $event)"
               @toggle="toggleItem"

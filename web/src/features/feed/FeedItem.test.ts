@@ -40,3 +40,12 @@ test('a read item asks for nothing when clicked, and shows its body only when ex
   await rerender({ item, source, fresh: false, expanded: true });
   expect(screen.getByText('please look')).toBeTruthy();
 });
+
+test('only a fresh item carries the new styling', async () => {
+  const { rerender } = render(FeedItemRow, { props: { item, source, fresh: false, expanded: false } });
+  const row = () => screen.getByText('PROJ-7').closest('li')!;
+
+  expect(row().classList.contains('feed-item--new')).toBe(false);
+  await rerender({ item, source, fresh: true, expanded: false });
+  expect(row().classList.contains('feed-item--new')).toBe(true);
+});

@@ -12,7 +12,6 @@ const props = defineProps<{
   item: FeedItem;
   source: ConnectorSummary;
   fresh: boolean;
-  lit?: boolean;
   expanded: boolean;
 }>();
 const emit = defineEmits<{ open: [item: FeedItem]; toggle: [id: string]; seen: [id: string] }>();
@@ -40,7 +39,7 @@ const toggle = () => {
 <template>
   <li
     class="feed-item"
-    :class="{ 'feed-item--new': fresh, 'feed-item--lit': lit, 'feed-item--open': open }"
+    :class="{ 'feed-item--new': fresh, 'feed-item--open': open }"
     @click="seen"
   >
     <span class="feed-item__icon" :class="modifier('feed-item__icon', iconTone)">{{ badge }}</span>
@@ -237,24 +236,20 @@ const toggle = () => {
   margin-top: 8px;
 }
 
-.feed-item--new .feed-item__kind,
-.feed-item--lit .feed-item__kind {
+.feed-item--new .feed-item__kind {
   color: var(--md-on-surface);
   font-weight: 700;
 }
 
-.feed-item--new .feed-item__text,
-.feed-item--lit .feed-item__text {
+.feed-item--new .feed-item__text {
   color: var(--md-on-surface);
 }
 
-.feed-item--new .feed-item__icon,
-.feed-item--lit .feed-item__icon {
+.feed-item--new .feed-item__icon {
   box-shadow: 0 0 0 2px var(--new);
 }
 
-.feed-item--new .feed-item__when::before,
-.feed-item--lit .feed-item__when::before {
+.feed-item--new .feed-item__when::before {
   content: 'NEW';
   display: inline-block;
   margin-right: 6px;
