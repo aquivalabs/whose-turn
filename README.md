@@ -46,10 +46,19 @@ Nothing that names an employer, an account or a team process lives in this repos
 
 A flat config with `github`, `jira` and `rules` at the top level still loads as one workspace named `default`.
 
-Secrets never go into the config. GitHub uses `gh auth token`. The Jira API token lives in the macOS Keychain under the service and the account email; paste it into the settings sheet or send it through the API, and the server stores it. Elsewhere, or for a launch agent that is refused Keychain access, the server keeps it in `<data>/secrets/<service>@<account>` with mode 600.
-
+Secrets never go into the config. GitHub uses `gh auth token`. The Jira API token lives in the platform's secret store under the service and the account email: the macOS Keychain, libsecret on Linux (`secret-tool`), or the Windows Credential Manager (through `lib/platform/credential.ps1`). Paste it into the settings sheet or send it through the API, and the server stores it. When the store is missing or refuses (no `secret-tool`, a launch agent refused Keychain access), the server keeps it in `<data>/secrets/<service>@<account>` with mode 600. On macOS `security` receives the value as a command-line argument, which other local processes can see for a moment; libsecret and the Windows script read it from stdin.
 
 State lives next to the config, per workspace: `workspaces/<id>/state.json` (last poll), `marks.json` (read, handled, notified), `todos.json`, `cache.json` (fetched PR details, so a restart does not refetch them; versioned, never holds a token).
+
+## Platforms
+
+| platform | autostart | secrets | notifications | status |
+|---|---|---|---|---|
+| macOS | launchd agent, `install.sh` | Keychain | `osascript` | in daily use |
+| Linux | systemd user unit, `install.sh` | libsecret, else file | `notify-send` | scripts and argv tested with stubs; not run on a real machine |
+| Windows | Task Scheduler, one `schtasks` line that `install.sh` prints | Credential Manager, else file | PowerShell balloon | untested on Windows |
+
+On Windows, run `schtasks /Create /SC ONLOGON /TN whose-turn /TR "\"<path to node.exe>\" \"<this folder>\server.mjs\""` once; `install.sh` prints the same line and installs nothing. The notification is a `NotifyIcon` balloon shown by `powershell`, which Windows 10 and 11 display as a toast; title and body reach it through environment variables, not through the script text.
 
 ## Files
 
@@ -62,10 +71,10 @@ State lives next to the config, per workspace: `workspaces/<id>/state.json` (las
 | `lib/palette.mjs` | a workspace's light and dark scheme from its theme seed |
 | `lib/api.mjs` | the local HTTP API, SSE stream and static files |
 | `lib/window.mjs` | the app window's remembered size and the launcher behind "Open as app" |
-| `lib/http-client.mjs`, `lib/secrets.mjs`, `lib/notify.mjs`, `lib/store.mjs`, `lib/errors.mjs`, `lib/text.mjs` | ETag fetch, secret lookup, desktop notification, files on disk, the error envelope, text helpers |
+| `lib/http-client.mjs`, `lib/secrets.mjs` (with `lib/platform/credential.ps1`), `lib/notify.mjs`, `lib/store.mjs`, `lib/errors.mjs`, `lib/text.mjs` | ETag fetch, secret lookup, desktop notification, files on disk, the error envelope, text helpers |
 | `connectors/` | one module per source type; `demo.mjs` is a source of invented data (scenarios `northwind`, `atlas`, `garden`) that shows every state without any account |
 | `web/` | the window: a Vue 3 app built with Vite (`web/src/App.vue`, one component per island in `web/src/components/`, pure logic in `web/src/lib/`, the dot-drawn animal in `web/src/backdrop.js`, Tippy.js 6.3.7 and Popper 2.11.8 pinned in `web/public/vendor/`); `npm run build` writes `dist/`, which the server serves and git ignores (ADR 0001) |
-| `install.sh` | macOS launch agent `local.whose-turn`: start at login, restart on crash, log to `~/Library/Logs/whose-turn.log` |
+| `install.sh` | bash installer that picks by `uname`: on macOS the launch agent `local.whose-turn` (log in `~/Library/Logs/whose-turn.log`); on Linux the user unit `~/.config/systemd/user/whose-turn.service` (log in `journalctl --user -u whose-turn`); both start at login and restart on a crash; on other systems it prints the Windows `schtasks` line. The node path is read with `command -v node` at install time |
 | `open.sh` | opens the window as its own app window (Chrome on macOS; Chrome, Chromium or Edge on Linux) at the size it last had, or in a browser tab with `--browser` or when none of those is installed; bash, not zsh, so it runs on Linux too; Windows: open the URL yourself |
 | `.claude-plugin/`, `hooks/`, `commands/`, `skills/`, `bin/` | the Claude Code plugin |
 | `test/` | `node:test` suite: rules, config, ADF conversion |
