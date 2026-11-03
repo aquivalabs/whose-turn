@@ -51,9 +51,7 @@ const setList = (typedText: string) =>
         :value="text()"
         @input="set(typed($event))"
       />
-      <span class="btn" role="button" tabindex="0" @click="set('')" @keydown.enter.prevent="set('')"
-        >None</span
-      >
+      <button type="button" class="btn" @click="set('')">None</button>
     </div>
     <input
       v-else-if="spec.list"

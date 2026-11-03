@@ -110,14 +110,7 @@ const markAll = async () => {
       <span class="feed__search-count">{{
         feedState.query ? rows.length + ' of ' + bySource.length : ''
       }}</span>
-      <span
-        class="feed__mark-read"
-        role="button"
-        tabindex="0"
-        @click="markAll"
-        @keydown.enter.prevent="markAll"
-        >Mark all read</span
-      >
+      <button type="button" class="feed__mark-read" @click="markAll">Mark all read</button>
     </div>
     <p v-if="!snapshot.feed.length" class="empty">
       No changes yet. New comments, reviews and status changes show up here.
@@ -139,7 +132,14 @@ const markAll = async () => {
             :title="group.move ? 'Your move on this ticket' : undefined"
             @click="toggleGroup(group)"
           >
-            <span class="feed__group-caret">›</span>
+            <button
+              type="button"
+              class="feed__group-caret"
+              :aria-expanded="group.open"
+              :aria-label="'Collapse or expand ' + group.id"
+            >
+              ›
+            </button>
             <div class="feed__group-text">
               <div class="feed__group-key">
                 <ExtLink
@@ -416,6 +416,10 @@ const markAll = async () => {
   color: var(--md-on-surface-variant);
   font-size: 14px;
   transition: transform 0.15s ease;
+}
+
+.feed__group-caret:focus-visible {
+  outline: var(--focus-ring);
 }
 
 .feed__group--open .feed__group-caret {

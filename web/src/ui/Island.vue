@@ -20,27 +20,19 @@ const { collapsed, toggle } = useFold(props.id);
       <h2 class="island__title">{{ title }} <slot name="head" /></h2>
       <p class="island__note">
         <span class="island__note-text">{{ note }}</span>
-        <span
-          v-if="tip"
-          class="hint-icon"
-          role="button"
-          tabindex="0"
-          aria-label="More info"
-          :data-tip="tip"
-          >?</span
-        >
-        <span
+        <button v-if="tip" type="button" class="hint-icon" aria-label="More info" :data-tip="tip">
+          ?
+        </button>
+        <button
+          type="button"
           class="fold-toggle"
           :class="{ 'fold-toggle--folded': collapsed }"
-          role="button"
-          tabindex="0"
           :aria-label="'Collapse or expand ' + id"
           data-tip="Fold this panel; it stays folded until you open it again"
           @click.stop="toggle"
-          @keydown.enter.prevent="toggle"
-          @keydown.space.prevent="toggle"
-          >▾</span
         >
+          ▾
+        </button>
       </p>
     </div>
     <div class="island__body"><slot /></div>

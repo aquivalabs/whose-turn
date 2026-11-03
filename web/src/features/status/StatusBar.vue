@@ -43,18 +43,16 @@ const openAsApp = () => {
 </script>
 <template>
   <div class="status-bar">
-    <span
+    <button
+      type="button"
       class="btn status-bar__btn status-bar__report"
-      role="button"
-      tabindex="0"
       title="A bug or a wish about this monitor, straight to its backlog"
       @click="emit('report')"
-      @keydown.enter.prevent="emit('report')"
     >
       <svg class="status-bar__icon" viewBox="0 0 24 24" aria-hidden="true">
         <path :d="BUG" fill="currentColor" /></svg
       >Report
-    </span>
+    </button>
     <span
       class="status-bar__live"
       :class="{
@@ -64,14 +62,7 @@ const openAsApp = () => {
     ></span>
     <span>{{ status }}</span>
     <span v-if="notice" class="status-bar__notice" role="alert">{{ notice }}</span>
-    <span
-      class="btn status-bar__btn"
-      role="button"
-      tabindex="0"
-      @click="refresh"
-      @keydown.enter.prevent="refresh"
-      >Refresh now</span
-    >
+    <button type="button" class="btn status-bar__btn" @click="refresh">Refresh now</button>
     <a
       v-if="ui.mode === 'app'"
       class="btn status-bar__btn"
@@ -80,17 +71,16 @@ const openAsApp = () => {
       rel="noopener"
       >Open in browser</a
     >
-    <span
+    <button
       v-else
+      type="button"
       class="btn status-bar__btn"
       :class="{ 'status-bar__btn--busy': opening }"
-      role="button"
-      tabindex="0"
       :aria-disabled="opening"
       @click="openAsApp"
-      @keydown.enter.prevent="openAsApp"
-      >{{ opening ? 'Opening…' : 'Open as app' }}</span
     >
+      {{ opening ? 'Opening…' : 'Open as app' }}
+    </button>
     <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint"
       >AI: copy everything</span
     >

@@ -61,14 +61,14 @@ const rows = computed(() => {
             </td>
             <td class="hide-narrow">
               <span v-if="row.hold_url" class="hint-row"
-                ><ExtLink :text="row.next" :url="row.hold_url" class="waiting__reason" /><span
+                ><ExtLink :text="row.next" :url="row.hold_url" class="waiting__reason" /><button
+                  type="button"
                   class="hint-icon"
-                  role="button"
-                  tabindex="0"
                   aria-label="Full reason"
                   :data-tip="row.hold_full || row.next"
-                  >?</span
-                ></span
+                >
+                  ?
+                </button></span
               >
               <template v-else>{{ row.next }}</template>
             </td>

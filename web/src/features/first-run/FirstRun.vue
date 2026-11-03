@@ -24,23 +24,10 @@ const demo = () => {
       a repository or a tracker, or look around a demo workspace with invented data first.
     </p>
     <div class="first-run__actions">
-      <span
-        class="btn btn--tonal"
-        role="button"
-        tabindex="0"
-        @click="addSource"
-        @keydown.enter.prevent="addSource"
-        >Add a source</span
-      >
-      <span
-        class="btn"
-        role="button"
-        tabindex="0"
-        :aria-disabled="busy"
-        @click="demo"
-        @keydown.enter.prevent="demo"
-        >Try a demo workspace</span
-      >
+      <button type="button" class="btn btn--tonal" @click="addSource">Add a source</button>
+      <button type="button" class="btn" :aria-disabled="busy" @click="demo">
+        Try a demo workspace
+      </button>
     </div>
     <p class="first-run__text first-run__ai">
       Or ask Claude: "add my GitHub repository to Whose Turn."

@@ -90,14 +90,7 @@ const options = computed(() => [
         autocomplete="off"
         @keydown.enter="add"
       />
-      <span
-        class="btn btn--tonal"
-        role="button"
-        tabindex="0"
-        @click="add"
-        @keydown.enter.prevent="add"
-        >Add</span
-      >
+      <button type="button" class="btn btn--tonal" @click="add">Add</button>
     </div>
     <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
     <ul class="todos__list">
@@ -107,16 +100,15 @@ const options = computed(() => [
         class="todos__item"
         :class="{ 'todos__item--done': todo.done }"
       >
-        <span
+        <button
+          type="button"
           class="todos__check"
           :class="{ 'todos__check--on': todo.done }"
           role="checkbox"
-          tabindex="0"
           :aria-checked="!!todo.done"
           :aria-label="todo.done ? 'Mark not done' : 'Mark done'"
           @click="flip(todo)"
-          @keydown.enter.prevent="flip(todo)"
-        ></span>
+        ></button>
         <span class="todos__text"
           ><template v-for="(piece, index) in pieces" :key="index"
             ><ExtLink v-if="piece.url !== undefined" :text="piece.text" :url="piece.url" /><template
@@ -126,15 +118,9 @@ const options = computed(() => [
           ></span
         >
         <span class="todos__meta">{{ meta }}</span>
-        <span
-          class="todos__delete"
-          role="button"
-          tabindex="0"
-          aria-label="Delete to-do"
-          @click="remove(todo)"
-          @keydown.enter.prevent="remove(todo)"
-          >×</span
-        >
+        <button type="button" class="todos__delete" aria-label="Delete to-do" @click="remove(todo)">
+          ×
+        </button>
       </li>
       <span v-if="!rows.length" class="empty todos__empty">{{
         showDone ? 'Nothing here yet.' : 'Nothing to do. Add one above, or ask Claude.'

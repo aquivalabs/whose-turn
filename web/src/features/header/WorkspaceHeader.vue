@@ -42,18 +42,16 @@ const { collapsed, toggle } = useFold('header');
         /></span>
       </p>
     </div>
-    <span
+    <button
+      type="button"
       class="fold-toggle workspace-header__fold"
       :class="{ 'fold-toggle--folded': collapsed }"
-      role="button"
-      tabindex="0"
       aria-label="Collapse or expand header"
       data-tip="Fold the header; it stays folded until you open it again"
       @click.stop="toggle"
-      @keydown.enter.prevent="toggle"
-      @keydown.space.prevent="toggle"
-      >▾</span
     >
+      ▾
+    </button>
     <div class="workspace-header__tiles">
       <div class="workspace-header__tile workspace-header__tile--you">
         <span class="workspace-header__tile-label">Your move</span

@@ -216,30 +216,13 @@ watch(
         <h3 id="settings-title" class="modal__title">Workspaces</h3>
         <span class="modal__meta">{{ configFile }}</span>
         <span v-if="dirty" class="settings-sheet__dirty">Unsaved changes</span>
-        <span
-          v-if="!unloaded"
-          class="btn btn--tonal"
-          role="button"
-          tabindex="0"
-          @click="save"
-          @keydown.enter.prevent="save"
-          >Save</span
-        >
-        <span
-          class="btn"
-          role="button"
-          tabindex="0"
-          @click="requestClose"
-          @keydown.enter.prevent="requestClose"
-          >Close</span
-        >
+        <button v-if="!unloaded" type="button" class="btn btn--tonal" @click="save">Save</button>
+        <button type="button" class="btn" @click="requestClose">Close</button>
       </div>
       <div v-if="ask" class="settings-sheet__confirm" role="alertdialog">
         <span class="settings-sheet__confirm-text">{{ ask.text }}</span>
-        <span class="btn btn--danger" role="button" tabindex="0" @click="answer(true)">{{
-          ask.yes
-        }}</span>
-        <span class="btn" role="button" tabindex="0" @click="answer(false)">{{ ask.no }}</span>
+        <button type="button" class="btn btn--danger" @click="answer(true)">{{ ask.yes }}</button>
+        <button type="button" class="btn" @click="answer(false)">{{ ask.no }}</button>
       </div>
       <div v-if="unloaded" class="alert settings-sheet__alert" role="alert">{{ unloaded }}</div>
       <div v-else-if="problems.length" class="alert settings-sheet__alert">
@@ -247,20 +230,24 @@ watch(
       </div>
       <div v-if="!unloaded" class="settings-sheet__body">
         <ul class="settings-sheet__list">
-          <li
-            v-for="(workspace, index) in list"
-            :key="index"
-            class="settings-sheet__workspace"
-            :aria-selected="index === selected"
-            @click="selected = index"
-          >
-            {{ workspace.name || workspace.id || 'Workspace ' + (index + 1) }}
+          <li v-for="(workspace, index) in list" :key="index">
+            <button
+              type="button"
+              class="settings-sheet__workspace"
+              :aria-current="index === selected"
+              @click="selected = index"
+            >
+              {{ workspace.name || workspace.id || 'Workspace ' + (index + 1) }}
+            </button>
           </li>
-          <li
-            class="settings-sheet__workspace settings-sheet__workspace--add"
-            @click="addWorkspace"
-          >
-            + Add workspace
+          <li>
+            <button
+              type="button"
+              class="settings-sheet__workspace settings-sheet__workspace--add"
+              @click="addWorkspace"
+            >
+              + Add workspace
+            </button>
           </li>
         </ul>
         <div class="sheet-form">
@@ -290,13 +277,9 @@ watch(
             >
               <div class="settings-sheet__connector-head">
                 <strong class="settings-sheet__connector-name">{{ specOf(entry).label }}</strong
-                ><span
-                  class="btn btn--danger"
-                  role="button"
-                  tabindex="0"
-                  @click="askRemoveConnector(index)"
-                  >Remove</span
-                >
+                ><button type="button" class="btn btn--danger" @click="askRemoveConnector(index)">
+                  Remove
+                </button>
               </div>
               <FieldRow
                 :spec="{ key: 'id', label: 'Entry id' }"
@@ -322,15 +305,15 @@ watch(
               />
             </div>
             <div class="settings-sheet__actions">
-              <span
+              <button
                 v-for="spec in catalogue"
                 :key="spec.type"
+                type="button"
                 class="btn"
-                role="button"
-                tabindex="0"
                 @click="addConnector(spec)"
-                >+ {{ spec.label }}</span
               >
+                + {{ spec.label }}
+              </button>
             </div>
             <h4 class="sheet-form__heading">Rules</h4>
             <FieldRow
@@ -360,9 +343,9 @@ watch(
             </ol>
             <p v-else class="empty">Save the workspace to see its rows.</p>
             <div class="settings-sheet__actions">
-              <span class="btn btn--danger" role="button" tabindex="0" @click="askRemoveWorkspace"
-                >Delete workspace</span
-              >
+              <button type="button" class="btn btn--danger" @click="askRemoveWorkspace">
+                Delete workspace
+              </button>
             </div>
           </template>
         </div>
@@ -423,6 +406,9 @@ watch(
 }
 
 .settings-sheet__workspace {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
   padding: 8px 12px;
   overflow: hidden;
   border-radius: 10px;
@@ -436,9 +422,14 @@ watch(
   background: var(--state-hover);
 }
 
-.settings-sheet__workspace[aria-selected='true'] {
+.settings-sheet__workspace[aria-current='true'] {
   background: var(--md-secondary-container);
   color: var(--md-on-secondary-container);
+}
+
+.settings-sheet__workspace:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
 }
 
 .settings-sheet__workspace--add {

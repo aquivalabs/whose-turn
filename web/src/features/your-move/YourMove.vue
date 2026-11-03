@@ -94,15 +94,15 @@ const mark = async (item: YourRow) => {
                   :data-tip="'Waiting since ' + when(item.row.activity_at)"
                   >{{ item.age.text }}</span
                 >
-                <span
+                <button
                   v-if="item.row.why"
+                  type="button"
                   class="hint-icon"
-                  role="button"
-                  tabindex="0"
                   aria-label="Why this is your move"
                   :data-tip="item.row.why"
-                  >?</span
                 >
+                  ?
+                </button>
                 <span
                   v-if="item.handled"
                   class="handled-chip"
@@ -135,18 +135,17 @@ const mark = async (item: YourRow) => {
                 class="table__ai"
                 :query="{ ws: snapshot.workspace.id, kind: 'row', ref: item.row.row_id }"
               />
-              <span
+              <button
+                type="button"
                 class="your-move__mark"
                 :class="{ 'your-move__mark--undo': item.handled }"
-                role="button"
-                tabindex="0"
                 :aria-label="
                   (item.handled ? 'Move back to open: ' : 'Mark as handled: ') + item.row.key
                 "
                 @click.stop="mark(item)"
-                @keydown.enter.prevent.stop="mark(item)"
-                >{{ item.handled ? 'Undo' : 'Handled' }}</span
               >
+                {{ item.handled ? 'Undo' : 'Handled' }}
+              </button>
             </td>
           </tr>
         </tbody>

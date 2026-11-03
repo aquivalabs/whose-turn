@@ -12,20 +12,19 @@ const selected = defineModel<string>({ required: true });
 </script>
 <template>
   <span class="segmented" :class="{ 'segmented--chips': chips }" role="group" :aria-label="label">
-    <span
+    <button
       v-for="option in options"
       :key="option.id"
+      type="button"
       class="segmented__option"
-      role="button"
-      tabindex="0"
       :aria-pressed="selected === option.id"
       @click="selected = option.id"
-      @keydown.enter.prevent="selected = option.id"
-      >{{ option.label
+    >
+      {{ option.label
       }}<template v-if="option.count !== undefined">
         <b class="segmented__count">{{ option.count }}</b></template
-      ></span
-    >
+      >
+    </button>
   </span>
 </template>
 <style scoped>

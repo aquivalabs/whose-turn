@@ -25,25 +25,22 @@ const copy = () =>
     );
 </script>
 <template>
-  <span
+  <button
+    type="button"
     class="ai-button"
     :class="{
       'ai-button--big': big,
       'ai-button--sent': state === 'sent',
       'ai-button--failed': state === 'failed',
     }"
-    role="button"
-    tabindex="0"
     aria-label="Copy for AI"
     :data-tip="tip"
     @click.stop="copy"
-    @keydown.enter.prevent.stop="copy"
-    @keydown.space.prevent.stop="copy"
   >
     <svg class="ai-button__icon" viewBox="0 0 24 24" aria-hidden="true">
       <path :d="SPARKLE" fill="currentColor" />
     </svg>
-  </span>
+  </button>
 </template>
 <style scoped>
 .ai-button {

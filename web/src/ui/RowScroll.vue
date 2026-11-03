@@ -40,16 +40,9 @@ const reveal = () => {
   <div ref="scroller" class="row-scroll" :class="{ 'row-scroll--floor': floor }">
     <div ref="content"><slot /></div>
   </div>
-  <span
-    v-if="hidden"
-    class="row-scroll__more"
-    role="button"
-    tabindex="0"
-    @click="reveal"
-    @keydown.enter.prevent="reveal"
-    @keydown.space.prevent="reveal"
-    >+{{ hidden }} more</span
-  >
+  <button v-if="hidden" type="button" class="row-scroll__more" @click="reveal">
+    +{{ hidden }} more
+  </button>
 </template>
 <style scoped>
 .row-scroll {

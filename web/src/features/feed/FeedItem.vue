@@ -54,30 +54,23 @@ const toggle = () => {
         <span v-if="item.mention" class="at-you">@you</span>
         <span class="feed-item__right">
           <span class="timestamp feed-item__when">{{ when }}</span>
-          <span
+          <button
             v-if="written"
+            type="button"
             class="feed-item__toggle"
-            role="button"
-            tabindex="0"
             :aria-label="open ? 'Collapse' : 'Expand'"
             :aria-expanded="open"
             @click.stop="toggle"
-            @keydown.enter.prevent.stop="toggle"
-          ></span>
+          ></button>
         </span>
       </div>
       <template v-if="open">
         <span v-if="subject" class="feed-item__text">{{ subject }}</span>
         <div class="feed-item__full">{{ item.body }}</div>
         <div class="feed-item__actions">
-          <span
-            class="btn btn--tonal"
-            role="button"
-            tabindex="0"
-            @click.stop="emit('open', item)"
-            @keydown.enter.prevent.stop="emit('open', item)"
-            >Open formatted</span
-          >
+          <button type="button" class="btn btn--tonal" @click.stop="emit('open', item)">
+            Open formatted
+          </button>
           <AiButton :query="{ ws: snapshot.workspace.id, kind: 'feed', ref: item.id }" />
           <ExtLink :text="'Open in ' + source.label" :url="item.url" class="btn" />
         </div>

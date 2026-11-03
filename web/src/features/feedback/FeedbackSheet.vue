@@ -120,18 +120,15 @@ watch(
       <div class="modal__head">
         <h3 id="feedback-title" class="modal__title">To the Whose Turn backlog</h3>
         <span class="modal__meta">{{ project }}</span>
-        <span
+        <button
+          type="button"
           class="btn btn--tonal"
-          role="button"
-          tabindex="0"
           :aria-disabled="!configured || sending"
           @click="send"
-          @keydown.enter.prevent="send"
-          >{{ sending ? 'Composing…' : 'Send' }}</span
         >
-        <span class="btn" role="button" tabindex="0" @click="close" @keydown.enter.prevent="close"
-          >Close</span
-        >
+          {{ sending ? 'Composing…' : 'Send' }}
+        </button>
+        <button type="button" class="btn" @click="close">Close</button>
       </div>
       <div v-if="problems.length" class="alert">{{ problems.join('  ·  ') }}</div>
       <div class="sheet-form">
@@ -151,16 +148,11 @@ watch(
         <p v-if="!configured" class="feedback-sheet__note">
           The maintainer's tracker is not connected on this machine, so nothing can be sent from
           here. Copy your remark and pass it on yourself.
-          <span
-            class="btn"
-            role="button"
-            tabindex="0"
-            @click="copy"
-            @keydown.enter.prevent="copy"
-            >{{
+          <button type="button" class="btn" @click="copy">
+            {{
               copied === 'sent' ? 'Copied' : copied === 'failed' ? 'Could not copy' : 'Copy remark'
-            }}</span
-          >
+            }}
+          </button>
         </p>
         <p v-else class="feedback-sheet__note">
           An assistant turns it into a proper issue (title, kind, description) and files it in the
