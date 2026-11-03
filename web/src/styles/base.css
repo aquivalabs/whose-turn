@@ -233,6 +233,9 @@
   .wt-connector-head { display: flex; align-items: center; gap: 10px; }
   .wt-connector-head strong { flex: 1; font-weight: 600; }
   .wt-settings-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .wt-dirty { color: var(--md-error); font-size: 12px; font-weight: 600; }
+  .wt-confirm { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 20px 0; padding: 8px 12px; border-radius: 10px; font-size: 13px; background: var(--md-warn-container); color: var(--md-on-warn-container); }
+  .wt-confirm > span:first-child { flex: 1; }
   .wt-btn.danger { color: var(--md-error); border-color: var(--md-error); }
   .wt-seg-b:focus-visible { outline: 2px solid var(--md-primary); outline-offset: -2px; }
   .wt-act-col { width: 1%; }

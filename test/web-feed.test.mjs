@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { reactive } from 'vue';
 import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.ts';
-import { normaliseForForm, forSaving, pendingSecrets, ruleText } from '../web/src/lib/settings.ts';
+import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
 
 const marks = { seen: ['b'], base: new Date('2026-11-01T00:00:00Z').getTime(), handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
 const items = [
@@ -55,6 +55,16 @@ test('the settings form shapes a raw workspace both ways and lists only the secr
   assert.deepEqual(forSaving(form), { id: 'a', connectors: [{ type: 'github', repo: 'x/y' }] });
   const typed = new Map([[form.connectors[0], { token: 'abc', other: '' }]]);
   assert.deepEqual(pendingSecrets([form], typed), [{ ws: 'a', connector: 'github', key: 'token', value: 'abc' }]);
+});
+
+test('the settings form is dirty only once its list differs from the copy taken at load', () => {
+  const form = reactive([normaliseForForm({ id: 'a', name: 'A' })]);
+  const loaded = settingsKey(form);
+  assert.equal(settingsKey(form), loaded);
+  form[0].name = 'B';
+  assert.notEqual(settingsKey(form), loaded);
+  form[0].name = 'A';
+  assert.equal(settingsKey(form), loaded);
 });
 
 test('a workspace held in a reactive form still shapes for saving', () => {

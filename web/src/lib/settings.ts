@@ -41,6 +41,9 @@ export const forSaving = (workspace: RawWorkspace): StoredWorkspace => {
   return copy;
 };
 
+/** The form's list as one string, read through the reactive proxy so a computed tracks every edit, to compare with the copy taken at load. */
+export const settingsKey = (list: RawWorkspace[]) => JSON.stringify(list);
+
 export interface PendingSecret {
   ws: string;
   connector: string;

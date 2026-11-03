@@ -51,6 +51,8 @@ export const ui = reactive({
   modal: null as FeedItem | null,
   feedback: false,
   settings: false,
+  settingsDirty: false,
+  settingsAsk: false,
 });
 
 lastMode.value = ui.mode;
@@ -85,6 +87,10 @@ export const alerts = computed(() => [
   ...Object.entries(snapshot.errors || {}).map(([source, text]) => source + ': ' + text),
 ]);
 export const closeSheets = () => {
+  if (ui.settings && ui.settingsDirty) {
+    ui.settingsAsk = true;
+    return;
+  }
   ui.modal = null;
   ui.settings = false;
   ui.feedback = false;

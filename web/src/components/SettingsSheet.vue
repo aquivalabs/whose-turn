@@ -3,7 +3,13 @@
 import { ref, computed, watch } from 'vue';
 import { snapshot, ui, reload } from '../store.ts';
 import { getJson, post, problemsOf } from '../lib/api.ts';
-import { normaliseForForm, forSaving, pendingSecrets, ruleText } from '../lib/settings.ts';
+import {
+  normaliseForForm,
+  forSaving,
+  pendingSecrets,
+  ruleText,
+  settingsKey,
+} from '../lib/settings.ts';
 import type { StoredWorkspace } from '../lib/settings.ts';
 import type { ApiError, ConnectorEntry, FieldSpec, RawWorkspace, RuleRow } from '../lib/types.ts';
 import FieldRow from './FieldRow.vue';
@@ -12,6 +18,12 @@ interface ConnectorSpec {
   type: string;
   label: string;
   fields: FieldSpec[];
+}
+interface Ask {
+  text: string;
+  yes: string;
+  no: string;
+  run: () => void;
 }
 interface FormFields {
   workspace: FieldSpec[];
@@ -36,6 +48,10 @@ const configFile = ref('');
 const problems = ref<string[]>([]);
 const tables = ref<Record<string, RuleRow[]>>({});
 const typed = new Map<ConnectorEntry, Record<string, string>>();
+const typedCount = ref(0);
+const loadedKey = ref('');
+const ask = ref<Ask | null>(null);
+const dirty = computed(() => typedCount.value > 0 || settingsKey(list.value) !== loadedKey.value);
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
 const ruleRows = computed(() =>
   ((current.value && tables.value[current.value.id]) || []).map(ruleText),
@@ -46,8 +62,10 @@ const specOf = (entry: ConnectorEntry): ConnectorSpec =>
     label: entry.type,
     fields: [],
   };
-const setSecret = (entry: ConnectorEntry, key: string, value: string) =>
+const setSecret = (entry: ConnectorEntry, key: string, value: string) => {
   typed.set(entry, Object.assign(typed.get(entry) || {}, { [key]: value }));
+  typedCount.value += 1;
+};
 const addWorkspace = () => {
   list.value.push(
     normaliseForForm({ id: 'new-' + (list.value.length + 1), name: 'New workspace' }),
@@ -58,6 +76,17 @@ const removeWorkspace = () => {
   list.value.splice(selected.value, 1);
   selected.value = Math.max(0, selected.value - 1);
 };
+const askRemoveWorkspace = () => {
+  if (!current.value) {
+    return;
+  }
+  ask.value = {
+    text: `Delete ${current.value.name || current.value.id}? Its to-dos and marks stay on disk.`,
+    yes: 'Delete',
+    no: 'Keep',
+    run: removeWorkspace,
+  };
+};
 const addConnector = (spec: ConnectorSpec) => current.value?.connectors.push({ type: spec.type });
 const removeConnector = (index: number) => {
   if (!current.value) {
@@ -66,12 +95,26 @@ const removeConnector = (index: number) => {
   typed.delete(current.value.connectors[index]);
   current.value.connectors.splice(index, 1);
 };
+const askRemoveConnector = (index: number) => {
+  if (!current.value) {
+    return;
+  }
+  const label = specOf(current.value.connectors[index]).label;
+  ask.value = {
+    text: `Remove the ${label} connector from ${current.value.name || current.value.id}?`,
+    yes: 'Remove',
+    no: 'Keep',
+    run: () => removeConnector(index),
+  };
+};
 const open = () =>
   getJson<ConfigReply>('/api/config').then((reply) => {
     list.value = (reply.workspaces || []).map(normaliseForForm);
     catalogue.value = reply.connectors || [];
     fields.value = reply.fields;
     typed.clear();
+    typedCount.value = 0;
+    ask.value = null;
     selected.value = Math.max(
       0,
       list.value.findIndex((workspace) => workspace.id === snapshot.workspace.id),
@@ -79,9 +122,21 @@ const open = () =>
     configFile.value = reply.config_file || '';
     problems.value = reply.problems || [];
     tables.value = reply.tables || {};
+    loadedKey.value = settingsKey(list.value);
   });
 const close = () => {
   ui.settings = false;
+};
+const askDiscard = () => {
+  ask.value = { text: 'Discard changes?', yes: 'Discard', no: 'Keep editing', run: close };
+};
+const requestClose = () => (dirty.value ? askDiscard() : close());
+const answer = (yes: boolean) => {
+  const pending = ask.value;
+  ask.value = null;
+  if (yes) {
+    pending?.run();
+  }
 };
 const save = async () => {
   try {
@@ -100,6 +155,22 @@ const save = async () => {
   }
 };
 watch(
+  [dirty, () => ui.settings],
+  () => {
+    ui.settingsDirty = ui.settings && dirty.value;
+  },
+  { immediate: true },
+);
+watch(
+  () => ui.settingsAsk,
+  (asked) => {
+    if (asked) {
+      ui.settingsAsk = false;
+      askDiscard();
+    }
+  },
+);
+watch(
   () => ui.settings,
   (isOpen) => {
     if (isOpen) {
@@ -115,12 +186,13 @@ watch(
     role="dialog"
     aria-modal="true"
     aria-labelledby="settings-title"
-    @click.self="close"
+    @click.self="requestClose"
   >
     <div class="wt-modal-card wt-settings-card">
       <div class="wt-modal-head">
         <h3 id="settings-title">Workspaces</h3>
         <span class="wt-modal-meta">{{ configFile }}</span>
+        <span v-if="dirty" class="wt-dirty">Unsaved changes</span>
         <span
           class="wt-btn tonal"
           role="button"
@@ -133,10 +205,17 @@ watch(
           class="wt-btn"
           role="button"
           tabindex="0"
-          @click="close"
-          @keydown.enter.prevent="close"
+          @click="requestClose"
+          @keydown.enter.prevent="requestClose"
           >Close</span
         >
+      </div>
+      <div v-if="ask" class="wt-confirm" role="alertdialog">
+        <span>{{ ask.text }}</span>
+        <span class="wt-btn danger" role="button" tabindex="0" @click="answer(true)">{{
+          ask.yes
+        }}</span>
+        <span class="wt-btn" role="button" tabindex="0" @click="answer(false)">{{ ask.no }}</span>
       </div>
       <div v-if="problems.length" class="wt-alert">{{ problems.join('  ·  ') }}</div>
       <div class="wt-settings-body">
@@ -176,7 +255,7 @@ watch(
                   class="wt-btn danger"
                   role="button"
                   tabindex="0"
-                  @click="removeConnector(index)"
+                  @click="askRemoveConnector(index)"
                   >Remove</span
                 >
               </div>
@@ -237,7 +316,7 @@ watch(
             </ol>
             <p v-else class="wt-empty">Save the workspace to see its rows.</p>
             <div class="wt-settings-actions">
-              <span class="wt-btn danger" role="button" tabindex="0" @click="removeWorkspace"
+              <span class="wt-btn danger" role="button" tabindex="0" @click="askRemoveWorkspace"
                 >Delete workspace</span
               >
             </div>
