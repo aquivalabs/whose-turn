@@ -46,6 +46,7 @@ Example shape: `0001-choose-the-message-queue.md`.
 |---|-------|--------|
 | 0001 | [The window is Vue 3 built with Vite; the server stays dependency-free](0001-vue-window-with-a-build.md) | accepted |
 | 0002 | [The window takes browser behaviour from VueUse, except the rail's drag](0002-vueuse-in-the-window.md) | accepted |
+| 0003 | [Comment Markdown stays a hand-written tokeniser behind a DOM builder](0003-markdown-rendering.md) | accepted |
 
 ## Referencing an ADR from code
 
