@@ -27,7 +27,7 @@ export interface YourRow {
   handled: boolean;
 }
 
-/** Rows on you, each with its handled flag: by the server's rank (lowest first), then oldest first; handled rows sink to the bottom unless only they are wanted. */
+/** Rows on you, each with its handled flag: by the server's rank (lowest first), then oldest first; the open view lists only open rows and the handled view only handled ones. */
 export const yourRows = (turn: TurnRow[], marks: HandledMarks, view: string) => {
   const you: YourRow[] = turn
     .filter((row) => row.group === 'you')
@@ -38,10 +38,8 @@ export const yourRows = (turn: TurnRow[], marks: HandledMarks, view: string) => 
         String(first.row.updated).localeCompare(String(second.row.updated)),
     );
   const open = you.filter((item) => !item.handled).length;
-  const rows =
-    view === 'handled'
-      ? you.filter((item) => item.handled)
-      : you.slice().sort((first, second) => Number(first.handled) - Number(second.handled));
+  const wantHandled = view === 'handled';
+  const rows = you.filter((item) => item.handled === wantHandled);
   return { rows, open, handled: you.length - open };
 };
 

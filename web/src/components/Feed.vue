@@ -2,9 +2,9 @@
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
 import { computed, ref } from 'vue';
 import { snapshot, ui, now, setMarks } from '../store.ts';
-import { isNew, matchesQuery, groupFeed } from '../lib/feed.ts';
+import { isNew, matchesQuery, groupFeed, moveChip } from '../lib/feed.ts';
 import type { FeedGroup } from '../lib/feed.ts';
-import type { ConnectorSummary, FeedItem } from '../lib/types.ts';
+import type { ConnectorSummary, FeedItem, TurnRow } from '../lib/types.ts';
 import { ago } from '../lib/time.ts';
 import Island from './Island.vue';
 import Segmented from './Segmented.vue';
@@ -45,11 +45,19 @@ const rows = computed(() =>
   bySource.value.filter((item) => matchesQuery(item, ui.feedQuery)).slice(0, 200),
 );
 const turnByKey = computed(() => new Map(snapshot.turn.map((row) => [row.key, row])));
+const rowsByKey = computed(() => {
+  const byKey = new Map<string, TurnRow[]>();
+  for (const row of snapshot.turn) {
+    byKey.set(row.key, [...(byKey.get(row.key) || []), row]);
+  }
+  return byKey;
+});
 const groups = computed(() => {
   void now.value;
   return groupFeed(rows.value, marks.value).map((group) => ({
     ...group,
     row: turnByKey.value.get(group.id),
+    chip: moveChip(rowsByKey.value.get(group.id) || [], snapshot.marks),
     when: ago(group.newest),
     kinds: [...new Set(group.items.map((item) => item.kind))].slice(0, 3).join(' · '),
     open: ui.openGroups.has(group.id) || Boolean(ui.feedQuery),
@@ -136,8 +144,10 @@ const markAll = async () => {
                 }}</span>
                 <span>{{ group.kinds }}</span>
                 <span class="wt-feed-when">{{ group.when }}</span>
-                <span v-if="group.row && group.row.group === 'you'" class="wt-at-you"
-                  >your move</span
+                <span
+                  v-if="group.chip"
+                  :class="group.chip === 'handled' ? 'wt-handled-chip' : 'wt-at-you'"
+                  >{{ group.chip }}</span
                 >
               </div>
             </div>

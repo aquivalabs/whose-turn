@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { reactive } from 'vue';
-import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.ts';
+import { groupFeed, isNew, moveChip, matchesQuery } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.ts';
 import { topLayer } from '../web/src/lib/layers.ts';
 import { liveStatus } from '../web/src/lib/live-status.ts';
@@ -24,7 +24,7 @@ test('the feed groups by ticket, newest group first, counting only unread items'
   assert.equal(matchesQuery(items[0], 'sam'), false);
 });
 
-test('your rows go by the server rank, then oldest first, and handled rows last; the handled view shows only them', () => {
+test('your rows go by the server rank, then oldest first, and the open view lists only open rows; the handled view only handled ones', () => {
   const turn = [
     { row_id: 'PROJ-3', group: 'you', rank: 3, updated: '2026-11-01', activity_at: '2026-11-01T00:00:00.000Z' },
     { row_id: 'PROJ-2', group: 'you', rank: 3, updated: '2026-10-30', activity_at: '2026-11-01T00:00:00.000Z' },
@@ -33,13 +33,22 @@ test('your rows go by the server rank, then oldest first, and handled rows last;
     { row_id: 'PROJ-7', group: 'you', rank: 0, updated: '2026-11-02', activity_at: '2026-11-02T00:00:00.000Z' },
   ];
   const open = yourRows(turn, marks, 'open');
-  assert.deepEqual(open.rows.map((item) => item.row.row_id), ['PROJ-7', 'PROJ-9', 'PROJ-3', 'PROJ-2']);
-  assert.deepEqual(open.rows.map((item) => item.handled), [false, false, false, true]);
+  assert.deepEqual(open.rows.map((item) => item.row.row_id), ['PROJ-7', 'PROJ-9', 'PROJ-3']);
+  assert.deepEqual(open.rows.map((item) => item.handled), [false, false, false]);
   assert.equal(open.open, 3);
   assert.equal(open.handled, 1);
   assert.deepEqual(yourRows(turn, marks, 'handled').rows.map((item) => item.row.row_id), ['PROJ-2']);
   assert.equal(isHandled(turn[1], marks), true);
   assert.deepEqual(waitingRows(turn).map((r) => r.row_id), ['PROJ-5']);
+});
+
+test('the feed chip reads your move while any row is open, handled once all are marked, and is absent off your move', () => {
+  const handled = { row_id: 'PROJ-2', group: 'you', activity_at: '2026-11-01T00:00:00.000Z' };
+  const open = { row_id: 'PROJ-2:c1', group: 'you', activity_at: '2026-11-03T00:00:00.000Z' };
+  assert.equal(moveChip([handled], marks), 'handled');
+  assert.equal(moveChip([handled, open], marks), 'your move');
+  assert.equal(moveChip([{ ...handled, group: 'others' }], marks), '');
+  assert.equal(moveChip([], marks), '');
 });
 
 test('recently done lists done rows, most recently done first, capped at 15', () => {
