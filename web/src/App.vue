@@ -7,8 +7,6 @@ import {
   snapshot,
   alerts,
   themeVariables,
-  load,
-  connect,
   currentLayer,
   closeTopLayer,
   reportWindowSize,
@@ -33,7 +31,6 @@ watch(themeVariables, repaint, { flush: 'post' });
 onKeyStroke('Escape', closeTopLayer, { target: document });
 onMounted(() => {
   reportWindowSize();
-  load().then(connect);
 });
 </script>
 <template>

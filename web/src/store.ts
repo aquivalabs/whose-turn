@@ -86,8 +86,15 @@ export const reportWindowSize = () => {
   );
 };
 
-/** A clock for "ago" texts; ticks every 30 seconds. */
-export const now = useNow({ scheduler: (update) => useIntervalFn(update, 30000) });
+const clock = { resume: () => {} };
+/** A clock for "ago" texts; ticks every 30 seconds once start() has run. */
+export const now = useNow({
+  scheduler: (update) => {
+    const ticker = useIntervalFn(update, 30000, { immediate: false });
+    clock.resume = ticker.resume;
+    return ticker;
+  },
+});
 
 /** The workspace palette for the current colour scheme, as the CSS variables App.vue puts on the root. */
 export const themeVariables = computed(() => {
@@ -224,7 +231,16 @@ watch(
   },
   { flush: 'sync' },
 );
-export const connect = () => stream.open();
+export const connect = () => {
+  if (stream.status.value === 'CLOSED') {
+    stream.open();
+  }
+};
+/** Starts what runs on its own: the clock, the first load and the stream behind it; importing this module does none of it. */
+export const start = () => {
+  clock.resume();
+  return load().then(connect);
+};
 
 /** Switches only when the server answers with the workspace; with the server down the click is ignored and the notice says why. */
 export const switchWorkspace = (id: string) => {

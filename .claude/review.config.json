@@ -58,6 +58,10 @@
         {
           "name": "suite",
           "command": "npm test"
+        },
+        {
+          "name": "window-suite",
+          "command": "npm run test:web"
         }
       ]
     },
