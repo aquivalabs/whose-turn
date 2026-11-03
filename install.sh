@@ -12,10 +12,19 @@ NODE=$(command -v node) || { echo "Node 22 or newer is needed on PATH."; exit 1;
 NODE_DIR=$(dirname "$NODE")
 PORT=$("$NODE" --input-type=module -e "const { pathToFileURL } = await import('node:url'); const { defaultDataDir, resolvePort } = await import(pathToFileURL(process.argv[1]).href); console.log(resolvePort(process.env.WHOSE_TURN_DATA || defaultDataDir()))" "$DIR/lib/config.mjs")
 URL="http://127.0.0.1:${PORT:-8765}/"
+PASSED=()
+[[ -n ${WHOSE_TURN_DATA:-} ]] && PASSED+=(WHOSE_TURN_DATA)
+[[ -n ${WHOSE_TURN_PORT:-} ]] && PASSED+=(WHOSE_TURN_PORT)
+PASSED_NOTE=""
+((${#PASSED[@]})) && PASSED_NOTE=" ${PASSED[*]} from this shell $([[ ${#PASSED[@]} -gt 1 ]] && echo are || echo is) written into it."
+
+xml_escape() { local v=${1//&/&amp;}; v=${v//</&lt;}; echo "${v//>/&gt;}"; }
 
 install_macos() {
   local plist=$HOME/Library/LaunchAgents/local.whose-turn.plist
   local log=$HOME/Library/Logs/whose-turn.log
+  local extra="" name
+  for name in "${PASSED[@]}"; do extra+="<key>$name</key><string>$(xml_escape "${!name}")</string>"; done
   mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
   cat > "$plist" <<PL
 <?xml version="1.0" encoding="UTF-8"?>
@@ -24,7 +33,7 @@ install_macos() {
   <key>Label</key><string>local.whose-turn</string>
   <key>ProgramArguments</key><array><string>$NODE</string><string>$DIR/server.mjs</string></array>
   <key>WorkingDirectory</key><string>$DIR</string>
-  <key>EnvironmentVariables</key><dict><key>PATH</key><string>$NODE_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>$NODE_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>$extra</dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>StandardOutPath</key><string>$log</string>
@@ -33,12 +42,14 @@ install_macos() {
 PL
   launchctl bootout "gui/$(id -u)" "$plist" 2>/dev/null || true
   launchctl bootstrap "gui/$(id -u)" "$plist"
-  echo "Installed. The monitor runs at $URL and starts at login."
+  echo "Installed. The monitor runs at $URL and starts at login.$PASSED_NOTE"
 }
 
 install_linux() {
   command -v systemctl > /dev/null || { echo "systemd is needed: systemctl is not on PATH."; exit 1; }
   local unit_dir=$HOME/.config/systemd/user
+  local extra="" name
+  for name in "${PASSED[@]}"; do extra+="Environment=\"$name=${!name}\""$'\n'; done
   mkdir -p "$unit_dir"
   cat > "$unit_dir/whose-turn.service" <<UNIT
 [Unit]
@@ -48,14 +59,14 @@ Description=Whose Turn monitor
 ExecStart="$NODE" "$DIR/server.mjs"
 WorkingDirectory=$DIR
 Environment=PATH=$NODE_DIR:/usr/local/bin:/usr/bin:/bin
-Restart=on-failure
+${extra}Restart=on-failure
 
 [Install]
 WantedBy=default.target
 UNIT
   systemctl --user daemon-reload
   systemctl --user enable --now whose-turn
-  echo "Installed. The monitor runs at $URL and starts at login. Logs: journalctl --user -u whose-turn"
+  echo "Installed. The monitor runs at $URL and starts at login. Logs: journalctl --user -u whose-turn.$PASSED_NOTE"
 }
 
 case "$(uname -s)" in

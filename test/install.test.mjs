@@ -29,8 +29,8 @@ const harness = (kernel, { built = true } = {}) => {
   for (const name of ['systemctl', 'launchctl']) {
     stub(name, `echo "${name} $*" >> "${log}"`);
   }
-  const install = () =>
-    execFileSync('bash', [join(root, 'install.sh')], { env: { HOME: home, PATH: `${bin}:/usr/bin:/bin` }, encoding: 'utf8' });
+  const install = (env = {}) =>
+    execFileSync('bash', [join(root, 'install.sh')], { env: { HOME: home, PATH: `${bin}:/usr/bin:/bin`, ...env }, encoding: 'utf8' });
   const calls = () => (existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n') : []);
   return { home, bin, root, install, calls, cleanup: () => rmSync(home, { recursive: true, force: true }) };
 };
@@ -76,4 +76,32 @@ test('a copy without the built window: refuses with one line and installs nothin
   assert.throws(() => h.install(), (error) => error.status === 1 && /dist\/index\.html is missing\. A released whose-turn package carries it/.test(error.stdout));
   assert.equal(existsSync(join(h.home, 'Library/LaunchAgents/local.whose-turn.plist')), false);
   assert.deepEqual(h.calls(), []);
+});
+
+test('Linux: WHOSE_TURN_DATA and WHOSE_TURN_PORT set at install time land in the unit and the Installed line', { skip: process.platform === 'win32' }, (t) => {
+  const h = harness('Linux');
+  t.after(h.cleanup);
+  const output = h.install({ WHOSE_TURN_DATA: '/tmp/my data', WHOSE_TURN_PORT: '8801' });
+  const unit = readFileSync(join(h.home, '.config/systemd/user/whose-turn.service'), 'utf8');
+  assert.match(unit, /^Environment="WHOSE_TURN_DATA=\/tmp\/my data"$/m);
+  assert.match(unit, /^Environment="WHOSE_TURN_PORT=8801"$/m);
+  assert.match(output, /WHOSE_TURN_DATA WHOSE_TURN_PORT from this shell are written into it\./);
+});
+
+test('macOS: WHOSE_TURN_PORT set at install time lands in the plist, an unset variable does not', { skip: process.platform === 'win32' }, (t) => {
+  const h = harness('Darwin');
+  t.after(h.cleanup);
+  const output = h.install({ WHOSE_TURN_PORT: '8801' });
+  const plist = readFileSync(join(h.home, 'Library/LaunchAgents/local.whose-turn.plist'), 'utf8');
+  assert.match(plist, /<key>WHOSE_TURN_PORT<\/key><string>8801<\/string><\/dict>/);
+  assert.doesNotMatch(plist, /WHOSE_TURN_DATA/);
+  assert.match(output, /WHOSE_TURN_PORT from this shell is written into it\./);
+});
+
+test('without either variable the Installed line and the unit stay as they were', { skip: process.platform === 'win32' }, (t) => {
+  const h = harness('Linux');
+  t.after(h.cleanup);
+  const output = h.install();
+  assert.doesNotMatch(readFileSync(join(h.home, '.config/systemd/user/whose-turn.service'), 'utf8'), /WHOSE_TURN/);
+  assert.doesNotMatch(output, /written into it/);
 });
