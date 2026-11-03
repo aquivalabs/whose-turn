@@ -28,13 +28,14 @@ const moves = summary.moves || [];
 const todos = summary.todos || [];
 const unread = summary.new_events || 0;
 const errors = Object.entries(summary.errors || {});
+const health = summary.health?.alerts || [];
 const workspaces = summary.workspaces || [];
 const where = (item) => (workspaces.length > 1 && item.ws ? `[${flat(item.ws, 30)}] ` : '');
 const sources = [...new Set(workspaces.flatMap((workspace) => (workspace.connectors || []).map((connector) => flat(connector.label, 30))))];
 const tail = () => ` · ${unread} unread${todos.length ? ` · ${todos.length} to-do` : ''}`;
 
 if (mode === 'status') {
-  console.log(`▲ ${moves.length} your move${tail()}${errors.length ? ' · error' : ''}`);
+  console.log(`▲ ${moves.length} your move${tail()}${errors.length || health.length ? ' · error' : ''}`);
   process.exit(0);
 }
 
@@ -51,6 +52,9 @@ if (todos.length) {
 if (errors.length) {
   lines.push(`Monitor errors: ${errors.map(([source, message]) => `${flat(source, 40)}: ${flat(message)}`).join('; ')}`);
 }
+if (health.length) {
+  lines.push(`Monitor health: ${health.map((text) => flat(text)).join('; ')}. The data below may be out of date.`);
+}
 if (handed) {
   lines.push(`${handed} item(s) were handed to Claude from the window; they arrive with the user's next message, or through the whose_turn_inbox MCP tool.`);
 }
@@ -58,5 +62,5 @@ let message = `Whose Turn: ${moves.length} your move`;
 if (moves.length) {
   message += ` — ${moves.slice(0, 3).map((move) => `${where(move)}${flat(move.key, 40)} ${flat(move.next, 80)}`).join('; ')}`;
 }
-message += `${tail()}${errors.length ? ' · monitor error' : ''}`;
+message += `${tail()}${errors.length || health.length ? ' · monitor error' : ''}`;
 console.log(JSON.stringify({ systemMessage: message, hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: lines.join('\n') } }));

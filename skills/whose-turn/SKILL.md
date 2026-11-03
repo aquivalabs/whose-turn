@@ -7,7 +7,7 @@ description: Use when the user asks what is going on with their tasks, what is w
 
 The local monitor at `http://127.0.0.1:8765` already polls Jira and GitHub every minute.
 
-1. `curl -s http://127.0.0.1:8765/api/summary` gives `moves` (each `key`, `next`, `url`, and `ws` naming the workspace), `new_events`, `todos`, `polled_at`, `errors` and `workspaces` with the same per workspace.
+1. `curl -s http://127.0.0.1:8765/api/summary` gives `moves` (each `key`, `next`, `url`, and `ws` naming the workspace), `new_events`, `todos`, `polled_at`, `errors`, `health` (`ok` and `alerts`: stale data or a source failing several polls in a row; say so when it is not ok) and `workspaces` with the same per workspace.
 2. For detail, `curl -s 'http://127.0.0.1:8765/api/state?ws=<id>'` gives `turn` (the rows with `why` and `url`) and `feed` of one workspace; add `&full=1` for the raw `tickets`, `comments`, `prs`, `activity` and `events`. `/api/workspaces` lists the ids.
 3. Answer from that data: first what is the user's move, one line each with the ticket and the next step; then anything notable from the feed. Say when the data was last checked.
 4. If the monitor does not answer, say so and suggest `launchctl kickstart gui/$(id -u)/local.whose-turn`, or `${CLAUDE_PLUGIN_ROOT}/install.sh` if it was never installed. Only then fall back to Jira and GitHub directly.

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Whose Turn server: loads the workspace config, polls every workspace's connectors on one loop with rate-limit backoff, serves the window and the local API, reloads workspaces when the config is saved. Node 22, no dependencies. */
+/** Whose Turn server: loads the workspace config, polls every workspace's connectors on one loop with rate-limit backoff, checks the health of the data on its own timer, serves the window and the local API, reloads workspaces when the config is saved. Node 22, no dependencies. */
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, saveWorkspaces } from './lib/config.mjs';
@@ -18,15 +18,17 @@ const secrets = createSecrets(first.dataDir);
 const inbox = openInbox(first.dataDir);
 const reports = openReports(first.dataDir);
 let pollSeconds = first.pollSeconds;
+let healthLimits = first.health;
 
 const registry = createRegistry({
   load: () => {
     const config = loadConfig();
     pollSeconds = config.pollSeconds;
+    healthLimits = config.health;
     return config;
   },
   save: (rawWorkspaces) => saveWorkspaces(first.configFile, rawWorkspaces),
-  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: config.historyDays, http, secrets }),
+  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: config.historyDays, http, secrets, limits: () => healthLimits }),
 });
 
 let wake = null;
@@ -56,3 +58,15 @@ for (const problem of registry.problems) {
   console.error(problem);
 }
 pollLoop();
+
+const HEALTH_TICK = 30000;
+let lastTick = Date.now();
+setInterval(() => {
+  const slept = Date.now() - lastTick > 3 * HEALTH_TICK;
+  lastTick = Date.now();
+  if (slept) {
+    requestPoll();
+    return;
+  }
+  registry.workspaces.forEach((workspace) => workspace.checkHealth());
+}, HEALTH_TICK).unref();

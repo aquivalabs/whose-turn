@@ -12,7 +12,7 @@ const sessionGet = (key) => { try { return sessionStorage.getItem(key) || ''; } 
 const sessionSet = (key, value) => { try { sessionStorage.setItem(key, value); } catch { /* storage may be blocked */ } };
 
 // The server's snapshot: replaced wholesale on every load, never mutated in place, so shallow reactivity is enough.
-export const S = shallowReactive({ workspaces: [], workspace: { id: '', name: '', connectors: [], links: [], key_pattern: '', theme: null }, turn: [], feed: [], marks: { seen: [], base: 0, handled: {} }, todos: [], errors: {}, problems: [], polled_at: '' });
+export const S = shallowReactive({ workspaces: [], workspace: { id: '', name: '', connectors: [], links: [], key_pattern: '', theme: null }, turn: [], feed: [], marks: { seen: [], base: 0, handled: {} }, todos: [], errors: {}, health: { ok: true, stale: false, fresh_at: '', failing: [], alerts: [] }, problems: [], polled_at: '' });
 export const ui = reactive({
   ws: new URLSearchParams(location.search).get('ws') || remembered('wt-ws', ''),
   feed: 'all', feedView: remembered('wt-feed-view', 'ticket'), feedQuery: '', openGroups: new Set(), move: 'open', open: new Set(), showDone: false,
@@ -47,7 +47,7 @@ setInterval(() => { now.value = Date.now(); }, 30000);
 /** The workspace palette for the current colour scheme, as the CSS variables App.vue puts on the root. */
 export const themeVariables = computed(() => { const t = S.workspace.theme; return t && t.light && t.dark ? t[dark.value ? 'dark' : 'light'] : {}; });
 export const counts = computed(() => turnCounts(S.turn, S.marks));
-export const alerts = computed(() => [...(S.problems || []), ...Object.entries(S.errors || {}).map(([source, text]) => source + ': ' + text)]);
+export const alerts = computed(() => [...(S.problems || []), ...S.health.alerts.map((alert) => alert.text), ...Object.entries(S.errors || {}).map(([source, text]) => source + ': ' + text)]);
 export const closeSheets = () => { ui.modal = null; ui.settings = false; ui.feedback = false; };
 
 let version = -1;

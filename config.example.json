@@ -2,6 +2,8 @@
   "port": 8765,
   "poll_seconds": 60,
   "history_days": 14,
+  "stale_minutes": 15,
+  "failing_polls": 3,
   "workspaces": [
     {
       "id": "work",
