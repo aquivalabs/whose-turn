@@ -53,7 +53,7 @@ const { collapsed, toggle } = useFold('header');
       <div class="wt-tile">
         <span>Waiting on others</span><strong>{{ counts.others }}</strong>
       </div>
-      <div class="wt-tile is-fail">
+      <div class="wt-tile" :class="{ 'is-fail': counts.failing }">
         <span>Open PRs with failing checks</span><strong>{{ counts.failing }}</strong>
       </div>
       <div class="wt-tile">

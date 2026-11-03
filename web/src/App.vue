@@ -1,9 +1,10 @@
 <script setup lang="ts">
 // The window: the rail, the status line, and the dashboard that fills the rest; sheets open over it. State and data flow live in store.ts.
-import { onMounted, watch } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
 import {
   ui,
+  snapshot,
   alerts,
   themeVariables,
   load,
@@ -19,9 +20,13 @@ import YourMove from './components/YourMove.vue';
 import Todos from './components/Todos.vue';
 import Waiting from './components/Waiting.vue';
 import Feed from './components/Feed.vue';
+import FirstRun from './components/FirstRun.vue';
 import CommentModal from './components/CommentModal.vue';
 import FeedbackSheet from './components/FeedbackSheet.vue';
 import SettingsSheet from './components/SettingsSheet.vue';
+const firstRun = computed(
+  () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
+);
 watch(themeVariables, repaint, { flush: 'post' });
 onKeyStroke('Escape', closeSheets, { target: document });
 onMounted(() => {
@@ -38,7 +43,8 @@ onMounted(() => {
       <div id="wt" class="wt wt-fit">
         <canvas id="backdrop" class="wt-backdrop" aria-hidden="true"></canvas>
         <WorkspaceHeader />
-        <div class="wt-layout">
+        <FirstRun v-if="firstRun" />
+        <div v-else class="wt-layout">
           <div class="wt-main"><YourMove /><Todos /><Waiting /></div>
           <Feed @open="ui.modal = $event" />
         </div>

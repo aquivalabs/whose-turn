@@ -104,7 +104,10 @@ const markAll = () => setMarks({ seen: snapshot.feed.map((item) => item.id), bas
         ui.feedQuery ? rows.length + ' of ' + bySource.length : ''
       }}</span>
     </div>
-    <ol class="wt-feed-list">
+    <p v-if="!snapshot.feed.length" class="wt-empty">
+      No changes yet. New comments, reviews and status changes show up here.
+    </p>
+    <ol v-else class="wt-feed-list">
       <template v-if="ui.feedView === 'ticket'">
         <li
           v-for="group in groups"

@@ -24,7 +24,8 @@ const rows = computed(() => {
     note="Someone else holds the next step"
     tip="Tickets you touched in the last 30 days where someone else holds the next step: a reviewer, QA, or a new owner."
   >
-    <div class="wt-scroll">
+    <p v-if="!rows.length" class="wt-empty">Nothing is waiting on someone else.</p>
+    <div v-else class="wt-scroll">
       <table>
         <thead>
           <tr>

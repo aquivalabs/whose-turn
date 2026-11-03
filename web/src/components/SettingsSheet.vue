@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Settings: the workspace list on the left, one workspace's form on the right, drawn from the catalogues the server sends; the server validates, stores secrets, writes config.json and reloads.
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick, useTemplateRef } from 'vue';
 import { snapshot, ui, reload } from '../store.ts';
 import { getJson, post, problemsOf } from '../lib/api.ts';
 import {
@@ -47,6 +47,7 @@ const fields = ref<FormFields>({ workspace: [], theme: [], rules: [], statuses: 
 const configFile = ref('');
 const problems = ref<string[]>([]);
 const tables = ref<Record<string, RuleRow[]>>({});
+const connectorsHead = useTemplateRef<HTMLElement>('connectors-head');
 const typed = new Map<ConnectorEntry, Record<string, string>>();
 const typedCount = ref(0);
 const loadedKey = ref('');
@@ -108,22 +109,30 @@ const askRemoveConnector = (index: number) => {
   };
 };
 const open = () =>
-  getJson<ConfigReply>('/api/config').then((reply) => {
-    list.value = (reply.workspaces || []).map(normaliseForForm);
-    catalogue.value = reply.connectors || [];
-    fields.value = reply.fields;
-    typed.clear();
-    typedCount.value = 0;
-    ask.value = null;
-    selected.value = Math.max(
-      0,
-      list.value.findIndex((workspace) => workspace.id === snapshot.workspace.id),
-    );
-    configFile.value = reply.config_file || '';
-    problems.value = reply.problems || [];
-    tables.value = reply.tables || {};
-    loadedKey.value = settingsKey(list.value);
-  });
+  getJson<ConfigReply>('/api/config')
+    .then((reply) => {
+      list.value = (reply.workspaces || []).map(normaliseForForm);
+      catalogue.value = reply.connectors || [];
+      fields.value = reply.fields;
+      typed.clear();
+      typedCount.value = 0;
+      ask.value = null;
+      selected.value = Math.max(
+        0,
+        list.value.findIndex((workspace) => workspace.id === snapshot.workspace.id),
+      );
+      configFile.value = reply.config_file || '';
+      problems.value = reply.problems || [];
+      tables.value = reply.tables || {};
+      loadedKey.value = settingsKey(list.value);
+    })
+    .then(nextTick)
+    .then(() => {
+      if (ui.settingsAt === 'connectors') {
+        connectorsHead.value?.scrollIntoView({ block: 'start' });
+      }
+      ui.settingsAt = '';
+    });
 const close = () => {
   ui.settings = false;
 };
@@ -247,7 +256,7 @@ watch(
               :spec="spec"
               :target="current.theme"
             />
-            <h4>Connectors</h4>
+            <h4 ref="connectors-head">Connectors</h4>
             <div v-for="(entry, index) in current.connectors" :key="index" class="wt-connector">
               <div class="wt-connector-head">
                 <strong>{{ specOf(entry).label }}</strong

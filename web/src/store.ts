@@ -53,6 +53,7 @@ export const ui = reactive({
   settings: false,
   settingsDirty: false,
   settingsAsk: false,
+  settingsAt: '',
 });
 
 lastMode.value = ui.mode;
@@ -86,6 +87,11 @@ export const alerts = computed(() => [
   ...snapshot.health.alerts.map((alert) => alert.text),
   ...Object.entries(snapshot.errors || {}).map(([source, text]) => source + ': ' + text),
 ]);
+/** Opens the settings sheet on the current workspace, scrolled to a section when one is named. */
+export const openSettings = (section = '') => {
+  ui.settingsAt = section;
+  ui.settings = true;
+};
 export const closeSheets = () => {
   if (ui.settings && ui.settingsDirty) {
     ui.settingsAsk = true;
@@ -206,6 +212,30 @@ export const reorderWorkspaces = (ids: string[]) =>
     .then((reply) => {
       if (!refused(reply, 'The order was not saved')) {
         reload();
+      }
+    });
+/** The workspace the first-run card offers: invented data from the northwind scenario, no account needed. */
+const DEMO_WORKSPACE = {
+  id: 'demo',
+  name: 'Demo',
+  key_pattern: '\\bNW-\\d+\\b',
+  theme: { seed: '#3d7a5c', accent: '#c27a2c' },
+  connectors: [{ type: 'demo', scenario: 'northwind', label: 'Demo tracker' }],
+};
+/** Adds the demo workspace to the config unless one with its id is there, then switches to it. */
+export const tryDemo = () =>
+  getJson<{ workspaces: { id: string }[] }>('/api/config')
+    .then((config) =>
+      config.workspaces.some((workspace) => workspace.id === DEMO_WORKSPACE.id)
+        ? null
+        : post<{ error?: ApiError }>('/api/config', {
+            workspaces: [...config.workspaces, DEMO_WORKSPACE],
+            secrets: [],
+          }),
+    )
+    .then((reply) => {
+      if (!refused(reply, 'The demo workspace was not added')) {
+        switchWorkspace(DEMO_WORKSPACE.id);
       }
     });
 export const refresh = () => {

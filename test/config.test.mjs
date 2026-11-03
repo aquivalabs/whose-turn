@@ -17,7 +17,8 @@ test('a missing config is reported as a problem, not a crash', () => {
   const config = withConfig(null);
   assert.equal(config.workspaces.length, 1);
   assert.deepEqual(config.workspaces[0].connectors, []);
-  assert.match(config.problems[0], /No workspace config/);
+  assert.match(config.problems[0], /No workspace config yet: open Settings \(the gear\)/);
+  assert.ok(config.problems[0].includes(config.configFile));
 });
 
 test('a flat config with github and jira at the top becomes one default workspace', () => {

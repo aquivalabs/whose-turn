@@ -45,6 +45,12 @@
   .wt-quote { color: var(--md-on-surface-variant); font-size: 12px; line-height: 16px; max-width: 48ch; }
   .wt-quote a { color: var(--md-on-surface-variant); }
   .wt-empty { color: var(--md-on-surface-variant); font-size: 14px; margin: 12px 0 0; padding-bottom: 14px; }
+  /* First run: one card in place of the islands while the workspace has no sources. */
+  .wt-first-run { align-self: start; justify-self: center; width: min(640px, 100%); padding: 28px 32px; display: grid; gap: 14px; }
+  .wt-first-run h2 { margin: 0; font-size: 22px; line-height: 28px; font-weight: 400; }
+  .wt-first-run p { margin: 0; color: var(--md-on-surface-variant); }
+  .wt-first-run-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .wt-first-run .wt-first-run-ai { font-size: 13px; }
 
   .wt-feed { position: sticky; top: 12px; max-height: calc(100vh - 24px); display: flex; flex-direction: column; }
   .wt-feed .wt-island-head { flex-direction: column; gap: 4px; }
