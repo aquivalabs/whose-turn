@@ -72,7 +72,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 
 A flat config with `github`, `jira` and `rules` at the top level still loads as one workspace named `default`.
 
-Secrets never go into the config. GitHub uses `gh auth token`. The Jira API token lives in the platform's secret store under the service and the account email: the macOS Keychain, libsecret on Linux (`secret-tool`), or the Windows Credential Manager (through `lib/platform/credential.ps1`). Paste it into the settings sheet or send it through the API, and the server stores it. When the store is missing or refuses (no `secret-tool`, a launch agent refused Keychain access), the server keeps it in `<data>/secrets/<service>@<account>` with mode 600. On macOS `security` receives the value as a command-line argument, which other local processes can see for a moment; libsecret and the Windows script read it from stdin.
+Secrets never go into the config. GitHub uses `gh auth token`, or `GH_TOKEN` from the environment when set. The Jira API token lives in the platform's secret store under the service and the account email: the macOS Keychain, libsecret on Linux (`secret-tool`), or the Windows Credential Manager (through `lib/platform/credential.ps1`). Paste it into the settings sheet or send it through the API, and the server stores it. When the store is missing or refuses (no `secret-tool`, a launch agent refused Keychain access), the server keeps it in `<data>/secrets/<service>@<account>` with mode 600. On macOS `security` receives the value as a command-line argument, which other local processes can see for a moment; libsecret and the Windows script read it from stdin.
 
 State lives next to the config, per workspace: `workspaces/<id>/state.json` (last poll), `marks.json` (read, handled, notified), `todos.json`, `cache.json` (fetched PR details, so a restart does not refetch them; versioned, never holds a token).
 
@@ -107,7 +107,7 @@ On Windows, run `schtasks /Create /SC ONLOGON /TN whose-turn /TR "\"<path to nod
 
 ## Sources and polling
 
-**GitHub**, token from `gh auth token`:
+**GitHub**, token from `gh auth token`, or from `GH_TOKEN` when that variable is set (CI, a machine without `gh`):
 
 - `search/issues` finds your open PRs and PRs updated in the last `history_days`. Full details are fetched only for PRs whose `updated_at` changed: PR, reviews, issue comments, inline comments, check runs.
 - Open PRs get their check runs re-polled every cycle, because CI finishing does not bump `updated_at`.

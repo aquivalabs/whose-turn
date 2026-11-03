@@ -18,6 +18,8 @@ test('a RateLimited carries its name', () => {
 });
 
 test('a workspace whose source answers 429 reports rateLimited', async () => {
+  // The token comes from the environment, so the test never shells out to gh (absent on CI).
+  process.env.GH_TOKEN = 'stub';
   const built = createWorkspace(
     { id: 'w', name: 'Work', key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'github', id: 'gh', repo: 'acme/app', me: 'pat' }] },
     { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: { fetchJson: limited }, notify: () => {} },

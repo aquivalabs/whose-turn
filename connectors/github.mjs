@@ -1,4 +1,4 @@
-/** GitHub connector: your PRs in one repository with reviews, comments and checks, the workflow runs on its default branch, plus review requests and mentions across the org. Token from `gh auth token`. */
+/** GitHub connector: your PRs in one repository with reviews, comments and checks, the workflow runs on its default branch, plus review requests and mentions across the org. Token from `GH_TOKEN`, else `gh auth token`. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { RateLimited } from '../lib/http-client.mjs';
@@ -22,7 +22,11 @@ export const fields = [
 
 export const persistedCache = ['prs', 'asks', 'runStreaks'];
 
+/** `GH_TOKEN` when set (CI, a machine without gh), else the token gh holds. */
 const ghToken = (account, cache) => cachedToken(cache, async () => {
+  if (process.env.GH_TOKEN) {
+    return process.env.GH_TOKEN;
+  }
   const { stdout } = await run('gh', account ? ['auth', 'token', '--user', account] : ['auth', 'token']);
   return stdout.trim();
 });
