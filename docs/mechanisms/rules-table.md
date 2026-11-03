@@ -33,7 +33,7 @@ with the text `now <status>, with <who>`.
 | `lib/rules.mjs` | `compileRules` expands the workspace table and the status-group order once per workspace; `ticketRow` and `runRow` match the table and apply `then` |
 | `lib/config.mjs` | `normaliseRules` validates `rules.table` on load and on `POST /api/config` |
 | `lib/api.mjs` | `GET /api/config` returns `facts` (the dictionary) and `tables` (the effective rows per workspace) |
-| `web/src/features/settings/SettingsSheet.vue` | Shows the effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into text |
+| `web/src/features/settings/SettingsSheet.vue` | Shows the effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into a sentence ("When the ticket is in review and the PR is open and the PR is approved: your move, \"Merge it\"") |
 
 ## How it behaves
 
@@ -131,7 +131,7 @@ The user's own name is shown as `you` wherever a person appears: the `With` cell
 10. Code review status, open approved PR into a branch starting with `release_branch_prefix`: you, `approved_release_next`.
 11. Code review status, open approved PR: you, `approved_next`.
 12. Code review status: reviewer, "Code review".
-13. QA status: them, "QA".
+13. Testing status (`qa`): them, "Testing".
 14. On hold with a reason: them, "On hold: {ticket.hold_reason}", `hold`.
 15. On hold: them, "On hold".
 16. Not done, on you, started: you, "Continue the work", `rank` 2, `started`; the why says "no pull request is waiting on anyone".
@@ -195,3 +195,7 @@ facts do not have. That is a separate layer.
 Any change to `lib/facts.mjs`, `lib/table.mjs`, `lib/default-table.mjs` or `lib/rules.mjs` that adds, renames
 or removes a fact, a condition form, a `whose` value or a default row, changes the status-group order,
 the `"default"` marker or the validation messages, or moves ticket rows or workflow run rows into or out of the table.
+
+### Words in the window
+
+The `qa` group is called Testing everywhere a person reads it: the Testing statuses field, the settings rows ("the ticket is in testing") and the default next step. The `rules` fields are labelled by the situation they answer ("Next step when the PR is approved"). The ids (`qa`, `approved_next`) stay as they are in the config and the API.

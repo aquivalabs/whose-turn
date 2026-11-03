@@ -393,8 +393,8 @@ watch(
             />
             <h4 class="sheet-form__heading">Whose turn table</h4>
             <p class="settings-sheet__rules-note">
-              The rows in force, first match wins. Read-only here: ask Claude to change rules.table
-              through /api/config.
+              The rows in force, top to bottom: the first one that fits decides. Read-only here: ask
+              Claude to change them.
             </p>
             <p v-for="warning in ruleWarnings" :key="warning" class="settings-sheet__rules-warning">
               {{ warning }}

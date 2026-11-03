@@ -117,37 +117,129 @@ export const movedIds = (ids: string[], dragged: string, target: string, before:
   return rest;
 };
 
-const OPERATOR_SIGNS: Record<string, string> = {
-  gt: '>',
-  gte: '≥',
-  lt: '<',
-  lte: '≤',
-  prefix: 'starts with',
+const STATUS_PHRASES: Record<string, string> = {
+  backlog: 'in the backlog',
+  passed: 'passed',
+  code_review: 'in review',
+  qa: 'in testing',
+  on_hold: 'on hold',
+  todo: 'to do',
+  in_progress: 'in progress',
+  done: 'done',
 };
-const presentText = (fact: string, operand: unknown) =>
-  `${fact} is ${operand ? 'present' : 'absent'}`;
+const statusPhrase = (group: string) => STATUS_PHRASES[group] || `in ${group.replace(/_/g, ' ')}`;
 
-const conditionText = (fact: string, condition: unknown) => {
+const WHOSE_PHRASES: Record<string, string> = {
+  you: 'your move',
+  reviewer: "the reviewer's move",
+  qa: "the tester's move",
+  them: 'waiting on others',
+};
+
+const FACT_NAMES: Record<string, string> = {
+  'ticket.hold_reason': 'the hold reason',
+  'ticket.status_name': 'the status',
+  'ticket.key': 'the ticket key',
+  'pr.number': 'the PR number',
+  'pr.base': 'the target branch',
+  'pr.commenter': 'the commenter',
+  'run.workflow': 'the workflow',
+  'run.branch': 'the branch',
+  'comment.author': 'the author',
+};
+const factName = (fact: string) => FACT_NAMES[fact] || fact.replace(/[._]/g, ' ');
+
+const flag = (operand: unknown, whenTrue: string, whenFalse: string) =>
+  operand ? whenTrue : whenFalse;
+
+const REVIEW_PHRASES: Record<string, string> = {
+  approved: 'the PR is approved',
+  changes_requested: 'changes are requested on the PR',
+  none: 'the PR has no review',
+};
+
+const valuePhrase = (fact: string, value: unknown): string => {
+  switch (fact) {
+    case 'ticket.status':
+      return `the ticket is ${statusPhrase(String(value))}`;
+    case 'ticket.assignee':
+      return value === 'me' ? 'the ticket is on you' : `the ticket is assigned to ${value}`;
+    case 'pr.checks':
+      return value === 'none' ? 'the PR has no checks' : `the PR checks are ${value}`;
+    case 'pr.review':
+      return REVIEW_PHRASES[String(value)] || `the PR review is ${value}`;
+    case 'pr.base':
+      return `the PR goes into ${value}`;
+    default:
+      return `${factName(fact)} is ${value}`;
+  }
+};
+
+const FLAG_PHRASES: Record<string, [string, string]> = {
+  'ticket.done': ['the ticket is done', 'the ticket is not done'],
+  'ticket.started': ['the ticket is started', 'the ticket is not started'],
+  'pr.open': ['the PR is open', 'no PR is open'],
+  'pr.merged': ['the PR is merged', 'the PR is not merged'],
+  'pr.unanswered': ['a comment on the PR waits for your answer', 'no comment on the PR waits for your answer'],
+  'comment.mentions_me': ['you are mentioned and have not answered', 'no mention of you waits for an answer'],
+  'comment.is_question': ['the mention is a question', 'the mention is not a question'],
+  'run.failed': ['a workflow run failed', 'no workflow run failed'],
+  'run.mine': ['the run is yours', 'the run is not yours'],
+};
+
+const operatorPhrase = (fact: string, operator: string, operand: unknown) => {
+  if (operator === 'present') {
+    return flag(operand, `${factName(fact)} is given`, `${factName(fact)} is missing`);
+  }
+  if (operator === 'prefix') {
+    return fact === 'pr.base'
+      ? `the PR goes into a branch starting with ${operand}`
+      : `${factName(fact)} starts with ${operand}`;
+  }
+  if (fact === 'unanswered_count') {
+    const count = Number(operand);
+    const bounds: Record<string, string> = {
+      gt: `more than ${count}`,
+      gte: `at least ${count}`,
+      lt: `fewer than ${count}`,
+      lte: `at most ${count}`,
+    };
+    return `${bounds[operator]} mentions of you wait for an answer`;
+  }
+  const signs: Record<string, string> = { gt: 'more than', gte: 'at least', lt: 'less than', lte: 'at most' };
+  return `${factName(fact)} is ${signs[operator]} ${operand}`;
+};
+
+const conditionText = (fact: string, condition: unknown): string => {
   if (Array.isArray(condition)) {
-    return `${fact} in ${condition.join(', ')}`;
+    return fact === 'ticket.status'
+      ? `the ticket is ${condition.map((group) => statusPhrase(String(group))).join(' or ')}`
+      : `${factName(fact)} is ${condition.join(' or ')}`;
   }
   if (condition && typeof condition === 'object') {
     return Object.entries(condition)
-      .map(([operator, operand]) =>
-        operator === 'present'
-          ? presentText(fact, operand)
-          : `${fact} ${OPERATOR_SIGNS[operator]} ${JSON.stringify(operand)}`,
-      )
+      .map(([operator, operand]) => operatorPhrase(fact, operator, operand))
       .join(' and ');
   }
-  return `${fact} = ${condition}`;
+  if (typeof condition === 'boolean' && FLAG_PHRASES[fact]) {
+    return FLAG_PHRASES[fact][condition ? 0 : 1];
+  }
+  return valuePhrase(fact, condition);
 };
 
-/** One rules-table row as two plain texts for the read-only list in the settings sheet. */
-export const ruleText = (row: RuleRow) => ({
-  when:
-    Object.entries(row.when)
-      .map(([fact, condition]) => conditionText(fact, condition))
-      .join(' and ') || 'anything else',
-  then: row.then.whose === 'hidden' ? 'hidden' : `${row.then.whose}: ${row.then.next}`,
-});
+const nextText = (next: string) => next.replace(/\{([\w.]+)\}/g, (match, fact: string) => `{${factName(fact)}}`);
+
+/** One rules-table row as a sentence pair for the read-only list in the settings sheet. */
+export const ruleText = (row: RuleRow) => {
+  const conditions = Object.entries(row.when).map(([fact, condition]) =>
+    conditionText(fact, condition),
+  );
+  const outcome =
+    row.then.whose === 'hidden'
+      ? 'not shown'
+      : `${WHOSE_PHRASES[row.then.whose] || row.then.whose}, "${nextText(row.then.next || '')}"`;
+  return {
+    when: conditions.length ? `When ${conditions.join(' and ')}:` : 'In every other case:',
+    then: outcome,
+  };
+};

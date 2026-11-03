@@ -136,12 +136,16 @@ test('a rail glyph is the initials of a multi-word name or the first two letters
   assert.deepEqual(['WT', 'AMA', 'X'].map(glyphSize), [14, 11, 17]);
 });
 
-test('a rules-table row reads as when and then texts for the settings sheet', () => {
-  assert.deepEqual(ruleText({ when: { 'ticket.status': ['qa', 'on_hold'], 'pr.base': { prefix: 'release/' }, unanswered_count: { gte: 2 } }, then: { whose: 'you', next: 'Merge it' } }), {
-    when: 'ticket.status in qa, on_hold and pr.base starts with "release/" and unanswered_count ≥ 2', then: 'you: Merge it',
+test('a rules-table row reads as a sentence for the settings sheet', () => {
+  assert.deepEqual(ruleText({ when: { 'ticket.status': 'code_review', 'pr.open': true, 'pr.review': 'approved' }, then: { whose: 'you', next: 'Merge it' } }), {
+    when: 'When the ticket is in review and the PR is open and the PR is approved:', then: 'your move, "Merge it"',
   });
-  assert.deepEqual(ruleText({ when: {}, then: { whose: 'hidden' } }), { when: 'anything else', then: 'hidden' });
-  assert.equal(ruleText({ when: { 'ticket.hold_reason': { present: true } }, then: { whose: 'them', next: 'x' } }).when, 'ticket.hold_reason is present');
+  assert.deepEqual(ruleText({ when: { 'ticket.status': ['qa', 'on_hold'], 'pr.base': { prefix: 'release/' }, unanswered_count: { gte: 2 } }, then: { whose: 'them', next: 'x' } }), {
+    when: 'When the ticket is in testing or on hold and the PR goes into a branch starting with release/ and at least 2 mentions of you wait for an answer:', then: 'waiting on others, "x"',
+  });
+  assert.deepEqual(ruleText({ when: {}, then: { whose: 'hidden' } }), { when: 'In every other case:', then: 'not shown' });
+  assert.equal(ruleText({ when: { 'ticket.hold_reason': { present: true } }, then: { whose: 'them', next: 'On hold: {ticket.hold_reason}' } }).then, 'waiting on others, "On hold: {the hold reason}"');
+  assert.equal(ruleText({ when: { 'ticket.status': 'qa', 'pr.open': false }, then: { whose: 'qa', next: 'x' } }).when, 'When the ticket is in testing and no PR is open:');
 });
 
 test('a refused write names what was not saved, a network failure the server-down line, a confirmed one nothing', () => {
