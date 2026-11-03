@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { reactive } from 'vue';
 import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText } from '../web/src/lib/settings.ts';
@@ -54,6 +55,12 @@ test('the settings form shapes a raw workspace both ways and lists only the secr
   assert.deepEqual(forSaving(form), { id: 'a', connectors: [{ type: 'github', repo: 'x/y' }] });
   const typed = new Map([[form.connectors[0], { token: 'abc', other: '' }]]);
   assert.deepEqual(pendingSecrets([form], typed), [{ ws: 'a', connector: 'github', key: 'token', value: 'abc' }]);
+});
+
+test('a workspace held in a reactive form still shapes for saving', () => {
+  const form = reactive(normaliseForForm({ id: 'a', connectors: { github: { repo: 'x/y' } } }));
+  assert.deepEqual(forSaving(form), { id: 'a', connectors: [{ type: 'github', repo: 'x/y' }] });
+  assert.deepEqual(normaliseForForm(form).connectors, [{ type: 'github', repo: 'x/y' }]);
 });
 
 test('the header counts and the config order come from one place each', async () => {

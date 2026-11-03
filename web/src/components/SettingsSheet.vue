@@ -83,18 +83,22 @@ const open = () =>
 const close = () => {
   ui.settings = false;
 };
-const save = () =>
-  post<{ error?: ApiError }>('/api/config', {
-    workspaces: list.value.map(forSaving),
-    secrets: pendingSecrets(list.value, typed),
-  }).then((reply) => {
+const save = async () => {
+  try {
+    const reply = await post<{ error?: ApiError }>('/api/config', {
+      workspaces: list.value.map((workspace) => forSaving(workspace)),
+      secrets: pendingSecrets(list.value, typed),
+    });
     if (reply.error) {
       problems.value = problemsOf(reply.error);
       return;
     }
     close();
     reload();
-  });
+  } catch (error) {
+    problems.value = [error instanceof Error ? error.message : String(error)];
+  }
+};
 watch(
   () => ui.settings,
   (isOpen) => {

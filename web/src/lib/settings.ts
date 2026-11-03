@@ -1,4 +1,5 @@
 // The settings form's shaping: what the server's raw workspace becomes in the form, and what goes back.
+import { toRaw } from 'vue';
 import type { ConnectorEntry, RawWorkspace, RuleRow } from './types.ts';
 
 /** A raw workspace as config.json may hold it: connectors as a list or keyed by type, rules and theme optional. */
@@ -12,7 +13,7 @@ export interface StoredWorkspace {
 }
 
 export const normaliseForForm = (stored: StoredWorkspace): RawWorkspace => {
-  const copy = structuredClone(stored);
+  const copy = structuredClone(toRaw(stored));
   const connectors = copy.connectors || {};
   const rules = copy.rules || {};
   rules.statuses = rules.statuses || {};
@@ -27,7 +28,7 @@ export const normaliseForForm = (stored: StoredWorkspace): RawWorkspace => {
 };
 
 export const forSaving = (workspace: RawWorkspace): StoredWorkspace => {
-  const copy: StoredWorkspace = structuredClone(workspace);
+  const copy: StoredWorkspace = structuredClone(toRaw(workspace));
   if (copy.theme && !Object.keys(copy.theme).length) {
     delete copy.theme;
   }
