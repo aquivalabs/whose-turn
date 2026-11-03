@@ -52,6 +52,7 @@ export const ui = reactive({
   showDone: false,
   mode: resolveMode(location.search, lastMode.value),
   live: false,
+  reconnects: 0,
   status: 'Connecting…',
   modal: null as FeedItem | null,
   feedback: false,
@@ -194,6 +195,7 @@ watch(
     ui.live = status === 'OPEN';
     if (ui.live) {
       ui.status = '';
+      ui.reconnects++;
     }
   },
   { flush: 'sync' },

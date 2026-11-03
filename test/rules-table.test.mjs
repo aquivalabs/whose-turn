@@ -118,3 +118,31 @@ test('POST /api/config refuses a bad table through the config validation and sav
     server.close();
   }
 });
+
+const postConfig = async (workspaces) => {
+  const port = 19000 + Math.floor(Math.random() * 1000);
+  const registry = { workspaces: [], rawWorkspaces: [], problems: [], subscribe: () => () => {} };
+  const server = await startApi({ port, appDir: new URL('..', import.meta.url).pathname, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: {} });
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/api/config`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaces }) });
+    return { status: response.status, body: await response.json() };
+  } finally {
+    server.close();
+  }
+};
+
+test('POST /api/config refuses a null or non-object workspace as INVALID_CONFIG naming the index', async () => {
+  for (const [workspaces, field] of [[[null], 'workspaces[0]'], [[{ id: 'a' }, 'x'], 'workspaces[1]']]) {
+    const { status, body } = await postConfig(workspaces);
+    assert.equal(status, 400);
+    assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
+    assert.equal(body.error.details[1].field_violations[0].field, field);
+  }
+});
+
+test('POST /api/config refuses a non-object connector as INVALID_CONFIG naming workspace and connector index', async () => {
+  const { status, body } = await postConfig([{ id: 'a' }, { id: 'b', connectors: [{ type: 'demo' }, null] }]);
+  assert.equal(status, 400);
+  assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
+  assert.equal(body.error.details[1].field_violations[0].field, 'workspaces[1].connectors[1]');
+});

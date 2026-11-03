@@ -1,3 +1,4 @@
+import { ref, watch } from 'vue';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { SERVER_DOWN } from './lib/problems.ts';
 
@@ -91,4 +92,21 @@ test('a late reply for an older request is dropped', async () => {
 
   expect(store.ui.ws).toBe('second');
   expect(store.snapshot.workspace.id).toBe('second');
+});
+
+test('the reconnect counter advances each time the stream opens, so problem lines can clear', async () => {
+  const status = ref('CLOSED');
+  vi.doMock('@vueuse/core', async (original) => ({
+    ...(await original<object>()),
+    useEventSource: () => ({ status, error: ref(null), data: ref(null), open: vi.fn() }),
+  }));
+  const store = await freshStore();
+  const seen: number[] = [];
+  watch(() => store.ui.reconnects, (count) => seen.push(count), { flush: 'sync' });
+  status.value = 'OPEN';
+  status.value = 'CONNECTING';
+  status.value = 'OPEN';
+  expect(store.ui.live).toBe(true);
+  expect(seen).toEqual([1, 2]);
+  vi.doUnmock('@vueuse/core');
 });
