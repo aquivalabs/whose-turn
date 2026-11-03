@@ -4,6 +4,7 @@ import { reactive } from 'vue';
 import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
+import { todoProblem, UNREACHABLE_TEXT } from '../web/src/lib/todos.ts';
 
 const marks = { seen: ['b'], base: new Date('2026-11-01T00:00:00Z').getTime(), handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
 const items = [
@@ -106,4 +107,12 @@ test('a rules-table row reads as when and then texts for the settings sheet', ()
   });
   assert.deepEqual(ruleText({ when: {}, then: { whose: 'hidden' } }), { when: 'anything else', then: 'hidden' });
   assert.equal(ruleText({ when: { 'ticket.hold_reason': { present: true } }, then: { whose: 'them', next: 'x' } }).when, 'ticket.hold_reason is present');
+});
+
+test('a refused to-do change shows the server message, a network failure the kept-text line, a confirmed one nothing', () => {
+  assert.equal(todoProblem({ error: { message: 'disk full' } }), 'disk full');
+  assert.equal(todoProblem({ error: { message: '' } }), 'The server refused the change.');
+  assert.equal(todoProblem(new Error('unreachable')), UNREACHABLE_TEXT);
+  assert.equal(todoProblem(null), '');
+  assert.equal(todoProblem({}), '');
 });

@@ -14,6 +14,7 @@ import { getJson, post } from './lib/api.ts';
 import { turnCounts } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
+import { todoProblem } from './lib/todos.ts';
 import type { ApiError, FeedItem, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
@@ -194,12 +195,18 @@ export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen
       snapshot.marks = marks;
     }
   });
+/** Sends one to-do change; resolves with the problem line to show, empty when the server confirmed it. */
 export const todoAct = (body: { action: string; text?: string; id?: string }) =>
-  postWs<Todo[]>('/api/todos', body).then((list) => {
-    if (!refused(list, 'The to-do was not saved') && Array.isArray(list)) {
-      snapshot.todos = list;
-    }
-  });
+  postWs<Todo[]>('/api/todos', body).then(
+    (list) => {
+      const problem = todoProblem(Array.isArray(list) ? null : list);
+      if (!problem && Array.isArray(list)) {
+        snapshot.todos = list;
+      }
+      return problem;
+    },
+    (failure: Error) => todoProblem(failure),
+  );
 /** Dragging a workspace icon rewrites the config in the new order: the same raw entries, so secrets and caches stay. */
 export const reorderWorkspaces = (ids: string[]) =>
   getJson<{ workspaces: { id: string }[] }>('/api/config')

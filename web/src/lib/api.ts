@@ -3,12 +3,16 @@ import type { ApiError } from './types.ts';
 
 export const getJson = <T>(url: string): Promise<T> =>
   fetch(url).then((response) => response.json() as Promise<T>);
+/** Resolves with the reply (a refusal is its error envelope); rejects with Error('unreachable') when the server cannot be reached. */
 export const post = <T>(url: string, body?: object): Promise<T> =>
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {}),
-  }).then((response) => response.json() as Promise<T>);
+  }).then(
+    (response) => response.json() as Promise<T>,
+    () => Promise.reject(new Error('unreachable')),
+  );
 
 /** The field problems of a google.rpc.Status error envelope, or its one message. */
 export const problemsOf = (error: ApiError): string[] => {

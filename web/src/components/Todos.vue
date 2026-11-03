@@ -40,16 +40,22 @@ const rows = computed(() => {
     meta: (todo.by && todo.by !== 'you' ? todo.by + ' · ' : '') + ago(todo.created),
   }));
 });
-const add = () => {
+const problem = ref('');
+const send = async (body: Parameters<typeof todoAct>[0]) => {
+  problem.value = await todoAct(body);
+  return !problem.value;
+};
+const add = async () => {
   const text = draft.value.trim();
   if (!text) {
     return;
   }
-  draft.value = '';
-  todoAct({ action: 'add', text });
+  if ((await send({ action: 'add', text })) && draft.value.trim() === text) {
+    draft.value = '';
+  }
 };
-const flip = (todo: Todo) => todoAct({ action: todo.done ? 'undo' : 'done', id: todo.id });
-const remove = (todo: Todo) => todoAct({ action: 'delete', id: todo.id });
+const flip = (todo: Todo) => send({ action: todo.done ? 'undo' : 'done', id: todo.id });
+const remove = (todo: Todo) => send({ action: 'delete', id: todo.id });
 const toggleDone = () => {
   ui.showDone = !ui.showDone;
 };
@@ -84,6 +90,7 @@ const toggleDone = () => {
         >Done <b>{{ done.length }}</b></span
       >
     </div>
+    <p v-if="problem" class="wt-alert wt-todo-problem" role="alert">{{ problem }}</p>
     <ul class="wt-todo-list">
       <li
         v-for="{ todo, parts: pieces, meta } in rows"
