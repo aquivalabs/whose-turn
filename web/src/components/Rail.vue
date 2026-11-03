@@ -32,6 +32,20 @@ const colours = computed(() =>
   ),
 );
 
+const blurAfterMouse = (event: MouseEvent) => {
+  if (event.detail > 0) {
+    (event.currentTarget as HTMLElement).blur();
+  }
+};
+const onSwitch = (event: MouseEvent, id: string) => {
+  blurAfterMouse(event);
+  switchWorkspace(id);
+};
+const onSettings = (event: MouseEvent) => {
+  blurAfterMouse(event);
+  emit('settings');
+};
+
 const dragged = ref('');
 const drop = ref<{ id?: string; side?: 'before' | 'after' }>({});
 const dropBefore = (event: DragEvent) => {
@@ -89,7 +103,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       :aria-label="workspace.name"
       :aria-selected="workspace.id === snapshot.workspace.id"
       draggable="true"
-      @click.prevent="switchWorkspace(workspace.id)"
+      @click.prevent="onSwitch($event, workspace.id)"
       @dragstart="onDragStart($event, workspace)"
       @dragend="onDragEnd"
       @dragover="onDragOver($event, workspace)"
@@ -124,12 +138,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       <span v-if="workspace.open_moves" class="wt-rail-badge">{{ workspace.open_moves }}</span>
     </a>
     <span class="wt-rail-spacer"></span>
-    <a
-      class="wt-rail-item"
-      href="#settings"
-      aria-label="Settings"
-      @click.prevent="emit('settings')"
-    >
+    <a class="wt-rail-item" href="#settings" aria-label="Settings" @click.prevent="onSettings">
       <svg viewBox="0 0 24 24" class="wt-rail-gear" aria-hidden="true">
         <path :d="GEAR" fill="currentColor" />
       </svg>
