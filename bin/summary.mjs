@@ -15,6 +15,11 @@ const offline = () => {
   }
 };
 
+if (mode === 'hook') {
+  const { ensureRunning } = await import('./ensure-running.mjs');
+  await ensureRunning();
+}
+
 let summary;
 try {
   summary = await getJson('/api/summary');

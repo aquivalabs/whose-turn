@@ -187,7 +187,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 
 | part | what it does |
 |---|---|
-| `hooks/hooks.json` and `bin/session-summary.sh` | at SessionStart, kicks the launch agent if it is down and injects "N your move · M unread · K to-do" plus details into context, marked as data from other people |
+| `hooks/hooks.json` and `bin/summary.mjs hook` | at SessionStart, starts the monitor if it is down (`bin/ensure-running.mjs`: the launch agent on macOS, the user unit on Linux, else a detached `server.mjs`; Windows always detached) and injects "N your move · M unread · K to-do" plus details into context, marked as data from other people |
 | `bin/inbox-hook.mjs` | at every prompt, checks the marker file and, only when items wait, takes them as consumer `claude-code-hook` and puts their context into the message in `<handoff>` blocks marked as data, within a 20000-character budget |
 | `bin/lib.mjs` | shared by the scripts: the monitor's address, the data directory, a short-timeout JSON fetch |
 | `bin/mcp.mjs` | an MCP server over stdio, registered by the plugin as `whose-turn`: tools `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_feedback`, `whose_turn_reports`, `whose_turn_inbox`, all through the local API |
