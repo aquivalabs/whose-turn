@@ -2,9 +2,9 @@
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
 import { computed, ref } from 'vue';
 import { snapshot, ui, now, setMarks } from '../store.ts';
-import { isNew, matchesQuery, groupFeed, moveChip } from '../lib/feed.ts';
+import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '../lib/feed.ts';
 import type { FeedGroup } from '../lib/feed.ts';
-import type { ConnectorSummary, FeedItem, TurnRow } from '../lib/types.ts';
+import type { ConnectorSummary, FeedItem } from '../lib/types.ts';
 import { ago } from '../lib/time.ts';
 import Island from './Island.vue';
 import Segmented from './Segmented.vue';
@@ -45,21 +45,15 @@ const rows = computed(() =>
   bySource.value.filter((item) => matchesQuery(item, ui.feedQuery)).slice(0, 200),
 );
 const turnByKey = computed(() => new Map(snapshot.turn.map((row) => [row.key, row])));
-const rowsByKey = computed(() => {
-  const byKey = new Map<string, TurnRow[]>();
-  for (const row of snapshot.turn) {
-    byKey.set(row.key, [...(byKey.get(row.key) || []), row]);
-  }
-  return byKey;
-});
+const onYou = computed(() => moveKeys(snapshot.turn));
 const groups = computed(() => {
   void now.value;
   return groupFeed(rows.value, marks.value).map((group) => ({
     ...group,
     row: turnByKey.value.get(group.id),
-    chip: moveChip(rowsByKey.value.get(group.id) || []),
+    move: onYou.value.has(group.id),
     when: ago(group.newest),
-    kinds: [...new Set(group.items.map((item) => item.kind))].slice(0, 3).join(' · '),
+    kinds: kindsLabel(group.items),
     open: ui.openGroups.has(group.id) || Boolean(ui.feedQuery),
   }));
 });
@@ -84,24 +78,17 @@ const markAll = async () => {
     class="feed"
     column
   >
+    <template #head
+      ><span v-if="newCount" class="feed__new-count">{{ newCount }} new</span></template
+    >
     <div class="feed__bar">
       <Segmented
         v-if="filters.length"
         v-model="feedFilter"
         :options="filters"
         label="Feed source"
-        chips
       />
-      <Segmented v-model="ui.feedView" :options="VIEWS" label="Feed view" class="feed__view" />
-      <span v-if="newCount" class="feed__new-count">{{ newCount }} new</span>
-      <span
-        class="feed__mark-read"
-        role="button"
-        tabindex="0"
-        @click="markAll"
-        @keydown.enter.prevent="markAll"
-        >Mark all read</span
-      >
+      <Segmented v-model="ui.feedView" :options="VIEWS" label="Feed view" />
     </div>
     <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
     <div class="feed__search">
@@ -116,6 +103,14 @@ const markAll = async () => {
       <span class="feed__search-count">{{
         ui.feedQuery ? rows.length + ' of ' + bySource.length : ''
       }}</span>
+      <span
+        class="feed__mark-read"
+        role="button"
+        tabindex="0"
+        @click="markAll"
+        @keydown.enter.prevent="markAll"
+        >Mark all read</span
+      >
     </div>
     <p v-if="!snapshot.feed.length" class="empty">
       No changes yet. New comments, reviews and status changes show up here.
@@ -126,11 +121,19 @@ const markAll = async () => {
           v-for="group in groups"
           :key="group.id"
           class="feed__group"
-          :class="{ 'feed__group--new': group.unread, 'feed__group--open': group.open }"
+          :class="{
+            'feed__group--new': group.unread,
+            'feed__group--open': group.open,
+            'feed__group--move': group.move,
+          }"
         >
-          <div class="feed__group-head" @click="toggleGroup(group)">
+          <div
+            class="feed__group-head"
+            :title="group.move ? 'Your move on this ticket' : undefined"
+            @click="toggleGroup(group)"
+          >
             <span class="feed__group-caret">›</span>
-            <div>
+            <div class="feed__group-text">
               <div class="feed__group-key">
                 <ExtLink
                   :text="group.id"
@@ -147,13 +150,8 @@ const markAll = async () => {
                   :class="{ 'feed__group-count--new': group.unread }"
                   >{{ group.unread ? group.unread + ' new' : group.items.length }}</span
                 >
-                <span>{{ group.kinds }}</span>
-                <span class="timestamp">{{ group.when }}</span>
-                <span
-                  v-if="group.chip"
-                  :class="group.chip === 'handled' ? 'handled-chip' : 'at-you'"
-                  >{{ group.chip }}</span
-                >
+                <span class="feed__group-kinds">{{ group.kinds }}</span>
+                <span class="timestamp feed__group-when">{{ group.when }}</span>
               </div>
             </div>
             <AiButton
@@ -191,14 +189,11 @@ const markAll = async () => {
 .feed__bar {
   display: flex;
   flex: none;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin: 0 0 8px;
-}
-
-.feed__view {
-  margin-left: 10px;
 }
 
 .feed__new-count {
@@ -215,7 +210,7 @@ const markAll = async () => {
 }
 
 .feed__mark-read {
-  margin-left: auto;
+  flex: none;
   padding: 4px 8px;
   border-radius: 999px;
   color: var(--md-primary);
@@ -314,15 +309,30 @@ const markAll = async () => {
   box-shadow: inset 4px 0 0 var(--new);
 }
 
+.feed__group--move,
+.feed__group--move > .feed__group-head {
+  box-shadow: inset 4px 0 0 var(--move);
+}
+
+.feed__group.feed__group--new.feed__group--move {
+  box-shadow:
+    inset 4px 0 0 var(--move),
+    inset 0 0 0 1px var(--new-edge);
+}
+
+.feed__group-text {
+  min-width: 0;
+}
+
 .feed__group-key {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
   font-size: 14px;
 }
 
 .feed__group-ticket {
+  flex: none;
   font-weight: 600;
 }
 
@@ -336,7 +346,6 @@ const markAll = async () => {
 
 .feed__group-meta {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: 2px;
@@ -344,7 +353,18 @@ const markAll = async () => {
   font-size: 12px;
 }
 
+.feed__group-kinds {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed__group-when {
+  margin-left: auto;
+}
+
 .feed__group-count {
+  flex: none;
   display: inline-flex;
   align-items: center;
   height: 18px;
@@ -387,20 +407,6 @@ const markAll = async () => {
 
 .feed__group--open .feed__group-caret {
   transform: rotate(90deg);
-}
-
-.feed__group--new .feed__group-meta .timestamp::before {
-  content: 'NEW';
-  display: inline-block;
-  margin-right: 6px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: var(--new);
-  color: var(--new-ink);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  vertical-align: 1px;
 }
 
 @media (width >= 901px) {

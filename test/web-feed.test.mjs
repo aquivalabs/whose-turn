@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { reactive } from 'vue';
-import { groupFeed, isNew, moveChip, matchesQuery, badgeOf, subjectOf, itemLine } from '../web/src/lib/feed.ts';
+import { groupFeed, isNew, kindsLabel, moveKeys, matchesQuery, badgeOf, subjectOf, itemLine } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, recentlyDone, statusTone } from '../web/src/lib/moves.ts';
 import { topLayer } from '../web/src/lib/layers.ts';
 import { modifier } from '../web/src/lib/bem.ts';
@@ -39,6 +39,14 @@ test('a PR item without a ticket carries its title into the group head and its o
   assert.deepEqual([{ type: 'github', label: 'GitHub' }, { type: 'github', label: 'work' }, { type: 'demo', label: 'tracker' }, { type: 'demo', label: 'Demo code' }].map((source) => badgeOf({ id: 'x', ...source })), ['GH', 'WO', 'TR', 'DC']);
 });
 
+test('a group head names the first two distinct kinds and counts the rest as +n', () => {
+  const kinds = (...names) => names.map((kind) => ({ kind }));
+  assert.equal(kindsLabel(kinds('comment', 'comment', 'status')), 'comment · status');
+  assert.equal(kindsLabel(kinds('status', 'comment', 'merged', 'comment', 'reassigned')), 'status · comment +2');
+  assert.equal(kindsLabel(kinds('merged')), 'merged');
+  assert.equal(kindsLabel([]), '');
+});
+
 test('your rows go by the server rank, then oldest first, and the open view lists only open rows; the handled view only handled ones', () => {
   const turn = [
     { row_id: 'PROJ-3', group: 'you', rank: 3, updated: '2026-11-01', activity_at: '2026-11-01T00:00:00.000Z' },
@@ -57,13 +65,13 @@ test('your rows go by the server rank, then oldest first, and the open view list
   assert.deepEqual(waitingRows(turn).map((r) => r.row_id), ['PROJ-5']);
 });
 
-test('the feed chip reads your move while any row is open, handled once all are marked, and is absent off your move', () => {
-  const handled = { row_id: 'PROJ-2', group: 'you', handled: true };
-  const open = { row_id: 'PROJ-2:c1', group: 'you', handled: false };
-  assert.equal(moveChip([handled]), 'handled');
-  assert.equal(moveChip([handled, open]), 'your move');
-  assert.equal(moveChip([{ ...handled, group: 'others' }]), '');
-  assert.equal(moveChip([]), '');
+test('a feed group carries the your-move bar while any row of its ticket on you is open, not once all are handled or off you', () => {
+  const handled = { row_id: 'PROJ-2', key: 'PROJ-2', group: 'you', handled: true };
+  const open = { row_id: 'PROJ-2:c1', key: 'PROJ-2', group: 'you', handled: false };
+  assert.deepEqual([...moveKeys([handled, open])], ['PROJ-2']);
+  assert.deepEqual([...moveKeys([handled])], []);
+  assert.deepEqual([...moveKeys([{ ...open, key: 'PROJ-5', group: 'others' }])], []);
+  assert.deepEqual([...moveKeys([])], []);
 });
 
 test('a status pill takes its tone from the status group the server sent, not from the words', () => {

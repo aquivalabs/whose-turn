@@ -52,13 +52,15 @@ export const groupFeed = (items: FeedItem[], marks: Pick<Marks, 'seen' | 'base'>
   );
 };
 
-/** The chip on a feed group head, from every row of the ticket: "your move" while any row on you is open, "handled" once all of them are marked, none otherwise. */
-export const moveChip = (rows: TurnRow[]) => {
-  const you = rows.filter((row) => row.group === 'you');
-  if (!you.length) {
-    return '';
-  }
-  return you.some((row) => !row.handled) ? 'your move' : 'handled';
+/** The tickets whose feed group carries the "your move" bar: any row of the ticket on you and not yet handled. */
+export const moveKeys = (rows: TurnRow[]) =>
+  new Set(rows.filter((row) => row.group === 'you' && !row.handled).map((row) => row.key));
+
+/** The kinds of a group's events for its one-line head: the first `shown` distinct kinds, then "+n" for the rest. */
+export const kindsLabel = (items: Pick<FeedItem, 'kind'>[], shown = 2) => {
+  const kinds = [...new Set(items.map((item) => item.kind))];
+  const rest = kinds.length - shown;
+  return kinds.slice(0, shown).join(' · ') + (rest > 0 ? ` +${rest}` : '');
 };
 
 export const toneOf = (kind: string) =>
