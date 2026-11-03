@@ -1,7 +1,7 @@
 import { computed } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
 
-// The remembered fold of one panel: one browser list for all panels, each instance sees the others' writes through the storage event VueUse sends.
+/** The remembered fold of one panel, in the `wt-collapsed` list all panels share. ADR 0002. */
 export const useFold = (id: string) => {
   const folded = useLocalStorage<string[]>('wt-collapsed', [], { writeDefaults: false });
   const collapsed = computed(() => folded.value.includes(id));

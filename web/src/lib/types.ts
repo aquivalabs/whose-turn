@@ -33,7 +33,8 @@ export interface TurnRow {
   key: string;
   summary: string;
   ticket_url: string;
-  group: 'you' | 'others' | 'done' | string;
+  /** 'gone' is a row the table hides. */
+  group: 'you' | 'others' | 'done' | 'gone';
   rank: number;
   updated: string;
   activity_at?: string;
@@ -81,7 +82,8 @@ export interface Marks {
 export interface Todo {
   id: string;
   text: string;
-  done?: boolean;
+  /** When the to-do was done, null while it is open. */
+  done: string | null;
   by?: string;
   created: string;
   key?: string;
@@ -130,18 +132,23 @@ export interface StreamEvent {
   open_moves: number;
 }
 
-/** A google.rpc.Status error envelope, as every refused write returns it. */
+/** One `details[]` entry of the error envelope, by its `@type` (lib/errors.mjs). */
+export type ApiErrorDetail =
+  | {
+      '@type': 'ErrorInfo';
+      reason: string;
+      domain: string;
+      metadata: Record<string, string | number | undefined>;
+    }
+  | { '@type': 'BadRequest'; field_violations: { field: string; description: string }[] }
+  | { '@type': 'DebugInfo'; detail: string };
+
+/** The google.rpc.Status error envelope's `error`, as every refused request returns it. */
 export interface ApiError {
-  code?: number;
-  status?: string;
+  code: number;
+  status: string;
   message: string;
-  details?: {
-    '@type': string;
-    reason?: string;
-    domain?: string;
-    field_violations?: { description: string }[];
-    metadata?: { detail?: string; upstream_status?: number };
-  }[];
+  details: ApiErrorDetail[];
 }
 
 /** A raw workspace entry of config.json as the settings form edits it. */

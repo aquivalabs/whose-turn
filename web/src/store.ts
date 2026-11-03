@@ -22,12 +22,12 @@ import type { ApiError, FeedItem, Marks, Snapshot, StreamEvent, Todo } from './l
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
 
-// The same keys and values the window has always stored; nothing is written until a choice is made.
+// ADR 0002, the storage rows
 const STORED = { writeDefaults: false };
 const lastWorkspace = useLocalStorage('wt-ws', '', STORED);
 const lastMode = useSessionStorage('wt-mode', '', STORED);
 
-// The server's snapshot: replaced wholesale on every load, never mutated in place, so shallow reactivity is enough.
+/** The server's snapshot; every load replaces it wholesale and nothing mutates it in place. */
 export const snapshot = shallowReactive<Snapshot>({
   workspaces: [],
   workspace: { id: '', name: '', connectors: [], links: [], key_pattern: '', theme: null },
@@ -176,7 +176,7 @@ export const reload = () => {
   return load();
 };
 
-// Chromium gives up on a refused reconnect, so VueUse retries every second until the server is back; every message is a new object, so each one reaches the watcher.
+// ADR 0002, SSE stream
 const stream = useEventSource<[], StreamEvent>('/api/stream', [], {
   immediate: false,
   autoConnect: false,

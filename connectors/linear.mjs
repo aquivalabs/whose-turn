@@ -1,9 +1,9 @@
 /** Linear connector: your issues in one workspace (optionally one team or project) with comments and the moment they entered their state. API key from the secret store. */
 import { toIsoUtc } from '../lib/text.mjs';
+import { linearQuery } from '../lib/linear-api.mjs';
+import { cachedToken } from '../lib/token-cache.mjs';
 
-const API = 'https://api.linear.app/graphql';
 const DEFAULT_SERVICE = 'whose-turn-linear';
-const TOKEN_TTL = 10 * 60 * 1000;
 
 export const id = 'linear';
 export const label = 'Linear';
@@ -12,7 +12,7 @@ export const fields = [
   { key: 'workspace', label: 'Workspace slug', hint: 'the part after linear.app/ in your issue links', required: true },
   { key: 'api_key', label: 'API key', hint: 'a personal API key, stored in the secret store, never in the config', secret: { account: 'workspace', service: 'token_service', default: DEFAULT_SERVICE } },
   { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-linear' },
-  { key: 'team', label: 'Team key', hint: 'only issues of this team, for example RMA; empty for all' },
+  { key: 'team', label: 'Team key', hint: 'only issues of this team, for example TEAM; empty for all' },
   { key: 'project', label: 'Project', hint: 'only issues of this project, by name; empty for all' },
 ];
 
@@ -61,15 +61,12 @@ const buildFilter = (settings, done) => {
 };
 
 const apiKey = async (settings, secrets, cache) => {
-  if (!cache.token || Date.now() - cache.tokenAt > TOKEN_TTL) {
-    const service = settings.token_service || DEFAULT_SERVICE;
-    cache.token = await secrets.get(service, settings.workspace);
-    cache.tokenAt = Date.now();
-    if (!cache.token) {
-      throw new Error(`No Linear API key in the secret store (service ${service}, account ${settings.workspace})`);
-    }
+  const service = settings.token_service || DEFAULT_SERVICE;
+  const token = await cachedToken(cache, () => secrets.get(service, settings.workspace));
+  if (!token) {
+    throw new Error(`No Linear API key in the secret store (service ${service}, account ${settings.workspace})`);
   }
-  return cache.token;
+  return token;
 };
 
 const fetchAll = async (http, key, filter) => {
@@ -77,16 +74,13 @@ const fetchAll = async (http, key, filter) => {
   let after = null;
   let viewer = null;
   for (let page = 0; page < 10; page += 1) {
-    const result = await http.fetchJson(API, { method: 'POST', body: { query: QUERY, variables: { filter, after } }, useEtag: false, headers: { Authorization: key, 'Content-Type': 'application/json' } });
-    if (result.errors?.length) {
-      throw new Error(result.errors.map((error) => error.message).join('; '));
-    }
-    viewer = result.data.viewer;
-    nodes.push(...result.data.issues.nodes);
-    if (!result.data.issues.pageInfo.hasNextPage) {
+    const data = await linearQuery(http, key, QUERY, { filter, after });
+    viewer = data.viewer;
+    nodes.push(...data.issues.nodes);
+    if (!data.issues.pageInfo.hasNextPage) {
       break;
     }
-    after = result.data.issues.pageInfo.endCursor;
+    after = data.issues.pageInfo.endCursor;
   }
   return { viewer, nodes };
 };

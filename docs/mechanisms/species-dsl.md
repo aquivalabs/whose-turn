@@ -68,7 +68,7 @@ constant `PI`, and names from `params`, `let` and loops.
 | `chance(p)` | true with probability p | 1 |
 | `vary(v, spread)` | v times a factor in 1 - spread to 1 + spread, spread defaults to 0.12 | 1 |
 | `if(cond, a, b)` | a or b, only that branch is evaluated | those of the branch |
-| `cos sin sqrt abs hypot min max lerp clamp len` | as in JavaScript; `lerp(from, to, t)`, `clamp(v, lo, hi)` | 0 |
+| `cos sin sqrt abs hypot min max lerp clamp len` | as in JavaScript; `lerp(from, to, t)`, `clamp(v, lo, hi)`; every call takes numbers except `len`, which takes a list | 0 |
 
 Draws happen left to right in reading order, so the same seed always gives the same animal. Reordering
 statements or expressions changes which animal a seed draws.

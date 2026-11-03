@@ -1,34 +1,35 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { startApi } from '../lib/api.mjs';
-
-const appDir = new URL('..', import.meta.url).pathname;
-const port = 18000 + Math.floor(Math.random() * 1000);
-const registry = { workspaces: [], rawWorkspaces: [], problems: [], subscribe: () => () => {} };
-
-const postTo = (at, path, body) => fetch(`http://127.0.0.1:${at}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-const post = (path, body) => postTo(port, path, body);
+import { createServer } from 'node:http';
+import { once } from 'node:events';
+import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
 
 test('a workspace write without ws is refused instead of landing in the first workspace', async () => {
-  const server = await startApi({ port, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  // Setup
+  const { server, post } = await startTestApi();
   try {
     for (const path of ['/api/marks', '/api/todos']) {
+      // Exercise
       const response = await post(path, { seen: ['x'], action: 'add', text: 'y' });
+      // Verify
       const body = await response.json();
       assert.equal(response.status, 400, path);
       assert.equal(body.error.status, 'INVALID_ARGUMENT', path);
     }
-    const refresh = await post('/api/refresh', {});
-    assert.equal(refresh.status, 200);
+    // Exercise + Verify
+    assert.equal((await post('/api/refresh', {})).status, 200);
   } finally {
     server.close();
   }
 });
 
 test('an inbox hand-off without ws is refused, naming ws', async () => {
-  const server = await startApi({ port: port + 20, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  // Setup
+  const { server, post } = await startTestApi();
   try {
-    const response = await postTo(port + 20, '/api/inbox', { kind: 'workspace' });
+    // Exercise
+    const response = await post('/api/inbox', { kind: 'workspace' });
+    // Verify
     const error = (await response.json()).error;
     assert.equal(response.status, 400);
     assert.equal(error.status, 'INVALID_ARGUMENT');
@@ -39,10 +40,13 @@ test('an inbox hand-off without ws is refused, naming ws', async () => {
 });
 
 test('a config with no workspace is refused and nothing is saved', async () => {
+  // Setup
   let saved = 0;
-  const server = await startApi({ port: port + 1, appDir, registry, requestPoll: () => {}, saveConfig: async () => { saved += 1; }, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  const { server, post } = await startTestApi({ saveConfig: async () => { saved += 1; } });
   try {
-    const response = await fetch(`http://127.0.0.1:${port + 1}/api/config`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaces: [] }) });
+    // Exercise
+    const response = await post('/api/config', { workspaces: [] });
+    // Verify
     const body = await response.json();
     assert.equal(response.status, 400);
     assert.equal(body.error.status, 'INVALID_ARGUMENT');
@@ -54,9 +58,10 @@ test('a config with no workspace is refused and nothing is saved', async () => {
 });
 
 test('a marks write with a wrong shape is refused naming the field, a valid one lands', async () => {
+  // Setup
   const marks = { seen: [], base: 0, handled: {} };
   const workspace = { id: 'w', updateMarks: (body) => Object.assign(marks, body) };
-  const server = await startApi({ port: port + 2, appDir, registry: { ...registry, workspaces: [workspace] }, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  const { server, post } = await startTestApi({ registry: emptyRegistry({ workspaces: [workspace] }) });
   try {
     const wrong = [
       [{ seen: 'abc' }, 'seen'],
@@ -67,14 +72,18 @@ test('a marks write with a wrong shape is refused naming the field, a valid one 
       [{ handled: 'yes' }, 'handled'],
     ];
     for (const [body, field] of wrong) {
-      const response = await postTo(port + 2, '/api/marks', { ws: 'w', ...body });
+      // Exercise
+      const response = await post('/api/marks', { ws: 'w', ...body });
+      // Verify
       const error = (await response.json()).error;
       assert.equal(response.status, 400, JSON.stringify(body));
       assert.equal(error.status, 'INVALID_ARGUMENT');
       assert.ok(JSON.stringify(error).includes(field), JSON.stringify(error));
     }
     assert.deepEqual(marks, { seen: [], base: 0, handled: {} });
-    const ok = await postTo(port + 2, '/api/marks', { ws: 'w', seen: ['a'], base: Date.now(), handled: { 'NW-1': new Date().toISOString(), 'NW-2': null } });
+    // Exercise
+    const ok = await post('/api/marks', { ws: 'w', seen: ['a'], base: Date.now(), handled: { 'NW-1': new Date().toISOString(), 'NW-2': null } });
+    // Verify
     assert.equal(ok.status, 200);
     assert.deepEqual(marks.seen, ['a']);
   } finally {
@@ -83,19 +92,22 @@ test('a marks write with a wrong shape is refused naming the field, a valid one 
 });
 
 test('an unexpected exception in a handler answers INTERNAL, an unknown path still NOT_FOUND', async () => {
+  // Setup
   const workspace = { id: 'w', updateMarks: () => { throw new Error('disk full'); } };
-  const server = await startApi({ port: port + 3, appDir, registry: { ...registry, workspaces: [workspace] }, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  const { server, get, post } = await startTestApi({ registry: emptyRegistry({ workspaces: [workspace] }) });
   const logged = console.error;
   console.error = () => {};
   try {
-    const failed = await postTo(port + 3, '/api/marks', { ws: 'w', seen: ['a'] });
+    // Exercise
+    const failed = await post('/api/marks', { ws: 'w', seen: ['a'] });
+    const unknown = await get('/api/nowhere');
+    // Verify
     const error = (await failed.json()).error;
     assert.equal(failed.status, 500);
     assert.equal(error.status, 'INTERNAL');
     assert.equal(error.details[0].reason, 'INTERNAL');
     assert.doesNotMatch(JSON.stringify(error), /disk full/);
     assert.equal(error.details.some((detail) => detail['@type'] === 'DebugInfo'), false);
-    const unknown = await fetch(`http://127.0.0.1:${port + 3}/api/nowhere`);
     assert.equal(unknown.status, 404);
     assert.equal((await unknown.json()).error.details[0].reason, 'NOT_FOUND');
   } finally {
@@ -105,13 +117,16 @@ test('an unexpected exception in a handler answers INTERNAL, an unknown path sti
 });
 
 test('the raw exception text of an INTERNAL answer reaches the client only under WHOSE_TURN_DEBUG=1', async () => {
+  // Setup
   const workspace = { id: 'w', updateMarks: () => { throw new Error('disk full'); } };
-  const server = await startApi({ port: port + 4, appDir, registry: { ...registry, workspaces: [workspace] }, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  const { server, post } = await startTestApi({ registry: emptyRegistry({ workspaces: [workspace] }) });
   const logged = console.error;
   console.error = () => {};
   process.env.WHOSE_TURN_DEBUG = '1';
   try {
-    const error = (await (await postTo(port + 4, '/api/marks', { ws: 'w', seen: ['a'] })).json()).error;
+    // Exercise
+    const error = (await (await post('/api/marks', { ws: 'w', seen: ['a'] })).json()).error;
+    // Verify
     assert.equal(error.message, 'The local server failed on this request; the details are in its log.');
     assert.equal(error.details.find((detail) => detail['@type'] === 'DebugInfo').detail, 'disk full');
   } finally {
@@ -122,15 +137,72 @@ test('the raw exception text of an INTERNAL answer reaches the client only under
 });
 
 test('a request that needs a workspace answers NO_WORKSPACE when none is configured, while /api/state keeps its empty snapshot', async () => {
-  const server = await startApi({ port: port + 5, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  // Setup
+  const { server, get } = await startTestApi();
   try {
-    const handoff = await fetch(`http://127.0.0.1:${port + 5}/api/handoff?kind=workspace`);
+    // Exercise
+    const handoff = await get('/api/handoff?kind=workspace');
+    const state = await get('/api/state');
+    // Verify
     assert.equal(handoff.status, 412);
     assert.equal((await handoff.json()).error.details[0].reason, 'NO_WORKSPACE');
-    const state = await fetch(`http://127.0.0.1:${port + 5}/api/state`);
     assert.equal(state.status, 200);
     assert.deepEqual(await state.json(), { workspaces: [], problems: [] });
   } finally {
     server.close();
+  }
+});
+
+test('a method other than GET or POST answers 405 METHOD_NOT_ALLOWED with an Allow header', async () => {
+  // Setup
+  const { server, get } = await startTestApi();
+  try {
+    // Exercise
+    const response = await get('/api/todos', { method: 'DELETE' });
+    // Verify
+    const error = (await response.json()).error;
+    assert.equal(response.status, 405);
+    assert.equal(response.headers.get('allow'), 'GET, POST');
+    assert.equal(error.details[0].reason, 'METHOD_NOT_ALLOWED');
+    assert.equal(error.details[0].metadata.method, 'DELETE');
+  } finally {
+    server.close();
+  }
+});
+
+test('a to-do with empty text is INVALID_ARGUMENT with a field violation on text', async () => {
+  // Setup
+  let added = 0;
+  const workspace = { id: 'w', addTodo: () => { added += 1; }, saveTodos: () => {}, store: { todos: [] } };
+  const { server, post } = await startTestApi({ registry: emptyRegistry({ workspaces: [workspace] }) });
+  try {
+    // Exercise
+    const response = await post('/api/todos', { ws: 'w', action: 'add', text: '   ' });
+    // Verify
+    const error = (await response.json()).error;
+    assert.equal(response.status, 400);
+    assert.equal(error.details[0].reason, 'INVALID_ARGUMENT');
+    assert.deepEqual(error.details[1].field_violations.map((violation) => violation.field), ['text']);
+    assert.equal(added, 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('a port in use rejects startApi with one line naming the port and WHOSE_TURN_PORT', async () => {
+  // Setup
+  const holder = createServer();
+  holder.listen(0, '127.0.0.1');
+  await once(holder, 'listening');
+  const { port } = holder.address();
+  try {
+    // Exercise + Verify
+    await assert.rejects(startTestApi({ port }), (error) => {
+      assert.match(error.message, new RegExp(`^Port ${port} is already in use: .*WHOSE_TURN_PORT`));
+      assert.doesNotMatch(error.message, /\n/);
+      return true;
+    });
+  } finally {
+    holder.close();
   }
 });

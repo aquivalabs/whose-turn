@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createFeedback, openReports } from '../lib/feedback.mjs';
-import { startApi } from '../lib/api.mjs';
+import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
 import { RateLimited } from '../lib/http-client.mjs';
 
 const settings = { workspace: 'your-space', team: 'PROJ', project: 'monitor' };
@@ -39,10 +39,13 @@ test('a bug goes to the configured team and project with the Bug label, the body
   assert.equal(calls.length, 4);
 });
 
-test('no title, no config or no key each refuse with a plain message', async () => {
+test('no title, no config or no key each refuse with their reason, and a missing config wins over a missing title', async () => {
+  // Setup
   const { http } = stub();
-  await assert.rejects(createFeedback({ settings, secrets, http, cache: {} }, { title: '  ' }), { reason: 'INVALID_ARGUMENT', metadata: { detail: 'a title is required' } });
-  await assert.rejects(createFeedback({ settings: null, secrets, http, cache: {} }, { title: 'x' }), /not configured/);
+  // Exercise + Verify
+  await assert.rejects(createFeedback({ settings, secrets, http, cache: {} }, { title: '  ' }), { reason: 'INVALID_ARGUMENT', metadata: { detail: 'a title is required' }, violations: [{ field: 'title', description: 'A report needs a title.' }] });
+  await assert.rejects(createFeedback({ settings: null, secrets, http, cache: {} }, { title: 'x' }), { reason: 'NOT_CONFIGURED', code: 412 });
+  await assert.rejects(createFeedback({ settings: null, secrets, http, cache: {} }, { title: '' }), { reason: 'NOT_CONFIGURED' });
   await assert.rejects(createFeedback({ settings: { ...settings, workspace: 'elsewhere' }, secrets, http, cache: {} }, { title: 'x' }), { reason: 'NOT_CONFIGURED' });
 });
 
@@ -88,16 +91,18 @@ test('the detail of one report carries the comments as answers, and flags a clos
 });
 
 test('the server refuses a remark at once when feedback is not configured, without running the composer', async () => {
+  // Setup
   const dir = reportsDir();
   const marker = join(dir, 'composer-ran');
   const composer = { command: process.execPath, args: ['-e', `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'ran')`] };
-  const registry = { workspaces: [], rawWorkspaces: [], problems: [], feedback: { composer }, subscribe: () => () => {} };
-  const port = 19000 + Math.floor(Math.random() * 1000);
-  const server = await startApi({ port, appDir: new URL('..', import.meta.url).pathname, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  const { server, post } = await startTestApi({ registry: emptyRegistry({ feedback: { composer } }) });
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/api/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'the chevron wraps' }) });
+    // Exercise
+    const response = await post('/api/feedback', { text: 'the chevron wraps' });
+    // Verify
     const body = await response.json();
     assert.equal(response.status, 412);
+    assert.equal(body.error.status, 'FAILED_PRECONDITION');
     assert.equal(body.error.details[0].reason, 'NOT_CONFIGURED');
     assert.match(body.error.message, /not configured/);
     assert.equal(existsSync(marker), false);
@@ -106,50 +111,72 @@ test('the server refuses a remark at once when feedback is not configured, witho
   }
 });
 
+test('an empty remark without a title is INVALID_ARGUMENT with a field violation on text, and nothing is filed', async () => {
+  // Setup
+  const { http, calls } = stub();
+  const { server, post } = await startTestApi({ registry: emptyRegistry({ feedback: settings }), secrets, http, reports: { list: () => [], add: () => {}, states: async () => [] } });
+  try {
+    // Exercise
+    const response = await post('/api/feedback', { text: '  ' });
+    // Verify
+    const error = (await response.json()).error;
+    assert.equal(response.status, 400);
+    assert.equal(error.details[0].reason, 'INVALID_ARGUMENT');
+    assert.deepEqual(error.details[1].field_violations.map((violation) => violation.field), ['text']);
+    assert.equal(calls.length, 0);
+  } finally {
+    server.close();
+  }
+});
+
 test('the server refuses the same remark twice in a row and accepts a different one', async () => {
+  // Setup
   const { http } = stub();
   const composer = { command: process.execPath, args: ['-e', `process.stdout.write(JSON.stringify({ title: 'T', kind: 'bug', body: 'B' }))`] };
-  const registry = { workspaces: [], rawWorkspaces: [], problems: [], feedback: { ...settings, composer }, subscribe: () => () => {} };
-  const port = 19000 + Math.floor(Math.random() * 1000);
-  const server = await startApi({ port, appDir: new URL('..', import.meta.url).pathname, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets, inbox: {}, http, reports: { list: () => [], add: () => {}, states: async () => [] } });
+  const { server, post: postTo } = await startTestApi({ registry: emptyRegistry({ feedback: { ...settings, composer } }), secrets, http, reports: { list: () => [], add: () => {}, states: async () => [] } });
   const post = async (text) => {
-    const response = await fetch(`http://127.0.0.1:${port}/api/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+    const response = await postTo('/api/feedback', { text });
     return { status: response.status, body: await response.json() };
   };
   try {
-    assert.equal((await post('the chevron wraps')).status, 200);
+    // Exercise
+    const first = await post('the chevron wraps');
     const again = await post('  the chevron wraps ');
+    const other = await post('the title is cut off');
+    // Verify
+    assert.equal(first.status, 200);
     assert.equal(again.status, 400);
     assert.match(again.body.error.details[0].metadata.detail, /the same remark was just sent/);
-    assert.equal((await post('the title is cut off')).status, 200);
+    assert.equal(other.status, 200);
   } finally {
     server.close();
   }
 });
 
 test('a Linear failure, a rate limit and a missing key come back as their own reasons, without the upstream text', async () => {
+  // Setup
   const composer = { command: process.execPath, args: ['-e', `process.stdout.write(JSON.stringify({ title: 'T', kind: 'bug', body: 'B' }))`] };
   const failing = (error) => ({ fetchJson: async () => { throw error; } });
   const attempt = async (http, feedback, secretStore = secrets) => {
-    const registry = { workspaces: [], rawWorkspaces: [], problems: [], feedback: { ...feedback, composer }, subscribe: () => () => {} };
-    const port = 19000 + Math.floor(Math.random() * 1000);
-    const server = await startApi({ port, appDir: new URL('..', import.meta.url).pathname, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: secretStore, inbox: {}, http, reports: { list: () => [], add: () => {}, states: async () => [] } });
+    const { server, post } = await startTestApi({ registry: emptyRegistry({ feedback: { ...feedback, composer } }), secrets: secretStore, http, reports: { list: () => [], add: () => {}, states: async () => [] } });
     try {
-      const response = await fetch(`http://127.0.0.1:${port}/api/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'remark ' + Math.random() }) });
+      const response = await post('/api/feedback', { text: 'remark ' + Math.random() });
       return { status: response.status, body: await response.json() };
     } finally {
       server.close();
     }
   };
+  // Exercise
   const down = await attempt(failing(Object.assign(new Error('HTTP 503 from api.linear.app'), { upstreamStatus: 503 })), settings);
+  const limited = await attempt(failing(new RateLimited('429 from api.linear.app')), settings);
+  const keyless = await attempt(failing(new Error('unused')), settings, { get: async () => '' });
+  // Verify
   assert.equal(down.status, 502);
   assert.equal(down.body.error.details[0].reason, 'UPSTREAM_FAILED');
   assert.equal(down.body.error.details[0].metadata.upstream_status, 503);
   assert.doesNotMatch(JSON.stringify(down.body), /api\.linear\.app/);
-  const limited = await attempt(failing(new RateLimited('429 from api.linear.app')), settings);
   assert.equal(limited.status, 429);
   assert.equal(limited.body.error.details[0].reason, 'RATE_LIMITED');
-  const keyless = await attempt(failing(new Error('unused')), settings, { get: async () => '' });
   assert.equal(keyless.status, 412);
   assert.equal(keyless.body.error.details[0].reason, 'NOT_CONFIGURED');
 });

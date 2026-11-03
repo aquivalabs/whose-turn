@@ -117,7 +117,7 @@ const BINARY: Record<string, [number, (left: number, right: number) => Value]> =
   '%': [3, (left, right) => left % right],
 };
 
-// Arguments arrive as numbers; `len` alone takes a list, so it reads its argument as one.
+// docs/mechanisms/species-dsl.md, Expressions
 const FUNCTIONS: Record<string, (context: Context, ...values: number[]) => Value> = {
   range: (context, low, high) => context.random.range(low, high),
   int: (context, low, high) => context.random.int(low, high),

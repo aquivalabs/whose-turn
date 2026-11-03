@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileRules, turnRows } from '../lib/rules.mjs';
 import { DEFAULT_RULES, normaliseWorkspaces } from '../lib/config.mjs';
-import { startApi } from '../lib/api.mjs';
+import { startTestApi } from './fixtures/api.mjs';
 import { ticket, pr, comment } from './fixtures/rules.mjs';
 
 const me = { jira: 'Alex Doe', github: 'alex' };
@@ -100,15 +100,13 @@ test('a bad table is refused with the row and the unknown fact or operator named
 });
 
 test('POST /api/config refuses a bad table through the config validation and saves nothing', async () => {
-  const port = 19000 + Math.floor(Math.random() * 1000);
+  // Setup
   let saved = false;
-  const registry = { workspaces: [], rawWorkspaces: [], problems: [], subscribe: () => () => {} };
-  const server = await startApi({ port, appDir: new URL('..', import.meta.url).pathname, registry, requestPoll: () => {}, saveConfig: async () => { saved = true; }, secrets: {}, inbox: {}, http: {}, reports: {} });
+  const { server, post } = await startTestApi({ saveConfig: async () => { saved = true; }, reports: {} });
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/api/config`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workspaces: [{ id: 'w', rules: { table: [{ when: { 'pr.checks': { gt: 1 } }, then: yours('x') }] } }] }),
-    });
+    // Exercise
+    const response = await post('/api/config', { workspaces: [{ id: 'w', rules: { table: [{ when: { 'pr.checks': { gt: 1 } }, then: yours('x') }] } }] });
+    // Verify
     const body = await response.json();
     assert.equal(response.status, 400);
     assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
@@ -120,11 +118,9 @@ test('POST /api/config refuses a bad table through the config validation and sav
 });
 
 const postConfig = async (workspaces) => {
-  const port = 19000 + Math.floor(Math.random() * 1000);
-  const registry = { workspaces: [], rawWorkspaces: [], problems: [], subscribe: () => () => {} };
-  const server = await startApi({ port, appDir: new URL('..', import.meta.url).pathname, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: {} });
+  const { server, post } = await startTestApi({ reports: {} });
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/api/config`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaces }) });
+    const response = await post('/api/config', { workspaces });
     return { status: response.status, body: await response.json() };
   } finally {
     server.close();

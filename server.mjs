@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Whose Turn server: loads the workspace config, polls every workspace's connectors on one loop with rate-limit backoff, checks the health of the data on its own timer, serves the window and the local API, reloads workspaces when the config is saved. Node 22, no dependencies. */
+/** Whose Turn server: loads the workspace config, polls every workspace on one loop with rate-limit backoff, checks data health on a timer, serves the window and the local API. */
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, saveWorkspaces, normaliseWorkspaces } from './lib/config.mjs';
@@ -55,7 +55,12 @@ const saveConfig = async (rawWorkspaces) => {
   await Promise.all(created.map((workspace) => workspace.poll()));
 };
 
-await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir });
+try {
+  await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir });
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
 console.log(`whose-turn on http://127.0.0.1:${first.port} · data ${first.dataDir} · workspaces ${registry.workspaces.map((workspace) => workspace.id).join(', ') || 'none'}`);
 for (const problem of registry.problems) {
   console.error(problem);

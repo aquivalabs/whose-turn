@@ -4,18 +4,36 @@
   "_comment": "A record of the gates, not their source: package.json holds the command, .githooks/pre-push and .github/workflows hold when it runs.",
   "tiers": {
     "node": {
-      "include": ["test/**/*.test.mjs"],
+      "include": [
+        "test/**/*.test.mjs"
+      ],
       "environment": "node"
+    },
+    "dom": {
+      "include": [
+        "web/**/*.test.ts"
+      ],
+      "environment": "happy-dom",
+      "setupFile": "web/src/test-setup.ts"
     },
     "excluded": []
   },
   "coverage": {
-    "_comment": "Not armed. The server is being rewritten in Node (RMA-80); the first real suite comes with it, and the ratchet is set from a measured run, not chosen.",
+    "_comment": "Not armed. 192 node cases and 16 window cases run today (2026-11-03, RMA-199), but no coverage run has been measured; the ratchet is set from a measured run, not chosen.",
     "uncoveredLineCap": 0,
     "floorPercent": 0,
     "perPath": {}
   },
-  "blockedRules": [],
+  "blockedRules": [
+    {
+      "rule": 13,
+      "waitsOn": "The untouched cases of test/*.test.mjs and web/**/*.test.ts: they migrate when a change touches them for another reason, never in a sweep (tests standard, section 8). RMA-199 migrated the server-API cases in api-writes, feedback, mcp, rules-table and window.",
+      "interim": "A case you write or change carries // Setup, // Exercise and // Verify markers (or // Exercise + Verify where the assertion is the exercise); an untouched case is left as it is."
+    }
+  ],
   "armedRules": [],
-  "timeBudgetMs": { "node": 5000 }
+  "timeBudgetMs": {
+    "node": 5000,
+    "dom": 1000
+  }
 }

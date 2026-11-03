@@ -1,7 +1,6 @@
 /** Jira Cloud connector: your tickets by JQL with all comments (ADF turned into text) and the changelog entry for the current status. Token from the secret store. */
 import { toIsoUtc, mapLimit } from '../lib/text.mjs';
-
-const TOKEN_TTL = 10 * 60 * 1000;
+import { cachedToken } from '../lib/token-cache.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-jira';
 
@@ -106,15 +105,12 @@ const statusEntered = async (api, cache, key, updated, status) => {
 };
 
 const jiraToken = async (settings, secrets, cache) => {
-  if (!cache.token || Date.now() - cache.tokenAt > TOKEN_TTL) {
-    const service = settings.token_service || DEFAULT_SERVICE;
-    cache.token = await secrets.get(service, settings.email);
-    cache.tokenAt = Date.now();
-    if (!cache.token) {
-      throw new Error(`No Jira API token in the secret store (service ${service}, account ${settings.email})`);
-    }
+  const service = settings.token_service || DEFAULT_SERVICE;
+  const token = await cachedToken(cache, () => secrets.get(service, settings.email));
+  if (!token) {
+    throw new Error(`No Jira API token in the secret store (service ${service}, account ${settings.email})`);
   }
-  return cache.token;
+  return token;
 };
 
 export const poll = async ({ settings, http, secrets, cache }) => {

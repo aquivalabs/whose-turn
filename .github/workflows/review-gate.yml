@@ -1,6 +1,6 @@
 name: review-gate
 # The attestation and secret-scan half of the pre-push gate; `check.yml` runs the types, lint and tests half.
-# Why the merge commit's hash matches the local attestation only for a branch that contains main: CLAUDE.md, "Gates".
+# Why the merge commit's hash matches the local attestation only for a branch that contains main: AGENTS.md, "Gates".
 on:
   pull_request:
 jobs:

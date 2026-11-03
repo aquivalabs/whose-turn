@@ -3,6 +3,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { RateLimited } from '../lib/http-client.mjs';
 import { oneline, nowIso, mapLimit, wordsRegex, DAY } from '../lib/text.mjs';
+import { cachedToken } from '../lib/token-cache.mjs';
 
 const run = promisify(execFile);
 const API = 'https://api.github.com';
@@ -21,17 +22,10 @@ export const fields = [
 
 export const persistedCache = ['prs', 'asks', 'runStreaks'];
 
-const TOKEN_TTL = 10 * 60 * 1000;
-
-const ghToken = async (account, cache) => {
-  if (!cache.token || Date.now() - cache.tokenAt > TOKEN_TTL) {
-    const args = account ? ['auth', 'token', '--user', account] : ['auth', 'token'];
-    const { stdout } = await run('gh', args);
-    cache.token = stdout.trim();
-    cache.tokenAt = Date.now();
-  }
-  return cache.token;
-};
+const ghToken = (account, cache) => cachedToken(cache, async () => {
+  const { stdout } = await run('gh', account ? ['auth', 'token', '--user', account] : ['auth', 'token']);
+  return stdout.trim();
+});
 
 const createApi = (http, token) => (path) => {
   const url = path.startsWith(API) ? path : `${API}${path}`;

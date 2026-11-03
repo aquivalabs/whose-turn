@@ -42,7 +42,7 @@ export default tseslint.config(
           patterns: [
             {
               group: ['../../*'],
-              message: 'Use a registered @ alias instead of climbing with ../../.',
+              message: 'Import through the @ alias (web/src) instead of climbing with ../../.',
             },
           ],
         },

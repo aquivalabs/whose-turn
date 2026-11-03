@@ -4,20 +4,16 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, chmodSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { startApi } from '../lib/api.mjs';
+import { appDir, startTestApi } from './fixtures/api.mjs';
 import { resolveMode, tabUrl } from '../web/src/lib/window-mode.ts';
 
-const appDir = new URL('..', import.meta.url).pathname;
-const port = 19000 + Math.floor(Math.random() * 1000);
-const registry = { workspaces: [], rawWorkspaces: [], problems: [], subscribe: () => () => {} };
-const url = (path) => `http://127.0.0.1:${port}${path}`;
-const post = (path, body, headers = {}) => fetch(url(path), { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
-
 test('the window size is stored per data dir, read back, and bad values are refused', async () => {
+  // Setup
   const dataDir = mkdtempSync(join(tmpdir(), 'wt-window-'));
   const opened = [];
-  const server = await startApi({ port, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: {}, dataDir, opener: (call) => opened.push(call) });
+  const { server, port, url, post } = await startTestApi({ reports: {}, dataDir, opener: (call) => opened.push(call) });
   try {
+    // Exercise + Verify
     assert.deepEqual(await (await fetch(url('/api/window'))).json(), {});
     assert.equal((await post('/api/window', { width: 1200, height: 800 })).status, 200);
     assert.deepEqual(await (await fetch(url('/api/window'))).json(), { width: 1200, height: 800 });
@@ -92,18 +88,22 @@ test('open.sh on Linux uses the first Chrome or Edge on PATH, else xdg-open', as
 });
 
 test('a second /api/open of the same mode within five seconds is refused and opens one window', async () => {
+  // Setup
   const opened = [];
-  const at = 19000 + Math.floor(Math.random() * 900);
-  const server = await startApi({ port: at, appDir: new URL('..', import.meta.url).pathname, registry: { workspaces: [], rawWorkspaces: [], problems: [], subscribe: () => () => {} }, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: {}, dataDir: mkdtempSync(join(tmpdir(), 'wt-open-')), opener: (call) => opened.push(call) });
-  const open = (mode) => fetch(`http://127.0.0.1:${at}/api/open`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
+  const { server, port: at, post } = await startTestApi({ reports: {}, dataDir: mkdtempSync(join(tmpdir(), 'wt-open-')), opener: (call) => opened.push(call) });
+  const open = (mode) => post('/api/open', { mode });
   try {
-    assert.equal((await open('app')).status, 200);
+    // Exercise
+    const first = await open('app');
     const second = await open('app');
+    const other = await open('browser');
+    // Verify
+    assert.equal(first.status, 200);
     const error = (await second.json()).error;
     assert.equal(second.status, 429);
     assert.equal(error.details[0].reason, 'OPEN_TOO_SOON');
     assert.ok(error.details[0].metadata.retry_after_seconds >= 1);
-    assert.equal((await open('browser')).status, 200);
+    assert.equal(other.status, 200);
     assert.deepEqual(opened, [{ mode: 'app', port: at }, { mode: 'browser', port: at }]);
   } finally {
     server.close();

@@ -72,14 +72,6 @@
   --live-pulse-rest: rgb(43 182 115 / 60%);
 }
 
-/* A forced light scheme keeps the header ink dark and the unread accent deeper on a light glass. */
-html.force-light .app {
-  --header-ink: #001a41;
-  --new: #0077b6;
-  --new-bg: rgb(0 119 182 / 10%);
-  --new-ink: #fff;
-}
-
 @media (prefers-color-scheme: dark) {
   .app {
     --md-primary: #adc6ff;
@@ -113,37 +105,4 @@ html.force-light .app {
     --blob-2: rgb(0 169 224 / 28%);
     --blob-3: rgb(23 223 220 / 14%);
   }
-}
-
-html.force-dark .app {
-  --md-primary: #adc6ff;
-  --md-on-primary: #0f2f60;
-  --md-primary-container: #2b4678;
-  --md-on-primary-container: #d8e2ff;
-  --md-secondary-container: #3e4759;
-  --md-on-secondary-container: #dae2f9;
-  --md-tertiary-container: #1f504c;
-  --md-on-tertiary-container: #b4efe9;
-  --md-warn-container: #5c4300;
-  --md-on-warn-container: #ffdea6;
-  --md-error: #ffb4ab;
-  --md-error-container: #93000a;
-  --md-on-error-container: #ffdad6;
-  --md-surface: #111318;
-  --md-s-low: #1b1e23;
-  --md-s: #1f2227;
-  --md-s-high: #292c32;
-  --md-s-highest: #34373d;
-  --md-on-surface: #e2e2e9;
-  --md-on-surface-variant: #c4c6d0;
-  --md-outline: #8e9099;
-  --md-outline-variant: #3a3d44;
-  --md-state: 226, 226, 233;
-  --glass: 30, 34, 42;
-  --glass-a: 0.55;
-  --glass-edge: rgb(255 255 255 / 9%);
-  --glass-hi: rgb(255 255 255 / 6%);
-  --blob-1: rgb(44 86 151 / 55%);
-  --blob-2: rgb(0 169 224 / 28%);
-  --blob-3: rgb(23 223 220 / 14%);
 }

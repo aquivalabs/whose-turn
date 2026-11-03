@@ -1,4 +1,4 @@
-/** Backdrop under the glass: one animal per workspace drawn in dots from a seeded random. `window.whoseTurnBackdrop.show({ workspace, seed?, species?, pose? })` picks it; species live in species/*.json (docs/mechanisms/species-dsl.md); RMA-93, RMA-94, RMA-96. */
+/** Backdrop under the glass: one animal per workspace in dots from a seeded random, picked by `window.whoseTurnBackdrop.show({ workspace, seed?, species?, pose? })`. docs/mechanisms/species-dsl.md. */
 import { watch } from 'vue';
 import { useDebounceFn, useEventListener } from '@vueuse/core';
 import { mulberry32, randomTools } from './lib/random.ts';
@@ -387,5 +387,5 @@ window.whoseTurnBackdrop = {
 watch(dark, paint);
 useEventListener(window, 'resize', useDebounceFn(paint, 200));
 
-// ES exports next to the window global, so modules import instead of reaching through window.
+/** The backdrop's functions as ES exports, the same ones `window.whoseTurnBackdrop` carries. */
 export const { show, repaint, seeded } = window.whoseTurnBackdrop;
