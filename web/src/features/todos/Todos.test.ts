@@ -39,7 +39,7 @@ test('a refused add keeps the text and shows the line', async () => {
 
 test('the done check is a native button, so Space and Enter tick it like a click', async () => {
   vi.mocked(todoAct).mockResolvedValue('');
-  snapshot.todos = [{ id: 't1', text: 'call the vendor', created: '2026-11-02T10:00:00Z' }];
+  snapshot.todos = [{ id: 't1', text: 'call the vendor', created: '2026-11-02T10:00:00Z', done: null }];
   render(Todos);
   const check = await screen.findByRole('checkbox', { name: 'Mark done' });
 
