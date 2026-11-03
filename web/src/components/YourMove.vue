@@ -13,6 +13,7 @@ import PrCell from './PrCell.vue';
 import ExtLink from './ExtLink.vue';
 import AiButton from './AiButton.vue';
 import RecentlyDone from './RecentlyDone.vue';
+import RowScroll from './RowScroll.vue';
 const view = computed(() => {
   void now.value;
   const mine = yourRows(snapshot.turn, snapshot.marks, ui.move);
@@ -52,7 +53,7 @@ const mark = (item: YourRow) =>
     <template #head
       ><Segmented v-model="ui.move" :options="options" label="Show" class="wt-move-view"
     /></template>
-    <div class="wt-scroll">
+    <RowScroll>
       <table>
         <thead>
           <tr>
@@ -128,7 +129,7 @@ const mark = (item: YourRow) =>
         </tbody>
       </table>
       <RecentlyDone />
-    </div>
+    </RowScroll>
     <p v-if="!view.rows.length" class="wt-empty">
       {{ emptyText }}
     </p>

@@ -63,3 +63,7 @@ export const statusTone = (status: string) =>
 export const outcomeTone = (outcome: string | undefined) =>
   (({ open: 'info', done: 'ok', dropped: 'warn' }) as Record<string, string>)[outcome || ''] ||
   'info';
+
+/** How many rows end below the visible bottom of a scroll area by more than the slack, given each row's bottom edge in the same coordinates. */
+export const hiddenBelow = (bottoms: number[], viewBottom: number, slack = 1) =>
+  bottoms.filter((bottom) => bottom > viewBottom + slack).length;

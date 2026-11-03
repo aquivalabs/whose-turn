@@ -9,6 +9,7 @@ import TicketCell from './TicketCell.vue';
 import PrCell from './PrCell.vue';
 import ExtLink from './ExtLink.vue';
 import AiButton from './AiButton.vue';
+import RowScroll from './RowScroll.vue';
 const rows = computed(() => {
   void now.value;
   return waitingRows(snapshot.turn).map((row) => ({
@@ -25,7 +26,7 @@ const rows = computed(() => {
     tip="Tickets you touched in the last 30 days where someone else holds the next step: a reviewer, QA, or a new owner."
   >
     <p v-if="!rows.length" class="wt-empty">Nothing is waiting on someone else.</p>
-    <div v-else class="wt-scroll">
+    <RowScroll v-else>
       <table>
         <thead>
           <tr>
@@ -73,6 +74,6 @@ const rows = computed(() => {
           </tr>
         </tbody>
       </table>
-    </div>
+    </RowScroll>
   </Island>
 </template>

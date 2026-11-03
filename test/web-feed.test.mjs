@@ -135,3 +135,11 @@ test('the live status is red when every source fails, amber when some do, green 
   assert.match(ok.text, /^Live · last check now/);
   assert.match(liveStatus(health([], true), fresh, 1, true).text, /^Stale · last data now/);
 });
+
+test('a clipped table counts the rows that end below the visible bottom, forgiving a cut through the cell padding', async () => {
+  const { hiddenBelow } = await import('../web/src/lib/moves.ts');
+  assert.equal(hiddenBelow([100, 200, 300, 400], 250), 2);
+  assert.equal(hiddenBelow([100, 200, 300], 300), 0);
+  assert.equal(hiddenBelow([100, 210, 300], 200, 13), 1);
+  assert.equal(hiddenBelow([], 0), 0);
+});
