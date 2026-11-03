@@ -108,6 +108,8 @@ the link and tooltip of the on-hold reason (`hold_url`, `hold_full`) when the ti
 
 A ticket that matches no row stays under "waiting on others" with "Not yours now".
 
+The user's own name is shown as `you` wherever a person appears: the `With` cell, feed items and comment authors.
+
 ### The default table and workspace tables
 
 `defaultTable(rules)` builds the default rows from the workspace's rule texts (`passed_next`,
