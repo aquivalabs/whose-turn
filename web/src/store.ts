@@ -11,6 +11,7 @@ import {
   useSessionStorage,
 } from '@vueuse/core';
 import { getJson, post } from './lib/api.ts';
+import { NO_WORKSPACE_MESSAGE, retryWithoutWorkspace } from './lib/load-retry.ts';
 import { turnCounts } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
@@ -110,6 +111,10 @@ export const load = (): Promise<Snapshot> =>
   getJson<StateReply>('/api/state' + (ui.ws ? '?ws=' + encodeURIComponent(ui.ws) : '')).then(
     (reply) => {
       if (reply.error) {
+        if (!retryWithoutWorkspace(ui.ws)) {
+          ui.status = NO_WORKSPACE_MESSAGE;
+          return snapshot;
+        }
         ui.ws = '';
         return load();
       }

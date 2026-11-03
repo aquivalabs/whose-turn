@@ -23,3 +23,18 @@ test('a workspace write without ws is refused instead of landing in the first wo
     server.close();
   }
 });
+
+test('a config with no workspace is refused and nothing is saved', async () => {
+  let saved = 0;
+  const server = await startApi({ port: port + 1, appDir, registry, requestPoll: () => {}, saveConfig: async () => { saved += 1; }, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  try {
+    const response = await fetch(`http://127.0.0.1:${port + 1}/api/config`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaces: [] }) });
+    const body = await response.json();
+    assert.equal(response.status, 400);
+    assert.equal(body.error.status, 'INVALID_ARGUMENT');
+    assert.equal(body.error.details[0].metadata.detail, 'keep at least one workspace');
+    assert.equal(saved, 0);
+  } finally {
+    server.close();
+  }
+});

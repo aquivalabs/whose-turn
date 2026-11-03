@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadConfig, saveWorkspaces, normaliseWorkspaces } from '../lib/config.mjs';
@@ -22,8 +22,19 @@ test('saving the workspace list keeps the other top-level keys and drops the fla
 test('saving into a missing file creates it', () => {
   const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
   const file = join(dir, 'nested', 'config.json');
-  saveWorkspaces(file, []);
-  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { workspaces: [] });
+  saveWorkspaces(file, [{ id: 'home' }]);
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { workspaces: [{ id: 'home' }] });
+  assert.equal(existsSync(`${file}.bak`), false);
+});
+
+test('saving keeps the previous file as config.json.bak', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const file = join(dir, 'config.json');
+  const before = JSON.stringify({ port: 9100, workspaces: [{ id: 'old' }] });
+  writeFileSync(file, before);
+  saveWorkspaces(file, [{ id: 'new' }]);
+  assert.equal(readFileSync(`${file}.bak`, 'utf8'), before);
+  assert.equal(JSON.parse(readFileSync(file, 'utf8')).workspaces[0].id, 'new');
 });
 
 test('validation reports duplicate ids and a bad theme without writing anything', () => {
