@@ -32,8 +32,7 @@ jobs:
         # No token: npm trusts this workflow through OIDC (the package's trusted publisher, RMA-235), and `id-token: write` above is what lets it. Every publish moves `latest`, prereleases included, because every install follows it (RMA-230, RMA-231); a prerelease also gets its channel tag (`alpha`).
         run: |
           version=${GITHUB_REF_NAME#v}
-          # Provenance is off until the repository is public: npm signs provenance only from a public source repository (RMA-237).
-          npm publish whose-turn-*.tgz --provenance=false --access public --tag latest
+          npm publish whose-turn-*.tgz --provenance --access public --tag latest
           case "$version" in *-*) channel=${version#*-}; npm dist-tag add "whose-turn@$version" "${channel%%.*}";; esac
       - name: GitHub Release with the tarball
         env:

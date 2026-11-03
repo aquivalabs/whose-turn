@@ -5,6 +5,7 @@ All notable changes to whose-turn are recorded here. The format follows [Keep a 
 ## [1.0.0-alpha.4] - 2026-11-03
 
 ### Changed
+- The repository is public, and every release is published with npm provenance again. RMA-237.
 - The self-update installs the new version with `--ignore-scripts`, as the plugin's first install does. RMA-236.
 
 ### Removed
