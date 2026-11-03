@@ -124,7 +124,7 @@ test('POST /api/update installs the channel version into the package location, r
     assert.equal(command[0], 'fake-npm');
     assert.deepEqual(command.slice(1, 3), ['install', '--prefix']);
     assert.match(command[3], /\/app$/);
-    assert.deepEqual(command.slice(4), ['--no-audit', '--no-fund', '--no-save', 'whose-turn@1.0.0-alpha.3']);
+    assert.deepEqual(command.slice(4), ['--no-audit', '--no-fund', '--no-save', '--ignore-scripts', 'whose-turn@1.0.0-alpha.3']);
 
     // Exercise
     installer.finish('');

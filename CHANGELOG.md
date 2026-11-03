@@ -4,6 +4,9 @@ All notable changes to whose-turn are recorded here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Changed
+- The self-update installs the new version with `--ignore-scripts`, as the plugin's first install does. RMA-236.
+
 ### Removed
 - The demo connector and the first-run "Try a demo workspace" button. A pre-made workspace belongs to the demo, which is separate work; the scenarios live on as test fixtures. A config that still names a `demo` source reports it as an unknown connector type. RMA-208.
 
