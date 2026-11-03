@@ -12,6 +12,16 @@ export const isHandled = (row: TurnRow, marks: HandledMarks) => {
 export const openCount = (turn: TurnRow[], marks: HandledMarks) =>
   turn.filter((row) => row.group === 'you' && !isHandled(row, marks)).length;
 
+/** The workspace list with one workspace's badge set; the same list when nothing changes. */
+export const withOpenMoves = <T extends { id: string; open_moves?: number }>(
+  workspaces: T[],
+  id: string,
+  count: number,
+) =>
+  workspaces.some((entry) => entry.id === id && entry.open_moves !== count)
+    ? workspaces.map((entry) => (entry.id === id ? { ...entry, open_moves: count } : entry))
+    : workspaces;
+
 export interface YourRow {
   row: TurnRow;
   handled: boolean;

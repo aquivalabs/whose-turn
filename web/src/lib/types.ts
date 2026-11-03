@@ -109,6 +109,7 @@ export interface StreamEvent {
   ws: string;
   version: number;
   polled_at: string;
+  open_moves: number;
 }
 
 /** A google.rpc.Status error envelope, as every refused write returns it. */

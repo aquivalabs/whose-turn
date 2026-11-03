@@ -132,3 +132,18 @@ test('the open window is told when a failing streak grows, not only when an aler
   built.checkHealth();
   assert.equal(built.store.state.version, steady);
 });
+
+test('every stream message carries the workspace badge count', async () => {
+  const built = createWorkspace(
+    { id: 'n', name: 'Northwind', key_pattern: 'NW-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'demo', id: 'demo', scenario: 'northwind' }] },
+    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, limits: () => DEFAULT_LIMITS, notify: () => {} },
+  );
+  const messages = [];
+  built.subscribe((message) => messages.push(message));
+  await built.poll();
+  assert.ok(messages.length);
+  assert.ok(built.summary().open_moves > 0);
+  for (const message of messages) {
+    assert.equal(message.open_moves, built.summary().open_moves);
+  }
+});

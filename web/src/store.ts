@@ -12,7 +12,7 @@ import {
 } from '@vueuse/core';
 import { getJson, post } from './lib/api.ts';
 import { NO_WORKSPACE_MESSAGE, retryWithoutWorkspace } from './lib/load-retry.ts';
-import { turnCounts } from './lib/moves.ts';
+import { openCount, turnCounts, withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
 import { SERVER_DOWN, TEXT_KEPT, writeProblem } from './lib/problems.ts';
@@ -168,7 +168,13 @@ watch(
 watch(
   stream.data,
   (message) => {
-    if (!message || (snapshot.workspace.id && message.ws !== snapshot.workspace.id)) {
+    if (!message) {
+      return;
+    }
+    if (typeof message.open_moves === 'number') {
+      snapshot.workspaces = withOpenMoves(snapshot.workspaces, message.ws, message.open_moves);
+    }
+    if (snapshot.workspace.id && message.ws !== snapshot.workspace.id) {
       return;
     }
     ui.status = '';
@@ -209,6 +215,11 @@ export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen
       const problem = writeProblem(marks);
       if (!problem) {
         snapshot.marks = marks;
+        snapshot.workspaces = withOpenMoves(
+          snapshot.workspaces,
+          snapshot.workspace.id,
+          openCount(snapshot.turn, marks),
+        );
       }
       return problem;
     },
