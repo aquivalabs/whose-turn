@@ -59,6 +59,24 @@ test('a refused marks write returns the problem line and changes nothing', async
   expect(store.snapshot.counts).toEqual(before);
 });
 
+test('a failing source gets one banner line with its reason and streak', async () => {
+  const store = await freshStore();
+  store.snapshot.workspace.name = 'Home';
+  store.snapshot.errors = { trello: 'Unknown source type "trello"', 'other.part': 'slow' };
+  store.snapshot.health = {
+    ok: false,
+    stale: false,
+    fresh_at: '',
+    failing: [{ source: 'trello', polls: 9 }],
+    alerts: [{ id: 'failing:trello', text: 'Source trello has failed 9 polls in a row' }],
+  };
+
+  expect(store.alerts.value).toEqual([
+    'Source trello: Unknown source type "trello", failed 9 polls in a row',
+    'Home: other.part: slow',
+  ]);
+});
+
 test('switching workspace with the server down leaves the current one alone', async () => {
   const store = await freshStore();
   store.ui.ws = 'home';

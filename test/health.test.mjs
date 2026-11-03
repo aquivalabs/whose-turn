@@ -155,5 +155,5 @@ test('a workspace naming a connector type that is not registered reports it as u
     { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, limits: () => DEFAULT_LIMITS, notify: () => {} },
   );
   await built.poll();
-  assert.match(JSON.stringify(built.snapshot()), /Unknown connector type \\"nothing\\"/);
+  assert.match(JSON.stringify(built.snapshot()), /Unknown source type \\"nothing\\"/);
 });

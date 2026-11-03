@@ -60,3 +60,25 @@ export const workspaceIconParts = (
   const glyph = glyphOf(workspace.name || workspace.id);
   return { dots, glyph, fontSize: glyphSize(glyph) };
 };
+
+export interface IconColours {
+  fill: string;
+  ink: string;
+  dot: string;
+}
+
+/** The workspace icon as a standalone SVG document, drawn exactly as the rail draws it; the favicon is this. */
+export const workspaceIconSvg = (parts: ReturnType<typeof workspaceIconParts>, colours: IconColours) => {
+  const dots = parts.dots
+    .map(
+      (dot) =>
+        `<circle cx="${dot.cx}" cy="${dot.cy}" r="${dot.r}" fill="${colours.dot}" opacity="${dot.opacity}"/>`,
+    )
+    .join('');
+  const y = parts.fontSize >= 17 ? 24 : 23;
+  const glyph = parts.glyph.replace(/[&<>]/g, '');
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><rect width="36" height="36" rx="10" fill="${colours.fill}"/>${dots}` +
+    `<text x="18" y="${y}" text-anchor="middle" font-size="${parts.fontSize}" font-weight="700" letter-spacing="-0.5" font-family="Roboto, Inter, system-ui, sans-serif" fill="${colours.ink}">${glyph}</text></svg>`
+  );
+};

@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, chmodSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { request as httpRequest } from 'node:http';
 import { appDir, startTestApi } from './fixtures/api.mjs';
 import { resolveMode, tabUrl } from '../web/src/lib/window-mode.ts';
 
@@ -105,6 +106,30 @@ test('a second /api/open of the same mode within five seconds is refused and ope
     assert.ok(error.details[0].metadata.retry_after_seconds >= 1);
     assert.equal(other.status, 200);
     assert.deepEqual(opened, [{ mode: 'app', port: at }, { mode: 'browser', port: at }]);
+  } finally {
+    server.close();
+  }
+});
+
+test('a window page opened under a foreign host name says where the window is, as HTML', async () => {
+  // Setup
+  const { server, port } = await startTestApi({ reports: {} });
+  try {
+    // Exercise
+    const answer = await new Promise((resolve, reject) => {
+      const request = httpRequest({ host: '127.0.0.1', port, path: '/', headers: { host: 'wt.example:9' } }, (response) => {
+        let body = '';
+        response.on('data', (chunk) => (body += chunk));
+        response.on('end', () => resolve({ status: response.statusCode, type: response.headers['content-type'], body }));
+      });
+      request.on('error', reject);
+      request.end();
+    });
+
+    // Verify
+    assert.equal(answer.status, 403);
+    assert.match(answer.type, /^text\/html/);
+    assert.ok(answer.body.includes(`http://127.0.0.1:${port}/`));
   } finally {
     server.close();
   }

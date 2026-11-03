@@ -61,7 +61,7 @@ test('an open PR whose ticket is not in my list asks me to check the ticket', ()
 
 test('a review request from GitHub is a row of its own', () => {
   const row = only(rows({ asks: [ask()] }), (candidate) => candidate.row_id === 'gha:1');
-  assert.equal(row.next, 'Review PR other-repo#12');
+  assert.equal(row.next, 'Review this PR');
 });
 
 test('a handled mark hides a row until something newer happens on it', () => {
@@ -144,4 +144,9 @@ test('every row carries a rank: failing checks, then requested changes, then wor
   assert.equal(rankOf({ tickets: [ticket({ status: 'Todo', status_category: 'new' })] }), 3);
   assert.equal(rankOf({ tickets: [ticket({ status: 'Passed' })] }), 3);
   assert.equal(rankOf({ tickets: [ticket({ status: 'Done', status_category: 'done' })] }), 3);
+});
+
+test('a review request names the PR in the next step only when it has a ticket', () => {
+  const keyed = only(rows({ asks: [ask({ key: 'PROJ-1' })] }), (candidate) => candidate.row_id === 'gha:1');
+  assert.equal(keyed.next, 'Review PR other-repo#12');
 });

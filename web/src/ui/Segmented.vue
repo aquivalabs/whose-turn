@@ -22,7 +22,7 @@ const selected = defineModel<string>({ required: true });
     >
       {{ option.label
       }}<template v-if="option.count !== undefined">
-        <b class="segmented__count">{{ option.count }}</b></template
+        <b class="count">{{ option.count }}</b></template
       >
     </button>
   </span>
@@ -58,11 +58,6 @@ const selected = defineModel<string>({ required: true });
 
 .segmented__option:first-child {
   border-left: 0;
-}
-
-.segmented__count {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
 }
 
 .segmented__option[aria-pressed='true'] {

@@ -98,13 +98,23 @@ export const themeVariables = computed(() => {
   return theme && theme.light && theme.dark ? theme[dark.value ? 'dark' : 'light'] : {};
 });
 export const counts = computed(() => snapshot.counts);
+/** The banner lines: a source failing past the threshold gets one line with its reason and streak, not one from health and one from its errors. */
 export const alerts = computed(() => {
   const name = snapshot.workspace.name;
   const prefix = name ? name + ': ' : '';
+  const errors = Object.entries(snapshot.errors || {});
+  const failing = snapshot.health.failing || [];
+  const owner = (key: string) => failing.find(({ source }) => key === source || key.startsWith(source + '.'));
+  const streaks = failing.map(({ source, polls }) => {
+    const reasons = errors.filter(([key]) => owner(key)?.source === source).map(([, text]) => text);
+    return `Source ${source}: ${reasons.join(', ') || 'failing'}, failed ${polls} polls in a row`;
+  });
+  const failingIds = new Set(failing.map(({ source }) => 'failing:' + source));
   return [
     ...(snapshot.problems || []),
-    ...snapshot.health.alerts.map((alert) => alert.text),
-    ...Object.entries(snapshot.errors || {}).map(([source, text]) => prefix + source + ': ' + text),
+    ...snapshot.health.alerts.filter((alert) => !failingIds.has(alert.id || '')).map((alert) => alert.text),
+    ...streaks,
+    ...errors.filter(([key]) => !owner(key)).map(([source, text]) => prefix + source + ': ' + text),
   ];
 });
 /** Opens the settings sheet on the current workspace, scrolled to a section when one is named. */

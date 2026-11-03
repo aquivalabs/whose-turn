@@ -247,6 +247,23 @@
   transform: rotate(-90deg);
 }
 
+/* Count: how many, drawn one way in every island head, neutral; colour belongs to "new" alone. */
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--md-s-high);
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Table: the rows of the table islands, with a glass head that sticks while the body scrolls. */
 .table {
   width: 100%;
@@ -258,9 +275,7 @@
   text-align: left;
   font-weight: 500;
   color: var(--md-on-surface-variant);
-  background: rgb(var(--glass), 0.32);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  backdrop-filter: blur(10px) saturate(140%);
+  background: var(--md-s-low);
   font-size: 12px;
   line-height: 16px;
   letter-spacing: 0.03em;
@@ -354,6 +369,12 @@
   color: var(--md-on-warn-container);
 }
 
+.pill--hold {
+  background: var(--md-s-highest);
+  color: var(--md-on-surface-variant);
+  box-shadow: inset 0 0 0 1px var(--md-outline);
+}
+
 .pill--ok {
   background: var(--md-tertiary-container);
   color: var(--md-on-tertiary-container);
@@ -429,7 +450,7 @@
   opacity: 0.8;
 }
 
-/* Hint: a centred "?" at the end of the text it explains; the text and the icon share a row. */
+/* Hint: a "?" means "about this panel" and sits in an island head only; a hint on a row is a small word. */
 .hint-icon {
   display: inline-flex;
   align-items: center;
@@ -457,6 +478,26 @@
 }
 
 .hint-icon:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.hint-label {
+  flex: none;
+  padding: 0 2px;
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+.hint-label:hover,
+.hint-label[aria-expanded='true'] {
+  color: var(--md-primary);
+}
+
+.hint-label:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
 }
@@ -559,8 +600,8 @@
   border-radius: 10px;
   font-size: 13px;
   font-family: var(--md-font);
-  background: var(--md-warn-container);
-  color: var(--md-on-warn-container);
+  background: var(--md-error-container);
+  color: var(--md-on-error-container);
 }
 
 .alert__action {

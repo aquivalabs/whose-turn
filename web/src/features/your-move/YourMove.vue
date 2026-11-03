@@ -3,7 +3,7 @@
 import { computed, reactive } from 'vue';
 import { refAutoReset } from '@vueuse/core';
 import { snapshot, ui, now, setMarks } from '@/store.ts';
-import { yourRows } from '@/lib/moves.ts';
+import { yourRows, hasPrColumn } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
 import { age, ago, when } from '@/lib/time.ts';
 import { liveStatus } from '@/lib/live-status.ts';
@@ -23,6 +23,8 @@ const view = computed(() => {
   const mine = yourRows(snapshot.turn, moveView.value);
   return { ...mine, rows: mine.rows.map((item) => ({ ...item, age: age(item.row.activity_at) })) };
 });
+const showPr = computed(() => hasPrColumn(view.value.rows.map((item) => item.row)));
+const showComment = computed(() => view.value.rows.some((item) => item.row.comment));
 const options = computed(() => [
   { id: 'open', label: 'Open', count: view.value.open },
   { id: 'handled', label: 'Handled', count: view.value.handled },
@@ -85,8 +87,8 @@ const undoHandled = () => {
           <tr>
             <th>Ticket</th>
             <th>Next step</th>
-            <th>PR</th>
-            <th class="hide-narrow">Last comment</th>
+            <th v-if="showPr">PR</th>
+            <th v-if="showComment" class="hide-narrow">Last comment</th>
             <th class="table__actions-col"><span class="visually-hidden">Mark</span></th>
           </tr>
         </thead>
@@ -111,11 +113,11 @@ const undoHandled = () => {
                 <button
                   v-if="item.row.why"
                   type="button"
-                  class="hint-icon"
+                  class="hint-label"
                   aria-label="Why this is your move"
                   :data-tip="item.row.why"
                 >
-                  ?
+                  why
                 </button>
                 <span
                   v-if="item.handled"
@@ -136,8 +138,8 @@ const undoHandled = () => {
                 {{ problems.get(item.row.row_id) }}
               </p>
             </td>
-            <PrCell :row="item.row" />
-            <td class="hide-narrow" :class="{ 'your-move__quote': item.row.comment }">
+            <PrCell v-if="showPr" :row="item.row" />
+            <td v-if="showComment" class="hide-narrow" :class="{ 'your-move__quote': item.row.comment }">
               <ExtLink
                 v-if="item.row.comment"
                 :text="item.row.comment"

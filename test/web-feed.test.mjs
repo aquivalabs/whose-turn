@@ -77,7 +77,7 @@ test('a feed group carries the your-move bar while any row of its ticket on you 
 test('a status pill takes its tone from the status group the server sent, not from the words', () => {
   assert.equal(statusTone('code_review'), 'info');
   assert.equal(statusTone('qa'), 'info');
-  assert.equal(statusTone('on_hold'), 'warn');
+  assert.equal(statusTone('on_hold'), 'hold');
   assert.equal(statusTone('passed'), '');
   assert.equal(statusTone(''), '');
   assert.equal(statusTone(undefined), '');

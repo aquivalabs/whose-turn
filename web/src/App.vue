@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The window: the rail, the status line, and the dashboard that fills the rest; sheets open over it. State and data flow live in store.ts.
 import { computed, onMounted, watch } from 'vue';
-import { onKeyStroke } from '@vueuse/core';
+import { onKeyStroke, useFavicon } from '@vueuse/core';
 import {
   ui,
   snapshot,
@@ -13,6 +13,9 @@ import {
   reportWindowSize,
 } from './store.ts';
 import { repaint } from './backdrop.ts';
+import { dark } from './scheme.ts';
+import { workspaceIconParts, workspaceIconSvg } from './lib/icons.ts';
+import { mulberry32 } from './lib/random.ts';
 import { useDialogFocus, useShortcuts } from './composables/useKeyboard.ts';
 import Rail from './features/rail/Rail.vue';
 import StatusBar from './features/status/StatusBar.vue';
@@ -32,6 +35,26 @@ const covered = computed(() => currentLayer.value !== null);
 useDialogFocus(covered);
 useShortcuts(covered);
 watch(themeVariables, repaint, { flush: 'post' });
+const FALLBACK = {
+  light: { fill: '#d8e2ff', ink: '#001a41', dot: '#2c5697' },
+  dark: { fill: '#2b4678', ink: '#d8e2ff', dot: '#adc6ff' },
+};
+/** The open workspace's rail icon as the tab icon. */
+const icon = computed(() => {
+  const { id, name } = snapshot.workspace;
+  if (!id) {
+    return null;
+  }
+  const scheme = themeVariables.value as Record<string, string>;
+  const base = FALLBACK[dark.value ? 'dark' : 'light'];
+  const colours = {
+    fill: scheme['--md-primary-container'] || base.fill,
+    ink: scheme['--md-on-primary-container'] || base.ink,
+    dot: scheme['--md-primary'] || base.dot,
+  };
+  return 'data:image/svg+xml,' + encodeURIComponent(workspaceIconSvg(workspaceIconParts({ id, name }, mulberry32), colours));
+});
+useFavicon(icon);
 onKeyStroke('Escape', closeTopLayer, { target: document });
 onMounted(() => {
   reportWindowSize();

@@ -8,6 +8,7 @@ import { modifier } from '@/lib/bem.ts';
 import { age, when } from '@/lib/time.ts';
 import TicketCell from '@/ui/TicketCell.vue';
 import AiButton from '@/ui/AiButton.vue';
+import Chevron from '@/ui/Chevron.vue';
 const open = useLocalStorage('wt-recent-open', false, {
   writeDefaults: false,
   serializer: { read: (raw) => raw === '1', write: (value) => (value ? '1' : '0') },
@@ -26,7 +27,8 @@ const rows = computed(() => {
 <template>
   <details v-if="rows.length" class="recently-done" :open="open" @toggle="remember">
     <summary class="recently-done__summary">
-      Recently done <span class="recently-done__count">{{ rows.length }}</span>
+      <Chevron tag="span" :open="open" />
+      Recently done <span class="count">{{ rows.length }}</span>
     </summary>
     <div class="recently-done__list">
       <table class="table">
@@ -94,35 +96,6 @@ const rows = computed(() => {
 
 .recently-done__summary::-webkit-details-marker {
   display: none;
-}
-
-.recently-done__summary::before {
-  content: '▾';
-  display: inline-grid;
-  place-items: center;
-  width: 24px;
-  font-size: 18px;
-  transform: rotate(-90deg);
-  transition: transform 0.15s ease;
-}
-
-.recently-done[open] .recently-done__summary::before {
-  transform: none;
-}
-
-.recently-done__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  margin-left: 6px;
-  padding: 0 6px;
-  border-radius: 10px;
-  background: var(--md-s-high);
-  color: var(--md-on-surface-variant);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .recently-done__list {

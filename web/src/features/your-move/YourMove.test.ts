@@ -31,6 +31,27 @@ beforeEach(() => {
   useMoveView().value = 'open';
 });
 
+test('the PR and Last comment columns are left out while every row is empty in them', async () => {
+  render(YourMove);
+  await screen.findByText('Review nw-1');
+
+  expect(screen.queryByRole('columnheader', { name: 'PR' })).toBeNull();
+  expect(screen.queryByRole('columnheader', { name: 'Last comment' })).toBeNull();
+});
+
+test('a PR row without a ticket links the PR from the ticket column and leaves the PR column out', async () => {
+  snapshot.turn = [
+    { ...row('nw-3', false), key: 'repo#7', ticket_url: '', pr: 'repo#7', pr_url: 'https://host.example/pull/7' },
+  ];
+  render(YourMove);
+
+  const link = await screen.findByRole('link', { name: 'repo#7' });
+
+  expect(link.getAttribute('href')).toBe('https://host.example/pull/7');
+  expect(screen.getAllByRole('link', { name: 'repo#7' })).toHaveLength(1);
+  expect(screen.queryByRole('columnheader', { name: 'PR' })).toBeNull();
+});
+
 test('Handled sends the id of its row to setMarks', async () => {
   vi.mocked(setMarks).mockResolvedValue('');
   render(YourMove);

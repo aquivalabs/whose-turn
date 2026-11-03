@@ -1,9 +1,11 @@
 import type * as Store from '@/store.ts';
+import { nextTick } from 'vue';
 import { expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { setMarks, snapshot, ui } from '@/store.ts';
 import type { FeedItem } from '@/lib/types.ts';
 import Feed from './Feed.vue';
+import { useFeedState } from './useFeedState.ts';
 
 vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 vi.mock('@/store.ts', async (importOriginal) => ({
@@ -35,4 +37,18 @@ test('Mark all read offers Undo, which takes back the ids it marked and the old 
   await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
 
   expect(setMarks).toHaveBeenLastCalledWith({ unseen: ['fresh'], base: 123 });
+});
+
+test('the feed search clears when the open workspace changes', async () => {
+  snapshot.workspace = { ...snapshot.workspace, id: 'home' };
+  render(Feed);
+  useFeedState().query = 'NW-137';
+  await nextTick();
+  expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('NW-137');
+
+  snapshot.workspace = { ...snapshot.workspace, id: 'atlas' };
+  await nextTick();
+  await nextTick();
+
+  expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('');
 });

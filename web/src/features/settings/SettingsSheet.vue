@@ -74,7 +74,7 @@ const idHint = computed(() => {
     ? `Its to-dos and marks stay under the old id "${was}"; they do not follow the rename.`
     : '';
 });
-const ID_SPEC: FieldSpec = { key: 'id', label: 'Entry id' };
+const ID_SPEC: FieldSpec = { key: 'id', label: 'Source id' };
 const LABEL_SPEC: FieldSpec = { key: 'label', label: 'Label' };
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
 const ruleRows = computed(() =>
@@ -153,7 +153,7 @@ const askRemoveConnector = (index: number) => {
   }
   const label = specOf(current.value.connectors[index]).label;
   ask.value = {
-    text: `Remove the ${label} connector from ${current.value.name || current.value.id}?`,
+    text: `Remove the ${label} source from ${current.value.name || current.value.id}?`,
     yes: 'Remove',
     no: 'Keep',
     run: () => removeConnector(index),
@@ -269,7 +269,7 @@ watch(
   >
     <div class="modal__card settings-sheet__card">
       <div class="modal__head">
-        <h3 id="settings-title" class="modal__title">Workspaces</h3>
+        <h3 id="settings-title" class="modal__title">Settings</h3>
         <span class="modal__meta">{{ configFile }}</span>
         <span v-if="dirty" class="settings-sheet__dirty">Unsaved changes</span>
         <button v-if="!unloaded" type="button" class="btn btn--tonal" @click="save">Save</button>
@@ -328,7 +328,7 @@ watch(
               :model-value="fieldValue(current.theme, spec.key)"
               @update:model-value="setOrDrop(current.theme, spec.key, $event)"
             />
-            <h4 ref="connectors-head" class="sheet-form__heading">Connectors</h4>
+            <h4 ref="connectors-head" class="sheet-form__heading">Sources</h4>
             <div
               v-for="({ entry, spec: entrySpec, uid }, index) in connectorCards"
               :key="uid"
@@ -350,7 +350,7 @@ watch(
               <FieldRow
                 :spec="LABEL_SPEC"
                 :placeholder="entrySpec.label"
-                hint="shown in the feed filter"
+                hint="its name in the feed"
                 :model-value="fieldValue(entry, 'label')"
                 @update:model-value="setOrDrop(entry, 'label', $event)"
               />
@@ -372,7 +372,7 @@ watch(
                 class="btn"
                 @click="addConnector(spec)"
               >
-                + {{ spec.label }}
+                + Add {{ spec.label }} source
               </button>
             </div>
             <h4 class="sheet-form__heading">Rules</h4>

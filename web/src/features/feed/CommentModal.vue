@@ -32,7 +32,7 @@ const close = () => {
       <div class="modal__head">
         <h3 id="modal-title" class="modal__title">{{ title }}</h3>
         <a v-if="href" class="btn" :href="href" target="_blank" rel="noopener">{{ label }}</a>
-        <button type="button" class="btn btn--tonal" @click="close">Close</button>
+        <button type="button" class="btn" @click="close">Close</button>
       </div>
       <MarkdownView :source="item.body || item.text || ''" />
     </div>

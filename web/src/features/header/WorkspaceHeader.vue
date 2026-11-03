@@ -46,7 +46,10 @@ const { collapsed, toggle } = useFold('header');
       ▾
     </button>
     <div class="workspace-header__tiles">
-      <div class="workspace-header__tile workspace-header__tile--you">
+      <div
+        class="workspace-header__tile"
+        :class="{ 'workspace-header__tile--you': counts.mine > 0 }"
+      >
         <span class="workspace-header__tile-label">Your move</span
         ><strong class="workspace-header__tile-value">{{ counts.mine }}</strong>
       </div>

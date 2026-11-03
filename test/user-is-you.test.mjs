@@ -23,5 +23,5 @@ test('feed items name the user "you"', () => {
     activity: [{ source: 'jira', at: '2026-11-02T10:00:00Z', url: 'https://x.test/a', kind: 'comment', who: 'Alex Doe', text: 'hi' }],
   }, { me, rules, historyDays: 3650 });
   assert.ok(feed.every((item) => !JSON.stringify(item).includes('Alex Doe')));
-  assert.ok(feed.some((item) => item.text === 'In Progress · you'));
+  assert.ok(feed.some((item) => item.text === 'now In Progress, with you'));
 });

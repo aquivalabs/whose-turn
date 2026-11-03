@@ -2,7 +2,7 @@
 // Waiting on others: tickets you touched where someone else holds the next step.
 import { computed } from 'vue';
 import { snapshot, now } from '@/store.ts';
-import { waitingRows, statusTone } from '@/lib/moves.ts';
+import { waitingRows, statusTone, hasPrColumn } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
 import { age, when } from '@/lib/time.ts';
 import Island from '@/ui/Island.vue';
@@ -19,6 +19,8 @@ const rows = computed(() => {
     own: row.status_group === 'backlog',
   }));
 });
+const showPr = computed(() => hasPrColumn(rows.value.map(({ row }) => row)));
+const showReason = computed(() => rows.value.some(({ row, own }) => row.hold_url || (!own && row.next)));
 const note = computed(() =>
   rows.value.length && rows.value.every(({ own }) => own)
     ? 'Your backlog'
@@ -32,6 +34,9 @@ const note = computed(() =>
     :note="note"
     tip="Tickets you touched in the last 30 days where someone else holds the next step: a reviewer, QA, or a new owner."
   >
+    <template #head
+      ><span v-if="rows.length" class="count">{{ rows.length }}</span></template
+    >
     <p v-if="!rows.length" class="empty">Nothing is waiting on someone else.</p>
     <RowScroll v-else>
       <table class="table waiting__table">
@@ -40,8 +45,8 @@ const note = computed(() =>
             <th class="waiting__col waiting__col--ticket">Ticket</th>
             <th class="waiting__col waiting__col--status">Status</th>
             <th class="waiting__col waiting__col--with">With</th>
-            <th class="hide-narrow">Waiting for</th>
-            <th class="waiting__col waiting__col--pr">PR</th>
+            <th v-if="showReason" class="hide-narrow">Waiting for</th>
+            <th v-if="showPr" class="waiting__col waiting__col--pr">PR</th>
             <th class="table__actions-col waiting__col waiting__col--actions">
               <span class="visually-hidden">Copy for AI</span>
             </th>
@@ -65,20 +70,20 @@ const note = computed(() =>
                 >{{ since.text }}</span
               >
             </td>
-            <td class="hide-narrow">
+            <td v-if="showReason" class="hide-narrow">
               <span v-if="row.hold_url" class="hint-row"
                 ><ExtLink :text="row.next" :url="row.hold_url" class="waiting__reason" /><button
                   type="button"
-                  class="hint-icon"
+                  class="hint-label"
                   aria-label="Full reason"
                   :data-tip="row.hold_full || row.next"
                 >
-                  ?
+                  full
                 </button></span
               >
               <template v-else-if="!own">{{ row.next }}</template>
             </td>
-            <PrCell :row="row" />
+            <PrCell v-if="showPr" :row="row" />
             <td class="table__actions">
               <AiButton
                 class="table__ai"

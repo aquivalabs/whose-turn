@@ -1,6 +1,7 @@
 <script setup lang="ts">
-// One panel of the dashboard: a head with the title, a note and a hint, a body, and a chevron that folds it; the fold is remembered in the browser. The glass surface is the global island primitive; a caller's class falls through to the section.
+// One panel of the dashboard: a head with the title, a note and a hint, a body, and a chevron before the title that folds it; the fold is remembered in the browser. The glass surface is the global island primitive; a caller's class falls through to the section.
 import { useFold } from '@/composables/useFold.ts';
+import Chevron from './Chevron.vue';
 const props = withDefaults(
   defineProps<{ id: string; title: string; note?: string; tip?: string; column?: boolean }>(),
   {
@@ -17,21 +18,17 @@ const { collapsed, toggle } = useFold(props.id);
     :class="{ 'island--collapsed': collapsed, 'island--column': column }"
   >
     <div class="island__head">
+      <Chevron
+        :open="!collapsed"
+        :aria-label="'Fold ' + title"
+        data-tip="Fold this panel; it stays folded until you open it again"
+        @click.stop="toggle"
+      />
       <h2 class="island__title">{{ title }} <slot name="head" /></h2>
       <p class="island__note">
         <span class="island__note-text">{{ note }}</span>
         <button v-if="tip" type="button" class="hint-icon" :aria-label="'About ' + title" :data-tip="tip">
           ?
-        </button>
-        <button
-          type="button"
-          class="fold-toggle"
-          :class="{ 'fold-toggle--folded': collapsed }"
-          :aria-label="'Fold ' + title"
-          data-tip="Fold this panel; it stays folded until you open it again"
-          @click.stop="toggle"
-        >
-          ▾
         </button>
       </p>
     </div>
@@ -44,8 +41,8 @@ const { collapsed, toggle } = useFold(props.id);
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 20px;
+  gap: 8px;
+  padding: 12px 20px 12px 12px;
 }
 
 .island__title {

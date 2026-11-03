@@ -118,7 +118,7 @@ watch(
   >
     <div class="modal__card feedback-sheet__card">
       <div class="modal__head">
-        <h3 id="feedback-title" class="modal__title">To the Whose Turn backlog</h3>
+        <h3 id="feedback-title" class="modal__title">Report a problem or a wish</h3>
         <span class="modal__meta">{{ project }}</span>
         <button
           type="button"

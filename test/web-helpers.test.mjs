@@ -2,7 +2,9 @@ import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { ago, age, when } from '../web/src/lib/time.ts';
 import { setOrDrop } from '../web/src/lib/settings.ts';
-import { checksTone, outcomeTone } from '../web/src/lib/moves.ts';
+import { checksTone, outcomeTone, isPrOnly, hasPrColumn } from '../web/src/lib/moves.ts';
+import { workspaceIconParts, workspaceIconSvg } from '../web/src/lib/icons.ts';
+import { mulberry32 } from '../web/src/lib/random.ts';
 import { hasBody } from '../web/src/lib/feed.ts';
 
 const NOW = Date.parse('2026-11-03T12:00:00Z');
@@ -103,4 +105,20 @@ test('hasBody is true only for a body-carrying kind with non-blank text', () => 
   assert.equal(hasBody({ kind: 'approved', body: '  \n ' }), false);
   assert.equal(hasBody({ kind: 'comment' }), false);
   assert.equal(hasBody({ kind: 'status', body: 'text' }), false);
+});
+
+test('a row whose PR key stands in for the ticket is PR-only, and the PR column shows only for a real PR', () => {
+  const prOnly = { key: 'repo#7', pr: 'repo#7', ticket_url: '' };
+  const ticketed = { key: 'PROJ-1', pr: '#7', ticket_url: 'https://x.example/PROJ-1' };
+  assert.equal(isPrOnly(prOnly), true);
+  assert.equal(isPrOnly(ticketed), false);
+  assert.equal(hasPrColumn([prOnly, { key: 'PROJ-2', pr: '', ticket_url: 'u' }]), false);
+  assert.equal(hasPrColumn([prOnly, ticketed]), true);
+});
+
+test('the workspace icon is a standalone SVG in the given colours with the glyph escaped', () => {
+  const svg = workspaceIconSvg(workspaceIconParts({ id: 'garden', name: 'My Garden' }, mulberry32), { fill: '#111111', ink: '#222222', dot: '#333333' });
+  assert.match(svg, /^<svg xmlns="http:\/\/www.w3.org\/2000\/svg" viewBox="0 0 36 36">/);
+  assert.ok(svg.includes('fill="#111111"') && svg.includes('fill="#222222"') && svg.includes('fill="#333333"'));
+  assert.ok(svg.includes('>MG</text>'));
 });

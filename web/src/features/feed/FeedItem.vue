@@ -7,6 +7,7 @@ import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
 import ExtLink from '@/ui/ExtLink.vue';
 import AiButton from '@/ui/AiButton.vue';
+import Chevron from '@/ui/Chevron.vue';
 import { modifier } from '@/lib/bem.ts';
 const props = defineProps<{
   item: FeedItem;
@@ -45,6 +46,12 @@ const toggle = () => {
     <span class="feed-item__icon" :class="modifier('feed-item__icon', iconTone)">{{ badge }}</span>
     <div class="feed-item__body">
       <div class="feed-item__top">
+        <Chevron
+          v-if="written"
+          :open="open"
+          :aria-label="open ? 'Collapse' : 'Expand'"
+          @click.stop="toggle"
+        />
         <ExtLink :text="item.ref" :url="item.url" />
         <span class="feed-item__kind" :class="{ 'feed-item__kind--bad': tone === 'bad' }">{{
           item.kind
@@ -53,14 +60,6 @@ const toggle = () => {
         <span v-if="item.mention" class="at-you">@you</span>
         <span class="feed-item__right">
           <span class="timestamp feed-item__when">{{ when }}</span>
-          <button
-            v-if="written"
-            type="button"
-            class="feed-item__toggle"
-            :aria-label="open ? 'Collapse' : 'Expand'"
-            :aria-expanded="open"
-            @click.stop="toggle"
-          ></button>
         </span>
       </div>
       <template v-if="open">
@@ -176,42 +175,6 @@ const toggle = () => {
   overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-}
-
-.feed-item__toggle {
-  display: inline-grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  margin-left: 2px;
-  border-radius: 50%;
-  color: var(--md-on-surface-variant);
-  font-size: 0;
-  line-height: 1;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.15s ease;
-}
-
-.feed-item__toggle::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid currentcolor;
-  border-bottom: 2px solid currentcolor;
-  transform: translateY(-2px) rotate(45deg);
-}
-
-.feed-item__toggle:hover {
-  background: rgb(var(--md-state), 0.1);
-}
-
-.feed-item__toggle[aria-expanded='true'] {
-  transform: rotate(180deg);
-}
-
-.feed-item__toggle:focus-visible {
-  outline: var(--focus-ring);
 }
 
 .feed-item__full {

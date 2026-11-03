@@ -27,7 +27,7 @@ onMounted(() => {
 </script>
 <template>
   <main class="app report-page">
-    <p v-if="!report" class="empty">{{ note }}</p>
+    <p v-if="!report" class="report-page__note">{{ note }}</p>
     <template v-else>
       <header class="report-page__head">
         <span class="report-page__id">{{ report.id }}</span>
@@ -65,6 +65,7 @@ onMounted(() => {
 <style scoped>
 .report-page {
   box-sizing: border-box;
+  height: auto;
   max-width: 720px;
   margin: 40px auto;
   padding: 28px 32px;
@@ -75,6 +76,11 @@ onMounted(() => {
   font-family: var(--md-font);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.report-page__note {
+  margin: 0;
+  font-size: 15px;
 }
 
 .report-page__back {

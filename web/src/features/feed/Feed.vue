@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { snapshot, ui, now, setMarks, tellProblem } from '@/store.ts';
 import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
 import type { FeedGroup } from '@/lib/feed.ts';
@@ -12,6 +12,7 @@ import Segmented from '@/ui/Segmented.vue';
 import FeedItemRow from './FeedItem.vue';
 import ExtLink from '@/ui/ExtLink.vue';
 import AiButton from '@/ui/AiButton.vue';
+import Chevron from '@/ui/Chevron.vue';
 import { useFeedState } from './useFeedState.ts';
 const emit = defineEmits<{ open: [item: FeedItem] }>();
 const feedState = useFeedState();
@@ -38,6 +39,12 @@ const feedFilter = computed({
     feedState.source = id;
   },
 });
+watch(
+  () => snapshot.workspace.id,
+  () => {
+    feedState.query = '';
+  },
+);
 const marks = computed(() => ({ base: snapshot.marks.base, seen: new Set(snapshot.marks.seen) }));
 const fresh = (item: FeedItem) => isNew(item, marks.value);
 const newCount = computed(() => snapshot.feed.filter(fresh).length);
@@ -149,14 +156,7 @@ const restoreMarks = async () => {
             :title="group.move ? 'Your move on this ticket' : undefined"
             @click="toggleGroup(group)"
           >
-            <button
-              type="button"
-              class="feed__group-caret"
-              :aria-expanded="group.open"
-              :aria-label="'Fold ' + group.id"
-            >
-              ›
-            </button>
+            <Chevron :open="group.open" :aria-label="'Fold ' + group.id" />
             <div class="feed__group-text">
               <div class="feed__group-key">
                 <ExtLink
@@ -332,7 +332,7 @@ const restoreMarks = async () => {
 
 .feed__group-head {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 10px 20px;
@@ -429,7 +429,7 @@ const restoreMarks = async () => {
 }
 
 .feed__children {
-  margin: 0 0 0 35px;
+  margin: 0 0 0 31px;
   padding: 0 0 4px;
   border-left: 2px solid var(--md-outline-variant);
   list-style: none;
@@ -437,27 +437,6 @@ const restoreMarks = async () => {
 
 .feed__children .feed-item {
   padding-left: 14px;
-}
-
-.feed__group-caret {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--md-s-highest);
-  color: var(--md-on-surface-variant);
-  font-size: 14px;
-  transition: transform 0.15s ease;
-}
-
-.feed__group-caret:focus-visible {
-  outline: var(--focus-ring);
-}
-
-.feed__group--open .feed__group-caret {
-  transform: rotate(90deg);
 }
 
 @media (width >= 901px) {

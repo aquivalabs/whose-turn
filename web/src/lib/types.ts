@@ -98,7 +98,7 @@ export interface Health {
   stale: boolean;
   fresh_at: string;
   failing: { source: string; polls: number }[];
-  alerts: { text: string }[];
+  alerts: { id?: string; text: string }[];
 }
 
 /** The four header tiles, counted by the server. */

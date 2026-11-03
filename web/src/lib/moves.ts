@@ -45,10 +45,16 @@ export const waitingRows = (turn: TurnRow[]) =>
     .filter((row) => row.group === 'others')
     .sort((first, second) => String(second.updated).localeCompare(String(first.updated)));
 
+/** A row of a PR that has no ticket: the PR's own key stands in for the ticket, so the PR column would repeat it. */
+export const isPrOnly = (row: TurnRow) => !row.ticket_url && Boolean(row.pr) && row.pr === row.key;
+
+/** Whether any row has a PR of its own to show, so an empty PR column can be left out. */
+export const hasPrColumn = (rows: TurnRow[]) => rows.some((row) => row.pr && !isPrOnly(row));
+
 export const checksTone = (checks: string | undefined) =>
   checks === 'failing' ? 'bad' : checks === 'running' ? 'warn' : checks === 'passing' ? 'ok' : '';
 /** The pill tone of each status group the server sends as status_group; other groups have none. */
-const STATUS_TONES: Record<string, string> = { code_review: 'info', qa: 'info', on_hold: 'warn' };
+const STATUS_TONES: Record<string, string> = { code_review: 'info', qa: 'info', on_hold: 'hold' };
 export const statusTone = (group: string | undefined) => STATUS_TONES[group || ''] || '';
 export const outcomeTone = (outcome: string | undefined) =>
   (({ open: 'info', done: 'ok', dropped: 'warn' }) as Record<string, string>)[outcome || ''] ||
