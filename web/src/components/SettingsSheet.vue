@@ -201,20 +201,20 @@ watch(
 <template>
   <div
     v-if="ui.settings"
-    class="wt-modal"
+    class="modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="settings-title"
     @click.self="requestClose"
   >
-    <div class="wt-modal-card wt-settings-card">
-      <div class="wt-modal-head">
-        <h3 id="settings-title">Workspaces</h3>
-        <span class="wt-modal-meta">{{ configFile }}</span>
-        <span v-if="dirty" class="wt-dirty">Unsaved changes</span>
+    <div class="modal__card settings-sheet__card">
+      <div class="modal__head">
+        <h3 id="settings-title" class="modal__title">Workspaces</h3>
+        <span class="modal__meta">{{ configFile }}</span>
+        <span v-if="dirty" class="settings-sheet__dirty">Unsaved changes</span>
         <span
           v-if="!unloaded"
-          class="wt-btn tonal"
+          class="btn btn--tonal"
           role="button"
           tabindex="0"
           @click="save"
@@ -222,7 +222,7 @@ watch(
           >Save</span
         >
         <span
-          class="wt-btn"
+          class="btn"
           role="button"
           tabindex="0"
           @click="requestClose"
@@ -230,50 +230,62 @@ watch(
           >Close</span
         >
       </div>
-      <div v-if="ask" class="wt-confirm" role="alertdialog">
-        <span>{{ ask.text }}</span>
-        <span class="wt-btn danger" role="button" tabindex="0" @click="answer(true)">{{
+      <div v-if="ask" class="settings-sheet__confirm" role="alertdialog">
+        <span class="settings-sheet__confirm-text">{{ ask.text }}</span>
+        <span class="btn btn--danger" role="button" tabindex="0" @click="answer(true)">{{
           ask.yes
         }}</span>
-        <span class="wt-btn" role="button" tabindex="0" @click="answer(false)">{{ ask.no }}</span>
+        <span class="btn" role="button" tabindex="0" @click="answer(false)">{{ ask.no }}</span>
       </div>
-      <div v-if="unloaded" class="wt-alert" role="alert">{{ unloaded }}</div>
-      <div v-else-if="problems.length" class="wt-alert">{{ problems.join('  ·  ') }}</div>
-      <div v-if="!unloaded" class="wt-settings-body">
-        <ul class="wt-settings-list">
+      <div v-if="unloaded" class="alert settings-sheet__alert" role="alert">{{ unloaded }}</div>
+      <div v-else-if="problems.length" class="alert settings-sheet__alert">
+        {{ problems.join('  ·  ') }}
+      </div>
+      <div v-if="!unloaded" class="settings-sheet__body">
+        <ul class="settings-sheet__list">
           <li
             v-for="(workspace, index) in list"
             :key="index"
+            class="settings-sheet__workspace"
             :aria-selected="index === selected"
             @click="selected = index"
           >
             {{ workspace.name || workspace.id || 'Workspace ' + (index + 1) }}
           </li>
-          <li class="add" @click="addWorkspace">+ Add workspace</li>
+          <li
+            class="settings-sheet__workspace settings-sheet__workspace--add"
+            @click="addWorkspace"
+          >
+            + Add workspace
+          </li>
         </ul>
-        <div class="wt-settings-form">
-          <p v-if="!current" class="wt-empty">No workspaces yet. Add one on the left.</p>
+        <div class="sheet-form">
+          <p v-if="!current" class="empty">No workspaces yet. Add one on the left.</p>
           <template v-else>
-            <h4>Workspace</h4>
+            <h4 class="sheet-form__heading">Workspace</h4>
             <FieldRow
               v-for="spec in fields.workspace"
               :key="spec.key"
               :spec="spec"
               :target="current"
             />
-            <h4>Theme</h4>
+            <h4 class="sheet-form__heading">Theme</h4>
             <FieldRow
               v-for="spec in fields.theme"
               :key="spec.key"
               :spec="spec"
               :target="current.theme"
             />
-            <h4 ref="connectors-head">Connectors</h4>
-            <div v-for="(entry, index) in current.connectors" :key="index" class="wt-connector">
-              <div class="wt-connector-head">
-                <strong>{{ specOf(entry).label }}</strong
+            <h4 ref="connectors-head" class="sheet-form__heading">Connectors</h4>
+            <div
+              v-for="(entry, index) in current.connectors"
+              :key="index"
+              class="settings-sheet__connector"
+            >
+              <div class="settings-sheet__connector-head">
+                <strong class="settings-sheet__connector-name">{{ specOf(entry).label }}</strong
                 ><span
-                  class="wt-btn danger"
+                  class="btn btn--danger"
                   role="button"
                   tabindex="0"
                   @click="askRemoveConnector(index)"
@@ -300,18 +312,18 @@ watch(
                 @secret="(key, value) => setSecret(entry, key, value)"
               />
             </div>
-            <div class="wt-settings-actions">
+            <div class="settings-sheet__actions">
               <span
                 v-for="spec in catalogue"
                 :key="spec.type"
-                class="wt-btn"
+                class="btn"
                 role="button"
                 tabindex="0"
                 @click="addConnector(spec)"
                 >+ {{ spec.label }}</span
               >
             </div>
-            <h4>Rules</h4>
+            <h4 class="sheet-form__heading">Rules</h4>
             <FieldRow
               v-for="spec in fields.rules"
               :key="spec.key"
@@ -324,20 +336,20 @@ watch(
               :spec="spec"
               :target="current.rules.statuses"
             />
-            <h4>Whose turn table</h4>
-            <p class="wt-rules-table__note">
+            <h4 class="sheet-form__heading">Whose turn table</h4>
+            <p class="settings-sheet__rules-note">
               The rows in force, first match wins. Read-only here: ask Claude to change rules.table
               through /api/config.
             </p>
-            <ol v-if="ruleRows.length" class="wt-rules-table">
-              <li v-for="(rule, index) in ruleRows" :key="index" class="wt-rules-table__row">
-                <span class="wt-rules-table__when">{{ rule.when }}</span>
-                <span class="wt-rules-table__then">{{ rule.then }}</span>
+            <ol v-if="ruleRows.length" class="settings-sheet__rules">
+              <li v-for="(rule, index) in ruleRows" :key="index" class="settings-sheet__rule">
+                <span class="settings-sheet__rule-when">{{ rule.when }}</span>
+                <span class="settings-sheet__rule-then">{{ rule.then }}</span>
               </li>
             </ol>
-            <p v-else class="wt-empty">Save the workspace to see its rows.</p>
-            <div class="wt-settings-actions">
-              <span class="wt-btn danger" role="button" tabindex="0" @click="askRemoveWorkspace"
+            <p v-else class="empty">Save the workspace to see its rows.</p>
+            <div class="settings-sheet__actions">
+              <span class="btn btn--danger" role="button" tabindex="0" @click="askRemoveWorkspace"
                 >Delete workspace</span
               >
             </div>
@@ -348,16 +360,119 @@ watch(
   </div>
 </template>
 <style scoped>
-.wt-rules-table {
-  margin: 0;
-  padding: 0 0 0 28px;
+.settings-sheet__card {
+  width: min(1040px, 100%);
+  height: min(760px, 100%);
+}
+
+.settings-sheet__dirty {
+  color: var(--md-error);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.settings-sheet__confirm {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 20px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--md-warn-container);
+  color: var(--md-on-warn-container);
   font-size: 13px;
 }
 
-.wt-rules-table__row {
+.settings-sheet__confirm-text {
+  flex: 1;
+}
+
+.settings-sheet__alert {
+  margin: 12px 20px 0;
+}
+
+.settings-sheet__body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+}
+
+.settings-sheet__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-right: 1px solid var(--md-outline-variant);
+  list-style: none;
+}
+
+.settings-sheet__workspace {
+  padding: 8px 12px;
+  overflow: hidden;
+  border-radius: 10px;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-sheet__workspace:hover {
+  background: var(--state-hover);
+}
+
+.settings-sheet__workspace[aria-selected='true'] {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.settings-sheet__workspace--add {
+  color: var(--md-primary);
+  font-weight: 500;
+}
+
+.settings-sheet__connector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 12px;
+  background: rgb(var(--glass), 0.35);
+}
+
+.settings-sheet__connector-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-sheet__connector-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.settings-sheet__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-sheet__rules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0 0 0 28px;
+  font-size: 13px;
+}
+
+.settings-sheet__rule {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: 12px;
@@ -365,18 +480,18 @@ watch(
   border-bottom: 1px solid var(--md-outline-variant);
 }
 
-.wt-rules-table__when {
+.settings-sheet__rule-when {
+  color: var(--md-on-surface-variant);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
-  color: var(--md-on-surface-variant);
   overflow-wrap: anywhere;
 }
 
-.wt-rules-table__then {
+.settings-sheet__rule-then {
   overflow-wrap: anywhere;
 }
 
-.wt-rules-table__note {
+.settings-sheet__rules-note {
   margin: 0;
   color: var(--md-on-surface-variant);
 }

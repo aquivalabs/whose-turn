@@ -26,54 +26,80 @@ const setList = (value: string) =>
   );
 </script>
 <template>
-  <div class="wt-field">
-    <label>{{ spec.label }}{{ spec.required ? ' *' : '' }}</label>
+  <div class="field-row">
+    <label class="field-row__label">{{ spec.label }}{{ spec.required ? ' *' : '' }}</label>
     <input
       v-if="spec.secret"
-      class="wt-input"
+      class="input"
       type="password"
       placeholder="paste to replace"
       autocomplete="off"
       @input="emit('secret', spec.key, typed($event))"
     />
-    <div v-else-if="spec.colour" class="wt-inline">
+    <div v-else-if="spec.colour" class="field-row__inline">
       <input
-        class="wt-input"
+        class="input field-row__colour"
         type="color"
         :value="HEX.test(text()) ? text() : '#888888'"
         @input="set(typed($event))"
       />
       <input
-        class="wt-input"
+        class="input"
         type="text"
         placeholder="#rrggbb"
         :value="text()"
         @input="set(typed($event))"
       />
-      <span
-        class="wt-btn"
-        role="button"
-        tabindex="0"
-        @click="set('')"
-        @keydown.enter.prevent="set('')"
+      <span class="btn" role="button" tabindex="0" @click="set('')" @keydown.enter.prevent="set('')"
         >None</span
       >
     </div>
     <input
       v-else-if="spec.list"
-      class="wt-input"
+      class="input"
       type="text"
       :value="list().join(', ')"
       @input="setList(typed($event))"
     />
     <input
       v-else
-      class="wt-input"
+      class="input"
       type="text"
       :placeholder="placeholder"
       :value="text()"
       @input="set(typed($event))"
     />
-    <small v-if="hint || spec.hint">{{ hint || spec.hint }}</small>
+    <small v-if="hint || spec.hint" class="field-row__hint">{{ hint || spec.hint }}</small>
   </div>
 </template>
+<style scoped>
+.field-row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 14px;
+}
+
+.field-row__label {
+  color: var(--md-on-surface);
+  font-size: 13px;
+}
+
+.field-row__hint {
+  grid-column: 2;
+  color: var(--md-on-surface-variant);
+  font-size: 11px;
+}
+
+.field-row__colour {
+  width: 44px;
+  height: 30px;
+  padding: 2px;
+}
+
+.field-row__inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>

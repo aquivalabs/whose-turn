@@ -1,8 +1,9 @@
 <script setup lang="ts">
-// The scroll area of a table island; when rows end below its bottom, a "+N more" line under it scrolls to the first of them.
+// The scroll area of a table island; when rows end below its bottom, a "+N more" line under it scrolls to the first of them. floor keeps a few rows' height when the island shrinks.
 import { computed, ref } from 'vue';
 import { useElementSize, useScroll } from '@vueuse/core';
 import { hiddenBelow } from '../lib/moves.ts';
+defineProps<{ floor?: boolean }>();
 // A row cut only through its cell padding and border still reads as shown.
 const cellSlack = 13;
 const scroller = ref<HTMLElement | null>(null);
@@ -36,12 +37,12 @@ const reveal = () => {
 };
 </script>
 <template>
-  <div ref="scroller" class="wt-scroll">
+  <div ref="scroller" class="row-scroll" :class="{ 'row-scroll--floor': floor }">
     <div ref="content"><slot /></div>
   </div>
   <span
     v-if="hidden"
-    class="row-more"
+    class="row-scroll__more"
     role="button"
     tabindex="0"
     @click="reveal"
@@ -51,7 +52,34 @@ const reveal = () => {
   >
 </template>
 <style scoped>
-.row-more {
+.row-scroll {
+  overflow-x: auto;
+  margin: 0 -20px;
+}
+
+@media (width >= 901px) {
+  .dashboard--fit .dashboard__main .row-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .dashboard--fit .row-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .dashboard--fit .row-scroll::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background: var(--md-outline-variant);
+  }
+}
+
+.dashboard--fit .dashboard__main .row-scroll--floor {
+  min-height: 5rem;
+}
+
+.row-scroll__more {
   flex: none;
   display: block;
   margin: 0 -20px;
@@ -63,12 +91,12 @@ const reveal = () => {
   cursor: pointer;
 }
 
-.row-more:hover {
+.row-scroll__more:hover {
   background: rgb(var(--md-state), 0.06);
 }
 
-.row-more:focus-visible {
-  outline: 2px solid var(--md-primary);
+.row-scroll__more:focus-visible {
+  outline: var(--focus-ring);
   outline-offset: -2px;
 }
 </style>

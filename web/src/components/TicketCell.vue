@@ -5,9 +5,21 @@ import ExtLink from './ExtLink.vue';
 defineProps<{ row: TurnRow }>();
 </script>
 <template>
-  <td>
-    <ExtLink :text="row.key" :url="row.ticket_url" class="wt-key" /><span class="wt-sum">{{
-      row.summary
-    }}</span>
+  <td class="ticket-cell">
+    <ExtLink :text="row.key" :url="row.ticket_url" class="ticket-key" /><span
+      class="ticket-cell__summary"
+      >{{ row.summary }}</span
+    >
   </td>
 </template>
+<style scoped>
+.ticket-cell__summary {
+  display: block;
+  max-width: 44ch;
+  margin-top: 2px;
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.03em;
+}
+</style>

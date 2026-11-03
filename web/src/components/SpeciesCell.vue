@@ -26,21 +26,21 @@ watchEffect(() => {
 });
 </script>
 <template>
-  <figure class="cell">
-    <p v-if="built.error" class="cell__error">{{ built.error }}</p>
-    <canvas v-else ref="canvas" class="cell__canvas" width="260" height="260"></canvas>
-    <figcaption class="cell__seed">{{ seed }}</figcaption>
+  <figure class="species-cell">
+    <p v-if="built.error" class="species-cell__error">{{ built.error }}</p>
+    <canvas v-else ref="canvas" class="species-cell__canvas" width="260" height="260"></canvas>
+    <figcaption class="species-cell__seed">{{ seed }}</figcaption>
   </figure>
 </template>
 <style scoped>
-.cell {
+.species-cell {
   margin: 0;
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
-.cell__canvas {
+.species-cell__canvas {
   width: 100%;
   aspect-ratio: 1;
   background: var(--md-s-low);
@@ -48,7 +48,7 @@ watchEffect(() => {
   color: var(--md-on-surface);
 }
 
-.cell__error {
+.species-cell__error {
   margin: 0;
   aspect-ratio: 1;
   padding: 8px;
@@ -59,7 +59,7 @@ watchEffect(() => {
   overflow: auto;
 }
 
-.cell__seed {
+.species-cell__seed {
   font-size: 11px;
   color: var(--md-on-surface-variant);
   text-align: center;

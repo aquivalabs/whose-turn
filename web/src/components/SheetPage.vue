@@ -32,29 +32,30 @@ onMounted(readInk);
 watch(dark, readInk);
 </script>
 <template>
-  <main ref="page" class="wt-app sheet">
-    <header class="sheet__head">
-      <h1 class="sheet__title">Species sheet</h1>
-      <label class="sheet__field"
+  <main ref="page" class="app sheet-page">
+    <header class="sheet-page__head">
+      <h1 class="sheet-page__title">Species sheet</h1>
+      <label class="sheet-page__field"
         >Species
         <select v-model="only">
           <option value="">all ({{ names.length }})</option>
           <option v-for="name in names" :key="name" :value="name">{{ name }}</option>
         </select>
       </label>
-      <label class="sheet__field"
-        >Seeds <input v-model.number="count" type="number" min="1" max="12"
+      <label class="sheet-page__field"
+        >Seeds
+        <input v-model.number="count" class="sheet-page__number" type="number" min="1" max="12"
       /></label>
-      <label class="sheet__field"
-        >From seed <input v-model.number="first" type="number" min="0"
+      <label class="sheet-page__field"
+        >From seed <input v-model.number="first" class="sheet-page__number" type="number" min="0"
       /></label>
     </header>
-    <section v-for="row in rows" :key="row.key" class="sheet__row">
-      <h2 class="sheet__label">
-        {{ row.name }}<small v-if="row.pose">{{ row.pose }}</small>
+    <section v-for="row in rows" :key="row.key" class="sheet-page__row">
+      <h2 class="sheet-page__label">
+        {{ row.name }}<small v-if="row.pose" class="sheet-page__pose">{{ row.pose }}</small>
       </h2>
       <div
-        class="sheet__cells"
+        class="sheet-page__cells"
         :style="{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }"
       >
         <SpeciesCell
@@ -70,7 +71,7 @@ watch(dark, readInk);
   </main>
 </template>
 <style scoped>
-.sheet {
+.sheet-page {
   font-family: var(--md-font);
   color: var(--md-on-surface);
   background: var(--md-surface);
@@ -80,7 +81,7 @@ watch(dark, readInk);
   box-sizing: border-box;
 }
 
-.sheet__head {
+.sheet-page__head {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -88,13 +89,13 @@ watch(dark, readInk);
   margin-bottom: 12px;
 }
 
-.sheet__title {
+.sheet-page__title {
   font-size: 20px;
   font-weight: 500;
   margin: 0 16px 0 0;
 }
 
-.sheet__field {
+.sheet-page__field {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -102,11 +103,11 @@ watch(dark, readInk);
   color: var(--md-on-surface-variant);
 }
 
-.sheet__field input {
+.sheet-page__number {
   width: 64px;
 }
 
-.sheet__row {
+.sheet-page__row {
   display: grid;
   grid-template-columns: 120px minmax(0, 1fr);
   gap: 12px;
@@ -114,20 +115,20 @@ watch(dark, readInk);
   margin-bottom: 8px;
 }
 
-.sheet__label {
+.sheet-page__label {
   font-size: 14px;
   font-weight: 500;
   margin: 0;
   display: grid;
 }
 
-.sheet__label small {
+.sheet-page__pose {
   font-weight: 400;
   font-size: 12px;
   color: var(--md-on-surface-variant);
 }
 
-.sheet__cells {
+.sheet-page__cells {
   display: grid;
   gap: 8px;
 }

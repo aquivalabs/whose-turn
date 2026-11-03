@@ -92,12 +92,12 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 };
 </script>
 <template>
-  <nav class="wt-rail" aria-label="Workspaces">
+  <nav class="rail" aria-label="Workspaces">
     <a
       v-for="workspace in snapshot.workspaces"
       :key="workspace.id"
-      class="wt-rail-item"
-      :class="{ 'is-dragging': dragged === workspace.id }"
+      class="rail__item"
+      :class="{ 'rail__item--dragging': dragged === workspace.id }"
       :data-drop="drop.id === workspace.id ? drop.side : null"
       :href="'?ws=' + encodeURIComponent(workspace.id)"
       :aria-label="workspace.name"
@@ -110,7 +110,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       @dragleave="drop = {}"
       @drop="onDrop($event, workspace)"
     >
-      <svg viewBox="0 0 36 36" class="wt-rail-icon" aria-hidden="true">
+      <svg viewBox="0 0 36 36" class="rail__icon" aria-hidden="true">
         <rect x="0" y="0" width="36" height="36" rx="10" :fill="colours[workspace.id].fill" />
         <circle
           v-for="(dot, index) in parts[workspace.id].dots"
@@ -134,15 +134,149 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
           {{ parts[workspace.id].glyph }}
         </text>
       </svg>
-      <span class="wt-rail-label">{{ workspace.name }}</span>
-      <span v-if="workspace.open_moves" class="wt-rail-badge">{{ workspace.open_moves }}</span>
+      <span class="rail__label">{{ workspace.name }}</span>
+      <span v-if="workspace.open_moves" class="rail__badge">{{ workspace.open_moves }}</span>
     </a>
-    <span class="wt-rail-spacer"></span>
-    <a class="wt-rail-item" href="#settings" aria-label="Settings" @click.prevent="onSettings">
-      <svg viewBox="0 0 24 24" class="wt-rail-gear" aria-hidden="true">
+    <span class="rail__spacer"></span>
+    <a class="rail__item" href="#settings" aria-label="Settings" @click.prevent="onSettings">
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
         <path :d="GEAR" fill="currentColor" />
       </svg>
-      <span class="wt-rail-label">Settings</span>
+      <span class="rail__label">Settings</span>
     </a>
   </nav>
 </template>
+<style scoped>
+.rail {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 60px;
+  padding: 12px 8px;
+  overflow: hidden;
+  border-right: 1px solid var(--glass-edge);
+  background: rgb(var(--glass), 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  font-family: var(--md-font);
+  color: var(--md-on-surface);
+  transition:
+    width 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.rail:hover,
+.rail:has(:focus-visible) {
+  width: 232px;
+  box-shadow: 12px 0 32px rgb(0 0 0 / 12%);
+}
+
+.app:has(.modal) .rail {
+  z-index: 0;
+}
+
+.rail__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding: 0 4px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.rail__item:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.rail__item--dragging {
+  opacity: 0.4;
+}
+
+.rail__item[data-drop='before'] {
+  box-shadow: 0 -2px 0 0 var(--md-primary);
+}
+
+.rail__item[data-drop='after'] {
+  box-shadow: 0 2px 0 0 var(--md-primary);
+}
+
+.rail__item:hover {
+  background: var(--state-hover);
+}
+
+.rail__item[aria-selected='true'] {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.rail__icon {
+  flex: none;
+  display: block;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.rail__gear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--md-on-surface-variant);
+}
+
+.rail__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.rail:hover .rail__label,
+.rail:has(:focus-visible) .rail__label {
+  opacity: 1;
+}
+
+.rail__badge {
+  position: absolute;
+  top: 2px;
+  left: 30px;
+  box-sizing: border-box;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+.rail:hover .rail__badge,
+.rail:has(:focus-visible) .rail__badge {
+  position: static;
+  flex: none;
+}
+
+.rail__spacer {
+  flex: 1;
+}
+</style>

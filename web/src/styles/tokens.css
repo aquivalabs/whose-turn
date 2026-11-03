@@ -1,5 +1,28 @@
-/* Material 3 tonal scheme; a workspace theme overrides these variables on .wt-app from lib/palette.mjs. */
-.wt-app {
+/* Material 3 tonal scheme; a workspace theme overrides these variables on .app from lib/palette.mjs. The page, unread, live-dot and tooltip colours are tokens here too, so no component holds a colour literal. */
+:root {
+  --page-bg: #f3f4f8;
+  --tip-bg: #1f2433;
+  --tip-ink: #e8ecf5;
+  --tip-edge: rgb(255 255 255 / 12%);
+  --tip-shadow: rgb(0 0 0 / 45%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg: #0d0f13;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --tip-bg: #fff;
+    --tip-ink: #1d2023;
+    --tip-edge: #d3d6de;
+    --tip-shadow: rgb(0 0 0 / 18%);
+  }
+}
+
+.app {
   --md-primary: #2c5697;
   --md-on-primary: #fff;
   --md-primary-container: #d8e2ff;
@@ -23,6 +46,8 @@
   --md-outline: #74777f;
   --md-outline-variant: #d3d6de;
   --md-state: 25, 28, 32;
+  --state-hover: rgb(var(--md-state), 0.08);
+  --focus-ring: 2px solid var(--md-primary);
   --glass: 255, 255, 255;
   --glass-a: 0.52;
   --glass-edge: rgb(255 255 255 / 70%);
@@ -33,10 +58,29 @@
   --md-font: roboto, inter, -apple-system, blinkmacsystemfont, 'Segoe UI', system-ui, sans-serif;
   --md-r-card: 12px;
   --md-r-chip: 8px;
+  --new: #5cc8f0;
+  --new-bg: rgb(92 200 240 / 17%);
+  --new-ink: #04222e;
+  --new-edge: rgb(92 200 240 / 28%);
+  --new-glow: rgb(92 200 240 / 45%);
+  --live-on: #2bb673;
+  --live-off: #d6455d;
+  --live-warn: #e0a030;
+  --live-pulse-from: rgb(43 182 115 / 50%);
+  --live-pulse-to: rgb(43 182 115 / 0%);
+  --live-pulse-rest: rgb(43 182 115 / 60%);
+}
+
+/* A forced light scheme keeps the header ink dark and the unread accent deeper on a light glass. */
+html.force-light .app {
+  --header-ink: #001a41;
+  --new: #0077b6;
+  --new-bg: rgb(0 119 182 / 10%);
+  --new-ink: #fff;
 }
 
 @media (prefers-color-scheme: dark) {
-  .wt-app {
+  .app {
     --md-primary: #adc6ff;
     --md-on-primary: #0f2f60;
     --md-primary-container: #2b4678;
@@ -70,7 +114,7 @@
   }
 }
 
-html.force-dark .wt-app {
+html.force-dark .app {
   --md-primary: #adc6ff;
   --md-on-primary: #0f2f60;
   --md-primary-container: #2b4678;

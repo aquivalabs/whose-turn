@@ -22,18 +22,18 @@ const close = () => {
 <template>
   <div
     v-if="item"
-    class="wt-modal"
+    class="modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="modal-title"
     @click.self="close"
   >
-    <div class="wt-modal-card">
-      <div class="wt-modal-head">
-        <h3 id="modal-title">{{ title }}</h3>
-        <a v-if="href" class="wt-btn" :href="href" target="_blank" rel="noopener">{{ label }}</a>
+    <div class="modal__card">
+      <div class="modal__head">
+        <h3 id="modal-title" class="modal__title">{{ title }}</h3>
+        <a v-if="href" class="btn" :href="href" target="_blank" rel="noopener">{{ label }}</a>
         <span
-          class="wt-btn tonal"
+          class="btn btn--tonal"
           role="button"
           tabindex="0"
           @click="close"

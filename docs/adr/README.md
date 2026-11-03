@@ -48,6 +48,7 @@ Example shape: `0001-choose-the-message-queue.md`.
 | 0002 | [The window takes browser behaviour from VueUse, except the rail's drag](0002-vueuse-in-the-window.md) | accepted |
 | 0003 | [Comment Markdown stays a hand-written tokeniser behind a DOM builder](0003-markdown-rendering.md) | accepted |
 | 0004 | [The window gets a DOM test tier on Vitest; node:test keeps the server and the pure modules](0004-window-test-tier.md) | accepted |
+| 0005 | [Each component owns its styles in a scoped BEM block; the global sheet keeps layout and primitives](0005-scoped-bem-styles.md) | accepted |
 
 ## Referencing an ADR from code
 

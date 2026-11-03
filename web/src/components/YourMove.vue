@@ -61,39 +61,40 @@ const mark = async (item: YourRow) => {
     tip="Each row is something where the next step is yours. Ticket, PR and comment open in a new tab."
   >
     <template #head
-      ><Segmented v-model="ui.move" :options="options" label="Show" class="wt-move-view"
+      ><Segmented v-model="ui.move" :options="options" label="Show" class="your-move__view"
     /></template>
-    <RowScroll>
-      <table>
+    <RowScroll floor>
+      <table class="table">
         <thead>
           <tr>
             <th>Ticket</th>
             <th>Next step</th>
             <th>PR</th>
-            <th class="wt-hide-narrow">Last comment</th>
-            <th class="wt-act-col"><span class="wt-sr">Mark</span></th>
+            <th class="hide-narrow">Last comment</th>
+            <th class="table__actions-col"><span class="visually-hidden">Mark</span></th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="item in view.rows"
             :key="item.row.row_id"
-            :class="{ 'is-handled': item.handled }"
+            class="your-move__row"
+            :class="{ 'your-move__row--handled': item.handled }"
           >
             <TicketCell :row="item.row" />
             <td>
-              <span class="wt-hint-row">
-                <span class="wt-next">{{ item.row.next }}</span>
+              <span class="hint-row">
+                <span class="your-move__next">{{ item.row.next }}</span>
                 <span
                   v-if="item.age.text"
-                  class="wt-age"
-                  :class="{ old: item.age.old }"
+                  class="age"
+                  :class="{ 'age--old': item.age.old }"
                   :data-tip="'Waiting since ' + when(item.row.activity_at)"
                   >{{ item.age.text }}</span
                 >
                 <span
                   v-if="item.row.why"
-                  class="wt-hint-icon"
+                  class="hint-icon"
                   role="button"
                   tabindex="0"
                   aria-label="Why this is your move"
@@ -102,7 +103,7 @@ const mark = async (item: YourRow) => {
                 >
                 <span
                   v-if="item.handled"
-                  class="wt-handled-chip"
+                  class="handled-chip"
                   :data-tip="
                     'Marked ' +
                     ago(snapshot.marks.handled[item.row.row_id] || '') +
@@ -113,25 +114,28 @@ const mark = async (item: YourRow) => {
               </span>
               <p
                 v-if="problems.get(item.row.row_id)"
-                class="wt-alert wt-todo-problem wt-row-problem"
+                class="alert alert--inline your-move__problem"
                 role="alert"
               >
                 {{ problems.get(item.row.row_id) }}
               </p>
             </td>
             <PrCell :row="item.row" />
-            <td class="wt-hide-narrow" :class="{ 'wt-quote': item.row.comment }">
+            <td class="hide-narrow" :class="{ 'your-move__quote': item.row.comment }">
               <ExtLink
                 v-if="item.row.comment"
                 :text="item.row.comment"
                 :url="item.row.comment_url"
               />
             </td>
-            <td class="wt-actions">
-              <AiButton :query="{ ws: snapshot.workspace.id, kind: 'row', ref: item.row.row_id }" />
+            <td class="table__actions">
+              <AiButton
+                class="table__ai"
+                :query="{ ws: snapshot.workspace.id, kind: 'row', ref: item.row.row_id }"
+              />
               <span
-                class="wt-mark"
-                :class="{ undo: item.handled }"
+                class="your-move__mark"
+                :class="{ 'your-move__mark--undo': item.handled }"
                 role="button"
                 tabindex="0"
                 :aria-label="
@@ -146,9 +150,86 @@ const mark = async (item: YourRow) => {
         </tbody>
       </table>
     </RowScroll>
-    <p v-if="!view.rows.length" class="wt-empty">
+    <p v-if="!view.rows.length" class="empty">
       {{ emptyText }}
     </p>
     <RecentlyDone v-if="ui.move === 'open'" />
   </Island>
 </template>
+<style scoped>
+.your-move__view {
+  margin-left: 10px;
+}
+
+.your-move__next {
+  font-weight: 500;
+}
+
+.your-move__quote {
+  max-width: 48ch;
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.your-move__quote a {
+  color: var(--md-on-surface-variant);
+}
+
+.your-move__problem {
+  margin: 4px 0 0;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.your-move__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--md-outline);
+  border-radius: 999px;
+  color: var(--md-on-surface);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.your-move__mark:hover {
+  background: var(--state-hover);
+}
+
+.your-move__mark::before {
+  content: '';
+  width: 9px;
+  height: 5px;
+  border-bottom: 2px solid currentcolor;
+  border-left: 2px solid currentcolor;
+  transform: translateY(-2px) rotate(-45deg);
+}
+
+.your-move__mark--undo::before {
+  display: none;
+}
+
+.your-move__mark:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.your-move__row--handled td {
+  opacity: 0.55;
+}
+
+.your-move__row--handled .your-move__next {
+  text-decoration: line-through;
+  text-decoration-color: var(--md-outline);
+}
+
+.your-move__row--handled .table__actions {
+  opacity: 1;
+}
+</style>

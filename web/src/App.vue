@@ -34,18 +34,22 @@ onMounted(() => {
 });
 </script>
 <template>
-  <div class="wt-app" :style="themeVariables">
+  <div class="app" :style="themeVariables">
     <Rail :inert="covered" @settings="ui.settings = true" />
-    <div class="wt-shell">
+    <div class="app__shell">
       <StatusBar :inert="covered" @report="ui.feedback = true" />
-      <div v-if="alerts.length" class="wt-alert" :inert="covered">{{ alerts.join('  ·  ') }}</div>
-      <div id="wt" class="wt wt-fit">
-        <canvas id="backdrop" class="wt-backdrop" aria-hidden="true"></canvas>
+      <div v-if="alerts.length" class="alert" :inert="covered">{{ alerts.join('  ·  ') }}</div>
+      <div id="wt" class="dashboard dashboard--fit">
+        <canvas id="backdrop" class="dashboard__backdrop" aria-hidden="true"></canvas>
         <WorkspaceHeader :inert="covered" />
         <FirstRun v-if="firstRun" :inert="covered" />
-        <div v-else class="wt-layout" :inert="covered">
-          <div class="wt-main"><YourMove /><Todos /><Waiting /></div>
-          <Feed @open="ui.modal = $event" />
+        <div v-else class="dashboard__layout" :inert="covered">
+          <div class="dashboard__main">
+            <YourMove class="dashboard__move" /><Todos class="dashboard__todo" /><Waiting
+              class="dashboard__waiting"
+            />
+          </div>
+          <Feed class="dashboard__feed" @open="ui.modal = $event" />
         </div>
         <FeedbackSheet />
         <SettingsSheet />
@@ -54,3 +58,29 @@ onMounted(() => {
     </div>
   </div>
 </template>
+<style scoped>
+.app__shell {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px 12px 12px 72px;
+}
+
+.app__shell > .dashboard {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (width >= 901px) {
+  .app__shell > .dashboard.dashboard--fit {
+    height: auto;
+  }
+}
+
+@media (width <= 900px) {
+  .app__shell {
+    height: auto;
+  }
+}
+</style>

@@ -4,6 +4,7 @@ import { reactive } from 'vue';
 import { groupFeed, isNew, moveChip, matchesQuery } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, recentlyDone, statusTone } from '../web/src/lib/moves.ts';
 import { topLayer } from '../web/src/lib/layers.ts';
+import { modifier } from '../web/src/lib/bem.ts';
 import { liveStatus } from '../web/src/lib/live-status.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
 import { latestWins } from '../web/src/lib/latest-wins.ts';
@@ -187,4 +188,10 @@ test('only the reply to the newest request is accepted', () => {
   const second = requests.next();
   assert.equal(requests.accepts(first), false);
   assert.equal(requests.accepts(second), true);
+});
+
+test('a BEM modifier names the block and the tone, and an empty tone adds no class', () => {
+  assert.equal(modifier('pill', 'bad'), 'pill--bad');
+  assert.equal(modifier('feed-item__icon', 'jira'), 'feed-item__icon--jira');
+  assert.equal(modifier('pill', ''), '');
 });

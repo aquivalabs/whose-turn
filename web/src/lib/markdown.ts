@@ -22,7 +22,7 @@ const inlineNode = (token: InlineToken) => {
     return anchor;
   }
   if (token.type === 'mention') {
-    return textElement('span', token.text, 'wt-mention');
+    return textElement('span', token.text, 'markdown-view__mention');
   }
   return textElement(token.type, token.text);
 };

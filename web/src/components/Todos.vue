@@ -75,11 +75,13 @@ const options = computed(() => [
     note="Your own notes"
     tip='Your personal to-dos, kept on this machine. Add here, or ask Claude: "add to my to-do: …". A ticket key like PROJ-123 in the text becomes a link.'
   >
-    <template #head><Segmented v-model="view" :options="options" label="Show" /></template>
-    <div class="wt-todo-add">
+    <template #head
+      ><Segmented v-model="view" :options="options" label="Show" class="todos__view"
+    /></template>
+    <div class="todos__add">
       <input
         v-model="draft"
-        class="wt-input"
+        class="input todos__input"
         type="text"
         placeholder="Add a to-do and press Enter"
         aria-label="New to-do"
@@ -87,7 +89,7 @@ const options = computed(() => [
         @keydown.enter="add"
       />
       <span
-        class="wt-btn tonal"
+        class="btn btn--tonal"
         role="button"
         tabindex="0"
         @click="add"
@@ -95,16 +97,17 @@ const options = computed(() => [
         >Add</span
       >
     </div>
-    <p v-if="problem" class="wt-alert wt-todo-problem" role="alert">{{ problem }}</p>
-    <ul class="wt-todo-list">
+    <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
+    <ul class="todos__list">
       <li
         v-for="{ todo, parts: pieces, meta } in rows"
         :key="todo.id"
-        :class="{ 'is-done': todo.done }"
+        class="todos__item"
+        :class="{ 'todos__item--done': todo.done }"
       >
         <span
-          class="wt-check"
-          :class="{ on: todo.done }"
+          class="todos__check"
+          :class="{ 'todos__check--on': todo.done }"
           role="checkbox"
           tabindex="0"
           :aria-checked="!!todo.done"
@@ -112,7 +115,7 @@ const options = computed(() => [
           @click="flip(todo)"
           @keydown.enter.prevent="flip(todo)"
         ></span>
-        <span class="wt-todo-text"
+        <span class="todos__text"
           ><template v-for="(piece, index) in pieces" :key="index"
             ><ExtLink v-if="piece.url !== undefined" :text="piece.text" :url="piece.url" /><template
               v-else
@@ -120,9 +123,9 @@ const options = computed(() => [
             ></template
           ></span
         >
-        <span class="wt-todo-meta">{{ meta }}</span>
+        <span class="todos__meta">{{ meta }}</span>
         <span
-          class="wt-todo-del"
+          class="todos__delete"
           role="button"
           tabindex="0"
           aria-label="Delete to-do"
@@ -131,9 +134,127 @@ const options = computed(() => [
           >×</span
         >
       </li>
-      <span v-if="!rows.length" class="wt-empty">{{
+      <span v-if="!rows.length" class="empty todos__empty">{{
         ui.showDone ? 'Nothing here yet.' : 'Nothing to do. Add one above, or ask Claude.'
       }}</span>
     </ul>
   </Island>
 </template>
+<style scoped>
+.todos__view {
+  margin-left: 10px;
+}
+
+.todos__add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.todos__input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  background: rgb(var(--md-state), 0.04);
+  font-size: 14px;
+}
+
+.todos__list {
+  margin: 0 -20px;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.todos__item {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto 20px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 20px;
+  border-top: 1px solid var(--md-outline-variant);
+}
+
+.todos__item:first-child {
+  border-top: 0;
+}
+
+.todos__item:hover {
+  background: rgb(var(--md-state), 0.06);
+}
+
+.todos__text {
+  overflow-wrap: anywhere;
+}
+
+.todos__item--done .todos__text {
+  color: var(--md-on-surface-variant);
+  text-decoration: line-through;
+}
+
+.todos__empty {
+  display: block;
+  padding: 6px 20px 10px;
+}
+
+.todos__check {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--md-outline);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.todos__check--on {
+  border-color: var(--md-primary);
+  background: var(--md-primary);
+}
+
+.todos__check--on::after {
+  content: '';
+  width: 8px;
+  height: 4px;
+  border-bottom: 2px solid var(--md-on-primary);
+  border-left: 2px solid var(--md-on-primary);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.todos__meta {
+  color: var(--md-on-surface-variant);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.todos__delete {
+  color: var(--md-on-surface-variant);
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.todos__delete:focus-visible {
+  opacity: 1;
+}
+
+.todos__item:hover .todos__delete {
+  opacity: 1;
+}
+
+@media (width >= 901px) {
+  .dashboard--fit .dashboard__todo .todos__list {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .dashboard--fit .dashboard__todo .todos__list:not(:has(.todos__item)) {
+    display: none;
+  }
+}
+</style>

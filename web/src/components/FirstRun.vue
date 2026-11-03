@@ -15,17 +15,17 @@ const demo = () => {
 };
 </script>
 <template>
-  <section id="first-run" class="wt-island wt-first-run" aria-labelledby="first-run-title">
-    <h2 id="first-run-title">
+  <section id="first-run" class="island first-run" aria-labelledby="first-run-title">
+    <h2 id="first-run-title" class="first-run__title">
       Whose Turn watches your tickets and pull requests and shows what is waiting on you.
     </h2>
-    <p>
+    <p class="first-run__text">
       <b>{{ snapshot.workspace.name }}</b> has no sources yet, so there is nothing to watch. Connect
       a repository or a tracker, or look around a demo workspace with invented data first.
     </p>
-    <div class="wt-first-run-actions">
+    <div class="first-run__actions">
       <span
-        class="wt-btn tonal"
+        class="btn btn--tonal"
         role="button"
         tabindex="0"
         @click="addSource"
@@ -33,7 +33,7 @@ const demo = () => {
         >Add a source</span
       >
       <span
-        class="wt-btn"
+        class="btn"
         role="button"
         tabindex="0"
         :aria-disabled="busy"
@@ -42,6 +42,40 @@ const demo = () => {
         >Try a demo workspace</span
       >
     </div>
-    <p class="wt-first-run-ai">Or ask Claude: "add my GitHub repository to Whose Turn."</p>
+    <p class="first-run__text first-run__ai">
+      Or ask Claude: "add my GitHub repository to Whose Turn."
+    </p>
   </section>
 </template>
+<style scoped>
+.first-run {
+  display: grid;
+  place-self: start center;
+  gap: 14px;
+  width: min(640px, 100%);
+  padding: 28px 32px;
+}
+
+.first-run__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 28px;
+}
+
+.first-run__text {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+}
+
+.first-run__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.first-run__ai {
+  font-size: 13px;
+}
+</style>

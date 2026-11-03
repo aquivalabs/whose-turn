@@ -26,8 +26,12 @@ const copy = () =>
 </script>
 <template>
   <span
-    class="wt-ai"
-    :class="[state, { 'wt-ai-big': big }]"
+    class="ai-button"
+    :class="{
+      'ai-button--big': big,
+      'ai-button--sent': state === 'sent',
+      'ai-button--failed': state === 'failed',
+    }"
     role="button"
     tabindex="0"
     aria-label="Copy for AI"
@@ -36,6 +40,60 @@ const copy = () =>
     @keydown.enter.prevent.stop="copy"
     @keydown.space.prevent.stop="copy"
   >
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="SPARKLE" fill="currentColor" /></svg>
+    <svg class="ai-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path :d="SPARKLE" fill="currentColor" />
+    </svg>
   </span>
 </template>
+<style scoped>
+.ai-button {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--md-primary);
+  background: rgb(var(--md-state), 0.06);
+  vertical-align: middle;
+  transition:
+    background 0.12s ease,
+    transform 0.12s ease;
+}
+
+.ai-button__icon {
+  width: 15px;
+  height: 15px;
+}
+
+.ai-button:hover {
+  background: var(--md-secondary-container);
+  transform: scale(1.08);
+}
+
+.ai-button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.ai-button.ai-button--sent {
+  background: var(--md-tertiary-container);
+  color: var(--md-on-tertiary-container);
+}
+
+.ai-button.ai-button--failed {
+  background: var(--md-error-container);
+  color: var(--md-on-error-container);
+}
+
+.ai-button--big {
+  width: 32px;
+  height: 32px;
+  background: rgb(var(--glass), 0.7);
+}
+
+.ai-button--big .ai-button__icon {
+  width: 18px;
+  height: 18px;
+}
+</style>

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted, 2026-11-02. Supersedes the "plain JavaScript without a build step" line of the decisions in AGENTS.md.
+Accepted, 2026-11-02. Supersedes the "plain JavaScript without a build step" line of the decisions in AGENTS.md. Superseded in part by [0005](0005-scoped-bem-styles.md), 2026-11-03: the stylesheet is no longer global with `wt-` names.
 
 ## Context
 

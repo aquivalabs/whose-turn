@@ -8,6 +8,7 @@ import { SERVER_DOWN, TEXT_KEPT, writeProblem } from '../lib/problems.ts';
 import type { ApiError, FiledReport } from '../lib/types.ts';
 import { ago } from '../lib/time.ts';
 import { outcomeTone } from '../lib/moves.ts';
+import { modifier } from '../lib/bem.ts';
 
 type ReportLine = Pick<
   FiledReport,
@@ -109,18 +110,18 @@ watch(
 <template>
   <div
     v-if="ui.feedback"
-    class="wt-modal"
+    class="modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="feedback-title"
     @click.self="close"
   >
-    <div class="wt-modal-card wt-feedback-card">
-      <div class="wt-modal-head">
-        <h3 id="feedback-title">To the Whose Turn backlog</h3>
-        <span class="wt-modal-meta">{{ project }}</span>
+    <div class="modal__card feedback-sheet__card">
+      <div class="modal__head">
+        <h3 id="feedback-title" class="modal__title">To the Whose Turn backlog</h3>
+        <span class="modal__meta">{{ project }}</span>
         <span
-          class="wt-btn tonal"
+          class="btn btn--tonal"
           role="button"
           tabindex="0"
           :aria-disabled="!configured || sending"
@@ -128,21 +129,16 @@ watch(
           @keydown.enter.prevent="send"
           >{{ sending ? 'Composing…' : 'Send' }}</span
         >
-        <span
-          class="wt-btn"
-          role="button"
-          tabindex="0"
-          @click="close"
-          @keydown.enter.prevent="close"
+        <span class="btn" role="button" tabindex="0" @click="close" @keydown.enter.prevent="close"
           >Close</span
         >
       </div>
-      <div v-if="problems.length" class="wt-alert">{{ problems.join('  ·  ') }}</div>
-      <div class="wt-settings-form wt-feedback-form">
+      <div v-if="problems.length" class="alert">{{ problems.join('  ·  ') }}</div>
+      <div class="sheet-form">
         <textarea
           ref="field"
           v-model="text"
-          class="wt-input wt-feedback-text"
+          class="input feedback-sheet__text"
           rows="5"
           :placeholder="
             'Describe the problem or the wish in your own words.' +
@@ -152,11 +148,11 @@ watch(
           @keydown.meta.enter.prevent="send"
           @keydown.ctrl.enter.prevent="send"
         ></textarea>
-        <p v-if="!configured" class="wt-feedback-note">
+        <p v-if="!configured" class="feedback-sheet__note">
           The maintainer's tracker is not connected on this machine, so nothing can be sent from
           here. Copy your remark and pass it on yourself.
           <span
-            class="wt-btn"
+            class="btn"
             role="button"
             tabindex="0"
             @click="copy"
@@ -166,29 +162,62 @@ watch(
             }}</span
           >
         </p>
-        <p v-else class="wt-feedback-note">
+        <p v-else class="feedback-sheet__note">
           An assistant turns it into a proper issue (title, kind, description) and files it in the
           Whose Turn backlog with this workspace's summary attached.
         </p>
-        <p v-if="done" class="wt-empty">
+        <p v-if="done" class="empty">
           Filed as
           <a :href="reportPage(done.identifier)" target="_blank" rel="noopener">{{
             done.identifier
           }}</a>
           · {{ done.title }}
         </p>
-        <div v-if="reports.length" class="wt-feedback-reports">
-          <h4>Your reports</h4>
-          <div v-for="report in reports" :key="report.id" class="wt-feedback-report">
+        <div v-if="reports.length" class="feedback-sheet__reports">
+          <h4 class="sheet-form__heading">Your reports</h4>
+          <div v-for="report in reports" :key="report.id" class="feedback-sheet__report">
             <a :href="reportPage(report.id)" target="_blank" rel="noopener">{{ report.id }}</a>
-            <span class="wt-feedback-report-title">{{ report.title }}</span>
-            <span class="wt-pill" :class="outcomeTone(report.outcome)">{{
+            <span class="feedback-sheet__report-title">{{ report.title }}</span>
+            <span class="pill" :class="modifier('pill', outcomeTone(report.outcome))">{{
               report.state || 'filed'
             }}</span>
-            <span class="wt-feed-when">{{ ago(report.changed_at || report.filed_at) }}</span>
+            <span class="timestamp">{{ ago(report.changed_at || report.filed_at) }}</span>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+<style scoped>
+.feedback-sheet__card {
+  width: min(640px, 100%);
+}
+
+.feedback-sheet__text {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.feedback-sheet__note {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+}
+
+.feedback-sheet__report {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--md-outline-variant);
+  font-size: 13px;
+}
+
+.feedback-sheet__report-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
