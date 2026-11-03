@@ -31,8 +31,19 @@ test('macOS: Keychain through security', async (t) => {
   await secrets.set('svc', 'me', 'v');
   assert.deepEqual(calls, [
     ['security', ['find-generic-password', '-s', 'svc', '-a', 'me', '-w']],
-    ['security', ['add-generic-password', '-U', '-a', 'me', '-s', 'svc', '-w', 'v']],
+    ['security', ['-i'], 'add-generic-password -U -a "me" -s "svc" -w "v"\n'],
   ]);
+});
+
+test('macOS: the value goes to security on stdin, quoted, and never into argv', async (t) => {
+  const { calls, run } = recorder(() => '');
+  const secrets = createSecrets(scratch(t), { platform: 'darwin', run });
+  await secrets.set('svc', 'me', 'pa"ss\\word');
+  const [file, args, input] = calls[0];
+  assert.equal(file, 'security');
+  assert.deepEqual(args, ['-i']);
+  assert.ok(!args.join(' ').includes('pa'));
+  assert.equal(input, 'add-generic-password -U -a "me" -s "svc" -w "pa\\"ss\\\\word"\n');
 });
 
 test('Linux: libsecret through secret-tool, the value on stdin and never in argv', async (t) => {
