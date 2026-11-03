@@ -39,6 +39,10 @@ export interface TurnRow {
   activity_at?: string;
   status: string;
   status_since?: string;
+  /** The chain group of the status, '' when it is none of them. */
+  status_group?: 'backlog' | 'passed' | 'code_review' | 'qa' | 'on_hold' | '';
+  /** Whether a handled mark covers the row's latest activity; the server decides. */
+  handled?: boolean;
   next: string;
   why?: string;
   whose?: string;
@@ -91,12 +95,25 @@ export interface Health {
   alerts: { text: string }[];
 }
 
-export interface Snapshot {
+/** The four header tiles, counted by the server. */
+export interface Counts {
+  mine: number;
+  others: number;
+  failing: number;
+  done: number;
+}
+
+/** What a marks write changes, as /api/marks answers it. */
+export interface Marked {
+  marks: Marks & { seen: string[] };
+  turn: TurnRow[];
+  counts: Counts;
+}
+
+export interface Snapshot extends Marked {
   workspaces: Workspace[];
   workspace: Workspace;
-  turn: TurnRow[];
   feed: FeedItem[];
-  marks: Marks & { seen: string[] };
   todos: Todo[];
   errors: Record<string, string>;
   health: Health;

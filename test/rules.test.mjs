@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compileRules, turnRows, feedRows, myMoves } from '../lib/rules.mjs';
+import { compileRules, turnRows, feedRows, myMoves, withHandled, turnCounts } from '../lib/rules.mjs';
 import { holdReason } from '../lib/facts.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 import { ticket, pr, comment, ask } from './fixtures/rules.mjs';
@@ -68,6 +68,40 @@ test('a handled mark hides a row until something newer happens on it', () => {
   const list = rows({ tickets: [ticket()], prs: [pr({ checks: 'failing', updated_at: '2026-11-01T11:00:00Z' })] });
   assert.equal(myMoves(list, { handled: { 'PROJ-1': '2026-11-01T12:00:00Z' } }).length, 0);
   assert.equal(myMoves(list, { handled: { 'PROJ-1': '2026-11-01T10:00:00Z' } }).length, 1);
+});
+
+test('every row carries the handled flag from the same rule as myMoves', () => {
+  const list = rows({ tickets: [ticket()], prs: [pr({ checks: 'failing', updated_at: '2026-11-01T11:00:00Z' })] });
+  const row = (marks) => only(withHandled(list, marks), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(row({ handled: { 'PROJ-1': '2026-11-01T12:00:00Z' } }).handled, true);
+  assert.equal(row({ handled: { 'PROJ-1': '2026-11-01T10:00:00Z' } }).handled, false);
+  assert.equal(row({ handled: {} }).handled, false);
+  assert.equal(list[0].handled, undefined);
+});
+
+test('a row names its chain status group, and a mention row the group of its ticket', () => {
+  const group = (status) => only(rows({ tickets: [ticket({ status })], prs: [pr()] }), (candidate) => candidate.row_id === 'PROJ-1').status_group;
+  assert.equal(group('In Review'), 'code_review');
+  assert.equal(group('Ready for QA'), 'qa');
+  assert.equal(group('On Hold'), 'on_hold');
+  assert.equal(group('Passed'), 'passed');
+  assert.equal(group('Ice Box'), '');
+  const mention = only(rows({ tickets: [ticket({ status: 'Ready for QA' })], comments: [comment()] }), (candidate) => candidate.row_id === 'PROJ-1:c1');
+  assert.equal(mention.status_group, 'qa');
+  assert.equal(only(rows({ asks: [ask()] }), (candidate) => candidate.row_id === 'gha:1').status_group, '');
+});
+
+test('the counts are the open moves, waiting, failing and done, with handled rows left out of mine', () => {
+  const list = [
+    { row_id: 'a', group: 'you', activity_at: '2026-11-02T00:00:00.000Z' },
+    { row_id: 'PROJ-2', group: 'you', activity_at: '2026-11-01T00:00:00.000Z' },
+    { row_id: 'b', group: 'others', pr_state: 'OPEN', checks: 'failing' },
+    { row_id: 'c', group: 'done' },
+  ];
+  const marks = { handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
+  assert.deepEqual(turnCounts(list, marks), { mine: 1, others: 1, failing: 1, done: 1 });
+  assert.equal(turnCounts(list, marks).mine, myMoves(list, marks).length);
+  assert.equal(turnCounts(list, { handled: {} }).mine, 2);
 });
 
 test('the on-hold reason is the mover’s comment closest to the status change', () => {

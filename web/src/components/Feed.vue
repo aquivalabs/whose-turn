@@ -57,7 +57,7 @@ const groups = computed(() => {
   return groupFeed(rows.value, marks.value).map((group) => ({
     ...group,
     row: turnByKey.value.get(group.id),
-    chip: moveChip(rowsByKey.value.get(group.id) || [], snapshot.marks),
+    chip: moveChip(rowsByKey.value.get(group.id) || []),
     when: ago(group.newest),
     kinds: [...new Set(group.items.map((item) => item.kind))].slice(0, 3).join(' · '),
     open: ui.openGroups.has(group.id) || Boolean(ui.feedQuery),

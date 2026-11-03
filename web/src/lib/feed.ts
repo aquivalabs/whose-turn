@@ -1,6 +1,5 @@
 // The feed's pure logic: unread, search, grouping by ticket. Rendering lives in Feed.vue.
 import type { FeedItem, Marks, TurnRow } from './types.ts';
-import { isHandled } from './moves.ts';
 
 export interface FeedGroup {
   id: string;
@@ -51,12 +50,12 @@ export const groupFeed = (items: FeedItem[], marks: Pick<Marks, 'seen' | 'base'>
 };
 
 /** The chip on a feed group head, from every row of the ticket: "your move" while any row on you is open, "handled" once all of them are marked, none otherwise. */
-export const moveChip = (rows: TurnRow[], marks: Pick<Marks, 'handled'>) => {
+export const moveChip = (rows: TurnRow[]) => {
   const you = rows.filter((row) => row.group === 'you');
   if (!you.length) {
     return '';
   }
-  return you.some((row) => !isHandled(row, marks)) ? 'your move' : 'handled';
+  return you.some((row) => !row.handled) ? 'your move' : 'handled';
 };
 
 export const toneOf = (kind: string) =>

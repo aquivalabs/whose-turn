@@ -13,7 +13,7 @@ import {
 import { getJson, post, reasonOf } from './lib/api.ts';
 import { latestWins } from './lib/latest-wins.ts';
 import { retryWithoutWorkspace } from './lib/load-retry.ts';
-import { openCount, turnCounts, withOpenMoves } from './lib/moves.ts';
+import { withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { topLayer, type Layer } from './lib/layers.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
@@ -34,6 +34,7 @@ export const snapshot = shallowReactive<Snapshot>({
   turn: [],
   feed: [],
   marks: { seen: [], base: 0, handled: {} },
+  counts: { mine: 0, others: 0, failing: 0, done: 0 },
   todos: [],
   errors: {},
   health: { ok: true, stale: false, fresh_at: '', failing: [], alerts: [] },
@@ -93,7 +94,7 @@ export const themeVariables = computed(() => {
   const theme = snapshot.workspace.theme;
   return theme && theme.light && theme.dark ? theme[dark.value ? 'dark' : 'light'] : {};
 });
-export const counts = computed(() => turnCounts(snapshot.turn, snapshot.marks));
+export const counts = computed(() => snapshot.counts);
 export const alerts = computed(() => [
   ...(snapshot.problems || []),
   ...snapshot.health.alerts.map((alert) => alert.text),
@@ -252,17 +253,17 @@ export const switchWorkspace = (id: string) => {
 
 const postWs = <T>(url: string, body: object) =>
   post<T & { error?: ApiError }>(url, { ws: snapshot.workspace.id, ...body });
-/** Sends one marks change; resolves with the problem line to show next to its control, empty when the server confirmed it. */
+/** Sends one marks change and takes the marks, rows and counts the server recomputed; resolves with the problem line to show next to its control, empty when the server confirmed it. */
 export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen?: string[] }) =>
-  postWs<Snapshot['marks']>('/api/marks', body).then(
-    (marks) => {
-      const problem = writeProblem(marks);
+  postWs<Pick<Snapshot, 'marks' | 'turn' | 'counts'>>('/api/marks', body).then(
+    (reply) => {
+      const problem = writeProblem(reply);
       if (!problem) {
-        snapshot.marks = marks;
+        Object.assign(snapshot, { marks: reply.marks, turn: reply.turn, counts: reply.counts });
         snapshot.workspaces = withOpenMoves(
           snapshot.workspaces,
           snapshot.workspace.id,
-          openCount(snapshot.turn, marks),
+          reply.counts.mine,
         );
       }
       return problem;

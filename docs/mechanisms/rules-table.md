@@ -16,7 +16,7 @@ requests and mentions, and for unanswered @-mentions in ticket comments are buil
 
 | File | Role |
 |---|---|
-| `lib/facts.mjs` | `FACTS`, the closed fact dictionary; `ticketFacts`, which computes one flat facts object per ticket (plus the whole hold reason for the row's link); `statusGroupOrder` and `statusGroups`; `holdReason` |
+| `lib/facts.mjs` | `FACTS`, the closed fact dictionary; `ticketFacts`, which computes one flat facts object per ticket (plus the whole hold reason for the row's link); `statusGroupOrder` and `statusGroups`; `chainGroup`, the row's `status_group` the window tones status pills by; `holdReason` |
 | `lib/table.mjs` | Validation (`tableProblems`), the `"default"` marker (`expandTable`), matching (`firstMatch`), placeholders (`fillText`) |
 | `lib/default-table.mjs` | `defaultTable(rules)`, the plugin's default rows |
 | `lib/rules.mjs` | `compileRules` expands the workspace table and the status-group order once per workspace; `ticketRow` matches the table and applies `then` |

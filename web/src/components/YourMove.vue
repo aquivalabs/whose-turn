@@ -16,7 +16,7 @@ import RecentlyDone from './RecentlyDone.vue';
 import RowScroll from './RowScroll.vue';
 const view = computed(() => {
   void now.value;
-  const mine = yourRows(snapshot.turn, snapshot.marks, ui.move);
+  const mine = yourRows(snapshot.turn, ui.move);
   return { ...mine, rows: mine.rows.map((item) => ({ ...item, age: age(item.row.activity_at) })) };
 });
 const options = computed(() => [

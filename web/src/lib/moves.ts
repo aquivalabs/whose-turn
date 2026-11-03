@@ -1,16 +1,5 @@
 // Your move and Waiting on others: which rows, in which order. Rendering lives in the islands.
-import type { Marks, TurnRow } from './types.ts';
-
-type HandledMarks = Pick<Marks, 'handled'>;
-
-export const isHandled = (row: TurnRow, marks: HandledMarks) => {
-  const at = marks.handled[row.row_id];
-  return Boolean(at) && String(row.activity_at || '') <= String(at);
-};
-
-/** How many rows on you are still open. */
-export const openCount = (turn: TurnRow[], marks: HandledMarks) =>
-  turn.filter((row) => row.group === 'you' && !isHandled(row, marks)).length;
+import type { TurnRow } from './types.ts';
 
 /** The workspace list with one workspace's badge set; the same list when nothing changes. */
 export const withOpenMoves = <T extends { id: string; open_moves?: number }>(
@@ -27,11 +16,11 @@ export interface YourRow {
   handled: boolean;
 }
 
-/** Rows on you, each with its handled flag: by the server's rank (lowest first), then oldest first; the open view lists only open rows and the handled view only handled ones. */
-export const yourRows = (turn: TurnRow[], marks: HandledMarks, view: string) => {
+/** Rows on you, each with the handled flag the server set: by the server's rank (lowest first), then oldest first; the open view lists only open rows and the handled view only handled ones. */
+export const yourRows = (turn: TurnRow[], view: string) => {
   const you: YourRow[] = turn
     .filter((row) => row.group === 'you')
-    .map((row) => ({ row, handled: isHandled(row, marks) }))
+    .map((row) => ({ row, handled: Boolean(row.handled) }))
     .sort(
       (first, second) =>
         first.row.rank - second.row.rank ||
@@ -51,14 +40,6 @@ export const recentlyDone = (turn: TurnRow[]) =>
     .sort((first, second) => doneAt(second).localeCompare(doneAt(first)))
     .slice(0, 15);
 
-/** The four tiles of the workspace header. */
-export const turnCounts = (turn: TurnRow[], marks: HandledMarks) => ({
-  mine: openCount(turn, marks),
-  others: turn.filter((row) => row.group === 'others').length,
-  failing: turn.filter((row) => row.pr_state === 'OPEN' && row.checks === 'failing').length,
-  done: turn.filter((row) => row.group === 'done').length,
-});
-
 export const waitingRows = (turn: TurnRow[]) =>
   turn
     .filter((row) => row.group === 'others')
@@ -66,8 +47,9 @@ export const waitingRows = (turn: TurnRow[]) =>
 
 export const checksTone = (checks: string | undefined) =>
   checks === 'failing' ? 'bad' : checks === 'running' ? 'warn' : checks === 'passing' ? 'ok' : '';
-export const statusTone = (status: string) =>
-  /qa|review/i.test(status) ? 'info' : /hold/i.test(status) ? 'warn' : '';
+/** The pill tone of each status group the server sends as status_group; other groups have none. */
+const STATUS_TONES: Record<string, string> = { code_review: 'info', qa: 'info', on_hold: 'warn' };
+export const statusTone = (group: string | undefined) => STATUS_TONES[group || ''] || '';
 export const outcomeTone = (outcome: string | undefined) =>
   (({ open: 'info', done: 'ok', dropped: 'warn' }) as Record<string, string>)[outcome || ''] ||
   'info';

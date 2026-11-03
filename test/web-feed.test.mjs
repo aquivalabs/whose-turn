@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { reactive } from 'vue';
 import { groupFeed, isNew, moveChip, matchesQuery } from '../web/src/lib/feed.ts';
-import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.ts';
+import { yourRows, waitingRows, recentlyDone, statusTone } from '../web/src/lib/moves.ts';
 import { topLayer } from '../web/src/lib/layers.ts';
 import { liveStatus } from '../web/src/lib/live-status.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
@@ -28,28 +28,37 @@ test('the feed groups by ticket, newest group first, counting only unread items'
 test('your rows go by the server rank, then oldest first, and the open view lists only open rows; the handled view only handled ones', () => {
   const turn = [
     { row_id: 'PROJ-3', group: 'you', rank: 3, updated: '2026-11-01', activity_at: '2026-11-01T00:00:00.000Z' },
-    { row_id: 'PROJ-2', group: 'you', rank: 3, updated: '2026-10-30', activity_at: '2026-11-01T00:00:00.000Z' },
+    { row_id: 'PROJ-2', group: 'you', rank: 3, updated: '2026-10-30', activity_at: '2026-11-01T00:00:00.000Z', handled: true },
     { row_id: 'PROJ-9', group: 'you', rank: 2, updated: '2026-11-02', activity_at: '2026-11-02T00:00:00.000Z' },
     { row_id: 'PROJ-5', group: 'others', updated: '2026-11-02' },
     { row_id: 'PROJ-7', group: 'you', rank: 0, updated: '2026-11-02', activity_at: '2026-11-02T00:00:00.000Z' },
   ];
-  const open = yourRows(turn, marks, 'open');
+  const open = yourRows(turn, 'open');
   assert.deepEqual(open.rows.map((item) => item.row.row_id), ['PROJ-7', 'PROJ-9', 'PROJ-3']);
   assert.deepEqual(open.rows.map((item) => item.handled), [false, false, false]);
   assert.equal(open.open, 3);
   assert.equal(open.handled, 1);
-  assert.deepEqual(yourRows(turn, marks, 'handled').rows.map((item) => item.row.row_id), ['PROJ-2']);
-  assert.equal(isHandled(turn[1], marks), true);
+  assert.deepEqual(yourRows(turn, 'handled').rows.map((item) => item.row.row_id), ['PROJ-2']);
+  assert.deepEqual(yourRows(turn, 'handled').rows.map((item) => item.handled), [true]);
   assert.deepEqual(waitingRows(turn).map((r) => r.row_id), ['PROJ-5']);
 });
 
 test('the feed chip reads your move while any row is open, handled once all are marked, and is absent off your move', () => {
-  const handled = { row_id: 'PROJ-2', group: 'you', activity_at: '2026-11-01T00:00:00.000Z' };
-  const open = { row_id: 'PROJ-2:c1', group: 'you', activity_at: '2026-11-03T00:00:00.000Z' };
-  assert.equal(moveChip([handled], marks), 'handled');
-  assert.equal(moveChip([handled, open], marks), 'your move');
-  assert.equal(moveChip([{ ...handled, group: 'others' }], marks), '');
-  assert.equal(moveChip([], marks), '');
+  const handled = { row_id: 'PROJ-2', group: 'you', handled: true };
+  const open = { row_id: 'PROJ-2:c1', group: 'you', handled: false };
+  assert.equal(moveChip([handled]), 'handled');
+  assert.equal(moveChip([handled, open]), 'your move');
+  assert.equal(moveChip([{ ...handled, group: 'others' }]), '');
+  assert.equal(moveChip([]), '');
+});
+
+test('a status pill takes its tone from the status group the server sent, not from the words', () => {
+  assert.equal(statusTone('code_review'), 'info');
+  assert.equal(statusTone('qa'), 'info');
+  assert.equal(statusTone('on_hold'), 'warn');
+  assert.equal(statusTone('passed'), '');
+  assert.equal(statusTone(''), '');
+  assert.equal(statusTone(undefined), '');
 });
 
 test('recently done lists done rows, most recently done first, capped at 15', () => {
@@ -86,16 +95,8 @@ test('a workspace held in a reactive form still shapes for saving', () => {
   assert.deepEqual(normaliseForForm(form).connectors, [{ type: 'github', repo: 'x/y' }]);
 });
 
-test('the header counts and the config order come from one place each', async () => {
-  const { turnCounts } = await import('../web/src/lib/moves.ts');
+test('the config order comes from one place', async () => {
   const { orderWorkspaces, movedIds } = await import('../web/src/lib/settings.ts');
-  const turn = [
-    { row_id: 'a', group: 'you', activity_at: '2026-11-02T00:00:00.000Z' },
-    { row_id: 'PROJ-2', group: 'you', activity_at: '2026-11-01T00:00:00.000Z' },
-    { row_id: 'b', group: 'others', pr_state: 'OPEN', checks: 'failing' },
-    { row_id: 'c', group: 'done' },
-  ];
-  assert.deepEqual(turnCounts(turn, marks), { mine: 1, others: 1, failing: 1, done: 1 });
   assert.deepEqual(orderWorkspaces([{ id: 'a' }, { id: 'b' }, { id: 'c' }], ['c', 'a']).map((w) => w.id), ['c', 'a', 'b']);
   assert.deepEqual(movedIds(['a', 'b', 'c'], 'c', 'a', true), ['c', 'a', 'b']);
   assert.deepEqual(movedIds(['a', 'b', 'c'], 'a', 'b', false), ['b', 'a', 'c']);

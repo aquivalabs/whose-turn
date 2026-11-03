@@ -42,7 +42,7 @@ const rows = computed(() => {
           <tr v-for="{ row, since } in rows" :key="row.row_id">
             <TicketCell :row="row" />
             <td>
-              <span class="wt-pill" :class="statusTone(row.status)">{{ row.status }}</span>
+              <span class="wt-pill" :class="statusTone(row.status_group)">{{ row.status }}</span>
             </td>
             <td>
               <span class="wt-age" :data-tip="'Done ' + when(row.status_since || row.updated)">{{
