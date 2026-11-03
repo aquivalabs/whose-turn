@@ -61,3 +61,19 @@ test('quick links accept "Label https://…" strings and {label, url} objects, a
   const config = withConfig({ workspaces: [{ id: 'w', links: ['Docs https://docs.example', { label: 'Board', url: 'https://board.example' }, 'nope', { url: 'ftp://x' }] }] });
   assert.deepEqual(config.workspaces[0].links, [{ label: 'Docs', url: 'https://docs.example' }, { label: 'Board', url: 'https://board.example' }]);
 });
+
+test('a workspace id must be lowercase letters, digits and hyphens; only a missing id gets ws<n>', () => {
+  const ids = (list) => withConfig({ workspaces: list.map((id) => ({ ...(id === undefined ? {} : { id }), connectors: [] })) });
+  const valid = ids(['a', 'ok-1', '0x', 'a'.repeat(40)]);
+  assert.deepEqual(valid.problems, []);
+  assert.equal(valid.workspaces.length, 4);
+  for (const bad of ['../../escape', 'my space', 'Upper', '-lead', '', 'a'.repeat(41), 'a/b']) {
+    const config = ids([bad]);
+    assert.equal(config.problems.length, 1, JSON.stringify(bad));
+    assert.match(config.problems[0], /id/);
+    assert.equal(config.workspaces.length, 0, JSON.stringify(bad));
+  }
+  const missing = ids([undefined, 'b']);
+  assert.deepEqual(missing.problems, []);
+  assert.equal(missing.workspaces[0].id, 'ws1');
+});

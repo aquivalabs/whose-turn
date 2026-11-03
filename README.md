@@ -25,7 +25,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `feedback.workspace`, `team`, `project` | where the "to the backlog" button and the `whose_turn_feedback` MCP tool file bugs and improvements about the monitor: a Linear workspace slug, team key and project name; the key with issue-creation rights goes to the secret store under `feedback.token_service` (default `whose-turn-feedback`) and the workspace slug |
 | `feedback.composer` | the user's own agent that turns a remark into an issue: `{command, args}` of a CLI that reads the prompt on stdin and prints JSON (`{title, kind, body}`, or a wrapper with a `result` string that contains it); default `claude -p --output-format json --model claude-haiku-5-5`, so Claude Code on the user's subscription; `codex exec` or anything alike works the same way |
 | `feedback.bug_words` | extra words, in any language, that make the fallback composer (used when the agent CLI gives no usable answer) call a remark a bug; matched as stems at a word start; the English defaults bug, broken, crash, error, fail, wrong always apply |
-| `workspaces[].id`, `name` | a short id used in the API and the display name |
+| `workspaces[].id`, `name` | a short id used in the API and on disk (lowercase letters, digits and hyphens, up to 40, starting with a letter or digit; a missing id becomes `ws<n>`) and the display name |
 | `workspaces[].key_pattern` | regex for ticket keys in PR titles and to-dos; the default matches any Jira-style key |
 | `workspaces[].connectors` | an object keyed by type, or a list of `{type, id?, label?, …}` entries when one type appears twice |
 | `…connectors.github.repo` | the repository whose PRs are yours, `owner/name` |
@@ -152,7 +152,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - `GET /api/state?ws=<id>`: one workspace, default the first: `turn` (the rows, each with `group`, `rank`, `next`, `why`, `url`, `ticket_url`, `source`), `feed`, `marks`, `todos` (each with `ticket_url`), `errors`, `health`, `polled_at`, `me` (your name per source), `workspace`, plus `workspaces` and `problems`. With `&full=1` the merged raw collections come too: `tickets`, `comments`, `prs`, `activity`, `asks`, `events`.
 - `GET /api/summary`: across all workspaces: `moves` (each with `ws`), `new_events`, `todos`, `polled_at`, `errors`, `health` (`{ok, alerts}`, alerts as text prefixed with the workspace name when there are several), and `workspaces` with the same per workspace, where `health` is `{ok, stale, fresh_at, failing:[{source, polls}], alerts:[{id, text}]}`.
 - `GET /api/stream`: SSE. One `data:` event per poll per workspace, `{ws, version, polled_at}`. The window reloads state when its workspace's `version` changes.
-- `POST /api/marks` takes `{ws?, seen:[ids], base:ms, handled:{row_id: iso|null}, notified:[ids]}`.
+- `POST /api/marks` takes `{ws?, seen:[ids], base:ms, handled:{row_id: iso|null}, notified:[ids]}`; `seen` must be strings, `base` a number not in the future, `handled` values ISO dates or null, else `INVALID_ARGUMENT` names the field.
 - `POST /api/todos` takes `{ws?, action, …}`: `add {text, key?, by?}`; `done`, `undo`, `delete` with `{id}`; `edit {id, text}`.
 - `POST /api/refresh` polls now.
 - `GET /api/window` is the size the app window last reported, `{width, height}`, or `{}` before the first report; `POST /api/window` with `{width, height}` (whole pixels, 300 to 10000) stores it in `<data>/window.json`. `open.sh` reads it for `--window-size`.
