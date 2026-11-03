@@ -110,3 +110,35 @@ test('the reconnect counter advances each time the stream opens, so problem line
   expect(seen).toEqual([1, 2]);
   vi.doUnmock('@vueuse/core');
 });
+
+test('an update message from the stream replaces the update status and loads nothing', async () => {
+  const data = ref<unknown>(null);
+  const fetchStub = vi.fn();
+  vi.stubGlobal('fetch', fetchStub);
+  vi.doMock('@vueuse/core', async (original) => ({
+    ...(await original<object>()),
+    useEventSource: () => ({ status: ref('OPEN'), error: ref(null), data, open: vi.fn() }),
+  }));
+  const store = await freshStore();
+  const update = { current: '1.0.0-alpha.3', latest: '1.0.0-alpha.3', available: false, state: 'idle' };
+  data.value = { update };
+  expect(store.snapshot.update).toEqual(update);
+  expect(fetchStub).not.toHaveBeenCalled();
+  vi.doUnmock('@vueuse/core');
+});
+
+test('start opens the event stream once the first load has answered', async () => {
+  vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(reply(workspaceReply('w')))));
+  const opened = vi.fn();
+  vi.stubGlobal(
+    'EventSource',
+    vi.fn(function (this: object) {
+      opened();
+      return Object.assign(this, { close: vi.fn(), addEventListener: vi.fn(), readyState: 0 });
+    }),
+  );
+  const store = await freshStore();
+  await store.start();
+  store.connect();
+  expect(opened).toHaveBeenCalledTimes(1);
+});

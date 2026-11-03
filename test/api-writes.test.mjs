@@ -147,7 +147,7 @@ test('a request that needs a workspace answers NO_WORKSPACE when none is configu
     assert.equal(handoff.status, 412);
     assert.equal((await handoff.json()).error.details[0].reason, 'NO_WORKSPACE');
     assert.equal(state.status, 200);
-    assert.deepEqual(await state.json(), { workspaces: [], problems: [] });
+    assert.deepEqual(await state.json(), { workspaces: [], problems: [], update: { current: '', latest: '', available: false, state: 'idle' } });
   } finally {
     server.close();
   }

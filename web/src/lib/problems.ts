@@ -16,6 +16,8 @@ export const REASON_COPY: Record<string, string> = {
   UPSTREAM_FAILED: 'The tracker did not answer; try again in a minute.',
   RATE_LIMITED: 'The source is rate-limited; the monitor backs off.',
   OPEN_TOO_SOON: 'The app window is already opening; give it a few seconds.',
+  UPDATE_IN_PROGRESS: 'An update is already installing; the monitor restarts when it is done.',
+  UPDATE_UNAVAILABLE: 'There is no update to install right now.',
   INTERNAL: 'The local server failed; see its log.',
 };
 

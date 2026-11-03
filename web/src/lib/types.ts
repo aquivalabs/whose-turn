@@ -115,6 +115,15 @@ export interface Marked {
   counts: Counts;
 }
 
+/** The self-update offer the server reports in /api/state, /api/summary and the stream (RMA-231). */
+export interface UpdateStatus {
+  current: string;
+  latest: string;
+  available: boolean;
+  state: 'idle' | 'installing' | 'restarting' | 'failed';
+  reason?: string;
+}
+
 export interface Snapshot extends Marked {
   workspaces: Workspace[];
   workspace: Workspace;
@@ -124,10 +133,13 @@ export interface Snapshot extends Marked {
   health: Health;
   problems: string[];
   polled_at: string;
+  update: UpdateStatus;
 }
 
-/** One message of /api/stream. */
-export interface StreamEvent {
+/** One message of /api/stream: a workspace's poll, or the update status when it changes. */
+export type StreamEvent = WorkspaceEvent | { update: UpdateStatus };
+
+export interface WorkspaceEvent {
   ws: string;
   version: number;
   polled_at: string;

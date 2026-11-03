@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Whose Turn server: loads the workspace config, polls every workspace on one loop with rate-limit backoff, checks data health on a timer, serves the window and the local API. */
-import { dirname } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, saveWorkspaces, normaliseWorkspaces } from './lib/config.mjs';
 import { createHttpClient } from './lib/http-client.mjs';
@@ -11,6 +12,8 @@ import { createRegistry } from './lib/registry.mjs';
 import { openInbox } from './lib/inbox.mjs';
 import { openReports } from './lib/feedback.mjs';
 import { startApi } from './lib/api.mjs';
+import { notify } from './lib/notify.mjs';
+import { createUpdater, restartServer, runsInstalled } from './lib/update.mjs';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 const http = createHttpClient();
@@ -18,6 +21,18 @@ const first = loadConfig();
 const secrets = createSecrets(first.dataDir);
 const inbox = openInbox(first.dataDir);
 const reports = openReports(first.dataDir);
+const { version } = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8'));
+let server;
+const updater = createUpdater({
+  http,
+  dataDir: first.dataDir,
+  version,
+  installed: runsInstalled(appDir, first.dataDir),
+  notify,
+  registry: process.env.WHOSE_TURN_REGISTRY,
+  npm: process.env.WHOSE_TURN_NPM,
+  restart: () => restartServer({ server, root: appDir, dataDir: first.dataDir }),
+});
 let pollSeconds = first.pollSeconds;
 /** @type {{ stale_minutes: number, failing_polls: number }} */
 let healthLimits = /** @type {any} */ (first.health);
@@ -56,16 +71,17 @@ const saveConfig = async (rawWorkspaces) => {
 };
 
 try {
-  await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir });
+  server = await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir, updater });
 } catch (error) {
   console.error(error.message);
   process.exit(1);
 }
-console.log(`whose-turn on http://127.0.0.1:${first.port} · data ${first.dataDir} · workspaces ${registry.workspaces.map((workspace) => workspace.id).join(', ') || 'none'}`);
+console.log(`whose-turn ${version} on http://127.0.0.1:${first.port} · data ${first.dataDir} · workspaces ${registry.workspaces.map((workspace) => workspace.id).join(', ') || 'none'}`);
 for (const problem of registry.problems) {
   console.error(problem);
 }
 pollLoop();
+updater.start();
 
 const HEALTH_TICK = 30000;
 let lastTick = Date.now();

@@ -40,6 +40,7 @@ export const snapshot = shallowReactive<Snapshot>({
   health: { ok: true, stale: false, fresh_at: '', failing: [], alerts: [] },
   problems: [],
   polled_at: '',
+  update: { current: '', latest: '', available: false, state: 'idle' },
 });
 export const ui = reactive({
   ws: new URLSearchParams(location.search).get('ws') || lastWorkspace.value,
@@ -209,6 +210,10 @@ watch(
     if (!message) {
       return;
     }
+    if ('update' in message) {
+      snapshot.update = message.update;
+      return;
+    }
     if (typeof message.open_moves === 'number') {
       snapshot.workspaces = withOpenMoves(snapshot.workspaces, message.ws, message.open_moves);
     }
@@ -227,8 +232,9 @@ watch(
   },
   { flush: 'sync' },
 );
+/** Opens the stream once; VueUse reports a stream that was never opened as CONNECTING, so the guard is the EventSource itself. */
 export const connect = () => {
-  if (stream.status.value === 'CLOSED') {
+  if (!stream.eventSource.value) {
     stream.open();
   }
 };

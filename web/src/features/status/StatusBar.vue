@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The line above the dashboard: Report, the live dot and the last check, Refresh, the app/tab switch, and the copy-everything sparkle.
+// The line above the dashboard: Report, the live dot and the last check, the update chip, Refresh, the app/tab switch, and the copy-everything sparkle.
 import { computed, ref } from 'vue';
 import { snapshot, ui, now, notice, refresh, tellProblem } from '@/store.ts';
 import { post } from '@/lib/api.ts';
@@ -8,6 +8,7 @@ import { writeProblem } from '@/lib/problems.ts';
 import { liveStatus } from '@/lib/live-status.ts';
 import { BUG } from '@/lib/icons.ts';
 import AiButton from '@/ui/AiButton.vue';
+import UpdateChip from './UpdateChip.vue';
 const emit = defineEmits<{ report: [] }>();
 const verdict = computed(() => {
   void now.value;
@@ -62,6 +63,7 @@ const openAsApp = () => {
     ></span>
     <span>{{ status }}</span>
     <span v-if="notice" class="status-bar__notice" role="alert">{{ notice }}</span>
+    <UpdateChip />
     <button type="button" class="btn status-bar__btn" @click="refresh">Refresh now</button>
     <a
       v-if="ui.mode === 'app'"
