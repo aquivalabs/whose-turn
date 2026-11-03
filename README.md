@@ -67,6 +67,8 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `workspaces[].rules` | the team's process, see Rules below; `statuses` groups, `automation_authors` and `question_words` must be lists of strings (statuses non-empty) or the save is refused |
 | `…connectors.linear.workspace`, `team`, `project` | the Linear workspace slug (the part after linear.app/), and optionally one team key or one project name; the personal API key goes to the secret store under the workspace slug |
 | `…connectors.demo.scenario` | `northwind` (a web team with Jira-like tickets and PRs), `atlas` (a mobile team with other status names) or `garden` (a side project, PRs only); invented data, no network |
+| `…connectors.file.path`, `me` | experimental: a local Markdown task list (`- [ ]` items, `##` headings as statuses, `@name` assigns) or a JSON list of tickets, and your name in it; no network, no secret |
+| `…connectors.module.path` | experimental: your own adapter, an `.mjs` file that follows the [connector contract](docs/mechanisms/connector-contract.md), plus the fields it declares; it runs inside the server with the server's rights, so name only a file you wrote or read; check it first with `node scripts/check-adapter.mjs <file>` |
 | `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark Material 3 scheme from it (`lib/palette.mjs`); without it the stylesheet's blue stays |
 | `workspaces[].theme.accent` | optional second hex that sets the tertiary hue; defaults to the seed's hue turned by 80 degrees |
 

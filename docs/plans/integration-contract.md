@@ -323,7 +323,7 @@ editing a file, and a reason to move to B if adapters are reloaded often.
 - **A breaking change bumps the number**: a renamed field, a new required field, a changed closed value.
   The server then speaks both versions for at least one release, adapting the old shape in the loader,
   and the error for an unsupported version names both numbers ("contract 3 is not supported; this server
-  speaks contract 1", PoC `lib/contract.mjs:78`).
+  speaks contract 1", PoC `lib/contract.mjs:87`).
 - Built-ins move in the same release as the contract; they are the first adapters checked against it.
 - The window never sees the contract version; rows are the window's contract and keep their own types
   (`web/src/lib/types.ts`).
