@@ -24,6 +24,8 @@ export interface Workspace {
   links: QuickLink[];
   key_pattern: string;
   theme: Theme | null;
+  /** The seed the scheme was built from: the configured one, or the one derived from the id. */
+  theme_seed?: string;
   open_moves?: number;
 }
 

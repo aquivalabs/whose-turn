@@ -88,6 +88,11 @@ const connectorCards = computed(() =>
   })),
 );
 /** A field's stored value as FieldRow shows it; an edit goes back through setOrDrop, so an emptied field leaves the config. */
+/** The hint under an empty seed field: the colour the server derived from the workspace id, once it is saved. */
+const derivedSeedHint = (id: string) => {
+  const seed = snapshot.workspaces.find((workspace) => workspace.id === id)?.theme_seed;
+  return seed ? `empty: ${seed}, derived from the workspace id` : 'empty derives one from the workspace id';
+};
 const fieldValue = (target: Record<string, unknown>, key: string) =>
   target[key] as string | string[] | undefined;
 const setSecret = (entry: ConnectorEntry, key: string, value: string) => {
@@ -285,6 +290,7 @@ watch(
               v-for="spec in fields.theme"
               :key="spec.key"
               :spec="spec"
+              :hint="spec.key === 'seed' && !current.theme?.seed ? derivedSeedHint(current.id) : ''"
               :model-value="fieldValue(current.theme, spec.key)"
               @update:model-value="setOrDrop(current.theme, spec.key, $event)"
             />

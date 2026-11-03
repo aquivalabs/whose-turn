@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { paletteFrom, contrastRatio } from '../lib/palette.mjs';
-import { loadConfig } from '../lib/config.mjs';
+import { paletteFrom, contrastRatio, derivedSeed, derivedSeeds } from '../lib/palette.mjs';
+import { loadConfig, DEFAULT_RULES } from '../lib/config.mjs';
+import { createWorkspace } from '../lib/workspace.mjs';
 
 const STYLESHEET = readFileSync(new URL('../web/src/styles/tokens.css', import.meta.url), 'utf8');
 const KEPT_FROM_STYLESHEET = /warn|font|-r-|^--glass-/;
@@ -74,6 +75,40 @@ test('the error colour stays 45 RGB units (Euclidean, 0 to 255 per channel) from
   }
 });
 
+test('a workspace without a seed gets one derived from its id: stable, a hex, and different per id', () => {
+  assert.equal(derivedSeed('marketplaces'), derivedSeed('marketplaces'));
+  assert.match(derivedSeed('marketplaces'), /^#[0-9a-f]{6}$/);
+  const seeds = ['marketplaces', 'sprut', 'whose-turn', 'demo', 'ws1', 'ws2'].map(derivedSeed);
+  assert.equal(new Set(seeds).size, seeds.length);
+});
+
+test('derived seeds of one list keep clear of each other and of the configured seeds, and earlier entries never move', () => {
+  const alone = derivedSeeds([{ id: 'northwind' }, { id: 'empty' }]);
+  assert.notEqual(alone.northwind, alone.empty);
+  const primary = (seed) => paletteFrom(seed).light['--md-primary'];
+  assert.notEqual(primary(alone.northwind), primary(alone.empty));
+  assert.equal(alone.northwind, derivedSeed('northwind'));
+  const longer = derivedSeeds([{ id: 'northwind' }, { id: 'empty' }, { id: 'atlas' }]);
+  assert.equal(longer.northwind, alone.northwind);
+  assert.equal(longer.empty, alone.empty);
+  const seeded = derivedSeeds([{ id: 'garden', seed: '#3d7a5c' }, { id: 'sprout' }]);
+  assert.equal(seeded.garden, undefined);
+  assert.notEqual(primary(seeded.sprout), primary('#3d7a5c'));
+});
+
+test('a workspace built without a theme still carries a scheme and names its seed; a configured seed wins', () => {
+  const build = (definition) => createWorkspace(
+    { key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'demo', scenario: 'northwind' }], ...definition },
+    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: {}, notify: () => {} },
+  ).describe();
+  const bare = build({ id: 'bare', name: 'Bare' });
+  assert.equal(bare.theme_seed, derivedSeed('bare'));
+  assert.ok(bare.theme?.light['--md-primary']);
+  const seeded = build({ id: 'seeded', name: 'Seeded', theme: { seed: '#3d7a5c' } });
+  assert.equal(seeded.theme_seed, '#3d7a5c');
+  assert.deepEqual(seeded.theme, paletteFrom('#3d7a5c'));
+});
+
 test('the same seed gives the same scheme, another seed another one', () => {
   assert.deepEqual(paletteFrom('#3d7a5c', '#c27a2c'), paletteFrom('#3d7a5c', '#c27a2c'));
   assert.notEqual(paletteFrom('#3d7a5c').light['--md-primary'], paletteFrom('#c27a2c').light['--md-primary']);
@@ -90,4 +125,7 @@ test('the config loader keeps a valid theme and drops an invalid seed or accent'
   assert.deepEqual(valid.theme, { seed: '#3d7a5c' });
   assert.equal(invalid.theme, null);
   assert.equal(none.theme, null);
+  assert.equal(valid.derived_seed, undefined);
+  assert.match(none.derived_seed, /^#[0-9a-f]{6}$/);
+  assert.notEqual(none.derived_seed, invalid.derived_seed);
 });
