@@ -7,13 +7,13 @@ import { dark } from '@/scheme.ts';
 import { GEAR, workspaceIconParts } from '@/lib/icons.ts';
 import { movedIds } from '@/lib/settings.ts';
 import type { Workspace } from '@/lib/types.ts';
-import { seeded } from '@/backdrop.ts';
+import { mulberry32 } from '@/lib/random.ts';
 const emit = defineEmits<{ settings: [] }>();
 
 // The dots depend on the id only; the colours on the scheme. Two computeds, so a scheme change does not redraw the dots.
 const parts = computed(() =>
   Object.fromEntries(
-    snapshot.workspaces.map((workspace) => [workspace.id, workspaceIconParts(workspace, seeded)]),
+    snapshot.workspaces.map((workspace) => [workspace.id, workspaceIconParts(workspace, mulberry32)]),
   ),
 );
 const colours = computed(() =>

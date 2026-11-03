@@ -41,6 +41,19 @@ export const forSaving = (workspace: RawWorkspace): StoredWorkspace => {
   return copy;
 };
 
+const uids = new WeakMap<object, number>();
+let lastUid = 0;
+/** A stable key for a workspace or connector entry in the form: assigned on first sight, kept beside the object so it never reaches the saved config. */
+export const uidOf = (item: object) => {
+  const raw = toRaw(item);
+  let uid = uids.get(raw);
+  if (!uid) {
+    uid = ++lastUid;
+    uids.set(raw, uid);
+  }
+  return uid;
+};
+
 /** The form's list as one string, read through the reactive proxy so a computed tracks every edit, to compare with the copy taken at load. */
 export const settingsKey = (list: RawWorkspace[]) => JSON.stringify(list);
 

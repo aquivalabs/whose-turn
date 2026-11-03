@@ -11,6 +11,7 @@ import {
   ruleText,
   setOrDrop,
   settingsKey,
+  uidOf,
 } from '@/lib/settings.ts';
 import type { StoredWorkspace } from '@/lib/settings.ts';
 import type { ApiError, ConnectorEntry, FieldSpec, RawWorkspace, RuleRow } from '@/lib/types.ts';
@@ -56,8 +57,13 @@ const loadedKey = ref('');
 const ask = ref<Ask | null>(null);
 const unloaded = ref('');
 const dirty = computed(
-  () => !unloaded.value && (typedCount.value > 0 || settingsKey(list.value) !== loadedKey.value),
+  () =>
+    ui.settings &&
+    !unloaded.value &&
+    (typedCount.value > 0 || settingsKey(list.value) !== loadedKey.value),
 );
+const ID_SPEC: FieldSpec = { key: 'id', label: 'Entry id' };
+const LABEL_SPEC: FieldSpec = { key: 'label', label: 'Label' };
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
 const ruleRows = computed(() =>
   ((current.value && tables.value[current.value.id]) || []).map(ruleText),
@@ -68,6 +74,19 @@ const specOf = (entry: ConnectorEntry): ConnectorSpec =>
     label: entry.type,
     fields: [],
   };
+const workspaceTabs = computed(() =>
+  list.value.map((workspace, index) => ({
+    uid: uidOf(workspace),
+    label: workspace.name || workspace.id || 'Workspace ' + (index + 1),
+  })),
+);
+const connectorCards = computed(() =>
+  (current.value?.connectors || []).map((entry) => ({
+    entry,
+    uid: uidOf(entry),
+    spec: specOf(entry),
+  })),
+);
 /** A field's stored value as FieldRow shows it; an edit goes back through setOrDrop, so an emptied field leaves the config. */
 const fieldValue = (target: Record<string, unknown>, key: string) =>
   target[key] as string | string[] | undefined;
@@ -178,9 +197,9 @@ const save = async () => {
   }
 };
 watch(
-  [dirty, () => ui.settings],
-  () => {
-    ui.settingsDirty = ui.settings && dirty.value;
+  dirty,
+  (isDirty) => {
+    ui.settingsDirty = isDirty;
   },
   { immediate: true },
 );
@@ -230,14 +249,14 @@ watch(
       </div>
       <div v-if="!unloaded" class="settings-sheet__body">
         <ul class="settings-sheet__list">
-          <li v-for="(workspace, index) in list" :key="index">
+          <li v-for="(tab, index) in workspaceTabs" :key="tab.uid">
             <button
               type="button"
               class="settings-sheet__workspace"
               :aria-current="index === selected"
               @click="selected = index"
             >
-              {{ workspace.name || workspace.id || 'Workspace ' + (index + 1) }}
+              {{ tab.label }}
             </button>
           </li>
           <li>
@@ -271,32 +290,32 @@ watch(
             />
             <h4 ref="connectors-head" class="sheet-form__heading">Connectors</h4>
             <div
-              v-for="(entry, index) in current.connectors"
-              :key="index"
+              v-for="({ entry, spec: entrySpec, uid }, index) in connectorCards"
+              :key="uid"
               class="settings-sheet__connector"
             >
               <div class="settings-sheet__connector-head">
-                <strong class="settings-sheet__connector-name">{{ specOf(entry).label }}</strong
+                <strong class="settings-sheet__connector-name">{{ entrySpec.label }}</strong
                 ><button type="button" class="btn btn--danger" @click="askRemoveConnector(index)">
                   Remove
                 </button>
               </div>
               <FieldRow
-                :spec="{ key: 'id', label: 'Entry id' }"
-                :placeholder="specOf(entry).type"
+                :spec="ID_SPEC"
+                :placeholder="entrySpec.type"
                 hint="only needed when one type appears twice"
                 :model-value="fieldValue(entry, 'id')"
                 @update:model-value="setOrDrop(entry, 'id', $event)"
               />
               <FieldRow
-                :spec="{ key: 'label', label: 'Label' }"
-                :placeholder="specOf(entry).label"
+                :spec="LABEL_SPEC"
+                :placeholder="entrySpec.label"
                 hint="shown in the feed filter"
                 :model-value="fieldValue(entry, 'label')"
                 @update:model-value="setOrDrop(entry, 'label', $event)"
               />
               <FieldRow
-                v-for="spec in specOf(entry).fields"
+                v-for="spec in entrySpec.fields"
                 :key="spec.key"
                 :spec="spec"
                 :model-value="fieldValue(entry, spec.key)"
