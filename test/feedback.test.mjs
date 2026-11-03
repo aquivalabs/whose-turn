@@ -14,7 +14,7 @@ const stub = () => {
   const http = { fetchJson: async (url, options) => {
     calls.push(options.body);
     if (options.body.query.includes('query Lookup')) {
-      return { data: { teams: { nodes: [{ id: 't1', key: 'PROJ', labels: { nodes: [{ id: 'l-bug', name: 'Bug' }, { id: 'l-imp', name: 'Improvement' }] } }] }, projects: { nodes: [{ id: 'p1', name: 'monitor' }] } } };
+      return { data: { viewer: { id: 'u1' }, teams: { nodes: [{ id: 't1', key: 'PROJ', labels: { nodes: [{ id: 'l-bug', name: 'Bug' }, { id: 'l-imp', name: 'Improvement' }] } }] }, projects: { nodes: [{ id: 'p1', name: 'monitor' }] } } };
     }
     return { data: { issueCreate: { success: true, issue: { id: 'i1', identifier: 'PROJ-500', url: 'https://linear.app/your-space/issue/PROJ-500', title: options.body.variables.input.title } } } };
   } };
@@ -30,6 +30,7 @@ test('a bug goes to the configured team and project with the Bug label, the body
   assert.equal(input.teamId, 't1');
   assert.equal(input.projectId, 'p1');
   assert.deepEqual(input.labelIds, ['l-bug']);
+  assert.equal(input.assigneeId, 'u1', 'the issue is assigned to the key owner, so it shows on their dashboard');
   assert.match(input.description, /drops a line/);
   assert.match(input.description, /"ws": "demo"/);
   await createFeedback({ settings, secrets, http, cache }, { kind: 'bug', title: 'With text', context: '## PROJ-1 · a row\nStatus: Open' });
@@ -37,6 +38,12 @@ test('a bug goes to the configured team and project with the Bug label, the body
   assert.doesNotMatch(calls[2].variables.input.description, /```json/);
   await createFeedback({ settings, secrets, http, cache }, { kind: 'improvement', title: 'Second' });
   assert.equal(calls.length, 4);
+});
+
+test('feedback.assign false leaves the filed issue unassigned for triage', async () => {
+  const { http, calls } = stub();
+  await createFeedback({ settings: { ...settings, assign: false }, secrets, http, cache: {} }, { kind: 'idea', title: 'A quieter alert', body: 'The alert bar could fade.' });
+  assert.equal(calls[1].variables.input.assigneeId, undefined);
 });
 
 test('no title, no config or no key each refuse with their reason, and a missing config wins over a missing title', async () => {
