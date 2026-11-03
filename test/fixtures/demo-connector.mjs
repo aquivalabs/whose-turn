@@ -1,5 +1,6 @@
-/** Demo connector: three invented projects with every state the rules know, timestamps relative to now, and a little life on later polls. No network. */
-import { toIsoUtc } from '../lib/text.mjs';
+/** Test fixture, never shipped: registers itself as `demo` on import. Three invented projects with every state the rules know, timestamps relative to now, and a little life on later polls. No network. */
+import { toIsoUtc } from '../../lib/text.mjs';
+import { CONNECTORS } from '../../connectors/index.mjs';
 
 export const id = 'demo';
 export const label = 'Demo';
@@ -144,3 +145,5 @@ export const poll = async ({ settings, cache }) => {
   }
   return { ...data, ticket_base: SITE, errors: {} };
 };
+
+CONNECTORS.demo = { id, label, links, fields, poll };

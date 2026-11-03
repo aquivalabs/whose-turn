@@ -31,9 +31,9 @@ test('a flat config with github and jira at the top becomes one default workspac
   assert.equal(workspace.key_pattern, '\\bPROJ-\\d+\\b');
 });
 
-test('the example config loads with three workspaces and placeholder accounts only', () => {
+test('the example config loads with two workspaces and placeholder accounts only', () => {
   const config = loadConfig({ WHOSE_TURN_DATA: tmpdir(), WHOSE_TURN_CONFIG: new URL('../config.example.json', import.meta.url).pathname });
-  assert.deepEqual(config.workspaces.map((workspace) => workspace.id), ['work', 'personal', 'demo']);
+  assert.deepEqual(config.workspaces.map((workspace) => workspace.id), ['work', 'personal']);
   assert.equal(config.workspaces[0].connectors[0].repo, 'your-org/your-repo');
   assert.equal(config.workspaces[0].connectors[1].email, 'you@example.com');
   assert.equal(config.problems.length, 0);

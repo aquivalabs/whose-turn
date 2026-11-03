@@ -2,7 +2,7 @@
 
 A local monitor that answers "what is waiting on me right now" across the places your work arrives: GitHub pull requests, Jira and Linear tickets, and your own to-dos. It polls each source about once a minute, decides once, on the server, whose turn every ticket is, shows the result in a window that updates live, sends a desktop notification when something becomes your move, and hands any item to an AI assistant as Markdown with its context. Its Claude Code plugin, `whose-turn@bladeforge`, makes a session start with "N your move · M unread · K to-do" already in context.
 
-![The window on the demo workspace: Your move, To do, Waiting on others, and the feed](docs/window.png)
+![The window with invented data: Your move, To do, Waiting on others, and the feed](docs/window.png)
 
 Everything runs on your machine: a Node 22 server on `127.0.0.1`, a window built with Vue, and no account anywhere but the sources you already use. Nothing that names an employer, an account or a team process lives in this repository; it all sits in one config file on the machine that owns it.
 
@@ -27,7 +27,7 @@ claude plugin install whose-turn@bladeforge
 
 ## First run
 
-The window opens on one card: add a source through the settings sheet (the gear at the bottom of the rail), or press "Try a demo workspace" to see every state on invented data without any account. A source needs an account and its filters; a token typed into a secret field goes to the platform's secret store, never into the config file. Claude can set a workspace up too, through the `whose_turn_config` MCP tool. From then on the server polls, the window follows, and the Claude Code plugin reads the same server.
+The window opens on one card: add a source through the settings sheet (the gear at the bottom of the rail). A source needs an account and its filters; a token typed into a secret field goes to the platform's secret store, never into the config file. Claude can set a workspace up too, through the `whose_turn_config` MCP tool. From then on the server polls, the window follows, and the Claude Code plugin reads the same server.
 
 ## Workspaces and connectors
 
@@ -67,7 +67,6 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `workspaces[].links` | quick links shown in the header, as `"Label https://…"` strings or `{label, url}`; the repository, the Jira site and the Linear team come from the connectors by themselves |
 | `workspaces[].rules` | the team's process, see Rules below; `statuses` groups, `automation_authors` and `question_words` must be lists of strings (statuses non-empty) or the save is refused |
 | `…connectors.linear.workspace`, `team`, `project` | the Linear workspace slug (the part after linear.app/), and optionally one team key or one project name; the personal API key goes to the secret store under the workspace slug |
-| `…connectors.demo.scenario` | `northwind` (a web team with Jira-like tickets and PRs), `atlas` (a mobile team with other status names) or `garden` (a side project, PRs only); invented data, no network |
 | `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark Material 3 scheme from it (`lib/palette.mjs`); without it the stylesheet's blue stays |
 | `workspaces[].theme.accent` | optional second hex that sets the tertiary hue; defaults to the seed's hue turned by 80 degrees |
 
@@ -99,7 +98,7 @@ On Windows, run `schtasks /Create /SC ONLOGON /TN whose-turn /TR "\"<path to nod
 | `lib/api.mjs` | the local HTTP API, SSE stream and static files |
 | `lib/window.mjs` | the app window's remembered size and the launcher behind "Open as app" |
 | `lib/http-client.mjs`, `lib/secrets.mjs` (with `lib/platform/credential.ps1`), `lib/notify.mjs`, `lib/store.mjs`, `lib/errors.mjs`, `lib/text.mjs` | ETag fetch, secret lookup, desktop notification, files on disk, the error envelope, text helpers |
-| `connectors/` | one module per source type; `demo.mjs` is a source of invented data (scenarios `northwind`, `atlas`, `garden`) that shows every state without any account |
+| `connectors/` | one module per source type |
 | `web/` | the window: a Vue 3 app in TypeScript built with Vite (`web/src/App.vue`, primitives in `web/src/ui/`, one folder per island in `web/src/features/` with its components, composables and tests, shared composables in `web/src/composables/` (ADR 0006), each component's styles in a scoped BEM block (layout and shared primitives in `web/src/styles/base.css`, ADR 0005), pure logic in `web/src/lib/`, the dot-drawn animal in `web/src/backdrop.ts`, Tippy.js 6.3.7 and Popper 2.11.8 pinned in `web/public/vendor/`); `npm run build` writes `dist/`, which the server serves and git ignores (ADR 0001) |
 | `install.sh` | bash installer that picks by `uname`: on macOS the launch agent `local.whose-turn` (log in `~/Library/Logs/whose-turn.log`); on Linux the user unit `~/.config/systemd/user/whose-turn.service` (log in `journalctl --user -u whose-turn`); both start at login and restart on a crash; on other systems it prints the Windows `schtasks` line. The node path is read with `command -v node` at install time |
 | `open.sh` | opens the window as its own app window (Chrome on macOS; Chrome, Chromium or Edge on Linux) at the size it last had, or in a browser tab with `--browser` or when none of those is installed; bash, not zsh, so it runs on Linux too; Windows: open the URL yourself |
@@ -198,7 +197,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 
 - Material 3 plus glass: tonal surfaces seeded from the workspace's `theme.seed`, or from a seed derived from its id without one, so every workspace has its own colour; translucent blurred islands with 12 px corners, dark and light schemes, a gradient header with stat tiles.
 - Under the glass, an animal drawn in dots (`web/src/backdrop.ts`): one species out of the JSON files in `web/src/species/`, built from shapes whose proportions come from a seeded random, in one of its poses (sitting, walking, sleeping, facing the camera). Each workspace gets its own seed for the session, so switching tabs changes the animal; `window.whoseTurnBackdrop.show({ workspace, seed, species, pose })` picks one and `.species` lists the names (the hook for pinning an animal per workspace, RMA-94). A new animal is a new JSON file, see [`docs/mechanisms/species-dsl.md`](docs/mechanisms/species-dsl.md); `/sheet` draws every species over several seeds without the glass.
-- First run: while the open workspace has no sources, one card replaces the islands. It says what the window does, offers "Add a source" (the settings sheet on this workspace, at its connectors) and "Try a demo workspace" (adds `demo` with the `northwind` scenario through `/api/config` and switches to it), and says Claude can set it up too.
+- First run: while the open workspace has no sources, one card replaces the islands. It says what the window does, offers "Add a source" (the settings sheet on this workspace, at its connectors) and says Claude can set it up too.
 - Two columns. Left: Your move, To do, Waiting on others. Right: the feed. The page never scrolls; each island scrolls inside, with sticky table headers. A PR cell shows the checks or state pill under the PR number.
 - Every header is one line, truncated with an ellipsis. Anything that hides more text gets a "?" icon at the end. Tooltips are Tippy: instant, also on click, interactive, keep line breaks.
 - Your move: one row per thing to do, with a "?" for why it is there, an age chip (amber after 24 h) and a Handled button. Handled rows leave this list; the Handled view in the head lists them, dimmed, with Undo.
@@ -216,7 +215,7 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 
 The Claude Code plugin is `whose-turn@bladeforge` in the [BladeForge marketplace](https://github.com/aquivalabs/BladeForge); this repository holds the monitor only. The plugin brings:
 
-- the skill `whose-turn:whose-turn`: answers "what's on me" from `/api/summary`, sets up a first workspace or the demo, edits the config, opens the window, files feedback and manages to-dos;
+- the skill `whose-turn:whose-turn`: answers "what's on me" from `/api/summary`, sets up a first workspace, edits the config, opens the window, files feedback and manages to-dos;
 - `/whose-turn`, which opens the window;
 - the SessionStart hook, which starts the monitor if it is down and puts "N your move · M unread · K to-do" into context, marked as data from other people;
 - the prompt hook, which takes waiting hand-offs from the inbox queue into your next message;

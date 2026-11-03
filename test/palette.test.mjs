@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { paletteFrom, contrastRatio, derivedSeed, derivedSeeds } from '../lib/palette.mjs';
 import { loadConfig, DEFAULT_RULES } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
+import './fixtures/demo-connector.mjs';
 
 const STYLESHEET = readFileSync(new URL('../web/src/styles/tokens.css', import.meta.url), 'utf8');
 const KEPT_FROM_STYLESHEET = /warn|font|-r-|^--glass-/;

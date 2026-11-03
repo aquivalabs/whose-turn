@@ -7,6 +7,7 @@ import { DEFAULT_LIMITS, nextFails, assess, transition } from '../lib/health.mjs
 import { createWorkspace } from '../lib/workspace.mjs';
 import { CONNECTORS } from '../connectors/index.mjs';
 import { loadConfig, DEFAULT_RULES } from '../lib/config.mjs';
+import './fixtures/demo-connector.mjs';
 
 const MINUTE = 60000;
 const base = Date.parse('2026-11-03T10:00:00Z');
@@ -146,4 +147,13 @@ test('every stream message carries the workspace badge count', async () => {
   for (const message of messages) {
     assert.equal(message.open_moves, built.summary().open_moves);
   }
+});
+
+test('a workspace naming a connector type that is not registered reports it as unknown', async () => {
+  const built = createWorkspace(
+    { id: 'u', name: 'Unregistered', key_pattern: 'NW-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'nothing', id: 'nothing' }] },
+    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, limits: () => DEFAULT_LIMITS, notify: () => {} },
+  );
+  await built.poll();
+  assert.match(JSON.stringify(built.snapshot()), /Unknown connector type \\"nothing\\"/);
 });

@@ -15,7 +15,7 @@ const item: FeedItem = {
   url: 'https://tracker.example/PROJ-7',
   source: 'tracker',
 };
-const source = { id: 'tracker', type: 'demo', label: 'Tracker' };
+const source = { id: 'tracker', type: 'jira', label: 'Tracker' };
 
 test('expanding a fresh comment asks the feed to toggle it and mark it seen', async () => {
   const { emitted } = render(FeedItemRow, {

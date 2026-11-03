@@ -317,33 +317,6 @@ export const reorderWorkspaces = (ids: string[]) =>
       },
       (failure: Error) => tellProblem(failure, { refused: 'The order was not saved' }),
     );
-/** The workspace the first-run card offers: invented data from the northwind scenario, no account needed. */
-const DEMO_WORKSPACE = {
-  id: 'demo',
-  name: 'Demo',
-  key_pattern: '\\bNW-\\d+\\b',
-  theme: { seed: '#3d7a5c', accent: '#c27a2c' },
-  connectors: [{ type: 'demo', scenario: 'northwind', label: 'Demo tracker' }],
-};
-/** Adds the demo workspace to the config unless one with its id is there, then switches to it. */
-export const tryDemo = () =>
-  getJson<{ workspaces: { id: string }[] }>('/api/config')
-    .then((config) =>
-      config.workspaces.some((workspace) => workspace.id === DEMO_WORKSPACE.id)
-        ? null
-        : post<{ error?: ApiError }>('/api/config', {
-            workspaces: [...config.workspaces, DEMO_WORKSPACE],
-            secrets: [],
-          }),
-    )
-    .then(
-      (reply) => {
-        if (tellProblem(reply, { refused: 'The demo workspace was not added' })) {
-          return switchWorkspace(DEMO_WORKSPACE.id);
-        }
-      },
-      (failure: Error) => tellProblem(failure, { refused: 'The demo workspace was not added' }),
-    );
 export const refresh = () => {
   ui.status = 'Checking now…';
   post('/api/refresh').catch((failure: Error) => {

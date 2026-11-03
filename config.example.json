@@ -107,22 +107,6 @@
           "team": "PROJ"
         }
       }
-    },
-    {
-      "id": "demo",
-      "name": "Demo",
-      "key_pattern": "\\bNW-\\d+\\b",
-      "theme": {
-        "seed": "#3d7a5c",
-        "accent": "#c27a2c"
-      },
-      "connectors": [
-        {
-          "type": "demo",
-          "scenario": "northwind",
-          "label": "Demo tracker"
-        }
-      ]
     }
   ],
   "feedback": {

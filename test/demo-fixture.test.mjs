@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { poll } from '../connectors/demo.mjs';
+import { poll } from './fixtures/demo-connector.mjs';
 import { compileRules, turnRows } from '../lib/rules.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 

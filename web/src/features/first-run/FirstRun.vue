@@ -1,18 +1,7 @@
 <script setup lang="ts">
-// The first-run card for a workspace without sources: what the window does, and the ways to give it something to watch.
-import { ref } from 'vue';
-import { snapshot, openSettings, tryDemo } from '@/store.ts';
-const busy = ref(false);
+// The first-run card for a workspace without sources: what the window does, and how to give it something to watch.
+import { snapshot, openSettings } from '@/store.ts';
 const addSource = () => openSettings('connectors');
-const demo = () => {
-  if (busy.value) {
-    return;
-  }
-  busy.value = true;
-  tryDemo().finally(() => {
-    busy.value = false;
-  });
-};
 </script>
 <template>
   <section id="first-run" class="island first-run" aria-labelledby="first-run-title">
@@ -21,13 +10,10 @@ const demo = () => {
     </h2>
     <p class="first-run__text">
       <b>{{ snapshot.workspace.name }}</b> has no sources yet, so there is nothing to watch. Connect
-      a repository or a tracker, or look around a demo workspace with invented data first.
+      a repository or a tracker.
     </p>
     <div class="first-run__actions">
       <button type="button" class="btn btn--tonal" @click="addSource">Add a source</button>
-      <button type="button" class="btn" :aria-disabled="busy" @click="demo">
-        Try a demo workspace
-      </button>
     </div>
     <p class="first-run__text first-run__ai">
       Or ask Claude: "add my GitHub repository to Whose Turn."

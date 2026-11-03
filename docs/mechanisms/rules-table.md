@@ -44,7 +44,7 @@ tickets, PRs and comments; they never compute facts. When a source cannot supply
 | Fact | Type | Comes from |
 |---|---|---|
 | `connector` | text | the connector entry id the ticket came from |
-| `ticket.key` | text | tracker connectors: `jira`, `linear`, `demo` |
+| `ticket.key` | text | tracker connectors: `jira`, `linear` |
 | `ticket.status` | text, a status group | the status matched against `rules.statuses` |
 | `ticket.status_name` | text | the status as the tracker names it |
 | `ticket.assignee` | text | `me` when the ticket is on you, else the assignee's name |

@@ -1,10 +1,9 @@
 /** The connector registry: every source type the server knows, and the catalogue the settings form and Claude read. */
 import * as github from './github.mjs';
 import * as jira from './jira.mjs';
-import * as demo from './demo.mjs';
 import * as linear from './linear.mjs';
 
-export const CONNECTORS = { github, jira, linear, demo };
+export const CONNECTORS = { github, jira, linear };
 
 /** What a workspace calls each of its connectors: the entry's own label, else its id when another entry has the same type, else the type's label (RMA-167). */
 export const connectorSummaries = (entries) => entries.map((entry) => {

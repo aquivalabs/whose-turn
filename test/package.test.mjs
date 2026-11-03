@@ -28,3 +28,7 @@ test('package.json is publishable: public, with a files list', () => {
   assert.equal(pkg.publishConfig?.access, 'public');
   assert.ok(Array.isArray(pkg.files) && pkg.files.includes('dist/'));
 });
+
+test('the published package carries no demo', () => {
+  assert.deepEqual(packed().filter((path) => /demo/i.test(path)), []);
+});
