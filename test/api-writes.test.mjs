@@ -25,6 +25,19 @@ test('a workspace write without ws is refused instead of landing in the first wo
   }
 });
 
+test('an inbox hand-off without ws is refused, naming ws', async () => {
+  const server = await startApi({ port: port + 20, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  try {
+    const response = await postTo(port + 20, '/api/inbox', { kind: 'workspace' });
+    const error = (await response.json()).error;
+    assert.equal(response.status, 400);
+    assert.equal(error.status, 'INVALID_ARGUMENT');
+    assert.match(error.details[0].metadata.detail, /\bws\b/);
+  } finally {
+    server.close();
+  }
+});
+
 test('a config with no workspace is refused and nothing is saved', async () => {
   let saved = 0;
   const server = await startApi({ port: port + 1, appDir, registry, requestPoll: () => {}, saveConfig: async () => { saved += 1; }, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
