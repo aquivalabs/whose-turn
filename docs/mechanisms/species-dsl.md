@@ -3,8 +3,8 @@
 ## What it is
 
 Every animal behind the glass is a JSON file in `web/src/species/`. The file lists shapes; the interpreter in
-`web/src/lib/species.js` turns it into a shape list from a seeded random; `web/src/lib/silhouette.js` paints
-the shapes onto a mask; `web/src/backdrop.js` turns the mask into dots. A new animal is one new JSON file:
+`web/src/lib/species.ts` turns it into a shape list from a seeded random; `web/src/lib/silhouette.ts` paints
+the shapes onto a mask; `web/src/backdrop.ts` turns the mask into dots. A new animal is one new JSON file:
 nothing else changes. The same file serves a request such as "add an otter": write `web/src/species/otter.json`
 to the contract below, open `/sheet?species=otter` (the dev server serves it as `/sheet.html`), adjust, run `npm test`.
 
@@ -14,11 +14,11 @@ to the contract below, open `/sheet?species=otter` (the dev server serves it as 
 |---|---|
 | `web/src/species/<name>.json` | One species. The file name is the species name. |
 | `web/src/species/base/<name>.json` | A base other species extend (`"abstract": true`). |
-| `web/src/species/index.js` | Bundles both folders; a new file needs no registration. |
-| `web/src/lib/species.js` | Interpreter: expressions, statements, `extends`, poses. No DOM. |
-| `web/src/lib/silhouette.js` | Paints shapes (spline tubes and blobs, cut-outs) onto a canvas. |
-| `web/src/lib/random.js` | The seeded random the expressions draw from. |
-| `web/src/backdrop.js` | Picks species, pose and layout from the seed; draws the dots. |
+| `web/src/species/index.ts` | Bundles both folders; a new file needs no registration. |
+| `web/src/lib/species.ts` | Interpreter: expressions, statements, `extends`, poses. No DOM. |
+| `web/src/lib/silhouette.ts` | Paints shapes (spline tubes and blobs, cut-outs) onto a canvas. |
+| `web/src/lib/random.ts` | The seeded random the expressions draw from. |
+| `web/src/backdrop.ts` | Picks species, pose and layout from the seed; draws the dots. |
 | `web/sheet.html`, `web/src/components/SheetPage.vue` | The test sheet at `/sheet`. |
 | `test/species.test.mjs` | Interpreter tests and a sweep over every bundled species. |
 
@@ -182,5 +182,5 @@ a full body.
 
 ## What obliges an update to this page
 
-A change to the interpreter (`species.js`), the shape painter (`silhouette.js`), a base file under
-`web/src/species/base/`, or the way `backdrop.js` picks a species or pose.
+A change to the interpreter (`species.ts`), the shape painter (`silhouette.ts`), a base file under
+`web/src/species/base/`, or the way `backdrop.ts` picks a species or pose.

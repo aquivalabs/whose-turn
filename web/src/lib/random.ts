@@ -1,5 +1,5 @@
 /** Seeded random for the backdrop: the same seed always draws the same animal. */
-export const mulberry32 = (seed) => {
+export const mulberry32 = (seed: number) => {
   let state = seed >>> 0;
   return () => {
     state = (state + 0x6d2b79f5) >>> 0;
@@ -10,9 +10,17 @@ export const mulberry32 = (seed) => {
   };
 };
 
-export const randomTools = (seed) => {
+export interface RandomTools {
+  next: () => number;
+  range: (low: number, high: number) => number;
+  int: (low: number, high: number) => number;
+  chance: (probability: number) => boolean;
+  vary: (value: number, spread?: number) => number;
+}
+
+export const randomTools = (seed: number): RandomTools => {
   const next = mulberry32(seed);
-  const range = (low, high) => low + (high - low) * next();
+  const range = (low: number, high: number) => low + (high - low) * next();
   return {
     next,
     range,

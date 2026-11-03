@@ -1,0 +1,4 @@
+# The global sheet ported from the old window keeps its shape until RMA-127 moves it into scoped BEM blocks.
+web/src/styles/base.css
+# Species files are hand-shaped DSL (docs/mechanisms/species-dsl.md); Prettier would reflow them.
+web/src/species/**/*.json

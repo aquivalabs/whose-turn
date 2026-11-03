@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.js';
-import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.js';
-import { normaliseForForm, forSaving, pendingSecrets, ruleText } from '../web/src/lib/settings.js';
+import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.ts';
+import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.ts';
+import { normaliseForForm, forSaving, pendingSecrets, ruleText } from '../web/src/lib/settings.ts';
 
 const marks = { seen: ['b'], base: new Date('2026-11-01T00:00:00Z').getTime(), handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
 const items = [
@@ -57,8 +57,8 @@ test('the settings form shapes a raw workspace both ways and lists only the secr
 });
 
 test('the header counts and the config order come from one place each', async () => {
-  const { turnCounts } = await import('../web/src/lib/moves.js');
-  const { orderWorkspaces, movedIds } = await import('../web/src/lib/settings.js');
+  const { turnCounts } = await import('../web/src/lib/moves.ts');
+  const { orderWorkspaces, movedIds } = await import('../web/src/lib/settings.ts');
   const turn = [
     { row_id: 'a', group: 'you', activity_at: '2026-11-02T00:00:00.000Z' },
     { row_id: 'PROJ-2', group: 'you', activity_at: '2026-11-01T00:00:00.000Z' },
@@ -72,7 +72,7 @@ test('the header counts and the config order come from one place each', async ()
 });
 
 test('a rail glyph is the initials of a multi-word name or the first two letters of a single word', async () => {
-  const { glyphOf, glyphSize } = await import('../web/src/lib/icons.js');
+  const { glyphOf, glyphSize } = await import('../web/src/lib/icons.ts');
   assert.equal(glyphOf('Whose Turn'), 'WT');
   assert.equal(glyphOf('Northwind Web'), 'NW');
   assert.equal(glyphOf('Atlas Mobile App'), 'AMA');

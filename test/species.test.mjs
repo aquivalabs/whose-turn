@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
-import { buildSpecies, resolveSpecies, poseWeights, speciesNames, posesOf } from '../web/src/lib/species.js';
-import { randomTools } from '../web/src/lib/random.js';
+import { buildSpecies, resolveSpecies, poseWeights, speciesNames, posesOf } from '../web/src/lib/species.ts';
+import { randomTools } from '../web/src/lib/random.ts';
 
 const folder = new URL('../web/src/species/', import.meta.url);
 const load = (directory) => readdirSync(directory).filter((file) => file.endsWith('.json'))

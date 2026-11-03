@@ -1,34 +1,104 @@
 /* Material 3 tonal scheme; a workspace theme overrides these variables on .wt-app from lib/palette.mjs. */
-  .wt-app { --md-primary: #2c5697; --md-on-primary: #ffffff; --md-primary-container: #d8e2ff; --md-on-primary-container: #001a41;
-    --md-secondary-container: #dae2f9; --md-on-secondary-container: #131c2b;
-    --md-tertiary-container: #c8f0ec; --md-on-tertiary-container: #00201e;
-    --md-warn-container: #ffdea6; --md-on-warn-container: #271900;
-    --md-error: #ba1a1a; --md-error-container: #ffdad6; --md-on-error-container: #410002;
-    --md-surface: #f9f9ff; --md-s-low: #ffffff; --md-s: #f1f3f9; --md-s-high: #e7e9f0; --md-s-highest: #e0e2ea;
-    --md-on-surface: #191c20; --md-on-surface-variant: #44474e; --md-outline: #74777f; --md-outline-variant: #d3d6de;
-    --md-state: 25, 28, 32;
-    --glass: 255, 255, 255; --glass-a: .52; --glass-edge: rgba(255, 255, 255, .7); --glass-hi: rgba(255, 255, 255, .9);
-    --blob-1: rgba(44, 86, 151, .30); --blob-2: rgba(0, 169, 224, .22); --blob-3: rgba(23, 223, 220, .16);
-    --md-font: Roboto, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    --md-r-card: 12px; --md-r-chip: 8px; }
-  @media (prefers-color-scheme: dark) { .wt-app { --md-primary: #adc6ff; --md-on-primary: #0f2f60; --md-primary-container: #2b4678; --md-on-primary-container: #d8e2ff;
-    --md-secondary-container: #3e4759; --md-on-secondary-container: #dae2f9;
-    --md-tertiary-container: #1f504c; --md-on-tertiary-container: #b4efe9;
-    --md-warn-container: #5c4300; --md-on-warn-container: #ffdea6;
-    --md-error: #ffb4ab; --md-error-container: #93000a; --md-on-error-container: #ffdad6;
-    --md-surface: #111318; --md-s-low: #1b1e23; --md-s: #1f2227; --md-s-high: #292c32; --md-s-highest: #34373d;
-    --md-on-surface: #e2e2e9; --md-on-surface-variant: #c4c6d0; --md-outline: #8e9099; --md-outline-variant: #3a3d44;
-    --md-state: 226, 226, 233;
-    --glass: 30, 34, 42; --glass-a: .55; --glass-edge: rgba(255, 255, 255, .09); --glass-hi: rgba(255, 255, 255, .06);
-    --blob-1: rgba(44, 86, 151, .55); --blob-2: rgba(0, 169, 224, .28); --blob-3: rgba(23, 223, 220, .14); } }
-  html.force-dark .wt-app { --md-primary: #adc6ff; --md-on-primary: #0f2f60; --md-primary-container: #2b4678; --md-on-primary-container: #d8e2ff;
-    --md-secondary-container: #3e4759; --md-on-secondary-container: #dae2f9;
-    --md-tertiary-container: #1f504c; --md-on-tertiary-container: #b4efe9;
-    --md-warn-container: #5c4300; --md-on-warn-container: #ffdea6;
-    --md-error: #ffb4ab; --md-error-container: #93000a; --md-on-error-container: #ffdad6;
-    --md-surface: #111318; --md-s-low: #1b1e23; --md-s: #1f2227; --md-s-high: #292c32; --md-s-highest: #34373d;
-    --md-on-surface: #e2e2e9; --md-on-surface-variant: #c4c6d0; --md-outline: #8e9099; --md-outline-variant: #3a3d44;
-    --md-state: 226, 226, 233;
-    --glass: 30, 34, 42; --glass-a: .55; --glass-edge: rgba(255, 255, 255, .09); --glass-hi: rgba(255, 255, 255, .06);
-    --blob-1: rgba(44, 86, 151, .55); --blob-2: rgba(0, 169, 224, .28); --blob-3: rgba(23, 223, 220, .14); }
+.wt-app {
+  --md-primary: #2c5697;
+  --md-on-primary: #fff;
+  --md-primary-container: #d8e2ff;
+  --md-on-primary-container: #001a41;
+  --md-secondary-container: #dae2f9;
+  --md-on-secondary-container: #131c2b;
+  --md-tertiary-container: #c8f0ec;
+  --md-on-tertiary-container: #00201e;
+  --md-warn-container: #ffdea6;
+  --md-on-warn-container: #271900;
+  --md-error: #ba1a1a;
+  --md-error-container: #ffdad6;
+  --md-on-error-container: #410002;
+  --md-surface: #f9f9ff;
+  --md-s-low: #fff;
+  --md-s: #f1f3f9;
+  --md-s-high: #e7e9f0;
+  --md-s-highest: #e0e2ea;
+  --md-on-surface: #191c20;
+  --md-on-surface-variant: #44474e;
+  --md-outline: #74777f;
+  --md-outline-variant: #d3d6de;
+  --md-state: 25, 28, 32;
+  --glass: 255, 255, 255;
+  --glass-a: 0.52;
+  --glass-edge: rgb(255 255 255 / 70%);
+  --glass-hi: rgb(255 255 255 / 90%);
+  --blob-1: rgb(44 86 151 / 30%);
+  --blob-2: rgb(0 169 224 / 22%);
+  --blob-3: rgb(23 223 220 / 16%);
+  --md-font: roboto, inter, -apple-system, blinkmacsystemfont, 'Segoe UI', system-ui, sans-serif;
+  --md-r-card: 12px;
+  --md-r-chip: 8px;
+}
 
+@media (prefers-color-scheme: dark) {
+  .wt-app {
+    --md-primary: #adc6ff;
+    --md-on-primary: #0f2f60;
+    --md-primary-container: #2b4678;
+    --md-on-primary-container: #d8e2ff;
+    --md-secondary-container: #3e4759;
+    --md-on-secondary-container: #dae2f9;
+    --md-tertiary-container: #1f504c;
+    --md-on-tertiary-container: #b4efe9;
+    --md-warn-container: #5c4300;
+    --md-on-warn-container: #ffdea6;
+    --md-error: #ffb4ab;
+    --md-error-container: #93000a;
+    --md-on-error-container: #ffdad6;
+    --md-surface: #111318;
+    --md-s-low: #1b1e23;
+    --md-s: #1f2227;
+    --md-s-high: #292c32;
+    --md-s-highest: #34373d;
+    --md-on-surface: #e2e2e9;
+    --md-on-surface-variant: #c4c6d0;
+    --md-outline: #8e9099;
+    --md-outline-variant: #3a3d44;
+    --md-state: 226, 226, 233;
+    --glass: 30, 34, 42;
+    --glass-a: 0.55;
+    --glass-edge: rgb(255 255 255 / 9%);
+    --glass-hi: rgb(255 255 255 / 6%);
+    --blob-1: rgb(44 86 151 / 55%);
+    --blob-2: rgb(0 169 224 / 28%);
+    --blob-3: rgb(23 223 220 / 14%);
+  }
+}
+
+html.force-dark .wt-app {
+  --md-primary: #adc6ff;
+  --md-on-primary: #0f2f60;
+  --md-primary-container: #2b4678;
+  --md-on-primary-container: #d8e2ff;
+  --md-secondary-container: #3e4759;
+  --md-on-secondary-container: #dae2f9;
+  --md-tertiary-container: #1f504c;
+  --md-on-tertiary-container: #b4efe9;
+  --md-warn-container: #5c4300;
+  --md-on-warn-container: #ffdea6;
+  --md-error: #ffb4ab;
+  --md-error-container: #93000a;
+  --md-on-error-container: #ffdad6;
+  --md-surface: #111318;
+  --md-s-low: #1b1e23;
+  --md-s: #1f2227;
+  --md-s-high: #292c32;
+  --md-s-highest: #34373d;
+  --md-on-surface: #e2e2e9;
+  --md-on-surface-variant: #c4c6d0;
+  --md-outline: #8e9099;
+  --md-outline-variant: #3a3d44;
+  --md-state: 226, 226, 233;
+  --glass: 30, 34, 42;
+  --glass-a: 0.55;
+  --glass-edge: rgb(255 255 255 / 9%);
+  --glass-hi: rgb(255 255 255 / 6%);
+  --blob-1: rgb(44 86 151 / 55%);
+  --blob-2: rgb(0 169 224 / 28%);
+  --blob-3: rgb(23 223 220 / 14%);
+}

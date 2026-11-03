@@ -1,53 +1,146 @@
-<script setup>
+<script setup lang="ts">
 // Report: one field in the user's words; the server's composer shapes the issue; the list below shows what this machine filed with the state Linear reports.
 import { ref, watch, nextTick } from 'vue';
-import { S, ui } from '../store.js';
-import { getJson, post, problemsOf } from '../lib/api.js';
-import { ago } from '../lib/time.js';
-import { outcomeTone } from '../lib/moves.js';
+import { snapshot, ui } from '../store.ts';
+import { getJson, post, problemsOf } from '../lib/api.ts';
+import type { ApiError, FiledReport } from '../lib/types.ts';
+import { ago } from '../lib/time.ts';
+import { outcomeTone } from '../lib/moves.ts';
+
+type ReportLine = Pick<
+  FiledReport,
+  'id' | 'title' | 'state' | 'outcome' | 'filed_at' | 'changed_at'
+>;
+interface FeedbackList {
+  configured: boolean;
+  project?: string;
+  reports?: ReportLine[];
+}
+interface FeedbackReply {
+  error?: ApiError;
+  issue?: { identifier: string; title: string };
+  reports?: ReportLine[];
+}
+
 const text = ref('');
-const field = ref(null);
+const field = ref<HTMLTextAreaElement | null>(null);
 const sending = ref(false);
-const problems = ref([]);
-const done = ref(null);
+const problems = ref<string[]>([]);
+const done = ref<{ identifier: string; title: string } | null>(null);
 const project = ref('');
-const reports = ref([]);
-const reportPage = (id) => '/report?id=' + encodeURIComponent(id);
-const load = () => getJson('/api/feedback').then((j) => { project.value = j.configured ? 'Linear · ' + j.project : 'not configured: set feedback in the config'; reports.value = j.reports || []; });
-const close = () => { ui.feedback = false; };
+const reports = ref<ReportLine[]>([]);
+const reportPage = (id: string) => '/report?id=' + encodeURIComponent(id);
+const load = () =>
+  getJson<FeedbackList>('/api/feedback').then((list) => {
+    project.value = list.configured
+      ? 'Linear · ' + list.project
+      : 'not configured: set feedback in the config';
+    reports.value = list.reports || [];
+  });
+const close = () => {
+  ui.feedback = false;
+};
 const send = () => {
   const remark = text.value.trim();
-  if (!remark) { problems.value = ['Write at least one line.']; return; }
+  if (!remark) {
+    problems.value = ['Write at least one line.'];
+    return;
+  }
   sending.value = true;
-  post('/api/feedback', { text: remark, from: 'the window', ws: S.workspace.id, kind_ref: { kind: 'workspace', ref: S.workspace.id } }).then((j) => {
-    sending.value = false;
-    if (j.error) { problems.value = problemsOf(j.error); return; }
-    done.value = j.issue; text.value = ''; reports.value = j.reports || reports.value;
-  }).catch(() => { sending.value = false; problems.value = ['The monitor did not answer.']; });
+  post<FeedbackReply>('/api/feedback', {
+    text: remark,
+    from: 'the window',
+    ws: snapshot.workspace.id,
+    kind_ref: { kind: 'workspace', ref: snapshot.workspace.id },
+  })
+    .then((reply) => {
+      sending.value = false;
+      if (reply.error) {
+        problems.value = problemsOf(reply.error);
+        return;
+      }
+      done.value = reply.issue || null;
+      text.value = '';
+      reports.value = reply.reports || reports.value;
+    })
+    .catch(() => {
+      sending.value = false;
+      problems.value = ['The monitor did not answer.'];
+    });
 };
-watch(() => ui.feedback, (open) => { if (open) { problems.value = []; done.value = null; load().then(() => nextTick(() => field.value && field.value.focus())); } });
+watch(
+  () => ui.feedback,
+  (open) => {
+    if (open) {
+      problems.value = [];
+      done.value = null;
+      load().then(() => nextTick(() => field.value?.focus()));
+    }
+  },
+);
 </script>
 <template>
-  <div v-if="ui.feedback" class="wt-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title" @click.self="close">
+  <div
+    v-if="ui.feedback"
+    class="wt-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="feedback-title"
+    @click.self="close"
+  >
     <div class="wt-modal-card wt-feedback-card">
       <div class="wt-modal-head">
         <h3 id="feedback-title">To the Whose Turn backlog</h3>
         <span class="wt-modal-meta">{{ project }}</span>
-        <span class="wt-btn tonal" role="button" tabindex="0" @click="send" @keydown.enter.prevent="send">{{ sending ? 'Composing…' : 'Send' }}</span>
-        <span class="wt-btn" role="button" tabindex="0" @click="close" @keydown.enter.prevent="close">Close</span>
+        <span
+          class="wt-btn tonal"
+          role="button"
+          tabindex="0"
+          @click="send"
+          @keydown.enter.prevent="send"
+          >{{ sending ? 'Composing…' : 'Send' }}</span
+        >
+        <span
+          class="wt-btn"
+          role="button"
+          tabindex="0"
+          @click="close"
+          @keydown.enter.prevent="close"
+          >Close</span
+        >
       </div>
       <div v-if="problems.length" class="wt-alert">{{ problems.join('  ·  ') }}</div>
       <div class="wt-settings-form wt-feedback-form">
-        <textarea ref="field" v-model="text" class="wt-input wt-feedback-text" rows="5" placeholder="Describe the problem or the wish in your own words. Cmd+Enter sends." autocomplete="off" @keydown.meta.enter.prevent="send" @keydown.ctrl.enter.prevent="send"></textarea>
-        <p class="wt-feedback-note">An assistant turns it into a proper issue (title, kind, description) and files it in the Whose Turn backlog with this workspace's summary attached.</p>
-        <p v-if="done" class="wt-empty">Filed as <a :href="reportPage(done.identifier)" target="_blank" rel="noopener">{{ done.identifier }}</a> · {{ done.title }}</p>
+        <textarea
+          ref="field"
+          v-model="text"
+          class="wt-input wt-feedback-text"
+          rows="5"
+          placeholder="Describe the problem or the wish in your own words. Cmd+Enter sends."
+          autocomplete="off"
+          @keydown.meta.enter.prevent="send"
+          @keydown.ctrl.enter.prevent="send"
+        ></textarea>
+        <p class="wt-feedback-note">
+          An assistant turns it into a proper issue (title, kind, description) and files it in the
+          Whose Turn backlog with this workspace's summary attached.
+        </p>
+        <p v-if="done" class="wt-empty">
+          Filed as
+          <a :href="reportPage(done.identifier)" target="_blank" rel="noopener">{{
+            done.identifier
+          }}</a>
+          · {{ done.title }}
+        </p>
         <div v-if="reports.length" class="wt-feedback-reports">
           <h4>Your reports</h4>
-          <div v-for="r in reports" :key="r.id" class="wt-feedback-report">
-            <a :href="reportPage(r.id)" target="_blank" rel="noopener">{{ r.id }}</a>
-            <span class="wt-feedback-report-title">{{ r.title }}</span>
-            <span class="wt-pill" :class="outcomeTone(r.outcome)">{{ r.state || 'filed' }}</span>
-            <span class="wt-feed-when">{{ ago(r.changed_at || r.filed_at) }}</span>
+          <div v-for="report in reports" :key="report.id" class="wt-feedback-report">
+            <a :href="reportPage(report.id)" target="_blank" rel="noopener">{{ report.id }}</a>
+            <span class="wt-feedback-report-title">{{ report.title }}</span>
+            <span class="wt-pill" :class="outcomeTone(report.outcome)">{{
+              report.state || 'filed'
+            }}</span>
+            <span class="wt-feed-when">{{ ago(report.changed_at || report.filed_at) }}</span>
           </div>
         </div>
       </div>

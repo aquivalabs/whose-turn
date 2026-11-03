@@ -11,16 +11,35 @@
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "start": "node server.mjs",
     "dev": "WHOSE_TURN_DATA=.users-files/dev WHOSE_TURN_PORT=8766 node server.mjs",
-    "test": "node --test \"test/**/*.test.mjs\"",
+    "test": "node --experimental-strip-types --test \"test/**/*.test.mjs\"",
     "dev:web": "vite",
-    "build": "vite build"
+    "build": "vue-tsc --noEmit && vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint web/src",
+    "lint:style": "stylelint \"web/src/**/*.{vue,css}\"",
+    "format": "prettier --write web/src",
+    "check": "npm run typecheck && npm run lint && npm run lint:style && npm test"
   },
   "bin": {
     "whose-turn": "server.mjs"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@vitejs/plugin-vue": "^5.2.0",
+    "@vueuse/core": "15.0.0",
+    "eslint": "10.13.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-vue": "10.11.1",
+    "postcss-html": "2.0.0",
+    "prettier": "3.9.10",
+    "stylelint": "17.16.0",
+    "stylelint-config-html": "2.0.0",
+    "stylelint-config-standard": "40.0.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
     "vite": "^6.0.0",
-    "vue": "^3.5.0"
+    "vue": "^3.5.0",
+    "vue-eslint-parser": "10.4.1",
+    "vue-tsc": "3.3.13"
   }
 }

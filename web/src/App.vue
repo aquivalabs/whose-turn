@@ -1,8 +1,17 @@
-<script setup>
-// The window: the rail, the status line, and the dashboard that fills the rest; sheets open over it. State and data flow live in store.js.
+<script setup lang="ts">
+// The window: the rail, the status line, and the dashboard that fills the rest; sheets open over it. State and data flow live in store.ts.
 import { onMounted, watch } from 'vue';
-import { ui, alerts, themeVariables, load, connect, closeSheets, reportWindowSize } from './store.js';
-import { repaint } from './backdrop.js';
+import { onKeyStroke } from '@vueuse/core';
+import {
+  ui,
+  alerts,
+  themeVariables,
+  load,
+  connect,
+  closeSheets,
+  reportWindowSize,
+} from './store.ts';
+import { repaint } from './backdrop.ts';
 import Rail from './components/Rail.vue';
 import StatusBar from './components/StatusBar.vue';
 import WorkspaceHeader from './components/WorkspaceHeader.vue';
@@ -14,8 +23,8 @@ import CommentModal from './components/CommentModal.vue';
 import FeedbackSheet from './components/FeedbackSheet.vue';
 import SettingsSheet from './components/SettingsSheet.vue';
 watch(themeVariables, repaint, { flush: 'post' });
+onKeyStroke('Escape', closeSheets, { target: document });
 onMounted(() => {
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheets(); });
   reportWindowSize();
   load().then(connect);
 });
@@ -26,8 +35,8 @@ onMounted(() => {
     <div class="wt-shell">
       <StatusBar @report="ui.feedback = true" />
       <div v-if="alerts.length" class="wt-alert">{{ alerts.join('  ·  ') }}</div>
-      <div class="wt wt-fit" id="wt">
-        <canvas class="wt-backdrop" id="backdrop" aria-hidden="true"></canvas>
+      <div id="wt" class="wt wt-fit">
+        <canvas id="backdrop" class="wt-backdrop" aria-hidden="true"></canvas>
         <WorkspaceHeader />
         <div class="wt-layout">
           <div class="wt-main"><YourMove /><Todos /><Waiting /></div>

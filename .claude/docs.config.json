@@ -21,10 +21,10 @@
       "id": "species-dsl",
       "paths": [
         "web/src/species/base/*.json",
-        "web/src/lib/species.js",
-        "web/src/lib/silhouette.js",
-        "web/src/lib/random.js",
-        "web/src/backdrop.js"
+        "web/src/lib/species.ts",
+        "web/src/lib/silhouette.ts",
+        "web/src/lib/random.ts",
+        "web/src/backdrop.ts"
       ],
       "doc": "docs/mechanisms/species-dsl.md"
     },

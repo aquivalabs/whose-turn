@@ -45,6 +45,7 @@ Example shape: `0001-choose-the-message-queue.md`.
 | # | Title | Status |
 |---|-------|--------|
 | 0001 | [The window is Vue 3 built with Vite; the server stays dependency-free](0001-vue-window-with-a-build.md) | accepted |
+| 0002 | [The window takes browser behaviour from VueUse, except the rail's drag](0002-vueuse-in-the-window.md) | accepted |
 
 ## Referencing an ADR from code
 

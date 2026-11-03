@@ -5,7 +5,7 @@ import { mkdtempSync, writeFileSync, chmodSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startApi } from '../lib/api.mjs';
-import { resolveMode, tabUrl } from '../web/src/lib/window-mode.js';
+import { resolveMode, tabUrl } from '../web/src/lib/window-mode.ts';
 
 const appDir = new URL('..', import.meta.url).pathname;
 const port = 19000 + Math.floor(Math.random() * 1000);
