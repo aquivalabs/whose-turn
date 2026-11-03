@@ -7,7 +7,7 @@ import { paletteFrom, contrastRatio } from '../lib/palette.mjs';
 import { loadConfig } from '../lib/config.mjs';
 
 const STYLESHEET = readFileSync(new URL('../web/src/styles/tokens.css', import.meta.url), 'utf8');
-const KEPT_FROM_STYLESHEET = /warn|error|font|-r-|^--glass-/;
+const KEPT_FROM_STYLESHEET = /warn|font|-r-|^--glass-/;
 
 const schemeVariables = () => {
   const names = [...new Set([...STYLESHEET.matchAll(/(--(?:md-|glass|blob-)[\w-]*)\s*:/g)].map((match) => match[1]))].filter((name) => !KEPT_FROM_STYLESHEET.test(name));
@@ -23,6 +23,14 @@ const CONTAINER_PAIRS = [
   ['--md-on-surface-variant', '--md-s-low'],
 ];
 
+const hslSeed = (hue) => {
+  const channel = (offset) => {
+    const k = (offset + hue / 30) % 12;
+    return Math.round(255 * (0.5 - 0.4 * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, '0');
+  };
+  return `#${[0, 8, 4].map(channel).join('')}`;
+};
+
 const SEEDS = [['#4a7bd0'], ['#3d7a5c', '#c27a2c'], ['#ffeb3b'], ['#111111'], ['#e0218a', '#00ffcc']];
 
 test('the scheme covers every colour variable the stylesheet defines, light and dark', () => {
@@ -33,7 +41,7 @@ test('the scheme covers every colour variable the stylesheet defines, light and 
     for (const name of expected[scheme]) {
       assert.ok(name in palette[scheme], `${scheme} is missing ${name}`);
     }
-    assert.ok(!Object.keys(palette[scheme]).some((name) => KEPT_FROM_STYLESHEET.test(name)), 'warn and error stay in the stylesheet');
+    assert.ok(!Object.keys(palette[scheme]).some((name) => KEPT_FROM_STYLESHEET.test(name)), 'warn stays in the stylesheet');
   }
 });
 
@@ -45,6 +53,23 @@ test('every on-colour reaches 4.5:1 against its container', () => {
         const ratio = contrastRatio(palette[scheme][ink], palette[scheme][ground]);
         assert.ok(ratio >= 4.5, `${seed} ${scheme} ${ink} on ${ground} is ${ratio.toFixed(2)}`);
       }
+    }
+  }
+});
+
+const rgbOf = (hex) => [1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16));
+const rgbDistance = (first, second) => Math.hypot(...rgbOf(first).map((channel, index) => channel - rgbOf(second)[index]));
+const MIN_RGB_DISTANCE = 45;
+const WHEEL_SEEDS = Array.from({ length: 12 }, (_, step) => [hslSeed(step * 30)]);
+const DEMO_SEEDS = [['#3d7a5c', '#c27a2c'], ['#4a7bd0'], ['#e8623c']];
+
+test('the error colour stays 45 RGB units (Euclidean, 0 to 255 per channel) from the primary, light and dark', () => {
+  for (const [seed, accent] of [...WHEEL_SEEDS, ...DEMO_SEEDS]) {
+    const palette = paletteFrom(seed, accent);
+    for (const scheme of ['light', 'dark']) {
+      const distance = rgbDistance(palette[scheme]['--md-primary'], palette[scheme]['--md-error']);
+      assert.ok(distance >= MIN_RGB_DISTANCE, `${seed} ${scheme} primary ${palette[scheme]['--md-primary']} against error ${palette[scheme]['--md-error']} is ${distance.toFixed(0)}`);
+      assert.ok(contrastRatio(palette[scheme]['--md-error'], palette[scheme]['--md-surface']) >= 4.5, `${seed} ${scheme} error is unreadable on the surface`);
     }
   }
 });
