@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { reactive } from 'vue';
-import { groupFeed, isNew, moveChip, matchesQuery } from '../web/src/lib/feed.ts';
+import { groupFeed, isNew, moveChip, matchesQuery, badgeOf, subjectOf, itemLine } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, recentlyDone, statusTone } from '../web/src/lib/moves.ts';
 import { topLayer } from '../web/src/lib/layers.ts';
 import { modifier } from '../web/src/lib/bem.ts';
@@ -24,6 +24,19 @@ test('the feed groups by ticket, newest group first, counting only unread items'
   assert.equal(isNew(items[1], marks), false);
   assert.equal(matchesQuery(items[0], 'pat LOOK'), true);
   assert.equal(matchesQuery(items[0], 'sam'), false);
+});
+
+test('a PR item without a ticket carries its title into the group head and its own line, and badges follow the connector label', () => {
+  const pr = { id: 'p', ref: 'garden-bot#12', key: '', title: 'Skip rainy days', at: '2026-11-02T09:00:00Z', kind: 'comment', text: 'Rebased' };
+  const ask = { id: 'q', ref: 'garden-bot#13', key: '', title: 'Frost warning', at: '2026-11-02T08:00:00Z', kind: 'review requested', text: 'Frost warning' };
+  assert.deepEqual(groupFeed([pr, ask], marks).map((g) => [g.id, g.title]), [['garden-bot#12', 'Skip rainy days'], ['garden-bot#13', 'Frost warning']]);
+  assert.equal(itemLine(pr), 'Skip rainy days · Rebased');
+  assert.equal(itemLine(ask), 'Frost warning');
+  assert.equal(subjectOf({ ...pr, key: 'PROJ-1' }), 'PROJ-1');
+  assert.equal(subjectOf({ ...items[0], ref: 'PROJ-1' }), '');
+  assert.equal(itemLine({ ...items[0], ref: 'PROJ-1' }), 'please look');
+  assert.equal(matchesQuery(pr, 'rainy'), true);
+  assert.deepEqual([{ type: 'github', label: 'GitHub' }, { type: 'github', label: 'work' }, { type: 'demo', label: 'tracker' }, { type: 'demo', label: 'Demo code' }].map((source) => badgeOf({ id: 'x', ...source })), ['GH', 'WO', 'TR', 'DC']);
 });
 
 test('your rows go by the server rank, then oldest first, and the open view lists only open rows; the handled view only handled ones', () => {

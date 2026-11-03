@@ -137,7 +137,9 @@ const markAll = async () => {
                   :url="group.row ? group.row.ticket_url : group.items[0].url"
                   class="ticket-key feed__group-ticket"
                 />
-                <span v-if="group.row" class="feed__group-sum">{{ group.row.summary }}</span>
+                <span v-if="group.row || group.title" class="feed__group-sum">{{
+                  group.row ? group.row.summary : group.title
+                }}</span>
               </div>
               <div class="feed__group-meta">
                 <span

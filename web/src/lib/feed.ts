@@ -1,11 +1,13 @@
-// The feed's pure logic: unread, search, grouping by ticket. Rendering lives in Feed.vue.
-import type { FeedItem, Marks, TurnRow } from './types.ts';
+// The feed's pure logic: unread, search, grouping by ticket, source badges. Rendering lives in Feed.vue.
+import type { ConnectorSummary, FeedItem, Marks, TurnRow } from './types.ts';
+import { glyphOf } from './icons.ts';
 
 export interface FeedGroup {
   id: string;
   items: FeedItem[];
   newest: string;
   unread: number;
+  title: string;
 }
 
 const seen = (marks: Pick<Marks, 'seen'>, id: string) =>
@@ -21,7 +23,7 @@ export const matchesQuery = (item: FeedItem, query: string) => {
   if (!words.length) {
     return true;
   }
-  const haystack = [item.ref, item.key, item.kind, item.who, item.text, item.body]
+  const haystack = [item.ref, item.key, item.title, item.kind, item.who, item.text, item.body]
     .join(' ')
     .toLowerCase();
   return words.every((word) => haystack.includes(word));
@@ -34,9 +36,10 @@ export const groupFeed = (items: FeedItem[], marks: Pick<Marks, 'seen' | 'base'>
   const groups = new Map<string, FeedGroup>();
   for (const item of items) {
     const id = groupOf(item);
-    const group = groups.get(id) || { id, items: [], newest: item.at, unread: 0 };
+    const group = groups.get(id) || { id, items: [], newest: item.at, unread: 0, title: '' };
     groups.set(id, group);
     group.items.push(item);
+    group.title ||= item.title || '';
     if (item.at > group.newest) {
       group.newest = item.at;
     }
@@ -63,3 +66,14 @@ export const toneOf = (kind: string) =>
 export const hasBody = (item: FeedItem) =>
   /comment|approved|changes|mentioned|review requested/.test(item.kind) &&
   String(item.body || '').trim() !== '';
+
+/** What a PR item is about: its ticket key, else its title; empty for a ticket item, whose reference is the key (RMA-167). */
+export const subjectOf = (item: FeedItem) => (item.ref !== item.key ? item.key || item.title || '' : '');
+
+/** The collapsed line under an item: the subject, then the text, without repeating a text that is the title itself. */
+export const itemLine = (item: FeedItem) =>
+  [subjectOf(item), item.text === item.title ? '' : item.text].filter(Boolean).join(' · ');
+
+/** The source badge: GH for a GitHub connector under its own name, else the initials of the connector's label, as the rail does for workspaces (RMA-137, RMA-167). */
+export const badgeOf = (source: ConnectorSummary) =>
+  source.type === 'github' && source.label === 'GitHub' ? 'GH' : glyphOf(source.label);

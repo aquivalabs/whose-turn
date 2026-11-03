@@ -60,6 +60,7 @@ export interface FeedItem {
   id: string;
   ref: string;
   key?: string;
+  title?: string;
   kind: string;
   who?: string;
   at: string;

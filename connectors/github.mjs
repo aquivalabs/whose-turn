@@ -69,7 +69,10 @@ const reviewDecision = (reviews) => {
   return values.has('APPROVED') ? 'APPROVED' : '';
 };
 
-const failedCheckActivity = (checkRun, number, key) => ({ at: checkRun.completed_at || nowIso(), pr: `#${number}`, key, kind: 'check failed', who: checkRun.name, url: checkRun.html_url, text: '', body: '' });
+/** A PR's reference in the feed: the repository name and the number, so a PR without a ticket still says where it lives (RMA-167). */
+const prRef = (repo, number) => `${repo.split('/').pop()}#${number}`;
+
+const failedCheckActivity = (checkRun, { pr, key, title }) => ({ at: checkRun.completed_at || nowIso(), pr, key, title, kind: 'check failed', who: checkRun.name, url: checkRun.html_url, text: '', body: '' });
 
 const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
   const [pr, issueComments, inlineComments, reviews] = await Promise.all([
@@ -99,6 +102,7 @@ const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
   const last = others[others.length - 1];
   const myLast = mine.length ? mine[mine.length - 1].at : '';
   const key = keyOf(pr.title);
+  const subject = { pr: prRef(repo, number), key, title: pr.title };
   const row = {
     pr: number, key, title: pr.title, base: pr.base.ref, state, review: reviewDecision(reviews), checks: checks.state, merged_at: pr.merged_at || '',
     updated_at: pr.updated_at, url: pr.html_url,
@@ -106,15 +110,15 @@ const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
     unanswered: Boolean(last && state === 'OPEN' && last.state !== 'APPROVED' && last.at > myLast),
   };
   const activity = people.filter((item) => item.at >= sinceIso).map((item) => ({
-    at: item.at, pr: `#${number}`, key, kind: item.kind, who: item.who === me ? 'you' : item.who, url: item.url, text: oneline(item.body), body: item.body.replace(/\r/g, '').slice(0, 6000),
+    ...subject, at: item.at, kind: item.kind, who: item.who === me ? 'you' : item.who, url: item.url, text: oneline(item.body), body: item.body.replace(/\r/g, '').slice(0, 6000),
   }));
   for (const checkRun of checks.failed) {
     if ((checkRun.completed_at || '') >= sinceIso) {
-      activity.push(failedCheckActivity(checkRun, number, key));
+      activity.push(failedCheckActivity(checkRun, subject));
     }
   }
   if (pr.merged_at && pr.merged_at >= sinceIso) {
-    activity.push({ at: pr.merged_at, pr: `#${number}`, key, kind: 'merged', who: '', url: pr.html_url, text: '', body: '' });
+    activity.push({ ...subject, at: pr.merged_at, kind: 'merged', who: '', url: pr.html_url, text: '', body: '' });
   }
   return { row, activity, sha: pr.head.sha };
 };
@@ -126,7 +130,7 @@ const refreshChecks = async (api, repo, cached, number) => {
   }
   cached.row.checks = checks.state;
   for (const checkRun of checks.failed) {
-    const item = failedCheckActivity(checkRun, number, cached.row.key);
+    const item = failedCheckActivity(checkRun, { pr: prRef(repo, number), key: cached.row.key, title: cached.row.title });
     if (!cached.activity.some((existing) => existing.url === item.url && existing.at === item.at)) {
       cached.activity.push(item);
     }
@@ -164,15 +168,14 @@ const issueNumber = (apiUrl) => {
   return match ? Number(match[2]) : null;
 };
 
-const buildAsk = async (api, { repo: ownRepo, me, keyOf }, note, repo) => {
+const buildAsk = async (api, { me, keyOf }, note, repo) => {
   const subject = note.subject;
   const number = issueNumber(subject.url);
   if (!number) {
     return null;
   }
   const title = subject.title || '';
-  const ref = repo === ownRepo ? `#${number}` : `${repo.split('/')[1]}#${number}`;
-  const base = { repo, number, ref, title, key: keyOf(title), url: `https://github.com/${repo}/${subject.type === 'PullRequest' ? 'pull' : 'issues'}/${number}` };
+  const base = { repo, number, ref: prRef(repo, number), title, key: keyOf(title), url: `https://github.com/${repo}/${subject.type === 'PullRequest' ? 'pull' : 'issues'}/${number}` };
   if (note.reason === 'review_requested' && subject.type === 'PullRequest') {
     const pr = await api(`/repos/${repo}/pulls/${number}`);
     if (pr.state !== 'open') {

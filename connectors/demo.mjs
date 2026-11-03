@@ -24,7 +24,7 @@ const pr = (number, key, title, repo, overrides = {}) => ({
   pr: number, key, title, base: 'main', state: 'OPEN', review: '', checks: 'passing', merged_at: '', updated_at: ago(5), url: `${REPO}${repo}/pull/${number}`,
   last_comment_by: '', last_comment_at: '', last_comment_url: '', last_comment: '', unanswered: false, ...overrides,
 });
-const activity = (hoursAgo, number, key, kind, who, repo, text, body) => ({ at: ago(hoursAgo), pr: `#${number}`, key, kind, who, url: `${REPO}${repo}/pull/${number}`, text, body: body || text });
+const activity = (hoursAgo, number, key, kind, who, repo, text, body) => ({ at: ago(hoursAgo), pr: `${repo}#${number}`, key, kind, who, url: `${REPO}${repo}/pull/${number}`, text, body: body || text });
 const ask = (noteId, repo, number, title, key, kind, who, hoursAgo, text) => ({ id: `gha:${noteId}`, repo: `example/${repo}`, number, ref: `${repo}#${number}`, title, key, kind, who, at: ago(hoursAgo), url: `${REPO}${repo}/pull/${number}`, text, body: text });
 
 const northwind = (polls) => {
@@ -128,7 +128,9 @@ export const poll = async ({ settings, cache }) => {
   cache.polls = (cache.polls || 0) + 1;
   cache.base = cache.base || Date.now();
   base = cache.base;
-  const data = scenario(cache.polls);
+  const scenarioData = scenario(cache.polls);
+  const titles = new Map(scenarioData.prs.map((entry) => [entry.url, entry.title]));
+  const data = { ...scenarioData, activity: scenarioData.activity.map((item) => ({ ...item, title: titles.get(item.url) || '' })) };
   if (settings.part === 'tickets') {
     return { me: data.me, tickets: data.tickets, comments: data.comments, ticket_base: SITE, errors: {} };
   }

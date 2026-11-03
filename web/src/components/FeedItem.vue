@@ -2,7 +2,7 @@
 // One feed item: the source badge, the reference, the kind, who, when, and the comment expanded in place with its actions.
 import { computed } from 'vue';
 import { snapshot, ui, now, setMarks, tellProblem } from '../store.ts';
-import { toneOf, hasBody } from '../lib/feed.ts';
+import { toneOf, hasBody, badgeOf, subjectOf, itemLine } from '../lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '../lib/types.ts';
 import { ago } from '../lib/time.ts';
 import ExtLink from './ExtLink.vue';
@@ -15,9 +15,9 @@ const props = defineProps<{
   lit?: boolean;
 }>();
 const emit = defineEmits<{ open: [item: FeedItem] }>();
-const badge = computed(() =>
-  props.source.type === 'github' ? 'GH' : String(props.source.label).slice(0, 2).toUpperCase(),
-);
+const badge = computed(() => badgeOf(props.source));
+const subject = computed(() => subjectOf(props.item));
+const line = computed(() => itemLine(props.item));
 const tone = computed(() => toneOf(props.item.kind));
 const iconTone = computed(() => tone.value || (props.source.type === 'github' ? '' : 'jira'));
 const written = computed(() => hasBody(props.item));
@@ -70,9 +70,7 @@ const toggle = () => {
         </span>
       </div>
       <template v-if="open">
-        <span v-if="item.key && item.source === 'github'" class="feed-item__text">{{
-          item.key
-        }}</span>
+        <span v-if="subject" class="feed-item__text">{{ subject }}</span>
         <div class="feed-item__full">{{ item.body }}</div>
         <div class="feed-item__actions">
           <span
@@ -87,9 +85,7 @@ const toggle = () => {
           <ExtLink :text="'Open in ' + source.label" :url="item.url" class="btn" />
         </div>
       </template>
-      <span v-else-if="item.text" class="feed-item__text">{{
-        (item.source === 'github' && item.key ? item.key + ' · ' : '') + item.text
-      }}</span>
+      <span v-else-if="line" class="feed-item__text">{{ line }}</span>
     </div>
   </li>
 </template>

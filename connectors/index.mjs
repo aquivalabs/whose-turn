@@ -6,6 +6,12 @@ import * as linear from './linear.mjs';
 
 export const CONNECTORS = { github, jira, linear, demo };
 
+/** What a workspace calls each of its connectors: the entry's own label, else its id when another entry has the same type, else the type's label (RMA-167). */
+export const connectorSummaries = (entries) => entries.map((entry) => {
+  const shared = entries.some((other) => other !== entry && other.type === entry.type);
+  return { id: entry.id, type: entry.type, label: entry.label || (shared ? entry.id : CONNECTORS[entry.type]?.label || entry.type) };
+});
+
 export const connectorCatalogue = () => Object.values(CONNECTORS).map((connector) => ({ type: connector.id, label: connector.label, fields: connector.fields }));
 
 /** The triples a stored secret is bound to: every secret field's service and account plus the connector's endpoint. */
