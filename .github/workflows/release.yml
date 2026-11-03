@@ -15,7 +15,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: The version, and whether it is already released
         id: version
         env:
@@ -30,7 +30,7 @@ jobs:
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.version.outputs.new == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -45,7 +45,7 @@ jobs:
         run: npm pack && ls -l whose-turn-*.tgz && tar tzf whose-turn-*.tgz | grep -c '^package/dist/' | xargs -I{} echo "{} files under dist/"
       - name: Trusted publishing needs npm 11.5 or newer; Node 22 ships npm 10
         if: steps.version.outputs.new == 'true'
-        run: npm install -g npm@latest && npm --version
+        run: npm install -g npm@12.2.1 && npm --version
       - name: Publish to npm
         if: steps.version.outputs.new == 'true'
         # No token: npm trusts this workflow through OIDC (the package's trusted publisher, RMA-235), and `id-token: write` above is what lets it. Every publish moves `latest`, prereleases included, because every install follows it (RMA-230, RMA-231); a prerelease also gets its channel tag (`alpha`).
