@@ -9,6 +9,7 @@ on purpose. Forcing it into one of the four layers would only mislabel it.
 
 - **Decisions** → [`docs/adr/`](adr/README.md) — architecture decision records.
 - **Mechanisms** → [`docs/mechanisms/`](mechanisms/README.md) — one file per live mechanism.
+- **Plans** → [`docs/plans/`](plans/README.md) — frozen research and staged proposals, never edited after their date.
 
 `.claude/docs.config.json` is the authoritative list. A project may add a `skill` layer or a `frozen` layer
 later, as more of the standard is adopted; each new layer gets its own directory and its own `README.md`
