@@ -59,7 +59,7 @@ const copy = () => {
   );
 };
 const send = () => {
-  if (!configured.value) {
+  if (!configured.value || sending.value) {
     return;
   }
   const remark = text.value.trim();
@@ -117,7 +117,7 @@ watch(
           class="wt-btn tonal"
           role="button"
           tabindex="0"
-          :aria-disabled="!configured"
+          :aria-disabled="!configured || sending"
           @click="send"
           @keydown.enter.prevent="send"
           >{{ sending ? 'Composing…' : 'Send' }}</span

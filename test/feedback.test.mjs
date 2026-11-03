@@ -104,3 +104,24 @@ test('the server refuses a remark at once when feedback is not configured, witho
     server.close();
   }
 });
+
+test('the server refuses the same remark twice in a row and accepts a different one', async () => {
+  const { http } = stub();
+  const composer = { command: process.execPath, args: ['-e', `process.stdout.write(JSON.stringify({ title: 'T', kind: 'bug', body: 'B' }))`] };
+  const registry = { workspaces: [], rawWorkspaces: [], problems: [], feedback: { ...settings, composer }, subscribe: () => () => {} };
+  const port = 19000 + Math.floor(Math.random() * 1000);
+  const server = await startApi({ port, appDir: new URL('..', import.meta.url).pathname, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets, inbox: {}, http, reports: { list: () => [], add: () => {}, states: async () => [] } });
+  const post = async (text) => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+    return { status: response.status, body: await response.json() };
+  };
+  try {
+    assert.equal((await post('the chevron wraps')).status, 200);
+    const again = await post('  the chevron wraps ');
+    assert.equal(again.status, 400);
+    assert.match(again.body.error.details[0].metadata.detail, /the same remark was just sent/);
+    assert.equal((await post('the title is cut off')).status, 200);
+  } finally {
+    server.close();
+  }
+});
