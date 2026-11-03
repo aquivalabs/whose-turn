@@ -37,6 +37,18 @@
         "lib/default-table.mjs"
       ],
       "doc": "docs/mechanisms/rules-table.md"
+    },
+    {
+      "id": "connector-contract",
+      "paths": [
+        "lib/contract.mjs",
+        "types/connector.d.ts",
+        "connectors/index.mjs",
+        "connectors/module.mjs",
+        "connectors/file.mjs",
+        "scripts/check-adapter.mjs"
+      ],
+      "doc": "docs/mechanisms/connector-contract.md"
     }
   ],
   "surfaceRules": {
@@ -45,5 +57,5 @@
       "AGENTS.md"
     ]
   },
-  "_comment": "Mechanisms are declared as they stabilise (AGENTS.md, Gates). Next candidates: the connector contract and the workspace config."
+  "_comment": "Mechanisms are declared as they stabilise (AGENTS.md, Gates). Next candidate: the workspace config. The built-in connectors join connector-contract when they export the contract (RMA-95, stage 1)."
 }

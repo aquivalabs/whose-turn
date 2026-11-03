@@ -10,6 +10,7 @@
     "server.mjs",
     "lib/",
     "connectors/",
+    "types/",
     "dist/",
     "install.sh",
     "open.sh",

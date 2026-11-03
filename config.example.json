@@ -105,6 +105,14 @@
         "linear": {
           "workspace": "your-space",
           "team": "PROJ"
+        },
+        "file": {
+          "path": "~/notes/tasks.md",
+          "me": "me"
+        },
+        "module": {
+          "path": "~/adapters/trello.mjs",
+          "board": "your-board"
         }
       }
     },

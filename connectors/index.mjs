@@ -3,8 +3,10 @@ import * as github from './github.mjs';
 import * as jira from './jira.mjs';
 import * as demo from './demo.mjs';
 import * as linear from './linear.mjs';
+import * as file from './file.mjs';
+import * as module from './module.mjs';
 
-export const CONNECTORS = { github, jira, linear, demo };
+export const CONNECTORS = { github, jira, linear, demo, file, module };
 
 /** What a workspace calls each of its connectors: the entry's own label, else its id when another entry has the same type, else the type's label (RMA-167). */
 export const connectorSummaries = (entries) => entries.map((entry) => {
@@ -12,7 +14,8 @@ export const connectorSummaries = (entries) => entries.map((entry) => {
   return { id: entry.id, type: entry.type, label: entry.label || (shared ? entry.id : CONNECTORS[entry.type]?.label || entry.type) };
 });
 
-export const connectorCatalogue = () => Object.values(CONNECTORS).map((connector) => ({ type: connector.id, label: connector.label, fields: connector.fields }));
+/** The settings form lists the supported types; an experimental one (RMA-95) is accepted in the config but not offered. */
+export const connectorCatalogue = () => Object.values(CONNECTORS).filter((connector) => !('experimental' in connector && connector.experimental)).map((connector) => ({ type: connector.id, label: connector.label, fields: connector.fields }));
 
 /** The triples a stored secret is bound to: every secret field's service and account plus the connector's endpoint. */
 const secretBindings = (entry) => (CONNECTORS[entry.type]?.fields || []).filter((field) => field.secret).map((field) => {

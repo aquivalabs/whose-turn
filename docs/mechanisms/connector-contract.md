@@ -1,0 +1,187 @@
+# Connector contract
+
+## What it is
+
+The connector contract is what a source must be to reach the dashboard: an ES module with six named
+exports whose `poll` returns normalised lists of the kinds it declared. The built-in connectors in
+`connectors/` and a user's own adapter, named by path in a workspace, follow the same contract and go
+through the same poll path. Contract version **1**. The decision is
+[ADR 0008](../adr/0008-integration-contract.md); the research behind it is
+[the integration-contract plan](../plans/integration-contract.md). RMA-95.
+
+**A user adapter runs inside the server with the server's rights**: every token in memory, the secret
+store, the file system, the network. Name only a file you wrote or read in full.
+
+Status of the proof of concept: `file` and `module` are registered as experimental. The config accepts
+them; the settings sheet does not offer them. The four built-ins (`github`, `jira`, `linear`, `demo`)
+follow the shapes but do not yet export `contract` and `capabilities`, and their results are not
+checked; that is stage 1 of the plan.
+
+## Where it lives
+
+| File | Role |
+|---|---|
+| `lib/contract.mjs` | `CONTRACT_VERSION`, `KINDS`, `SHAPES` (the fields and closed values of each kind), `adapterProblems`, `resultProblems`, `ContractError` |
+| `types/connector.d.ts` | The same contract as TypeScript types, shipped in the package: `Adapter`, `PollContext`, `PollResult` and one interface per kind |
+| `connectors/index.mjs` | `CONNECTORS`, the registry of types; `connectorCatalogue` leaves out a connector that exports `experimental: true` |
+| `connectors/module.mjs` | The `module` type: `loadAdapter` imports and checks a user adapter, `pollAdapter` polls it and checks the result |
+| `connectors/file.mjs` | The `file` type: tickets from a local Markdown or JSON file; the first connector that exports the contract |
+| `scripts/check-adapter.mjs` | The conformance check for an adapter file |
+| `lib/workspace.mjs` | `pollSource` calls `poll`, stamps `source`, merges the `KINDS` across entries |
+
+## How it behaves
+
+### Exports
+
+| Export | Type | Meaning |
+|---|---|---|
+| `contract` | `1` | The contract version the adapter follows |
+| `id` | string | 1 to 40 lowercase letters, digits or hyphens, starting with a letter |
+| `label` | string | The name the window shows for the source |
+| `capabilities` | list | The kinds `poll` may return, a non-empty subset of `tickets`, `comments`, `prs`, `activity`, `asks`, `runs` |
+| `fields` | list | `{ key, label, hint?, required?, list?, boolean? }` per setting of the entry; an empty list is fine |
+| `poll` | async function | `poll(context)` resolves to the result below |
+
+A built-in may also export `links(settings)` (quick links for the header), `endpointKey` (the field a
+stored secret is bound to) and `persistedCache` (cache keys holding `Map`s that survive a restart).
+
+### Context
+
+`poll` receives one object:
+
+| Key | Meaning |
+|---|---|
+| `settings` | The connector entry from the workspace config: `type`, `id`, the adapter's own fields, and for a module `path` |
+| `http` | `fetchJson(url, { headers, method, body, useEtag })`: JSON over HTTPS with ETags kept in memory, a 304 served from the cache, `RateLimited` thrown on 429 or a 403 rate limit |
+| `cache` | An object kept in memory between polls of this entry; a user adapter's cache is not written to disk |
+| `sinceIso`, `historyDays` | The start of the feed window and its length in days |
+| `keyOf(text)` | The first ticket key in `text` by the workspace's `key_pattern`, `''` when none |
+| `secret()` | A module adapter only: the token stored for this entry, `''` when none |
+
+The built-ins receive `secrets` (the store) instead of `secret()`, and read their own entries.
+
+### Result
+
+`{ me, tickets?, comments?, prs?, activity?, asks?, runs?, ticket_base?, errors? }`.
+
+- `me` is your name in the source, as it appears in `assignee`, `author` and `@` mentions.
+- Only declared kinds may appear; a declared kind that is missing counts as an empty list.
+- `ticket_base` is the ticket URL without the key, used to link a key found elsewhere.
+- `errors` is `{ part: message }` for the parts that failed while the rest succeeded.
+
+Shapes, every field required unless marked optional; a `url` is empty or starts with `https://`, a time
+is an ISO date-time:
+
+| Kind | Fields |
+|---|---|
+| `tickets` | `key`, `summary`, `status`, `status_category` (`new`, `indeterminate`, `done`), `assignee`, `updated` (time), `url`, `status_change` (optional, `{ since, by }` or `null`) |
+| `comments` | `id` (string or number), `key` (the ticket's), `at` (time), `author`, `body`, `url` |
+| `prs` | `pr` (number), `key`, `title`, `base`, `state` (`OPEN`, `CLOSED`, `MERGED`), `review` (`''`, `APPROVED`, `CHANGES_REQUESTED`), `checks` (`passing`, `failing`, `running`, `none`), `merged_at`, `updated_at` (time), `url`, `last_comment_by`, `last_comment_at`, `last_comment_url`, `last_comment`, `unanswered` (boolean) |
+| `activity` | `at` (time), `pr` (the feed reference), `key`, `title` (optional), `kind`, `who`, `url`, `text`, `body` (optional) |
+| `asks` | `id`, `ref`, `title`, `key`, `kind` (`review requested`, `mentioned you`), `who`, `at` (time), `url`, `text`, `body` |
+| `runs` | `id`, `ref` (stable per pipeline), `workflow`, `branch`, `failed`, `mine` (booleans), `actor`, `title`, `url`, `at` (time), `streak` (the first failure's id) |
+
+The server stamps every item with the entry's id as `source` and merges the kinds of all entries of a
+workspace. Facts for the rules are computed from these shapes, never by an adapter
+([rules table](rules-table.md)). A source of another nature maps onto these kinds: a to-do is a ticket, a
+request addressed to you is an ask.
+
+### Errors
+
+- Throw for a total failure: the message becomes the entry's error in the window and in
+  `/api/summary`, and counts toward the failing-source health alert. Name the thing to fix; never put a
+  token in a message.
+- Return `errors: { part: message }` for a partial failure; the server prefixes the part with the
+  entry id.
+- Throw `RateLimited` (from `lib/http-client.mjs`) to make the server back off.
+- A module that is not a connector, or a result that breaks the shapes, is a `ContractError`: its
+  message is `Adapter <path> does not follow connector contract 1:` followed by every problem, at most
+  ten, separated by `; `.
+
+### The `module` type
+
+A workspace entry `{ "type": "module", "id": "board", "path": "~/adapters/trello.mjs", "board": "…" }`.
+
+- The file is imported at the entry's first poll and again when its modification time changes; the
+  check runs on every import. A failed check is the entry's error, and the next poll tries again.
+- The adapter's own required fields must be present in the entry, or the poll fails naming them.
+- The token is entered like any connector secret and stored under the service `token_service`
+  (default `whose-turn-adapter`) and the account `path`. The path is the entry's endpoint, so a config
+  write that points a stored token at another file is refused unless the token comes with it.
+- Old module instances stay in memory after a re-import; ESM has no unload.
+
+### The `file` type
+
+A workspace entry `{ "type": "file", "path": "~/notes/tasks.md", "me": "alex" }` supplies `tickets`.
+
+- **Markdown**: every `- [ ]` and `- [x]` item is a ticket. The nearest `##` (or deeper) heading above
+  an open item is its status; before any heading it is `To Do`. `[x]` is `Done`. `@name` in the item
+  assigns it to `name`, else it is yours (`me`, default `me`). A key in the text matching the
+  workspace's `key_pattern` is the ticket key; otherwise the key is `F-` and six hex digits of the title.
+- **JSON** (`.json`): a list, or `{ "tickets": [...] }`, of `{ summary | title, key?, status?, assignee?,
+  updated?, url?, done? }`. A `url` that is not `https://` is dropped.
+- Statuses `Done`, `Closed`, `Complete(d)` are `done`; `Backlog`, `To Do`, `Todo`, `Open`, `New` are
+  `new`; any other is `indeterminate`. The workspace's `rules.statuses` then group them as for any
+  tracker.
+- An item keeps the time it was first seen in its current text, status and assignee (`seen`, persisted),
+  so saving the file moves only the items that changed.
+
+### Template
+
+```js
+/** Trello cards assigned to you on one board. */
+export const contract = 1;
+export const id = 'trello';
+export const label = 'Trello';
+export const capabilities = ['tickets'];
+export const fields = [
+  { key: 'board', label: 'Board id', required: true },
+  { key: 'me', label: 'Your full name on Trello', required: true },
+];
+
+/** @type {import('whose-turn/types/connector.js').Adapter['poll']} */
+export const poll = async ({ settings, http, secret }) => {
+  const [key, token] = (await secret()).split(':');
+  if (!token) {
+    throw new Error('Store the token as "<api key>:<token>" for this entry');
+  }
+  const auth = `key=${encodeURIComponent(key)}&token=${encodeURIComponent(token)}`;
+  const cards = await http.fetchJson(`https://api.trello.com/1/boards/${settings.board}/cards?members=true&list=true&${auth}`);
+  const mine = cards.filter((card) => card.members.some((member) => member.fullName === settings.me));
+  return {
+    me: settings.me,
+    tickets: mine.map((card) => ({
+      key: card.idShort ? `TR-${card.idShort}` : card.id, summary: card.name, status: card.list?.name || 'Open',
+      status_category: card.closed || card.dueComplete ? 'done' : 'indeterminate',
+      assignee: settings.me, updated: card.dateLastActivity, url: card.shortUrl,
+    })),
+  };
+};
+```
+
+The Trello calls are a sketch to be checked against Trello's API reference; the shape of the result is the part this page fixes. The type import resolves where the `whose-turn` package is installed; elsewhere, point it at that package's `types/connector.d.ts` or drop the line. The fixture `test/fixtures/adapters/board.mjs` is a complete adapter that needs no network.
+
+### Conformance check
+
+```
+node scripts/check-adapter.mjs <adapter.mjs> [--settings '{"board":"…"}'] [--no-poll]
+```
+
+It imports the file, checks the exports, runs one poll with the server's HTTP client and the token from
+`WHOSE_TURN_ADAPTER_TOKEN`, checks the result and prints the rows the default rules make of it. Exit 0
+passes, 1 is a contract or poll problem with one line per problem on stderr, 2 is a usage error. It
+accepts a built-in too: `connectors/file.mjs` passes, the other four report the two exports they lack.
+
+### Versioning
+
+`contract` is an integer; this server speaks `1`. An additive change (a new optional field, a new kind,
+a new context helper) keeps the number and is listed here with its date. A breaking change bumps it,
+and the server speaks the old version alongside the new one for at least one release. An adapter with a
+version the server does not speak is refused with both numbers in the message.
+
+## What obliges an update
+
+Any change to a file in the table above that adds, renames or removes an export, a context key, a kind,
+a field of a kind or one of its closed values, changes a check or its messages, changes how a module is
+loaded, reloaded or given its token, changes how the `file` connector reads a file, or changes the
+contract version.
