@@ -49,7 +49,7 @@ const reachable = async () => {
   }
 };
 
-const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const pause = (millis) => new Promise((resolve) => setTimeout(resolve, millis));
 
 /** Returns true when the monitor answers, starting it first if it does not. */
 export const ensureRunning = async ({
