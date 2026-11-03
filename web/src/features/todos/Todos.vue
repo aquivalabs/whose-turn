@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import { snapshot, now, todoAct } from '@/store.ts';
 import type { Todo } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
+import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
 import ExtLink from '@/ui/ExtLink.vue';
@@ -44,6 +45,9 @@ const rows = computed(() => {
   }));
 });
 const problem = ref('');
+useClearOnReconnect(() => {
+  problem.value = '';
+});
 const send = async (body: Parameters<typeof todoAct>[0]) => {
   problem.value = await todoAct(body);
   return !problem.value;

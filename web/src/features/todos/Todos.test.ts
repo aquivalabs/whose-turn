@@ -1,7 +1,7 @@
 import type * as Store from '@/store.ts';
 import { expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { snapshot, todoAct } from '@/store.ts';
+import { snapshot, todoAct, ui } from '@/store.ts';
 import Todos from './Todos.vue';
 
 vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
@@ -49,4 +49,15 @@ test('the done check is a native button, so Space and Enter tick it like a click
 
   expect(todoAct).toHaveBeenCalledWith({ action: 'done', id: 't1' });
   snapshot.todos = [];
+});
+
+test('a stream reconnect clears the line of a refused action', async () => {
+  vi.mocked(todoAct).mockResolvedValue('The local server is not answering; your text is kept.');
+  render(Todos);
+  await typeIntoBox('call the vendor');
+  await screen.findByRole('alert');
+
+  ui.reconnects++;
+
+  await vi.waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
 });

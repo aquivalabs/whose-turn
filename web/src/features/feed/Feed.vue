@@ -6,6 +6,7 @@ import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed
 import type { FeedGroup } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
+import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
 import FeedItemRow from './FeedItem.vue';
@@ -72,6 +73,9 @@ const toggleGroup = (group: FeedGroup) => toggleMember(feedState.openGroups, gro
 const toggleItem = (id: string) => toggleMember(ui.open, id);
 const markSeen = (id: string) => setMarks({ seen: [id] }).then(tellProblem);
 const problem = ref('');
+useClearOnReconnect(() => {
+  problem.value = '';
+});
 const markAll = async () => {
   problem.value = await setMarks({ seen: snapshot.feed.map((item) => item.id), base: Date.now() });
 };

@@ -1,7 +1,7 @@
 import type * as Store from '@/store.ts';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { setMarks, snapshot } from '@/store.ts';
+import { setMarks, snapshot, ui } from '@/store.ts';
 import type { TurnRow } from '@/lib/types.ts';
 import YourMove from './YourMove.vue';
 import { useMoveView } from './useMoveView.ts';
@@ -49,4 +49,15 @@ test('the Handled view lists the handled rows and not the open ones', async () =
 
   expect(await screen.findByText('Review nw-2')).toBeTruthy();
   expect(screen.queryByText('Review nw-1')).toBeNull();
+});
+
+test('a stream reconnect clears the problem lines of refused rows', async () => {
+  vi.mocked(setMarks).mockResolvedValue('The local server is not answering.');
+  render(YourMove);
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+  await screen.findByRole('alert');
+
+  ui.reconnects++;
+
+  await vi.waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
 });

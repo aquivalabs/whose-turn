@@ -6,6 +6,7 @@ import { yourRows } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
 import { age, ago, when } from '@/lib/time.ts';
 import { liveStatus } from '@/lib/live-status.ts';
+import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
 import TicketCell from '@/ui/TicketCell.vue';
@@ -43,6 +44,7 @@ const emptyText = computed(() => {
     : 'Nothing is waiting on you.';
 });
 const problems = reactive(new Map<string, string>());
+useClearOnReconnect(() => problems.clear());
 const mark = async (item: YourRow) => {
   const id = item.row.row_id;
   const problem = await setMarks({
