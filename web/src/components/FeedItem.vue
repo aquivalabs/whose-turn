@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // One feed item: the source badge, the reference, the kind, who, when, and the comment expanded in place with its actions.
 import { computed } from 'vue';
-import { snapshot, ui, now, setMarks } from '../store.ts';
+import { snapshot, ui, now, setMarks, tellProblem } from '../store.ts';
 import { toneOf, hasBody } from '../lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '../lib/types.ts';
 import { ago } from '../lib/time.ts';
@@ -21,7 +21,7 @@ const when = computed(() => {
 });
 const seen = () => {
   if (props.fresh) {
-    setMarks({ seen: [props.item.id] });
+    setMarks({ seen: [props.item.id] }).then(tellProblem);
   }
 };
 const toggle = () => {

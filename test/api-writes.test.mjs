@@ -81,3 +81,24 @@ test('a marks write with a wrong shape is refused naming the field, a valid one 
     server.close();
   }
 });
+
+test('an unexpected exception in a handler answers INTERNAL, an unknown path still NOT_FOUND', async () => {
+  const workspace = { id: 'w', updateMarks: () => { throw new Error('disk full'); } };
+  const server = await startApi({ port: port + 3, appDir, registry: { ...registry, workspaces: [workspace] }, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  const logged = console.error;
+  console.error = () => {};
+  try {
+    const failed = await postTo(port + 3, '/api/marks', { ws: 'w', seen: ['a'] });
+    const error = (await failed.json()).error;
+    assert.equal(failed.status, 500);
+    assert.equal(error.status, 'INTERNAL');
+    assert.equal(error.details[0].reason, 'INTERNAL');
+    assert.equal(error.details[0].metadata.detail, 'disk full');
+    const unknown = await fetch(`http://127.0.0.1:${port + 3}/api/nowhere`);
+    assert.equal(unknown.status, 404);
+    assert.equal((await unknown.json()).error.details[0].reason, 'NOT_FOUND');
+  } finally {
+    console.error = logged;
+    server.close();
+  }
+});

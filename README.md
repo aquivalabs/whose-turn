@@ -146,7 +146,7 @@ The monitor also alerts on its own polling: stale data, or a source that keeps f
 
 ## API, `127.0.0.1:<port>`
 
-Requests must carry the local `Host`; a POST must be `application/json`. An error is a `google.rpc.Status` envelope: `{"error":{"code","status","message","details":[{"@type":"ErrorInfo","reason"}]}}`; branch on `reason`.
+Requests must carry the local `Host`; a POST must be `application/json`. An error is a `google.rpc.Status` envelope: `{"error":{"code","status","message","details":[{"@type":"ErrorInfo","reason"}]}}`; branch on `reason`. An unexpected exception in a handler answers 500 `INTERNAL` with its message in the `ErrorInfo` metadata `detail`; only an unknown path answers `NOT_FOUND`.
 
 - `GET /api/workspaces`: `[{id, name, key_pattern, connectors:[{id, type, label}], open_moves, theme}]`; `theme` is `{light, dark}`, each a map of CSS variable to value, or `null` without a seed. `/api/summary` leaves `theme` out.
 - `GET /api/state?ws=<id>`: one workspace, default the first: `turn` (the rows, each with `group`, `rank`, `next`, `why`, `url`, `ticket_url`, `source`), `feed`, `marks`, `todos` (each with `ticket_url`), `errors`, `health`, `polled_at`, `me` (your name per source), `workspace`, plus `workspaces` and `problems`. With `&full=1` the merged raw collections come too: `tickets`, `comments`, `prs`, `activity`, `asks`, `events`.

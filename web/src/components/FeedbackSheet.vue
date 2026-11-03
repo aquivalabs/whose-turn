@@ -4,6 +4,7 @@ import { ref, watch, nextTick } from 'vue';
 import { refAutoReset } from '@vueuse/core';
 import { snapshot, ui } from '../store.ts';
 import { getJson, post, problemsOf } from '../lib/api.ts';
+import { SERVER_DOWN, TEXT_KEPT, writeProblem } from '../lib/problems.ts';
 import type { ApiError, FiledReport } from '../lib/types.ts';
 import { ago } from '../lib/time.ts';
 import { outcomeTone } from '../lib/moves.ts';
@@ -34,11 +35,16 @@ const copied = refAutoReset<'' | 'sent' | 'failed'>('', 1600);
 const reports = ref<ReportLine[]>([]);
 const reportPage = (id: string) => '/report?id=' + encodeURIComponent(id);
 const load = () =>
-  getJson<FeedbackList>('/api/feedback').then((list) => {
-    configured.value = list.configured;
-    project.value = list.configured ? 'Linear · ' + list.project : 'not connected';
-    reports.value = list.reports || [];
-  });
+  getJson<FeedbackList>('/api/feedback').then(
+    (list) => {
+      configured.value = list.configured;
+      project.value = list.configured ? 'Linear · ' + list.project : 'not connected';
+      reports.value = list.reports || [];
+    },
+    () => {
+      problems.value = [SERVER_DOWN + '; past reports cannot be loaded.'];
+    },
+  );
 const close = () => {
   ui.feedback = false;
 };
@@ -84,9 +90,9 @@ const send = () => {
       text.value = '';
       reports.value = reply.reports || reports.value;
     })
-    .catch(() => {
+    .catch((failure: Error) => {
       sending.value = false;
-      problems.value = ['The monitor did not answer.'];
+      problems.value = [writeProblem(failure, { refused: 'Not sent', unreachable: TEXT_KEPT })];
     });
 };
 watch(

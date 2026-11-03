@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { snapshot, ui, now, setMarks } from '../store.ts';
 import { isNew, matchesQuery, groupFeed } from '../lib/feed.ts';
 import type { FeedGroup } from '../lib/feed.ts';
@@ -62,7 +62,10 @@ const toggleGroup = (group: FeedGroup) => {
     ui.openGroups.add(group.id);
   }
 };
-const markAll = () => setMarks({ seen: snapshot.feed.map((item) => item.id), base: Date.now() });
+const problem = ref('');
+const markAll = async () => {
+  problem.value = await setMarks({ seen: snapshot.feed.map((item) => item.id), base: Date.now() });
+};
 </script>
 <template>
   <Island
@@ -91,6 +94,7 @@ const markAll = () => setMarks({ seen: snapshot.feed.map((item) => item.id), bas
         >Mark all read</span
       >
     </div>
+    <p v-if="problem" class="wt-alert wt-todo-problem" role="alert">{{ problem }}</p>
     <div class="wt-feed-search">
       <input
         v-model.trim="ui.feedQuery"

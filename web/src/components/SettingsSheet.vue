@@ -3,6 +3,7 @@
 import { ref, computed, watch, nextTick, useTemplateRef } from 'vue';
 import { snapshot, ui, reload } from '../store.ts';
 import { getJson, post, problemsOf } from '../lib/api.ts';
+import { SERVER_DOWN, writeProblem } from '../lib/problems.ts';
 import {
   normaliseForForm,
   forSaving,
@@ -52,7 +53,10 @@ const typed = new Map<ConnectorEntry, Record<string, string>>();
 const typedCount = ref(0);
 const loadedKey = ref('');
 const ask = ref<Ask | null>(null);
-const dirty = computed(() => typedCount.value > 0 || settingsKey(list.value) !== loadedKey.value);
+const unloaded = ref('');
+const dirty = computed(
+  () => !unloaded.value && (typedCount.value > 0 || settingsKey(list.value) !== loadedKey.value),
+);
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
 const ruleRows = computed(() =>
   ((current.value && tables.value[current.value.id]) || []).map(ruleText),
@@ -111,6 +115,7 @@ const askRemoveConnector = (index: number) => {
 const open = () =>
   getJson<ConfigReply>('/api/config')
     .then((reply) => {
+      unloaded.value = '';
       list.value = (reply.workspaces || []).map(normaliseForForm);
       catalogue.value = reply.connectors || [];
       fields.value = reply.fields;
@@ -125,6 +130,9 @@ const open = () =>
       problems.value = reply.problems || [];
       tables.value = reply.tables || {};
       loadedKey.value = settingsKey(list.value);
+    })
+    .catch(() => {
+      unloaded.value = SERVER_DOWN + '; settings cannot be loaded.';
     })
     .then(nextTick)
     .then(() => {
@@ -160,7 +168,9 @@ const save = async () => {
     close();
     reload();
   } catch (error) {
-    problems.value = [error instanceof Error ? error.message : String(error)];
+    problems.value = [
+      writeProblem(error, { unreachable: SERVER_DOWN + '; your changes are kept, save again.' }),
+    ];
   }
 };
 watch(
@@ -203,6 +213,7 @@ watch(
         <span class="wt-modal-meta">{{ configFile }}</span>
         <span v-if="dirty" class="wt-dirty">Unsaved changes</span>
         <span
+          v-if="!unloaded"
           class="wt-btn tonal"
           role="button"
           tabindex="0"
@@ -226,8 +237,9 @@ watch(
         }}</span>
         <span class="wt-btn" role="button" tabindex="0" @click="answer(false)">{{ ask.no }}</span>
       </div>
-      <div v-if="problems.length" class="wt-alert">{{ problems.join('  ·  ') }}</div>
-      <div class="wt-settings-body">
+      <div v-if="unloaded" class="wt-alert" role="alert">{{ unloaded }}</div>
+      <div v-else-if="problems.length" class="wt-alert">{{ problems.join('  ·  ') }}</div>
+      <div v-if="!unloaded" class="wt-settings-body">
         <ul class="wt-settings-list">
           <li
             v-for="(workspace, index) in list"

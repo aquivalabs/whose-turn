@@ -2,6 +2,7 @@
 // The reporter's page: one issue filed from this machine, its state, and the maintainer's answers. Everything from the server is rendered as text.
 import { ref, onMounted } from 'vue';
 import { getJson } from '../lib/api.ts';
+import { SERVER_DOWN } from '../lib/problems.ts';
 import { when } from '../lib/time.ts';
 import { outcomeTone } from '../lib/moves.ts';
 import type { FiledReport } from '../lib/types.ts';
@@ -19,7 +20,7 @@ onMounted(() => {
       note.value = reply.report ? '' : 'No report ' + id + ' was filed from this machine.';
     })
     .catch(() => {
-      note.value = 'The monitor did not answer. Is it running?';
+      note.value = SERVER_DOWN + '; reload this page once it is back.';
     });
 });
 </script>

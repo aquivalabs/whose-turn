@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The line above the dashboard: Report, the live dot and the last check, Refresh, the app/tab switch, and the copy-everything sparkle.
 import { computed } from 'vue';
-import { snapshot, ui, now, notice, refresh } from '../store.ts';
+import { snapshot, ui, now, notice, refresh, tellProblem } from '../store.ts';
 import { post } from '../lib/api.ts';
 import { tabUrl } from '../lib/window-mode.ts';
 import { liveStatus } from '../lib/live-status.ts';
@@ -18,7 +18,9 @@ const verdict = computed(() => {
   );
 });
 const status = computed(() => ui.status || verdict.value.text);
-const openAsApp = () => post('/api/open', { mode: 'app' });
+const tellOpen = (outcome: unknown) =>
+  tellProblem(outcome, { refused: 'The app window did not open' });
+const openAsApp = () => post('/api/open', { mode: 'app' }).then(tellOpen, tellOpen);
 </script>
 <template>
   <div class="wt-status">

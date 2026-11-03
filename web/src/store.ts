@@ -15,7 +15,7 @@ import { NO_WORKSPACE_MESSAGE, retryWithoutWorkspace } from './lib/load-retry.ts
 import { turnCounts } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
-import { todoProblem } from './lib/todos.ts';
+import { SERVER_DOWN, TEXT_KEPT, writeProblem } from './lib/problems.ts';
 import type { ApiError, FeedItem, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
@@ -62,6 +62,14 @@ lastMode.value = ui.mode;
 
 /** A refused write's message: shown beside the live text for a few seconds, then gone. */
 export const notice = refAutoReset('', 6000);
+/** Puts the problem of a write that has no control of its own into the notice; resolves with whether the write went through. */
+export const tellProblem = (outcome: unknown, options?: Parameters<typeof writeProblem>[1]) => {
+  const problem = writeProblem(outcome, options);
+  if (problem) {
+    notice.value = problem;
+  }
+  return !problem;
+};
 
 /** An app window reports its size after each resize, so the next one opens the same size. */
 export const reportWindowSize = () => {
@@ -71,7 +79,7 @@ export const reportWindowSize = () => {
   useEventListener(
     window,
     'resize',
-    useDebounceFn(() => post('/api/window', sizeBody(window)), 600),
+    useDebounceFn(() => post('/api/window', sizeBody(window)).catch(tellProblem), 600),
   );
 };
 
@@ -107,16 +115,16 @@ export const closeSheets = () => {
 type StateReply = Snapshot & { error?: ApiError };
 
 let version = -1;
-export const load = (): Promise<Snapshot> =>
-  getJson<StateReply>('/api/state' + (ui.ws ? '?ws=' + encodeURIComponent(ui.ws) : '')).then(
+/** Reads one workspace's state; ui.ws changes only once the server has answered with it. */
+export const load = (asked = ui.ws): Promise<Snapshot> =>
+  getJson<StateReply>('/api/state' + (asked ? '?ws=' + encodeURIComponent(asked) : '')).then(
     (reply) => {
       if (reply.error) {
-        if (!retryWithoutWorkspace(ui.ws)) {
+        if (!retryWithoutWorkspace(asked)) {
           ui.status = NO_WORKSPACE_MESSAGE;
           return snapshot;
         }
-        ui.ws = '';
-        return load();
+        return load('');
       }
       Object.assign(snapshot, reply);
       ui.ws = snapshot.workspace.id;
@@ -175,42 +183,48 @@ watch(
 );
 export const connect = () => stream.open();
 
+/** Switches only when the server answers with the workspace; with the server down the click is ignored and the notice says why. */
 export const switchWorkspace = (id: string) => {
   if (id === snapshot.workspace.id) {
-    return;
+    return Promise.resolve();
   }
-  ui.ws = id;
-  lastWorkspace.value = id;
-  ui.open.clear();
-  reload();
+  version = -1;
+  return load(id).then(
+    () => {
+      lastWorkspace.value = ui.ws;
+      ui.open.clear();
+    },
+    () => {
+      notice.value = SERVER_DOWN + '; staying on ' + snapshot.workspace.name + '.';
+    },
+  );
 };
 
-const refused = (reply: { error?: ApiError } | null, what: string) => {
-  if (reply && reply.error) {
-    notice.value = what + ': ' + (reply.error.message || 'refused');
-    return true;
-  }
-  return false;
-};
 const postWs = <T>(url: string, body: object) =>
   post<T & { error?: ApiError }>(url, { ws: snapshot.workspace.id, ...body });
+/** Sends one marks change; resolves with the problem line to show next to its control, empty when the server confirmed it. */
 export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen?: string[] }) =>
-  postWs<Snapshot['marks']>('/api/marks', body).then((marks) => {
-    if (!refused(marks, 'The mark was not saved')) {
-      snapshot.marks = marks;
-    }
-  });
+  postWs<Snapshot['marks']>('/api/marks', body).then(
+    (marks) => {
+      const problem = writeProblem(marks);
+      if (!problem) {
+        snapshot.marks = marks;
+      }
+      return problem;
+    },
+    (failure: Error) => writeProblem(failure),
+  );
 /** Sends one to-do change; resolves with the problem line to show, empty when the server confirmed it. */
 export const todoAct = (body: { action: string; text?: string; id?: string }) =>
   postWs<Todo[]>('/api/todos', body).then(
     (list) => {
-      const problem = todoProblem(Array.isArray(list) ? null : list);
+      const problem = writeProblem(list, { unreachable: TEXT_KEPT });
       if (!problem && Array.isArray(list)) {
         snapshot.todos = list;
       }
       return problem;
     },
-    (failure: Error) => todoProblem(failure),
+    (failure: Error) => writeProblem(failure, { unreachable: TEXT_KEPT }),
   );
 /** Dragging a workspace icon rewrites the config in the new order: the same raw entries, so secrets and caches stay. */
 export const reorderWorkspaces = (ids: string[]) =>
@@ -221,11 +235,14 @@ export const reorderWorkspaces = (ids: string[]) =>
         secrets: [],
       }),
     )
-    .then((reply) => {
-      if (!refused(reply, 'The order was not saved')) {
-        reload();
-      }
-    });
+    .then(
+      (reply) => {
+        if (tellProblem(reply, { refused: 'The order was not saved' })) {
+          reload();
+        }
+      },
+      (failure: Error) => tellProblem(failure, { refused: 'The order was not saved' }),
+    );
 /** The workspace the first-run card offers: invented data from the northwind scenario, no account needed. */
 const DEMO_WORKSPACE = {
   id: 'demo',
@@ -245,13 +262,19 @@ export const tryDemo = () =>
             secrets: [],
           }),
     )
-    .then((reply) => {
-      if (!refused(reply, 'The demo workspace was not added')) {
-        switchWorkspace(DEMO_WORKSPACE.id);
-      }
-    });
+    .then(
+      (reply) => {
+        if (tellProblem(reply, { refused: 'The demo workspace was not added' })) {
+          return switchWorkspace(DEMO_WORKSPACE.id);
+        }
+      },
+      (failure: Error) => tellProblem(failure, { refused: 'The demo workspace was not added' }),
+    );
 export const refresh = () => {
   ui.status = 'Checking now…';
-  post('/api/refresh');
+  post('/api/refresh').catch((failure: Error) => {
+    ui.status = '';
+    tellProblem(failure);
+  });
   showBackdrop({ workspace: snapshot.workspace.id, seed: Math.floor(Math.random() * 4294967296) });
 };

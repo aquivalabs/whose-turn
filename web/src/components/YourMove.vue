@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
 import { snapshot, ui, now, setMarks } from '../store.ts';
 import { yourRows } from '../lib/moves.ts';
 import type { YourRow } from '../lib/moves.ts';
@@ -40,8 +40,18 @@ const emptyText = computed(() => {
         ' failing. Check Settings.'
     : 'Nothing is waiting on you.';
 });
-const mark = (item: YourRow) =>
-  setMarks({ handled: { [item.row.row_id]: item.handled ? null : new Date().toISOString() } });
+const problems = reactive(new Map<string, string>());
+const mark = async (item: YourRow) => {
+  const id = item.row.row_id;
+  const problem = await setMarks({
+    handled: { [id]: item.handled ? null : new Date().toISOString() },
+  });
+  if (problem) {
+    problems.set(id, problem);
+  } else {
+    problems.delete(id);
+  }
+};
 </script>
 <template>
   <Island
@@ -101,6 +111,13 @@ const mark = (item: YourRow) =>
                   >handled</span
                 >
               </span>
+              <p
+                v-if="problems.get(item.row.row_id)"
+                class="wt-alert wt-todo-problem wt-row-problem"
+                role="alert"
+              >
+                {{ problems.get(item.row.row_id) }}
+              </p>
             </td>
             <PrCell :row="item.row" />
             <td class="wt-hide-narrow" :class="{ 'wt-quote': item.row.comment }">
