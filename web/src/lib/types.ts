@@ -87,7 +87,7 @@ export interface Health {
   ok: boolean;
   stale: boolean;
   fresh_at: string;
-  failing: string[];
+  failing: { source: string; polls: number }[];
   alerts: { text: string }[];
 }
 

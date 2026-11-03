@@ -117,3 +117,18 @@ test('recovery is announced, and stale data is noticed without any poll running'
   built.checkHealth();
   assert.equal(sent.length, 3);
 });
+
+test('the open window is told when a failing streak grows, not only when an alert is raised or clears', async () => {
+  const { built } = workspace({ fail: true }, { stale_minutes: 15, failing_polls: 1 });
+  const versions = [];
+  built.subscribe(() => versions.push(built.store.state.version));
+  await built.poll();
+  const first = built.snapshot().health.alerts[0].text;
+  const before = built.store.state.version;
+  await built.poll();
+  assert.ok(built.store.state.version > before);
+  assert.notEqual(built.snapshot().health.alerts[0].text, first);
+  const steady = built.store.state.version;
+  built.checkHealth();
+  assert.equal(built.store.state.version, steady);
+});

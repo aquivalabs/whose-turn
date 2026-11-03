@@ -329,6 +329,7 @@
   .wt-status { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--md-on-surface-variant); margin: 0 4px 8px; font-family: var(--md-font); }
   .wt-live { width: 8px; height: 8px; border-radius: 50%; background: #2bb673; box-shadow: 0 0 0 0 rgba(43, 182, 115, .6); animation: wt-pulse 2s infinite; }
   .wt-live.off { background: #d6455d; animation: none; }
+  .wt-live.warn { background: #e0a030; animation: none; }
   .wt-notice { color: #d6455d; }
   @keyframes wt-pulse { 0% { box-shadow: 0 0 0 0 rgba(43, 182, 115, .5); } 70% { box-shadow: 0 0 0 8px rgba(43, 182, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(43, 182, 115, 0); } }
   @media (prefers-reduced-motion: reduce) { .wt-live { animation: none; } }

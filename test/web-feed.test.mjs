@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { reactive } from 'vue';
 import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.ts';
+import { liveStatus } from '../web/src/lib/live-status.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
 import { todoProblem, UNREACHABLE_TEXT } from '../web/src/lib/todos.ts';
 
@@ -115,4 +116,22 @@ test('a refused to-do change shows the server message, a network failure the kep
   assert.equal(todoProblem(new Error('unreachable')), UNREACHABLE_TEXT);
   assert.equal(todoProblem(null), '');
   assert.equal(todoProblem({}), '');
+});
+
+test('the live status is red when every source fails, amber when some do, green otherwise', () => {
+  const fresh = new Date().toISOString();
+  const health = (failing, stale = false) => ({ ok: !failing.length && !stale, stale, fresh_at: fresh, failing: failing.map((source) => ({ source, polls: 3 })), alerts: [] });
+  const all = liveStatus(health(['trello']), fresh, 1, true);
+  assert.equal(all.dot, 'off');
+  assert.equal(all.noData, true);
+  assert.equal(all.text, 'No data: trello failing · last data now');
+  const some = liveStatus(health(['trello']), fresh, 2, true);
+  assert.equal(some.dot, 'warn');
+  assert.equal(some.noData, false);
+  assert.match(some.text, /^trello failing · last check now/);
+  assert.equal(liveStatus(health(['a']), fresh, 2, false).dot, 'off');
+  const ok = liveStatus(health([]), fresh, 1, true);
+  assert.equal(ok.dot, 'ok');
+  assert.match(ok.text, /^Live · last check now/);
+  assert.match(liveStatus(health([], true), fresh, 1, true).text, /^Stale · last data now/);
 });

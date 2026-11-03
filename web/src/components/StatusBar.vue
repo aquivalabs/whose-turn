@@ -4,25 +4,20 @@ import { computed } from 'vue';
 import { snapshot, ui, now, notice, refresh } from '../store.ts';
 import { post } from '../lib/api.ts';
 import { tabUrl } from '../lib/window-mode.ts';
-import { ago } from '../lib/time.ts';
+import { liveStatus } from '../lib/live-status.ts';
 import { BUG } from '../lib/icons.ts';
 import AiButton from './AiButton.vue';
 const emit = defineEmits<{ report: [] }>();
-const stale = computed(() => snapshot.health.stale);
-const status = computed(() => {
+const verdict = computed(() => {
   void now.value;
-  if (ui.status) {
-    return ui.status;
-  }
-  if (stale.value) {
-    return 'Stale · last data ' + ago(snapshot.health.fresh_at) + ' · checks every minute';
-  }
-  return (
-    'Live · last check ' +
-    (snapshot.polled_at ? ago(snapshot.polled_at) : '—') +
-    ' · checks every minute'
+  return liveStatus(
+    snapshot.health,
+    snapshot.polled_at,
+    snapshot.workspace.connectors.length,
+    ui.live,
   );
 });
+const status = computed(() => ui.status || verdict.value.text);
 const openAsApp = () => post('/api/open', { mode: 'app' });
 </script>
 <template>
@@ -37,7 +32,10 @@ const openAsApp = () => post('/api/open', { mode: 'app' });
     >
       <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="BUG" fill="currentColor" /></svg>Report
     </span>
-    <span class="wt-live" :class="{ off: !ui.live || stale }"></span>
+    <span
+      class="wt-live"
+      :class="{ off: verdict.dot === 'off', warn: verdict.dot === 'warn' }"
+    ></span>
     <span>{{ status }}</span>
     <span v-if="notice" class="wt-notice" role="alert">{{ notice }}</span>
     <span

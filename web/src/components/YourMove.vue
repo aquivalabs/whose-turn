@@ -5,6 +5,7 @@ import { snapshot, ui, now, setMarks } from '../store.ts';
 import { yourRows } from '../lib/moves.ts';
 import type { YourRow } from '../lib/moves.ts';
 import { age, ago, when } from '../lib/time.ts';
+import { liveStatus } from '../lib/live-status.ts';
 import Island from './Island.vue';
 import Segmented from './Segmented.vue';
 import TicketCell from './TicketCell.vue';
@@ -21,6 +22,23 @@ const options = computed(() => [
   { id: 'open', label: 'Open', count: view.value.open },
   { id: 'handled', label: 'Handled', count: view.value.handled },
 ]);
+const emptyText = computed(() => {
+  if (ui.move === 'handled') {
+    return 'Nothing marked as handled.';
+  }
+  const { noData, failing } = liveStatus(
+    snapshot.health,
+    snapshot.polled_at,
+    snapshot.workspace.connectors.length,
+    ui.live,
+  );
+  return noData
+    ? 'No data: ' +
+        failing.join(', ') +
+        (failing.length === 1 ? ' is' : ' are') +
+        ' failing. Check Settings.'
+    : 'Nothing is waiting on you.';
+});
 const mark = (item: YourRow) =>
   setMarks({ handled: { [item.row.row_id]: item.handled ? null : new Date().toISOString() } });
 </script>
@@ -112,7 +130,7 @@ const mark = (item: YourRow) =>
       <RecentlyDone />
     </div>
     <p v-if="!view.rows.length" class="wt-empty">
-      {{ ui.move === 'handled' ? 'Nothing marked as handled.' : 'Nothing is waiting on you.' }}
+      {{ emptyText }}
     </p>
   </Island>
 </template>
