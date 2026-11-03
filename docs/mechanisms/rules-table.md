@@ -131,8 +131,8 @@ The user's own name is shown as `you` wherever a person appears: the `With` cell
 13. QA status: them, "QA".
 14. On hold with a reason: them, "On hold: {ticket.hold_reason}", `hold`.
 15. On hold: them, "On hold".
-16. Not done, on you, in progress: you, "Continue the work", `rank` 2, `started`.
-17. Not done, on you: you, "Pick it up".
+16. Not done, on you, started: you, "Continue the work", `rank` 2, `started`; the why says "no pull request is waiting on anyone".
+17. Not done, on you: you, "Pick it up"; same why ending.
 18. Anything else: them, "Not yours now".
 
 `workspaces[].rules.table` is a list of rows. Without it the default table applies. With it, the list
@@ -155,7 +155,7 @@ spot; that one key covers replacing the default and extending it on either side:
 workspace and the 1-based row: an unknown fact, an unknown operator, a value of the wrong type or outside a
 closed list (status groups included), an unknown `whose`, a missing `next`, a `started` or `hold` that is not a boolean, an unknown key, an unknown
 `{fact}` in a text, or `"default"` used twice. On `POST /api/config` any problem refuses the whole write
-with `INVALID_CONFIG`, one `field_violations` entry per problem, and nothing is saved. On load, a bad table
+with `INVALID_CONFIG`, one `field_violations` entry per problem, and nothing is saved; a problem of one field (id, key pattern, `backlog_rows`, a connector field with `choices`) names its path, such as `workspaces[0].rules.backlog_rows`. On load, a bad table
 is reported in `problems` and the workspace runs on the default table.
 
 A valid table can still be a mistake, so `tableWarnings` adds two warnings that never refuse a write: the
