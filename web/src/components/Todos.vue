@@ -5,6 +5,7 @@ import { snapshot, ui, now, todoAct } from '../store.ts';
 import type { Todo } from '../lib/types.ts';
 import { ago } from '../lib/time.ts';
 import Island from './Island.vue';
+import Segmented from './Segmented.vue';
 import ExtLink from './ExtLink.vue';
 
 interface TextPart {
@@ -56,9 +57,16 @@ const add = async () => {
 };
 const flip = (todo: Todo) => send({ action: todo.done ? 'undo' : 'done', id: todo.id });
 const remove = (todo: Todo) => send({ action: 'delete', id: todo.id });
-const toggleDone = () => {
-  ui.showDone = !ui.showDone;
-};
+const view = computed({
+  get: () => (ui.showDone ? 'done' : 'open'),
+  set: (id) => {
+    ui.showDone = id === 'done';
+  },
+});
+const options = computed(() => [
+  { id: 'open', label: 'Open', count: open.value.length },
+  { id: 'done', label: 'Done', count: done.value.length },
+]);
 </script>
 <template>
   <Island
@@ -67,9 +75,7 @@ const toggleDone = () => {
     note="Your own notes"
     tip='Your personal to-dos, kept on this machine. Add here, or ask Claude: "add to my to-do: …". A ticket key like PROJ-123 in the text becomes a link.'
   >
-    <template #head
-      ><span v-if="open.length" class="wt-count">{{ open.length }}</span></template
-    >
+    <template #head><Segmented v-model="view" :options="options" label="Show" /></template>
     <div class="wt-todo-add">
       <input
         v-model="draft"
@@ -81,13 +87,12 @@ const toggleDone = () => {
         @keydown.enter="add"
       />
       <span
-        class="wt-seg-b wt-todo-toggle"
+        class="wt-btn tonal"
         role="button"
         tabindex="0"
-        :aria-pressed="ui.showDone"
-        @click="toggleDone"
-        @keydown.enter.prevent="toggleDone"
-        >Done <b>{{ done.length }}</b></span
+        @click="add"
+        @keydown.enter.prevent="add"
+        >Add</span
       >
     </div>
     <p v-if="problem" class="wt-alert wt-todo-problem" role="alert">{{ problem }}</p>
