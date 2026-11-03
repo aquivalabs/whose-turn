@@ -15,6 +15,7 @@ export const REASON_COPY: Record<string, string> = {
     "The maintainer's tracker is not connected on this machine, so nothing can be sent from here.",
   UPSTREAM_FAILED: 'The tracker did not answer; try again in a minute.',
   RATE_LIMITED: 'The source is rate-limited; the monitor backs off.',
+  OPEN_TOO_SOON: 'The app window is already opening; give it a few seconds.',
   INTERNAL: 'The local server failed; see its log.',
 };
 

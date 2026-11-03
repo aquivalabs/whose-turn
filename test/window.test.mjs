@@ -90,3 +90,22 @@ test('open.sh on Linux uses the first Chrome or Edge on PATH, else xdg-open', as
   }
   assert.equal(readFileSync(argLog, 'utf8').trim(), 'chromium --app=http://127.0.0.1:8771/?mode=app --window-size=1500,950');
 });
+
+test('a second /api/open of the same mode within five seconds is refused and opens one window', async () => {
+  const opened = [];
+  const at = 19000 + Math.floor(Math.random() * 900);
+  const server = await startApi({ port: at, appDir: new URL('..', import.meta.url).pathname, registry: { workspaces: [], rawWorkspaces: [], problems: [], subscribe: () => () => {} }, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: {}, dataDir: mkdtempSync(join(tmpdir(), 'wt-open-')), opener: (call) => opened.push(call) });
+  const open = (mode) => fetch(`http://127.0.0.1:${at}/api/open`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
+  try {
+    assert.equal((await open('app')).status, 200);
+    const second = await open('app');
+    const error = (await second.json()).error;
+    assert.equal(second.status, 429);
+    assert.equal(error.details[0].reason, 'OPEN_TOO_SOON');
+    assert.ok(error.details[0].metadata.retry_after_seconds >= 1);
+    assert.equal((await open('browser')).status, 200);
+    assert.deepEqual(opened, [{ mode: 'app', port: at }, { mode: 'browser', port: at }]);
+  } finally {
+    server.close();
+  }
+});

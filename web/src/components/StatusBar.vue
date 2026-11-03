@@ -1,9 +1,10 @@
 <script setup lang="ts">
 // The line above the dashboard: Report, the live dot and the last check, Refresh, the app/tab switch, and the copy-everything sparkle.
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { snapshot, ui, now, notice, refresh, tellProblem } from '../store.ts';
 import { post } from '../lib/api.ts';
 import { tabUrl } from '../lib/window-mode.ts';
+import { writeProblem } from '../lib/problems.ts';
 import { liveStatus } from '../lib/live-status.ts';
 import { BUG } from '../lib/icons.ts';
 import AiButton from './AiButton.vue';
@@ -17,10 +18,28 @@ const verdict = computed(() => {
     ui.live,
   );
 });
-const status = computed(() => ui.status || verdict.value.text);
+const OPEN_COOLDOWN_MS = 5000;
+const opening = ref(false);
+const opened = ref(false);
+const status = computed(() =>
+  opened.value
+    ? 'Opened in the app window. You can close this tab.'
+    : ui.status || verdict.value.text,
+);
 const tellOpen = (outcome: unknown) =>
   tellProblem(outcome, { refused: 'The app window did not open' });
-const openAsApp = () => post('/api/open', { mode: 'app' }).then(tellOpen, tellOpen);
+const openAsApp = () => {
+  if (opening.value) {
+    return;
+  }
+  opening.value = true;
+  setTimeout(() => (opening.value = false), OPEN_COOLDOWN_MS);
+  const settle = (outcome: unknown) => {
+    tellOpen(outcome);
+    opened.value = !writeProblem(outcome);
+  };
+  void post('/api/open', { mode: 'app' }).then(settle, settle);
+};
 </script>
 <template>
   <div class="status-bar">
@@ -64,11 +83,13 @@ const openAsApp = () => post('/api/open', { mode: 'app' }).then(tellOpen, tellOp
     <span
       v-else
       class="btn status-bar__btn"
+      :class="{ 'status-bar__btn--busy': opening }"
       role="button"
       tabindex="0"
+      :aria-disabled="opening"
       @click="openAsApp"
       @keydown.enter.prevent="openAsApp"
-      >Open as app</span
+      >{{ opening ? 'Opening…' : 'Open as app' }}</span
     >
     <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint"
       >AI: copy everything</span
@@ -91,6 +112,11 @@ const openAsApp = () => post('/api/open', { mode: 'app' }).then(tellOpen, tellOp
   padding: 0 12px;
   font-size: 12px;
   text-decoration: none;
+}
+
+.status-bar__btn--busy {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .status-bar__report {
