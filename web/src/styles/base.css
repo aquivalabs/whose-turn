@@ -392,8 +392,12 @@
   .wt .wt-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; font-size: 12px; font-weight: 700; background: var(--md-primary); color: var(--md-on-primary); }
   .wt .wt-count:empty { display: none; }
 
-  /* Recently done: a folded list under Your move; the native marker is replaced by the chevron the panels use. */
-  .wt .wt-recent { border-top: 1px solid var(--md-outline-variant); padding: 4px 0 8px; }
+  /* Recently done: a block of its own at the bottom of Your move, folded by default; an open list scrolls inside it; the native marker is replaced by the chevron the panels use. */
+  .wt .wt-recent { flex: 0 1 auto; min-height: 33px; overflow: hidden; display: flex; flex-direction: column; margin: 0 -20px; padding: 0 20px; border-top: 1px solid var(--md-outline-variant); }
+  .wt .wt-recent[open] { min-height: 128px; }
+  .wt .wt-recent summary { flex: none; min-height: 32px; }
+  .wt .wt-recent-list { flex: 1 1 auto; min-height: 0; margin: 0 -20px; max-height: min(30vh, 240px); overflow: auto; padding-bottom: 8px; }
+  .wt-fit #your-move .wt-scroll { min-height: 5rem; }
   .wt .wt-recent summary { display: flex; align-items: center; gap: 4px; min-height: 40px; cursor: pointer; list-style: none; font-size: 14px; font-weight: 500; color: var(--md-on-surface-variant); }
   .wt .wt-recent summary::-webkit-details-marker { display: none; }
   .wt .wt-recent summary::before { content: '▾'; display: inline-grid; place-items: center; width: 24px; font-size: 18px; transition: transform .15s ease; transform: rotate(-90deg); }

@@ -145,10 +145,10 @@ const mark = async (item: YourRow) => {
           </tr>
         </tbody>
       </table>
-      <RecentlyDone />
     </RowScroll>
     <p v-if="!view.rows.length" class="wt-empty">
       {{ emptyText }}
     </p>
+    <RecentlyDone v-if="ui.move === 'open'" />
   </Island>
 </template>
