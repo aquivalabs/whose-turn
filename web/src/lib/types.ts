@@ -176,6 +176,7 @@ export interface FieldSpec {
   colour?: boolean;
   list?: boolean;
   boolean?: boolean;
+  default?: boolean;
   hint?: string;
 }
 

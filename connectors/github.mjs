@@ -17,7 +17,7 @@ export const fields = [
   { key: 'me', label: 'Your login', hint: 'left empty, it is asked from the API once' },
   { key: 'account', label: 'gh account', hint: 'which logged-in gh account to use' },
   { key: 'bots', label: 'Bot logins', hint: 'comma-separated; their comments never count as a reply', list: true },
-  { key: 'workflow_runs', label: 'Workflow runs', hint: 'watch the Actions runs on the default branch; on unless set to false', boolean: true },
+  { key: 'workflow_runs', label: 'Workflow runs', hint: 'watch the Actions runs on the default branch; on unless set to false', boolean: true, default: true },
 ];
 
 export const persistedCache = ['prs', 'asks', 'runStreaks'];

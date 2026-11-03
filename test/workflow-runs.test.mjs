@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as github from '../connectors/github.mjs';
 import { compileRules, turnRows, feedRows } from '../lib/rules.mjs';
 import { DEFAULT_RULES, normaliseWorkspaces } from '../lib/config.mjs';
+import { connectorCatalogue } from '../connectors/index.mjs';
 
 const SINCE = '2026-10-01T00:00:00Z';
 const workflowRun = (overrides = {}) => ({
@@ -84,4 +85,11 @@ test('workflow_runs: false turns the runs off, and a value that is not a boolean
   const problems = (value) => normaliseWorkspaces([{ id: 'w', connectors: { github: { repo: 'acme/app', workflow_runs: value } } }]).problems;
   assert.deepEqual(problems(false), []);
   assert.ok(problems('no').some((problem) => problem.includes('workflow_runs must be true or false')), problems('no').join('\n'));
+});
+
+test('the connector catalogue declares workflow_runs as a boolean that is on by default', () => {
+  const github = connectorCatalogue().find((connector) => connector.type === 'github');
+  const field = github.fields.find((candidate) => candidate.key === 'workflow_runs');
+  assert.equal(field.boolean, true);
+  assert.equal(field.default, true);
 });

@@ -75,13 +75,13 @@ export const pendingSecrets = (
   return out;
 };
 
-/** Set a field, or drop it when emptied, so the saved config stays minimal. */
+/** Set a field, or drop it when emptied (a boolean is always kept; FieldRow sends undefined for the default), so the saved config stays minimal. */
 export const setOrDrop = (
   target: Record<string, unknown>,
   key: string,
-  value: string | string[] | undefined,
+  value: string | string[] | boolean | undefined,
 ) => {
-  if (value && value.length) {
+  if (typeof value === 'boolean' || (value && value.length)) {
     target[key] = value;
   } else {
     delete target[key];

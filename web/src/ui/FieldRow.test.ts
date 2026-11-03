@@ -21,3 +21,21 @@ test('None on a colour field sends an empty value for the parent to drop', async
 
   expect(emitted()['update:modelValue']).toEqual([['']]);
 });
+
+const runs = { key: 'workflow_runs', label: 'Workflow runs', boolean: true, default: true, hint: 'watch runs' };
+
+test('a boolean field is a checkbox that shows its default when unset', () => {
+  render(FieldRow, { props: { spec: runs, modelValue: undefined } });
+
+  expect((screen.getByRole('checkbox', { name: 'watch runs' }) as HTMLInputElement).checked).toBe(true);
+});
+
+test('unticking a default-on checkbox sends false and ticking it again sends nothing', async () => {
+  const { emitted } = render(FieldRow, { props: { spec: runs, modelValue: undefined } });
+  const box = screen.getByRole('checkbox');
+
+  await fireEvent.click(box);
+  await fireEvent.click(box);
+
+  expect(emitted()['update:modelValue']).toEqual([[false], [undefined]]);
+});
