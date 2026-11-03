@@ -1,8 +1,33 @@
 # Whose Turn
 
-A local monitor that answers "what is waiting on me right now" across your sources: Jira and GitHub today, Linear next. It polls each source about once a minute, evaluates the "whose turn" rules once on the server, pushes changes live to a window, sends a desktop notification when something becomes your move, and keeps your personal to-dos. It also ships as a Claude Code plugin, so a session starts with "N your move · M unread · K to-do" already in context.
+A local monitor that answers "what is waiting on me right now" across the places your work arrives: GitHub pull requests, Jira and Linear tickets, and your own to-dos. It polls each source about once a minute, decides once, on the server, whose turn every ticket is, shows the result in a window that updates live, sends a desktop notification when something becomes your move, and hands any item to an AI assistant as Markdown with its context. It also ships as a Claude Code plugin, so a session starts with "N your move · M unread · K to-do" already in context.
 
-Node 22, no dependencies, no build step. The window is plain JavaScript.
+![The window on the demo workspace: Your move, To do, Waiting on others, and the feed](docs/window.png)
+
+Everything runs on your machine: a Node 22 server on `127.0.0.1`, a window built with Vue, and no account anywhere but the sources you already use. Nothing that names an employer, an account or a team process lives in this repository; it all sits in one config file on the machine that owns it.
+
+## Install
+
+You need Node 22 or newer and, for GitHub, the `gh` CLI signed in.
+
+```sh
+git clone https://github.com/OWNER/whose-turn && cd whose-turn
+npm ci && npm run build
+./install.sh && ./open.sh
+```
+
+`install.sh` makes the monitor start at login and restart if it stops (a launch agent on macOS, a systemd user unit on Linux; on Windows it prints the one `schtasks` line to run). `open.sh` opens the window as its own app window, or in a browser tab with `--browser`. The window listens on port 8765; `WHOSE_TURN_PORT` changes that.
+
+For Claude Code, add the repository as a plugin marketplace and install the plugin:
+
+```sh
+claude plugin marketplace add OWNER/whose-turn
+claude plugin install whose-turn@whose-turn-local
+```
+
+## First run
+
+The window opens on one card: add a source through the settings sheet (the gear at the bottom of the rail), or press "Try a demo workspace" to see every state on invented data without any account. A source needs an account and its filters; a token typed into a secret field goes to the platform's secret store, never into the config file. Claude can set a workspace up too, through the `whose_turn_config` MCP tool. From then on the server polls, the window follows, and the Claude Code plugin reads the same server.
 
 ## Workspaces and connectors
 
@@ -166,7 +191,6 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - `POST /api/inbox` with `{ws, kind: 'row' | 'feed' | 'workspace', ref}` hands an item to an agent through a queue (`ws` is required, a hand-off without it is refused; for MCP clients and the plugin hook): the server queues it in `<data>/inbox.json` with a few words of snapshot and keeps `<data>/inbox.pending` as a marker while the queue is not empty. `{action: 'take', consumer}` returns the items this consumer has not seen yet, each with its context built at that moment (the row with its why and links, the last five comments and the PRs of its ticket, bodies capped; a feed item with its body; or the whole workspace with its rules, moves, waiting rows and to-dos), and marks them delivered to that consumer only, so every agent sees an item once. An item leaves the queue a day after its first delivery or a week after it was queued. `GET /api/inbox?consumer=<name>` lists without taking; `{action: 'clear'}` empties the queue.
 - `GET /api/config`: the raw workspace list as written in the config file, the `problems`, the connector catalogue (`type`, `label`, `fields`), the workspace field catalogue (`fields`: workspace, theme, rules, statuses) and the config file path. `POST /api/config` with `{workspaces: [...], secrets?: [{ws, connector, key, value}]}` validates the list first; on a problem it answers `INVALID_CONFIG` with the problems as `BadRequest.field_violations` in `details` and stores nothing. Otherwise it stores the secrets (the account and the store entry come from the connector's own field declaration), writes the file and reloads the workspaces in place; a workspace whose definition did not change keeps its caches, new or changed ones are polled at once. The reply carries the workspace list and `secrets_stored`. A workspace or connector entry that is not an object is refused with `INVALID_CONFIG`, the field violation naming its index (`workspaces[1]`, `workspaces[1].connectors[0]`). An empty list is refused with `INVALID_ARGUMENT` ("keep at least one workspace"), and each write keeps the previous file as `config.json.bak`.
 - `POST /api/secrets` with `{service, account, value}` stores a token on its own (Keychain on macOS, a 600-mode file `<data>/secrets/<service>@<account>` elsewhere); it never touches the config.
-- Both write endpoints are reachable by any local process. A stored token is bound to its service, account and endpoint: a save that would point an existing token at a new endpoint, account or store entry is refused with `INVALID_CONFIG` unless the same request carries the token again, so a process without the token cannot redirect it. See AGENTS.md.
 - Both write endpoints are reachable by any local process. A stored token is bound to its service, account and endpoint: a save that would point an existing token at a new endpoint, account or store entry is refused with `INVALID_CONFIG` unless the same request carries the token again, so a process without the token cannot redirect it. See AGENTS.md.
 
 ## The window
