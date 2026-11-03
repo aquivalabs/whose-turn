@@ -1,6 +1,7 @@
 /** GitHub connector: your PRs in one repository with reviews, comments and checks, plus review requests and mentions across the org. Token from `gh auth token`. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { RateLimited } from '../lib/http-client.mjs';
 import { oneline, nowIso, mapLimit, wordsRegex } from '../lib/text.mjs';
 
 const run = promisify(execFile);
@@ -231,7 +232,7 @@ export const poll = async ({ settings, http, cache, sinceIso, keyOf }) => {
   const errors = {};
   for (const [part, outcome] of [['pulls', prsOutcome], ['notifications', asksOutcome]]) {
     if (outcome.status === 'rejected') {
-      if (outcome.reason.name === 'RateLimited') {
+      if (outcome.reason instanceof RateLimited) {
         throw outcome.reason;
       }
       errors[part] = `${outcome.reason.name}: ${outcome.reason.message}`;

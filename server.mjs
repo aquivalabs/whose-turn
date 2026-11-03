@@ -4,6 +4,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, saveWorkspaces } from './lib/config.mjs';
 import { createHttpClient } from './lib/http-client.mjs';
+import { nextDelay } from './lib/backoff.mjs';
 import { createSecrets } from './lib/secrets.mjs';
 import { createWorkspace } from './lib/workspace.mjs';
 import { createRegistry } from './lib/registry.mjs';
@@ -42,7 +43,7 @@ const pollLoop = async () => {
   let delay = pollSeconds;
   for (;;) {
     const outcomes = await Promise.all(registry.workspaces.map((workspace) => workspace.poll()));
-    delay = outcomes.some((outcome) => outcome.rateLimited) ? Math.min(delay * 2, 15 * 60) : pollSeconds;
+    delay = nextDelay(outcomes, delay, pollSeconds);
     await sleep(delay);
   }
 };
