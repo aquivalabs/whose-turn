@@ -3,13 +3,13 @@ import { reasonOf } from './api.ts';
 import { NO_WORKSPACE_MESSAGE } from './load-retry.ts';
 import type { ApiError } from './types.ts';
 
-export const UNREACHABLE = 'unreachable';
+const UNREACHABLE = 'unreachable';
 export const SERVER_DOWN = 'The local server is not answering';
 export const UNREACHABLE_TEXT = SERVER_DOWN + '; try again once it is back.';
 export const TEXT_KEPT = SERVER_DOWN + '; your text is kept.';
 
 /** What each reason of the server's error registry says to the user; any other reason shows the envelope's own message. */
-export const REASON_COPY: Record<string, string> = {
+const REASON_COPY: Record<string, string> = {
   NO_WORKSPACE: NO_WORKSPACE_MESSAGE,
   NOT_CONFIGURED:
     "The maintainer's tracker is not connected on this machine, so nothing can be sent from here.",
