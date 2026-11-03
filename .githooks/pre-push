@@ -5,6 +5,6 @@ npm run check
 # Docs gate — blocks a push that leaves a declared mechanism's doc behind.
 # Ignores the ref pairs git passes on stdin: a per-push range would fail a rule the PR satisfies.
 python3 scripts/docs-check.py
-# Review gate — fresh passing /review attestation for this diff + secret scan.
-# Self-contained: fetch + run the pinned published harness; nothing vendored in this repo.
-npx -y -p bladeforge-review-harness@0.3.1 review-gate
+# Secret scan on every push. The full review gate (a fresh /review attestation) is off during the alpha
+# and runs once at the end of a working day instead; AGENTS.md "Gates", RMA-206. RMA-207 turns it back on per PR.
+npx -y -p bladeforge-review-harness@0.3.1 review-gate --secrets-only

@@ -1,8 +1,9 @@
 name: review-gate
 # The attestation and secret-scan half of the pre-push gate; `check.yml` runs the types, lint and tests half.
 # Why the merge commit's hash matches the local attestation only for a branch that contains main: AGENTS.md, "Gates".
+# Off during the alpha (RMA-206): manual runs only; RMA-207 puts it back on pull requests.
 on:
-  pull_request:
+  workflow_dispatch:
 jobs:
   review-gate:
     runs-on: ubuntu-latest
