@@ -6,6 +6,7 @@ import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/m
 import { topLayer } from '../web/src/lib/layers.ts';
 import { liveStatus } from '../web/src/lib/live-status.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
+import { latestWins } from '../web/src/lib/latest-wins.ts';
 import { writeProblem, UNREACHABLE_TEXT, TEXT_KEPT } from '../web/src/lib/problems.ts';
 
 const marks = { seen: ['b'], base: new Date('2026-11-01T00:00:00Z').getTime(), handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
@@ -165,4 +166,13 @@ test('Escape goes to the topmost layer: the comment modal, then Settings, then R
   assert.equal(topLayer({ modal: null, settings: true, feedback: true }), 'settings');
   assert.equal(topLayer({ modal: null, settings: false, feedback: true }), 'feedback');
   assert.equal(topLayer({ modal: null, settings: false, feedback: false }), null);
+});
+
+test('only the reply to the newest request is accepted', () => {
+  const requests = latestWins();
+  const first = requests.next();
+  assert.equal(requests.accepts(first), true);
+  const second = requests.next();
+  assert.equal(requests.accepts(first), false);
+  assert.equal(requests.accepts(second), true);
 });

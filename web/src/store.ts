@@ -11,6 +11,7 @@ import {
   useSessionStorage,
 } from '@vueuse/core';
 import { getJson, post } from './lib/api.ts';
+import { latestWins } from './lib/latest-wins.ts';
 import { NO_WORKSPACE_MESSAGE, retryWithoutWorkspace } from './lib/load-retry.ts';
 import { openCount, turnCounts, withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
@@ -141,10 +142,16 @@ Object.entries(layerFlags).forEach(([layer, isOpen]) => {
 type StateReply = Snapshot & { error?: ApiError };
 
 let version = -1;
+let pendingSwitches = 0;
+const requests = latestWins();
 /** Reads one workspace's state; ui.ws changes only once the server has answered with it. */
-export const load = (asked = ui.ws): Promise<Snapshot> =>
-  getJson<StateReply>('/api/state' + (asked ? '?ws=' + encodeURIComponent(asked) : '')).then(
+export const load = (asked = ui.ws): Promise<Snapshot> => {
+  const id = requests.next();
+  return getJson<StateReply>('/api/state' + (asked ? '?ws=' + encodeURIComponent(asked) : '')).then(
     (reply) => {
+      if (!requests.accepts(id)) {
+        return snapshot;
+      }
       if (reply.error) {
         if (!retryWithoutWorkspace(asked)) {
           ui.status = NO_WORKSPACE_MESSAGE;
@@ -160,6 +167,7 @@ export const load = (asked = ui.ws): Promise<Snapshot> =>
       return snapshot;
     },
   );
+};
 export const reload = () => {
   version = -1;
   return load();
@@ -206,7 +214,9 @@ watch(
     ui.status = '';
     if (message.version !== version) {
       version = message.version;
-      load();
+      if (pendingSwitches === 0) {
+        load();
+      }
     } else {
       snapshot.polled_at = message.polled_at;
     }
@@ -221,15 +231,23 @@ export const switchWorkspace = (id: string) => {
     return Promise.resolve();
   }
   version = -1;
-  return load(id).then(
-    () => {
-      lastWorkspace.value = ui.ws;
-      ui.open.clear();
-    },
-    () => {
-      notice.value = SERVER_DOWN + '; staying on ' + snapshot.workspace.name + '.';
-    },
-  );
+  pendingSwitches++;
+  return load(id)
+    .then(
+      () => {
+        if (ui.ws !== id) {
+          return;
+        }
+        lastWorkspace.value = ui.ws;
+        ui.open.clear();
+      },
+      () => {
+        notice.value = SERVER_DOWN + '; staying on ' + snapshot.workspace.name + '.';
+      },
+    )
+    .finally(() => {
+      pendingSwitches--;
+    });
 };
 
 const postWs = <T>(url: string, body: object) =>
