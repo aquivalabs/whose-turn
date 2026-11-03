@@ -8,7 +8,15 @@ first row whose conditions all hold decides the ticket's row in "your move" or "
 plugin ships a default table; a workspace replaces it or places its own rows around it in
 `workspaces[].rules.table`. RMA-101.
 
-The table covers ticket rows only. Rows for an open PR whose ticket is not in your list, for GitHub review
+The table decides ticket rows and workflow run rows. A run row stands for a GitHub Actions workflow whose
+latest completed run on the repository's default branch failed (RMA-152); the connector returns it in
+`runs` only while it fails, so a later success removes the row. Its facts are the `run.*` facts and
+`connector`; every ticket and PR fact is missing, so ticket rows never match a run and run rows never match
+a ticket. The row is keyed by repository, workflow and branch (`key` is `<repo>:<workflow>@<branch>`, the
+same text as the feed item's `ref`), its `url` is the run, and its `row_id` adds the id of the first
+failure of the streak, so a new breakage after a fix is a new move and notifies again.
+
+Rows for an open PR whose ticket is not in your list, for GitHub review
 requests and mentions, and for unanswered @-mentions in ticket comments are built in code in
 `lib/rules.mjs` (`orphanPrRow`, `askRow`, `mentionRow`), as is the feed.
 
@@ -16,10 +24,10 @@ requests and mentions, and for unanswered @-mentions in ticket comments are buil
 
 | File | Role |
 |---|---|
-| `lib/facts.mjs` | `FACTS`, the closed fact dictionary; `ticketFacts`, which computes one flat facts object per ticket (plus the whole hold reason for the row's link); `statusGroupOrder` and `statusGroups`; `chainGroup`, the row's `status_group` the window tones status pills by; `holdReason` |
+| `lib/facts.mjs` | `FACTS`, the closed fact dictionary; `ticketFacts`, which computes one flat facts object per ticket (plus the whole hold reason for the row's link); `runFacts`, the facts of one failing workflow run; `statusGroupOrder` and `statusGroups`; `chainGroup`, the row's `status_group` the window tones status pills by; `holdReason` |
 | `lib/table.mjs` | Validation (`tableProblems`), the `"default"` marker (`expandTable`), matching (`firstMatch`), placeholders (`fillText`) |
 | `lib/default-table.mjs` | `defaultTable(rules)`, the plugin's default rows |
-| `lib/rules.mjs` | `compileRules` expands the workspace table and the status-group order once per workspace; `ticketRow` matches the table and applies `then` |
+| `lib/rules.mjs` | `compileRules` expands the workspace table and the status-group order once per workspace; `ticketRow` and `runRow` match the table and apply `then` |
 | `lib/config.mjs` | `normaliseRules` validates `rules.table` on load and on `POST /api/config` |
 | `lib/api.mjs` | `GET /api/config` returns `facts` (the dictionary) and `tables` (the effective rows per workspace) |
 | `web/src/features/settings/SettingsSheet.vue` | Shows the effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into text |
@@ -54,6 +62,10 @@ tickets, PRs and comments; they never compute facts. When a source cannot supply
 | `comment.is_question` | boolean | the newest unanswered mention reads as a question (`question_words`) |
 | `comment.author` | text | the author of the newest unanswered mention |
 | `unanswered_count` | number | how many @-mentions of you on the ticket are unanswered |
+| `run.failed` | boolean | `github`: the latest completed run of a workflow on the default branch failed; `null` on tickets |
+| `run.workflow` | text | `github`: the workflow's name |
+| `run.branch` | text | `github`: the branch it ran on, the default branch |
+| `run.mine` | boolean | `github`: you pushed the commit or started the run (the run's `actor` or `triggering_actor` is your login) |
 
 The PR of a ticket is the one `pickPr` chooses: an open PR over a closed one, then the most recently
 updated.
@@ -91,7 +103,7 @@ A done ticket whose row is not `you` or `hidden` is in the done group. `next` an
 `{fact}` placeholders, for example `Answer {comment.author} in the ticket`. A missing fact fills as empty
 text.
 
-`rank` is a whole number the window sorts Your move by, lowest first; a row without it keeps 3, and the default table gives failing checks 0, requested changes 1 and work in progress 2. `started: true` marks the row as work in progress. `hold: true` attaches
+`rank` is a whole number the window sorts Your move by, lowest first; a row without it keeps 3, and the default table gives a failed run and failing checks 0, requested changes 1 and work in progress 2. `started: true` marks the row as work in progress. `hold: true` attaches
 the link and tooltip of the on-hold reason (`hold_url`, `hold_full`) when the ticket has one.
 
 A ticket that matches no row stays under "waiting on others" with "Not yours now".
@@ -102,22 +114,24 @@ A ticket that matches no row stays under "waiting on others" with "Not yours now
 `merged_next`, `approved_next`, `approved_release_next`, `release_branch_prefix`, `backlog_rows`). Those
 `rules` keys keep their meaning. In order:
 
-1. Backlog status, not done, no open PR: hidden; with `backlog_rows: "list"`, `them` with the status name.
-2. Open PR with failing checks: you, "Look at the failing checks".
-3. Open PR with changes requested: you, "Address the requested changes".
-4. Open PR with an unanswered comment: you, "Read and answer the new comment".
-5. Passed status: you, `passed_next`.
-6. Done ticket with an open PR: you, "Ticket is Done but the PR is open: merge it".
-7. Not done, PR merged, on you: you, `merged_next`.
-8. Code review status, open approved PR into a branch starting with `release_branch_prefix`: you, `approved_release_next`.
-9. Code review status, open approved PR: you, `approved_next`.
-10. Code review status: reviewer, "Code review".
-11. QA status: them, "QA".
-12. On hold with a reason: them, "On hold: {ticket.hold_reason}", `hold`.
-13. On hold: them, "On hold".
-14. Not done, on you, in progress: you, "Continue the work", `rank` 2, `started`.
-15. Not done, on you: you, "Pick it up".
-16. Anything else: them, "Not yours now".
+1. Failed workflow run that is yours: you, "Look at the failed run of {run.workflow} on {run.branch}", `rank` 0.
+2. Any other failed workflow run: hidden; it stays in the feed.
+3. Backlog status, not done, no open PR: hidden; with `backlog_rows: "list"`, `them` with the status name.
+4. Open PR with failing checks: you, "Look at the failing checks".
+5. Open PR with changes requested: you, "Address the requested changes".
+6. Open PR with an unanswered comment: you, "Read and answer the new comment".
+7. Passed status: you, `passed_next`.
+8. Done ticket with an open PR: you, "Ticket is Done but the PR is open: merge it".
+9. Not done, PR merged, on you: you, `merged_next`.
+10. Code review status, open approved PR into a branch starting with `release_branch_prefix`: you, `approved_release_next`.
+11. Code review status, open approved PR: you, `approved_next`.
+12. Code review status: reviewer, "Code review".
+13. QA status: them, "QA".
+14. On hold with a reason: them, "On hold: {ticket.hold_reason}", `hold`.
+15. On hold: them, "On hold".
+16. Not done, on you, in progress: you, "Continue the work", `rank` 2, `started`.
+17. Not done, on you: you, "Pick it up".
+18. Anything else: them, "Not yours now".
 
 `workspaces[].rules.table` is a list of rows. Without it the default table applies. With it, the list
 replaces the default. The text `"default"` placed anywhere in the list stands for the default rows at that
@@ -169,4 +183,4 @@ facts do not have. That is a separate layer.
 
 Any change to `lib/facts.mjs`, `lib/table.mjs`, `lib/default-table.mjs` or `lib/rules.mjs` that adds, renames
 or removes a fact, a condition form, a `whose` value or a default row, changes the status-group order,
-the `"default"` marker or the validation messages, or moves ticket rows into or out of the table.
+the `"default"` marker or the validation messages, or moves ticket rows or workflow run rows into or out of the table.

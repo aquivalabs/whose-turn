@@ -168,6 +168,7 @@ export interface FieldSpec {
   secret?: boolean;
   colour?: boolean;
   list?: boolean;
+  boolean?: boolean;
   hint?: string;
 }
 

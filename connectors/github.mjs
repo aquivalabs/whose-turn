@@ -1,8 +1,8 @@
-/** GitHub connector: your PRs in one repository with reviews, comments and checks, plus review requests and mentions across the org. Token from `gh auth token`. */
+/** GitHub connector: your PRs in one repository with reviews, comments and checks, the workflow runs on its default branch, plus review requests and mentions across the org. Token from `gh auth token`. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { RateLimited } from '../lib/http-client.mjs';
-import { oneline, nowIso, mapLimit, wordsRegex } from '../lib/text.mjs';
+import { oneline, nowIso, mapLimit, wordsRegex, DAY } from '../lib/text.mjs';
 
 const run = promisify(execFile);
 const API = 'https://api.github.com';
@@ -16,9 +16,10 @@ export const fields = [
   { key: 'me', label: 'Your login', hint: 'left empty, it is asked from the API once' },
   { key: 'account', label: 'gh account', hint: 'which logged-in gh account to use' },
   { key: 'bots', label: 'Bot logins', hint: 'comma-separated; their comments never count as a reply', list: true },
+  { key: 'workflow_runs', label: 'Workflow runs', hint: 'watch the Actions runs on the default branch; on unless set to false', boolean: true },
 ];
 
-export const persistedCache = ['prs', 'asks'];
+export const persistedCache = ['prs', 'asks', 'runStreaks'];
 
 const TOKEN_TTL = 10 * 60 * 1000;
 
@@ -163,6 +164,68 @@ const pollPrs = async (api, context) => {
   return { prs, activity };
 };
 
+const RUN_FAILED = ['failure', 'timed_out', 'startup_failure'];
+const RUN_PASSED = ['success'];
+
+/** A workflow run's reference in the feed and the key of its row: repository name, workflow and branch (RMA-152). */
+const runRef = (repo, workflow, branch) => `${repo.split('/').pop()}:${workflow}@${branch}`;
+
+const defaultBranch = async (api, repo, cache) => {
+  if (!cache.defaultBranch || Date.now() - cache.defaultBranchAt > DAY) {
+    cache.defaultBranch = (await api(`/repos/${repo}`)).default_branch;
+    cache.defaultBranchAt = Date.now();
+  }
+  return cache.defaultBranch;
+};
+
+/** The completed runs on the default branch, newest first per workflow; pull request runs are left to the PR path. */
+const runsByWorkflow = (listed, branch) => {
+  const byWorkflow = new Map();
+  const decided = listed.filter((run) => run.head_branch === branch && !String(run.event).startsWith('pull_request') && !(run.pull_requests || []).length
+    && run.status === 'completed' && [...RUN_FAILED, ...RUN_PASSED].includes(run.conclusion));
+  for (const run of decided.sort((a, b) => b.created_at.localeCompare(a.created_at))) {
+    (byWorkflow.get(run.workflow_id) || byWorkflow.set(run.workflow_id, []).get(run.workflow_id)).push(run);
+  }
+  return byWorkflow;
+};
+
+/** The first failure of the newest unbroken failure streak; a streak longer than the page keeps the start seen on an earlier poll. */
+const streakStart = (runs, ref, cache) => {
+  const passedAt = runs.findIndex((run) => RUN_PASSED.includes(run.conclusion));
+  const failures = passedAt < 0 ? runs : runs.slice(0, passedAt);
+  const start = passedAt < 0 && cache.runStreaks.has(ref) ? cache.runStreaks.get(ref) : failures[failures.length - 1].id;
+  cache.runStreaks.set(ref, start);
+  return start;
+};
+
+const pollRuns = async (api, { repo, me, sinceIso, cache }) => {
+  const branch = await defaultBranch(api, repo, cache);
+  const listed = (await api(`/repos/${repo}/actions/runs?branch=${encodeURIComponent(branch)}&per_page=50`)).workflow_runs || [];
+  cache.runStreaks = cache.runStreaks || new Map();
+  const runs = [];
+  const activity = [];
+  for (const workflowRuns of runsByWorkflow(listed, branch).values()) {
+    const ref = runRef(repo, workflowRuns[0].name, branch);
+    workflowRuns.forEach((run, index) => {
+      const failed = RUN_FAILED.includes(run.conclusion);
+      const recovered = !failed && RUN_FAILED.includes(workflowRuns[index + 1]?.conclusion);
+      if ((failed || recovered) && run.updated_at >= sinceIso) {
+        activity.push({ at: run.updated_at, pr: ref, key: '', title: run.display_title || '', kind: failed ? 'check failed' : 'check passed', who: run.name, url: run.html_url, text: `${run.name} on ${branch}`, body: '' });
+      }
+    });
+    const latest = workflowRuns[0];
+    if (!RUN_FAILED.includes(latest.conclusion)) {
+      cache.runStreaks.delete(ref);
+      continue;
+    }
+    runs.push({
+      id: latest.id, ref, repo, workflow: latest.name, branch, failed: true, mine: [latest.actor?.login, latest.triggering_actor?.login].includes(me),
+      actor: latest.actor?.login || '', title: latest.display_title || '', url: latest.html_url, at: latest.updated_at, streak: streakStart(workflowRuns, ref, cache),
+    });
+  }
+  return { runs, activity };
+};
+
 const issueNumber = (apiUrl) => {
   const match = /\/(pulls|issues)\/(\d+)$/.exec(apiUrl || '');
   return match ? Number(match[2]) : null;
@@ -231,9 +294,10 @@ export const poll = async ({ settings, http, cache, sinceIso, keyOf }) => {
   const api = createApi(http, await ghToken(settings.account, cache));
   const me = settings.me || (cache.me ??= (await api('/user')).login);
   const context = { repo: settings.repo, org: settings.org || settings.repo.split('/')[0], me, bots: wordsRegex(settings.bots || ['github-actions', 'dependabot', '[bot]']), keyOf, sinceIso, cache };
-  const [prsOutcome, asksOutcome] = await Promise.allSettled([pollPrs(api, context), pollAsks(api, context)]);
+  const watchRuns = settings.workflow_runs !== false;
+  const [prsOutcome, asksOutcome, runsOutcome] = await Promise.allSettled([pollPrs(api, context), pollAsks(api, context), watchRuns ? pollRuns(api, context) : { runs: [], activity: [] }]);
   const errors = {};
-  for (const [part, outcome] of /** @type {[string, PromiseSettledResult<unknown>][]} */ ([['pulls', prsOutcome], ['notifications', asksOutcome]])) {
+  for (const [part, outcome] of /** @type {[string, PromiseSettledResult<unknown>][]} */ ([['pulls', prsOutcome], ['notifications', asksOutcome], ['runs', runsOutcome]])) {
     if (outcome.status === 'rejected') {
       if (outcome.reason instanceof RateLimited) {
         throw outcome.reason;
@@ -241,11 +305,14 @@ export const poll = async ({ settings, http, cache, sinceIso, keyOf }) => {
       errors[part] = `${outcome.reason.name}: ${outcome.reason.message}`;
     }
   }
-  const last = cache.last || { prs: [], activity: [], asks: [] };
+  const last = cache.last || { prs: [], prActivity: [], asks: [], runs: [], runActivity: [] };
   cache.last = {
     prs: prsOutcome.status === 'fulfilled' ? prsOutcome.value.prs : last.prs,
-    activity: prsOutcome.status === 'fulfilled' ? prsOutcome.value.activity : last.activity,
+    prActivity: prsOutcome.status === 'fulfilled' ? prsOutcome.value.activity : last.prActivity,
     asks: asksOutcome.status === 'fulfilled' ? asksOutcome.value : last.asks,
+    runs: runsOutcome.status === 'fulfilled' ? runsOutcome.value.runs : last.runs,
+    runActivity: runsOutcome.status === 'fulfilled' ? runsOutcome.value.activity : last.runActivity,
   };
-  return { me, ...cache.last, errors };
+  const { prs, prActivity, asks, runs, runActivity } = cache.last;
+  return { me, prs, asks, runs, activity: [...prActivity, ...runActivity].sort((a, b) => b.at.localeCompare(a.at)), errors };
 };

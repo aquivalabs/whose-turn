@@ -25,6 +25,10 @@ const pr = (number, key, title, repo, overrides = {}) => ({
   last_comment_by: '', last_comment_at: '', last_comment_url: '', last_comment: '', unanswered: false, ...overrides,
 });
 const activity = (hoursAgo, number, key, kind, who, repo, text, body) => ({ at: ago(hoursAgo), pr: `${repo}#${number}`, key, kind, who, url: `${REPO}${repo}/pull/${number}`, text, body: body || text });
+const failedRun = (id, repo, workflow, hoursAgo, title) => ({
+  id, ref: `${repo}:${workflow}@main`, repo: `example/${repo}`, workflow, branch: 'main', failed: true, mine: true, actor: 'alex', title, url: `${REPO}${repo}/actions/runs/${id}`, at: ago(hoursAgo), streak: id,
+});
+const runActivity = (run) => ({ at: run.at, pr: run.ref, key: '', title: run.title, kind: 'check failed', who: run.workflow, url: run.url, text: `${run.workflow} on ${run.branch}`, body: '' });
 const ask = (noteId, repo, number, title, key, kind, who, hoursAgo, text) => ({ id: `gha:${noteId}`, repo: `example/${repo}`, number, ref: `${repo}#${number}`, title, key, kind, who, at: ago(hoursAgo), url: `${REPO}${repo}/pull/${number}`, text, body: text });
 
 const northwind = (polls) => {
@@ -71,7 +75,8 @@ const northwind = (polls) => {
     ask('n1', 'northwind-api', 512, 'Paginate the audit endpoint', 'NW-133', 'review requested', 'Chris Reviewer', 7, 'Paginate the audit endpoint'),
     ask('n2', 'northwind-infra', 77, 'Rotate the staging certificates', '', 'mentioned you', 'Pat Owner', 26, `@alex could you check whether the cron on staging still runs after the rotation?`),
   ];
-  return { me, tickets, comments, prs, activity: acts, asks };
+  const runs = [failedRun(9001, 'northwind-web', 'scout-publish', 0.5, 'Merge pull request #3940 from example/nw-099-tooltips')];
+  return { me, tickets, comments, prs, activity: [...acts, ...runs.map(runActivity)], asks, runs };
 };
 
 const atlas = (polls) => {
@@ -130,12 +135,12 @@ export const poll = async ({ settings, cache }) => {
   base = cache.base;
   const scenarioData = scenario(cache.polls);
   const titles = new Map(scenarioData.prs.map((entry) => [entry.url, entry.title]));
-  const data = { ...scenarioData, activity: scenarioData.activity.map((item) => ({ ...item, title: titles.get(item.url) || '' })) };
+  const data = { runs: [], ...scenarioData, activity: scenarioData.activity.map((item) => ({ ...item, title: item.title || titles.get(item.url) || '' })) };
   if (settings.part === 'tickets') {
     return { me: data.me, tickets: data.tickets, comments: data.comments, ticket_base: SITE, errors: {} };
   }
   if (settings.part === 'code') {
-    return { me: data.me, prs: data.prs, activity: data.activity, asks: data.asks, errors: {} };
+    return { me: data.me, prs: data.prs, activity: data.activity, asks: data.asks, runs: data.runs, errors: {} };
   }
   return { ...data, ticket_base: SITE, errors: {} };
 };

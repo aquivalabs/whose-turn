@@ -64,7 +64,7 @@ export const kindsLabel = (items: Pick<FeedItem, 'kind'>[], shown = 2) => {
 };
 
 export const toneOf = (kind: string) =>
-  /fail|changes/.test(kind) ? 'bad' : /approved|merged/.test(kind) ? 'ok' : '';
+  /fail|changes/.test(kind) ? 'bad' : /approved|merged|passed/.test(kind) ? 'ok' : '';
 export const hasBody = (item: FeedItem) =>
   /comment|approved|changes|mentioned|review requested/.test(item.kind) &&
   String(item.body || '').trim() !== '';

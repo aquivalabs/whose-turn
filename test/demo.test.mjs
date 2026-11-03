@@ -4,7 +4,7 @@ import { poll } from '../connectors/demo.mjs';
 import { compileRules, turnRows } from '../lib/rules.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 
-const stamp = (result) => Object.fromEntries(['tickets', 'comments', 'prs', 'activity', 'asks'].map((kind) => [kind, result[kind].map((item) => ({ ...item, source: 'demo' }))]));
+const stamp = (result) => Object.fromEntries(['tickets', 'comments', 'prs', 'activity', 'asks', 'runs'].map((kind) => [kind, result[kind].map((item) => ({ ...item, source: 'demo' }))]));
 
 test('the northwind scenario exercises every rule once the window has seen it', async () => {
   const result = await poll({ settings: { scenario: 'northwind' }, cache: {} });
@@ -18,6 +18,7 @@ test('the northwind scenario exercises every rule once the window has seen it', 
   assert.equal(rows.find((row) => row.row_id === 'NW-160').group, 'gone');
   assert.equal(next['NW-151:c4'], 'Answer Pat Owner in the ticket');
   assert.equal(next['gha:n1'], 'Review PR northwind-api#512');
+  assert.equal(next['run:demo:northwind-web:scout-publish@main:9001'], 'Look at the failed run of scout-publish on main');
 });
 
 test('life arrives on the third poll: a ticket moves and a new question appears', async () => {

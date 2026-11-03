@@ -6,7 +6,7 @@ Node 22, no dependencies, no build step. The window is plain JavaScript.
 
 ## Workspaces and connectors
 
-A **workspace** is one place you work: a project, a client, a side venture. It has its own connectors, its own feed and its own to-dos; nothing is mixed between workspaces. A **connector** is the code for one source type (`connectors/github.mjs`, `connectors/jira.mjs`): it takes one connector entry of a workspace (an account and its filters) and returns normalised `tickets`, `comments`, `prs`, `activity` and `asks`, plus `me` (your name there) and, for a ticket source, `ticket_base`. It holds no rules and knows no employer. The server stamps every row with the entry's id as `source`, merges all entries by kind and runs the rules over the merged view, so a workspace may hold two entries of one type (two repositories, two Jira sites) when each carries its own `id`.
+A **workspace** is one place you work: a project, a client, a side venture. It has its own connectors, its own feed and its own to-dos; nothing is mixed between workspaces. A **connector** is the code for one source type (`connectors/github.mjs`, `connectors/jira.mjs`): it takes one connector entry of a workspace (an account and its filters) and returns normalised `tickets`, `comments`, `prs`, `activity`, `asks` and `runs`, plus `me` (your name there) and, for a ticket source, `ticket_base`. It holds no rules and knows no employer. The server stamps every row with the entry's id as `source`, merges all entries by kind and runs the rules over the merged view, so a workspace may hold two entries of one type (two repositories, two Jira sites) when each carries its own `id`.
 
 Nothing that names an employer, an account or a team process lives in this repository. It all sits in one file on the machine that owns it:
 
@@ -33,6 +33,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `…github.me` | your GitHub login; left empty, it is asked from the API once |
 | `…github.account` | which `gh` account's token to use when several are logged in |
 | `…github.bots` | logins whose comments never count as a human reply |
+| `…github.workflow_runs` | `false` stops watching the Actions runs on the default branch; on by default |
 | `…connectors.jira.base` | your Jira Cloud site, `https://` only |
 | `…jira.email` | the account the API token belongs to |
 | `…jira.token_service` | the secret-store entry holding the token, default `whose-turn-jira` |
@@ -85,6 +86,7 @@ On Windows, run `schtasks /Create /SC ONLOGON /TN whose-turn /TR "\"<path to nod
 
 - `search/issues` finds your open PRs and PRs updated in the last `history_days`. Full details are fetched only for PRs whose `updated_at` changed: PR, reviews, issue comments, inline comments, check runs.
 - Open PRs get their check runs re-polled every cycle, because CI finishing does not bump `updated_at`.
+- Workflow runs: one `GET /repos/{owner}/{repo}/actions/runs?branch=<default branch>` per poll (the default branch itself is asked once a day) finds runs that fail on the default branch after a merge, on a schedule or in a `workflow_run` chain; each failure and the success that ends it reach the feed as `check failed` and `check passed`, runs of pull requests are left to the PR path, and `workflow_runs: false` on the connector turns this off.
 - `/notifications?participating=true` gives review requests and @-mentions on PRs and issues that are not yours, filtered to the org.
 - Every GET carries an ETag; a 304 does not count against the 5000/h limit. Steady state is about 1 to 10 requests a minute per workspace.
 - The token is sent only to `https://api.github.com/`.
@@ -116,6 +118,7 @@ The default table, in `lib/default-table.mjs`, takes its status words and next-s
 9. On you, in an in-progress status and nothing above: "Continue the work".
 10. On you and nothing above: "Pick it up".
 11. `statuses.backlog` without an open PR: hidden, whoever it is on; with `backlog_rows: "list"` it is shown under Waiting on others instead, which turns that panel into a plain task list for a project you run alone. This row is checked first.
+12. A workflow run on the default branch whose latest completed run failed, on a commit you pushed or a run you started: your move, "Look at the failed run of <workflow> on <branch>", rank 0, until a later run of the same workflow passes; someone else's failed run stays in the feed only (facts `run.failed`, `run.workflow`, `run.branch`, `run.mine`). These rows are checked before the backlog row.
 
 A workspace sets its own rows in `rules.table`. The list replaces the default table; the text `"default"` in it stands for the default rows at that spot. A condition is a value, a list of values, a number comparison (`gt`, `gte`, `lt`, `lte`) or a `prefix`; `whose` is `you`, `reviewer`, `qa`, `them` or `hidden`; `next` and `why` may quote facts as `{fact}`:
 
