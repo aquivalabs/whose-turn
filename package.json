@@ -12,6 +12,7 @@
     "connectors/",
     "dist/",
     "install.sh",
+    "launch.sh",
     "open.sh",
     "config.example.json",
     "CHANGELOG.md"

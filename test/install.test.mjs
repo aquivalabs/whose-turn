@@ -16,6 +16,7 @@ const harness = (kernel, { built = true } = {}) => {
   mkdirSync(bin);
   mkdirSync(root, { recursive: true });
   copyFileSync(join(ROOT, 'install.sh'), join(root, 'install.sh'));
+  copyFileSync(join(ROOT, 'launch.sh'), join(root, 'launch.sh'));
   if (built) {
     mkdirSync(join(root, 'dist'));
     writeFileSync(join(root, 'dist', 'index.html'), '<!doctype html>');
@@ -35,12 +36,13 @@ const harness = (kernel, { built = true } = {}) => {
   return { home, bin, root, install, calls, cleanup: () => rmSync(home, { recursive: true, force: true }) };
 };
 
-test('Linux: writes a systemd user unit with the node path found at install time and enables it', { skip: process.platform === 'win32' }, (t) => {
+test('Linux: writes a systemd user unit that starts the launcher, records the install-time node as a hint and enables it', { skip: process.platform === 'win32' }, (t) => {
   const h = harness('Linux');
   t.after(h.cleanup);
   const output = h.install();
   const unit = readFileSync(join(h.home, '.config/systemd/user/whose-turn.service'), 'utf8');
-  assert.match(unit, new RegExp(`^ExecStart="${h.bin}/node" "${h.root}/server.mjs"$`, 'm'));
+  assert.match(unit, new RegExp(`^ExecStart=/bin/bash "${h.root}/launch.sh"$`, 'm'));
+  assert.match(unit, new RegExp(`^Environment="WHOSE_TURN_NODE=${h.bin}/node"$`, 'm'));
   assert.match(unit, new RegExp(`^WorkingDirectory=${h.root}$`, 'm'));
   assert.match(unit, new RegExp(`^Environment=PATH=${h.bin}:`, 'm'));
   assert.match(unit, /^Restart=on-failure$/m);
@@ -54,7 +56,8 @@ test('macOS: writes the launch agent plist and bootstraps it', { skip: process.p
   t.after(h.cleanup);
   h.install();
   const plist = readFileSync(join(h.home, 'Library/LaunchAgents/local.whose-turn.plist'), 'utf8');
-  assert.match(plist, new RegExp(`<string>${h.bin}/node</string><string>${h.root}/server.mjs</string>`));
+  assert.match(plist, new RegExp(`<string>/bin/bash</string><string>${h.root}/launch.sh</string>`));
+  assert.match(plist, new RegExp(`<key>WHOSE_TURN_NODE</key><string>${h.bin}/node</string>`));
   assert.match(plist, new RegExp(`<key>WorkingDirectory</key><string>${h.root}</string>`));
   assert.match(plist, /<key>KeepAlive<\/key><true\/>/);
   const calls = h.calls();
@@ -102,6 +105,45 @@ test('without either variable the Installed line and the unit stay as they were'
   const h = harness('Linux');
   t.after(h.cleanup);
   const output = h.install();
-  assert.doesNotMatch(readFileSync(join(h.home, '.config/systemd/user/whose-turn.service'), 'utf8'), /WHOSE_TURN/);
+  assert.doesNotMatch(readFileSync(join(h.home, '.config/systemd/user/whose-turn.service'), 'utf8'), /WHOSE_TURN_(DATA|PORT)/);
   assert.doesNotMatch(output, /written into it/);
+});
+
+const launch = (t, { shell, path, hint }) => {
+  const h = harness('Linux');
+  t.after(h.cleanup);
+  writeFileSync(join(h.root, 'server.mjs'), '');
+  const make = (dir, name) => {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, name), '#!/bin/sh\necho "ran $0"\n');
+    chmodSync(join(dir, name), 0o755);
+    return join(dir, name);
+  };
+  const env = { HOME: h.home, PATH: '/usr/bin:/bin' };
+  const nodes = {};
+  if (path) { nodes.path = make(join(h.home, 'on-path'), 'node'); env.PATH = `${join(h.home, 'on-path')}:${env.PATH}`; }
+  if (hint) { nodes.hint = make(join(h.home, 'hint'), 'node'); env.WHOSE_TURN_NODE = nodes.hint; }
+  if (shell) nodes.shell = make(join(h.home, 'nvm'), 'node');
+  writeFileSync(join(h.home, 'sh'), `#!/bin/sh\n${shell ? `echo ${nodes.shell}` : 'exit 0'}\n`);
+  chmodSync(join(h.home, 'sh'), 0o755);
+  env.SHELL = join(h.home, 'sh');
+  const run = () => execFileSync('/bin/bash', [join(h.root, 'launch.sh')], { env, encoding: 'utf8' });
+  return { run, nodes, h };
+};
+
+test('launcher: the login shell node wins, then PATH, then the install-time hint', { skip: process.platform === 'win32' }, (t) => {
+  const a = launch(t, { shell: true, path: true, hint: true });
+  assert.equal(a.run().trim(), `ran ${a.nodes.shell}`);
+  const b = launch(t, { path: true, hint: true });
+  assert.equal(b.run().trim(), `ran ${b.nodes.path}`);
+  const c = launch(t, { hint: true });
+  assert.equal(c.run().trim(), `ran ${c.nodes.hint}`);
+});
+
+test('launcher: a hint pointing at a removed node is skipped, and no node at all exits with one line', { skip: process.platform === 'win32' }, (t) => {
+  const a = launch(t, { path: true, hint: true });
+  rmSync(a.nodes.hint);
+  assert.equal(a.run().trim(), `ran ${a.nodes.path}`);
+  const b = launch(t, {});
+  assert.throws(() => b.run(), (error) => error.status === 1 && /no node found/.test(error.stdout));
 });

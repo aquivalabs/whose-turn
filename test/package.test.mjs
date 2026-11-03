@@ -14,7 +14,7 @@ const packed = () => {
 test('the published package carries the server and the window, and neither the plugin nor the workbench', () => {
   const paths = packed();
   const has = (prefix) => paths.some((p) => p === prefix || p.startsWith(`${prefix}/`));
-  for (const required of ['server.mjs', 'lib', 'connectors', ...(existsSync(new URL('dist', root)) ? ['dist'] : []), 'install.sh', 'open.sh', 'config.example.json', 'README.md', 'LICENSE', 'CHANGELOG.md']) {
+  for (const required of ['server.mjs', 'lib', 'connectors', ...(existsSync(new URL('dist', root)) ? ['dist'] : []), 'install.sh', 'launch.sh', 'open.sh', 'config.example.json', 'README.md', 'LICENSE', 'CHANGELOG.md']) {
     assert.ok(has(required), `${required} is in the package`);
   }
   for (const absent of ['bin', 'hooks', 'commands', 'skills', '.claude-plugin', 'web', 'test', 'scripts', 'docs', '.users-files', '.github', '.githooks', '.claude', '.review', 'vite.config.mjs', 'vitest.config.ts', 'package-lock.json', 'AGENTS.md', 'CLAUDE.md']) {

@@ -31,9 +31,9 @@ install_macos() {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>local.whose-turn</string>
-  <key>ProgramArguments</key><array><string>$NODE</string><string>$DIR/server.mjs</string></array>
+  <key>ProgramArguments</key><array><string>/bin/bash</string><string>$DIR/launch.sh</string></array>
   <key>WorkingDirectory</key><string>$DIR</string>
-  <key>EnvironmentVariables</key><dict><key>PATH</key><string>$NODE_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>$extra</dict>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>$NODE_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string><key>WHOSE_TURN_NODE</key><string>$NODE</string>$extra</dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>StandardOutPath</key><string>$log</string>
@@ -56,9 +56,10 @@ install_linux() {
 Description=Whose Turn monitor
 
 [Service]
-ExecStart="$NODE" "$DIR/server.mjs"
+ExecStart=/bin/bash "$DIR/launch.sh"
 WorkingDirectory=$DIR
 Environment=PATH=$NODE_DIR:/usr/local/bin:/usr/bin:/bin
+Environment="WHOSE_TURN_NODE=$NODE"
 ${extra}Restart=on-failure
 
 [Install]
