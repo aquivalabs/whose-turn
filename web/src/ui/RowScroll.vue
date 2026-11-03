@@ -1,10 +1,9 @@
 <script setup lang="ts">
-// The scroll area of a table island; when rows end below its bottom, a "+N more" line under it scrolls to the first of them. floor keeps a few rows' height when the island shrinks.
+// Scroll area of a table island with a "+N more" line for the rows below it.
 import { computed, ref } from 'vue';
 import { useElementSize, useScroll } from '@vueuse/core';
 import { hiddenBelow } from '@/lib/moves.ts';
 defineProps<{ floor?: boolean }>();
-// A row cut only through its cell padding and border still reads as shown.
 const cellSlack = 13;
 const scroller = ref<HTMLElement | null>(null);
 const content = ref<HTMLElement | null>(null);

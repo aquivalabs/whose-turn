@@ -22,7 +22,7 @@ import type { ApiError, FeedItem, Marks, Snapshot, StreamEvent, Todo } from './l
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
 
-// ADR 0002, the storage rows
+// docs/adr/0002-vueuse-in-the-window.md (storage rows)
 const STORED = { writeDefaults: false };
 const lastWorkspace = useLocalStorage('wt-ws', '', STORED);
 const lastMode = useSessionStorage('wt-mode', '', STORED);
@@ -177,7 +177,7 @@ export const reload = () => {
   return load();
 };
 
-// ADR 0002, SSE stream
+// docs/adr/0002-vueuse-in-the-window.md (SSE stream)
 const stream = useEventSource<[], StreamEvent>('/api/stream', [], {
   immediate: false,
   autoConnect: false,

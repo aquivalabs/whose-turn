@@ -8,7 +8,6 @@ import { modifier } from '@/lib/bem.ts';
 import { age, when } from '@/lib/time.ts';
 import TicketCell from '@/ui/TicketCell.vue';
 import AiButton from '@/ui/AiButton.vue';
-// Stored as '1' or '0', as before VueUse, so a choice made earlier still holds.
 const open = useLocalStorage('wt-recent-open', false, {
   writeDefaults: false,
   serializer: { read: (raw) => raw === '1', write: (value) => (value ? '1' : '0') },

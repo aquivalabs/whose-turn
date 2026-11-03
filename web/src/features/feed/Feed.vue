@@ -38,7 +38,6 @@ const feedFilter = computed({
     feedState.source = id;
   },
 });
-// marks with seen as a Set, built once per change instead of an array scan per item
 const marks = computed(() => ({ base: snapshot.marks.base, seen: new Set(snapshot.marks.seen) }));
 const fresh = (item: FeedItem) => isNew(item, marks.value);
 const newCount = computed(() => snapshot.feed.filter(fresh).length);
@@ -69,7 +68,6 @@ const toggleMember = (members: Set<string>, id: string) => {
   }
 };
 const toggleGroup = (group: FeedGroup) => toggleMember(feedState.openGroups, group.id);
-// ui.open stays in the store, which clears it on a workspace switch; the feed is its only writer.
 const toggleItem = (id: string) => toggleMember(ui.open, id);
 const markSeen = (id: string) => setMarks({ seen: [id] }).then(tellProblem);
 const problem = ref('');

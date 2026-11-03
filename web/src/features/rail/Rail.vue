@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// The rail: one generated icon per workspace, the open-moves badge, drag to reorder, the gear at the bottom.
-// Reorder stays on the platform's drag events: SortableJS would own the DOM order Vue renders from the server (docs/adr/0002-vueuse-in-the-window.md).
+// The rail: one icon per workspace, the open-moves badge, drag to reorder, the gear.
+// docs/adr/0002-vueuse-in-the-window.md, docs/adr/0006-window-layers.md
 import { computed, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
@@ -10,7 +10,6 @@ import type { Workspace } from '@/lib/types.ts';
 import { mulberry32 } from '@/lib/random.ts';
 const emit = defineEmits<{ settings: [] }>();
 
-// The dots depend on the id only; the colours on the scheme. Two computeds, so a scheme change does not redraw the dots.
 const parts = computed(() =>
   Object.fromEntries(
     snapshot.workspaces.map((workspace) => [workspace.id, workspaceIconParts(workspace, mulberry32)]),

@@ -1,4 +1,4 @@
-// ESLint flat config: the window (web/src) from the frontend-vue:tooling template. Prettier owns formatting; this file owns correctness and the house style. The server tree (lib, connectors, bin, server.mjs, test) is plain Node ESM with no Vue and no TypeScript parser.
+// ESLint flat config: the window (web/src) and the Node server tree; Prettier owns formatting.
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import pluginVue from 'eslint-plugin-vue';
@@ -27,7 +27,6 @@ export default tseslint.config(
       'func-style': ['error', 'expression'],
       quotes: ['error', 'single', { avoidEscape: true }],
       curly: ['error', 'all'],
-      // Added to the template: 'ui' (the store's window state), 'x' and 'y' (coordinates), and properties: 'never', because property names come from wire formats (ws, ok, SVG cx, rule operators gt, lt).
       'id-length': [
         'error',
         {
@@ -59,7 +58,6 @@ export default tseslint.config(
       'vue/no-v-html': 'error',
       'vue/require-default-prop': 'off',
       'vue/multi-word-component-names': 'off',
-      // vue-tsc reports undefined names with the real browser globals; typescript-eslint advises this rule off in TypeScript.
       'no-undef': 'off',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
