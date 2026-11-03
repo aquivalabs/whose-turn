@@ -101,9 +101,11 @@ Each ticket is joined with its PR by the ticket key in the PR title. Status word
 6. PR merged, ticket not done and on you: `merged_next`.
 7. Status is one of `statuses.code_review` and the PR is approved: `approved_release_next` for a branch starting with `release_branch_prefix`, otherwise `approved_next`.
 8. `statuses.code_review`, not approved: the reviewer's turn. `statuses.qa`: QA's turn. `statuses.on_hold`: their turn, with the reason.
-9. On you, in an in-progress status and nothing above: "Continue the work"; these rows come first in the table.
+9. On you, in an in-progress status and nothing above: "Continue the work".
 10. On you and nothing above: "Pick it up".
 11. `statuses.backlog` without an open PR: hidden, whoever it is on; with `backlog_rows: "list"` it is shown under Waiting on others instead, which turns that panel into a plain task list for a project you run alone.
+
+Every row carries a numeric `rank`, set where the rule above matches and lowest first: 0 failing checks, 1 requested changes, 2 work in progress, 3 everything else. Your move sorts by `rank`, then oldest first; the window never reads the next-step text to order rows. Under the table, a folded Recently done list shows the last 15 tickets that are done, most recently done first.
 
 Extra rows, one per item:
 
@@ -119,7 +121,7 @@ A handled row stays in the list, dimmed and marked, until something newer happen
 Requests must carry the local `Host`; a POST must be `application/json`. An error is a `google.rpc.Status` envelope: `{"error":{"code","status","message","details":[{"@type":"ErrorInfo","reason"}]}}`; branch on `reason`.
 
 - `GET /api/workspaces`: `[{id, name, key_pattern, connectors:[{id, type, label}], open_moves, theme}]`; `theme` is `{light, dark}`, each a map of CSS variable to value, or `null` without a seed. `/api/summary` leaves `theme` out.
-- `GET /api/state?ws=<id>`: one workspace, default the first: `turn` (the rows, each with `group`, `next`, `why`, `url`, `ticket_url`, `source`), `feed`, `marks`, `todos` (each with `ticket_url`), `errors`, `polled_at`, `me` (your name per source), `workspace`, plus `workspaces` and `problems`. With `&full=1` the merged raw collections come too: `tickets`, `comments`, `prs`, `activity`, `asks`, `events`.
+- `GET /api/state?ws=<id>`: one workspace, default the first: `turn` (the rows, each with `group`, `rank`, `next`, `why`, `url`, `ticket_url`, `source`), `feed`, `marks`, `todos` (each with `ticket_url`), `errors`, `polled_at`, `me` (your name per source), `workspace`, plus `workspaces` and `problems`. With `&full=1` the merged raw collections come too: `tickets`, `comments`, `prs`, `activity`, `asks`, `events`.
 - `GET /api/summary`: across all workspaces: `moves` (each with `ws`), `new_events`, `todos`, `polled_at`, `errors`, and `workspaces` with the same per workspace.
 - `GET /api/stream`: SSE. One `data:` event per poll per workspace, `{ws, version, polled_at}`. The window reloads state when its workspace's `version` changes.
 - `POST /api/marks` takes `{ws?, seen:[ids], base:ms, handled:{row_id: iso|null}, notified:[ids]}`.

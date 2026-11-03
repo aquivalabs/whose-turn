@@ -1,17 +1,21 @@
 // Your move and Waiting on others: which rows, in which order. Rendering lives in the islands.
 export const isHandled = (row, marks) => { const at = marks.handled[row.row_id]; return Boolean(at) && String(row.activity_at || '') <= at; };
 
-/** Rows on you: in-progress work first, then oldest first; handled rows sink to the bottom unless only they are wanted. */
+/** How many rows on you are still open. */
 export const openCount = (turn, marks) => turn.filter((r) => r.group === 'you' && !isHandled(r, marks)).length;
 
-/** Rows on you, each with its handled flag: in-progress work first, then oldest first; handled rows sink to the bottom unless only they are wanted. */
+/** Rows on you, each with its handled flag: by the server's rank (lowest first), then oldest first; handled rows sink to the bottom unless only they are wanted. */
 export const yourRows = (turn, marks, view) => {
   const you = turn.filter((r) => r.group === 'you').map((row) => ({ row, handled: isHandled(row, marks) }))
-    .sort((a, b) => Number(b.row.started) - Number(a.row.started) || String(a.row.updated).localeCompare(String(b.row.updated)));
+    .sort((a, b) => a.row.rank - b.row.rank || String(a.row.updated).localeCompare(String(b.row.updated)));
   const open = you.filter((item) => !item.handled).length;
   const rows = view === 'handled' ? you.filter((item) => item.handled) : you.slice().sort((a, b) => Number(a.handled) - Number(b.handled));
   return { rows, open, handled: you.length - open };
 };
+
+/** Tickets that recently left your move: done ones, most recently done first, at most 15. */
+const doneAt = (row) => String(row.status_since || row.updated);
+export const recentlyDone = (turn) => turn.filter((r) => r.group === 'done').sort((a, b) => doneAt(b).localeCompare(doneAt(a))).slice(0, 15);
 
 /** The four tiles of the workspace header. */
 export const turnCounts = (turn, marks) => ({

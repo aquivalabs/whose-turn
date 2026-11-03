@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.js';
-import { yourRows, waitingRows, isHandled } from '../web/src/lib/moves.js';
+import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.js';
 import { normaliseForForm, forSaving, pendingSecrets } from '../web/src/lib/settings.js';
 
 const marks = { seen: ['b'], base: new Date('2026-11-01T00:00:00Z').getTime(), handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
@@ -20,21 +20,32 @@ test('the feed groups by ticket, newest group first, counting only unread items'
   assert.equal(matchesQuery(items[0], 'sam'), false);
 });
 
-test('your rows put in-progress work first and handled rows last; the handled view shows only them', () => {
+test('your rows go by the server rank, then oldest first, and handled rows last; the handled view shows only them', () => {
   const turn = [
-    { row_id: 'PROJ-3', group: 'you', started: false, updated: '2026-11-01', activity_at: '2026-11-01T00:00:00.000Z' },
-    { row_id: 'PROJ-2', group: 'you', started: false, updated: '2026-10-30', activity_at: '2026-11-01T00:00:00.000Z' },
-    { row_id: 'PROJ-9', group: 'you', started: true, updated: '2026-11-02', activity_at: '2026-11-02T00:00:00.000Z' },
+    { row_id: 'PROJ-3', group: 'you', rank: 3, updated: '2026-11-01', activity_at: '2026-11-01T00:00:00.000Z' },
+    { row_id: 'PROJ-2', group: 'you', rank: 3, updated: '2026-10-30', activity_at: '2026-11-01T00:00:00.000Z' },
+    { row_id: 'PROJ-9', group: 'you', rank: 2, updated: '2026-11-02', activity_at: '2026-11-02T00:00:00.000Z' },
     { row_id: 'PROJ-5', group: 'others', updated: '2026-11-02' },
+    { row_id: 'PROJ-7', group: 'you', rank: 0, updated: '2026-11-02', activity_at: '2026-11-02T00:00:00.000Z' },
   ];
   const open = yourRows(turn, marks, 'open');
-  assert.deepEqual(open.rows.map((item) => item.row.row_id), ['PROJ-9', 'PROJ-3', 'PROJ-2']);
-  assert.deepEqual(open.rows.map((item) => item.handled), [false, false, true]);
-  assert.equal(open.open, 2);
+  assert.deepEqual(open.rows.map((item) => item.row.row_id), ['PROJ-7', 'PROJ-9', 'PROJ-3', 'PROJ-2']);
+  assert.deepEqual(open.rows.map((item) => item.handled), [false, false, false, true]);
+  assert.equal(open.open, 3);
   assert.equal(open.handled, 1);
   assert.deepEqual(yourRows(turn, marks, 'handled').rows.map((item) => item.row.row_id), ['PROJ-2']);
   assert.equal(isHandled(turn[1], marks), true);
   assert.deepEqual(waitingRows(turn).map((r) => r.row_id), ['PROJ-5']);
+});
+
+test('recently done lists done rows, most recently done first, capped at 15', () => {
+  const done = (n, since, updated) => ({ row_id: `PROJ-${n}`, group: 'done', status_since: since, updated });
+  const turn = [done(1, '2026-11-01T10:00:00Z', '2026-11-03T00:00:00Z'), done(2, '', '2026-11-02T00:00:00Z'), done(3, '2026-11-02T12:00:00Z', ''), { row_id: 'PROJ-4', group: 'you' }];
+  assert.deepEqual(recentlyDone(turn).map((r) => r.row_id), ['PROJ-3', 'PROJ-2', 'PROJ-1']);
+  const many = Array.from({ length: 20 }, (_, n) => done(n, `2026-10-${String(n + 1).padStart(2, '0')}T00:00:00Z`, ''));
+  assert.equal(recentlyDone(many).length, 15);
+  assert.equal(recentlyDone(many)[0].row_id, 'PROJ-19');
+  assert.deepEqual(recentlyDone([]), []);
 });
 
 test('the settings form shapes a raw workspace both ways and lists only the secrets that were typed', () => {

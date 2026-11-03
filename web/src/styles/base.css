@@ -374,6 +374,14 @@
   /* To do: a compact checklist between Your move and Waiting on others. */
   .wt .wt-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; font-size: 12px; font-weight: 700; background: var(--md-primary); color: var(--md-on-primary); }
   .wt .wt-count:empty { display: none; }
+
+  /* Recently done: a folded list under Your move; the native marker is replaced by the chevron the panels use. */
+  .wt .wt-recent { border-top: 1px solid var(--md-outline-variant); padding: 4px 0 8px; }
+  .wt .wt-recent summary { display: flex; align-items: center; gap: 4px; min-height: 40px; cursor: pointer; list-style: none; font-size: 14px; font-weight: 500; color: var(--md-on-surface-variant); }
+  .wt .wt-recent summary::-webkit-details-marker { display: none; }
+  .wt .wt-recent summary::before { content: '▾'; display: inline-grid; place-items: center; width: 24px; font-size: 18px; transition: transform .15s ease; transform: rotate(-90deg); }
+  .wt .wt-recent[open] summary::before { transform: none; }
+  .wt .wt-recent .wt-count { background: var(--md-s-high); color: var(--md-on-surface-variant); }
   .wt-todo-add { display: flex; gap: 8px; align-items: center; padding: 8px 0; }
   .wt-todo-add .wt-input { flex: 1; min-width: 0; height: 32px; padding: 0 12px; background: rgba(var(--md-state), .04); font-size: 14px; }
   .wt-todo-toggle { border: 1px solid var(--md-outline); border-radius: 999px; }

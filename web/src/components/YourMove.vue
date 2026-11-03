@@ -10,6 +10,7 @@ import TicketCell from './TicketCell.vue';
 import PrCell from './PrCell.vue';
 import ExtLink from './ExtLink.vue';
 import AiButton from './AiButton.vue';
+import RecentlyDone from './RecentlyDone.vue';
 const view = computed(() => { void now.value; const v = yourRows(S.turn, S.marks, ui.move); return { ...v, rows: v.rows.map((item) => ({ ...item, age: age(item.row.activity_at) })) }; });
 const options = computed(() => [{ id: 'open', label: 'Open', count: view.value.open }, { id: 'handled', label: 'Handled', count: view.value.handled }]);
 const mark = (item) => setMarks({ handled: { [item.row.row_id]: item.handled ? null : new Date().toISOString() } });
@@ -40,6 +41,7 @@ const mark = (item) => setMarks({ handled: { [item.row.row_id]: item.handled ? n
           </tr>
         </tbody>
       </table>
+      <RecentlyDone />
     </div>
     <p v-if="!view.rows.length" class="wt-empty">{{ ui.move === 'handled' ? 'Nothing marked as handled.' : 'Nothing is waiting on you.' }}</p>
   </Island>

@@ -100,3 +100,13 @@ test('a row on me carries started so the window can order in-progress work first
   const todo = only(rows({ tickets: [ticket({ status: 'Todo', status_category: 'new' })] }), (candidate) => candidate.row_id === 'PROJ-1');
   assert.equal(todo.started, false);
 });
+
+test('every row carries a rank: failing checks, then requested changes, then work in progress, then the rest', () => {
+  const rankOf = (state) => only(rows(state), (candidate) => candidate.row_id === 'PROJ-1').rank;
+  assert.equal(rankOf({ tickets: [ticket({ status: 'In Review' })], prs: [pr({ checks: 'failing' })] }), 0);
+  assert.equal(rankOf({ tickets: [ticket({ status: 'In Review' })], prs: [pr({ review: 'CHANGES_REQUESTED' })] }), 1);
+  assert.equal(rankOf({ tickets: [ticket({ status: 'In Progress', status_category: 'indeterminate' })] }), 2);
+  assert.equal(rankOf({ tickets: [ticket({ status: 'Todo', status_category: 'new' })] }), 3);
+  assert.equal(rankOf({ tickets: [ticket({ status: 'Passed' })] }), 3);
+  assert.equal(rankOf({ tickets: [ticket({ status: 'Done', status_category: 'done' })] }), 3);
+});
