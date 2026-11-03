@@ -62,3 +62,16 @@ test('removing the first connector leaves a secret typed into the second where i
   expect((remaining[0] as HTMLInputElement).value).toBe('jira-secret');
   expect(screen.getByText('Jira')).toBeTruthy();
 });
+
+test('a table warning shows above the rows of its workspace', async () => {
+  const warning = 'rules.table hides every ticket: row 1 matches all of them and hides them';
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({ json: () => Promise.resolve({ ...reply, table_warnings: { alpha: [warning] } }) }),
+  );
+  render(SettingsSheet);
+  ui.settings = true;
+  await screen.findByText('Alpha');
+
+  expect(screen.getByText(warning)).toBeTruthy();
+});

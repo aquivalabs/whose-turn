@@ -142,3 +142,36 @@ test('POST /api/config refuses a non-object connector as INVALID_CONFIG naming w
   assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
   assert.equal(body.error.details[1].field_violations[0].field, 'workspaces[1].connectors[1]');
 });
+
+test('a table whose first catch-all hides every ticket is a warning, not a problem', () => {
+  const { problems, warnings } = normaliseWorkspaces([{ id: 'w', rules: { table: [{ when: {}, then: { whose: 'hidden' } }] } }]);
+  assert.deepEqual(problems, []);
+  assert.deepEqual(warnings, { w: ['rules.table hides every ticket: row 1 matches all of them and hides them'] });
+});
+
+test('a catch-all row before other rows warns that the later rows never apply', () => {
+  const { problems, warnings } = normaliseWorkspaces([{ id: 'w', rules: { table: [{ when: {}, then: yours('Everything') }, { when: { 'pr.open': true }, then: yours('x') }, 'default'] } }]);
+  assert.deepEqual(problems, []);
+  assert.deepEqual(warnings, { w: ['rules.table row 1 matches every ticket, so the 2 row(s) after it never apply'] });
+});
+
+test('a catch-all last, or the default table, raises no warning', () => {
+  const { warnings } = normaliseWorkspaces([
+    { id: 'a', rules: { table: [{ when: { 'pr.open': true }, then: { whose: 'hidden' } }, { when: {}, then: yours('x') }] } },
+    { id: 'b', rules: {} },
+  ]);
+  assert.deepEqual(warnings, {});
+});
+
+test('a hiding table is still saved by POST /api/config', async () => {
+  // Setup
+  const { server, post } = await startTestApi({ saveConfig: async () => {}, reports: {} });
+  try {
+    // Exercise
+    const response = await post('/api/config', { workspaces: [{ id: 'w', rules: { table: [{ when: {}, then: { whose: 'hidden' } }] } }] });
+    // Verify
+    assert.equal(response.status, 200);
+  } finally {
+    server.close();
+  }
+});

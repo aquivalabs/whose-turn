@@ -41,6 +41,7 @@ interface ConfigReply {
   config_file?: string;
   problems?: string[];
   tables?: Record<string, RuleRow[]>;
+  table_warnings?: Record<string, string[]>;
 }
 
 const list = ref<RawWorkspace[]>([]);
@@ -50,6 +51,7 @@ const fields = ref<FormFields>({ workspace: [], theme: [], rules: [], statuses: 
 const configFile = ref('');
 const problems = ref<string[]>([]);
 const tables = ref<Record<string, RuleRow[]>>({});
+const tableWarnings = ref<Record<string, string[]>>({});
 const connectorsHead = useTemplateRef<HTMLElement>('connectors-head');
 const typed = new Map<ConnectorEntry, Record<string, string>>();
 const typedCount = ref(0);
@@ -68,6 +70,7 @@ const current = computed(() => list.value[selected.value] as RawWorkspace | unde
 const ruleRows = computed(() =>
   ((current.value && tables.value[current.value.id]) || []).map(ruleText),
 );
+const ruleWarnings = computed(() => (current.value && tableWarnings.value[current.value.id]) || []);
 const specOf = (entry: ConnectorEntry): ConnectorSpec =>
   catalogue.value.find((spec) => spec.type === entry.type) || {
     type: entry.type,
@@ -157,6 +160,7 @@ const open = () =>
       configFile.value = reply.config_file || '';
       problems.value = reply.problems || [];
       tables.value = reply.tables || {};
+      tableWarnings.value = reply.table_warnings || {};
       loadedKey.value = settingsKey(list.value);
     })
     .catch(() => {
@@ -360,6 +364,9 @@ watch(
               The rows in force, first match wins. Read-only here: ask Claude to change rules.table
               through /api/config.
             </p>
+            <p v-for="warning in ruleWarnings" :key="warning" class="settings-sheet__rules-warning">
+              {{ warning }}
+            </p>
             <ol v-if="ruleRows.length" class="settings-sheet__rules">
               <li v-for="(rule, index) in ruleRows" :key="index" class="settings-sheet__rule">
                 <span class="settings-sheet__rule-when">{{ rule.when }}</span>
@@ -521,5 +528,13 @@ watch(
 .settings-sheet__rules-note {
   margin: 0;
   color: var(--md-on-surface-variant);
+}
+
+.settings-sheet__rules-warning {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--md-warn-container);
+  color: var(--md-on-warn-container);
 }
 </style>

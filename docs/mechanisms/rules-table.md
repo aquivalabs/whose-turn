@@ -156,6 +156,12 @@ closed list (status groups included), an unknown `whose`, a missing `next`, a `s
 with `INVALID_CONFIG`, one `field_violations` entry per problem, and nothing is saved. On load, a bad table
 is reported in `problems` and the workspace runs on the default table.
 
+A valid table can still be a mistake, so `tableWarnings` adds two warnings that never refuse a write: the
+table hides every ticket (its first catch-all row, an empty `when`, is `hidden` and nothing before it
+shows), or a catch-all row precedes other rows, which then never apply. On load they are appended to
+`problems`; `GET /api/config` returns them per workspace as `table_warnings`, and the settings sheet shows
+them above the rows.
+
 Claude edits the table through `POST /api/config` and reads the dictionary and the effective rows from
 `GET /api/config` (`facts`, `tables`). The settings sheet only shows the rows.
 
