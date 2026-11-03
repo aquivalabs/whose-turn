@@ -12,6 +12,9 @@ All notable changes to whose-turn are recorded here. The format follows [Keep a 
 ### Fixed
 - The window opens its event stream again. Since RMA-197 the store waited for a `CLOSED` status that VueUse never reports before the first open, so the window never subscribed to `/api/stream` and picked up new polls only on a reload.
 
+### Changed
+- The release workflow publishes through npm trusted publishing (OIDC) instead of a stored token. RMA-235.
+
 ## [1.0.0-alpha.2] - 2026-11-03
 
 ### Removed
