@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 /** MCP server over stdio for any agent: the monitor's summary, one workspace's state, to-dos, config and the hand-off inbox, all through the local HTTP API. RMA-97. */
+import { readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { base, getJson, postJson } from './lib.mjs';
 
+const VERSION = JSON.parse(readFileSync(new URL('../.claude-plugin/plugin.json', import.meta.url), 'utf8')).version;
 const KNOWN_VERSIONS = ['2024-11-05', '2025-03-26', '2025-06-18'];
 let consumer = 'mcp';
 const api = (path, body) => (body === undefined ? getJson(path, 10000) : postJson(path, body));
@@ -11,7 +13,7 @@ const reportPage = (id) => `${base}/report?id=${encodeURIComponent(id)}`;
 
 /** @type {{ name: string, description: string, inputSchema: object, run: (input?: any) => Promise<any> }[]} */
 const TOOLS = [
-  { name: 'whose_turn_summary', description: 'What is waiting on the user right now across every workspace: moves (each with ws, key, next, url), unread feed count, open to-dos, source errors. Call this first.', inputSchema: { type: 'object', properties: {} }, run: () => api('/api/summary') },
+  { name: 'whose_turn_summary', description: 'What is waiting on the user right now across every workspace: moves (each with ws, key, next, url and rank, lowest rank first), unread feed count, open to-dos, source errors, health alerts. Call this first.', inputSchema: { type: 'object', properties: {} }, run: () => api('/api/summary') },
   { name: 'whose_turn_state', description: 'One workspace in detail: turn rows (with why and url), feed, to-dos, marks; full=true adds the raw tickets, comments, PRs, activity and events.', inputSchema: { type: 'object', properties: { ws: { type: 'string', description: 'workspace id; omit for the first' }, full: { type: 'boolean' } } }, run: ({ ws, full }) => api(`/api/state?${new URLSearchParams({ ...(ws ? { ws } : {}), ...(full ? { full: '1' } : {}) })}`) },
   { name: 'whose_turn_todos', description: "Add, finish, reopen, rename or delete one of the user's to-dos in a workspace. Text in the user's words, one task per item; set by to your own name when you add one on your own initiative.", inputSchema: { type: 'object', properties: { ws: { type: 'string', description: 'workspace id, required: whose_turn_summary lists the workspaces' }, action: { type: 'string', enum: ['add', 'done', 'undo', 'edit', 'delete'] }, text: { type: 'string' }, id: { type: 'string' }, by: { type: 'string' } }, required: ['ws', 'action'] }, run: (input) => api('/api/todos', input) },
   { name: 'whose_turn_config', description: 'Read the workspace config, or write the whole list back (validated first; may carry secrets [{ws, connector, key, value}]).', inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['get', 'set'] }, workspaces: { type: 'array' }, secrets: { type: 'array' } }, required: ['action'] }, run: ({ action, workspaces, secrets }) => (action === 'set' ? api('/api/config', { workspaces, secrets }) : api('/api/config')) },
@@ -28,7 +30,7 @@ const handle = async (message) => {
   if (method === 'initialize') {
     consumer = `mcp:${String(params.clientInfo?.name || 'client').replace(/[^\w.-]+/g, '_').slice(0, 40)}`;
     const version = KNOWN_VERSIONS.includes(params.protocolVersion) ? params.protocolVersion : KNOWN_VERSIONS[0];
-    return reply(id, { protocolVersion: version, capabilities: { tools: {} }, serverInfo: { name: 'whose-turn', version: '0.2.0' } });
+    return reply(id, { protocolVersion: version, capabilities: { tools: {} }, serverInfo: { name: 'whose-turn', version: VERSION } });
   }
   if (method === 'ping') {
     return reply(id, {});

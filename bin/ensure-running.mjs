@@ -1,30 +1,45 @@
-/** Starts the monitor when it is down: the launch agent on macOS, the user unit on Linux, else a detached server.mjs. Platform, runner and probe are injectable. */
+/** Starts the monitor when it is down: the launch agent on macOS, the user unit on Linux, else a detached server.mjs. Repoints an agent left behind by an earlier plugin version. Platform, runner and probe are injectable. */
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { base } from './lib.mjs';
 
-const SERVER = join(dirname(dirname(fileURLToPath(import.meta.url))), 'server.mjs');
+const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+const SERVER = join(ROOT, 'server.mjs');
 const LABEL = 'local.whose-turn';
+
+const AGENT_FILES = {
+  darwin: (home) => join(home, 'Library', 'LaunchAgents', `${LABEL}.plist`),
+  linux: (home) => join(home, '.config', 'systemd', 'user', 'whose-turn.service'),
+};
+
+/** True when the agent text runs a server.mjs that is gone, or one in a sibling version folder of this plugin root (README § Claude Code plugin). */
+export const staleAgent = (text, root = ROOT, exists = existsSync) => {
+  const named = String(text).match(/(?:<string>|")([^"<]*\/server\.mjs)(?:<\/string>|")/)?.[1];
+  if (!named || named === join(root, 'server.mjs')) {
+    return false;
+  }
+  return !exists(named) || dirname(dirname(named)) === dirname(root);
+};
 
 const detachedServer = () => [process.execPath, [SERVER], { detached: true }];
 
 // Each platform returns the argv steps to try in order; a step that fails hands over to the next.
 const STARTS = {
   darwin: ({ home, uid, exists }) => {
-    if (!exists(join(home, 'Library', 'LaunchAgents', `${LABEL}.plist`))) {
+    if (!exists(AGENT_FILES.darwin(home))) {
       return [detachedServer()];
     }
     return [
       ['launchctl', ['kickstart', `gui/${uid}/${LABEL}`]],
-      ['launchctl', ['bootstrap', `gui/${uid}`, join(home, 'Library', 'LaunchAgents', `${LABEL}.plist`)]],
+      ['launchctl', ['bootstrap', `gui/${uid}`, AGENT_FILES.darwin(home)]],
       detachedServer(),
     ];
   },
   linux: ({ home, exists }) => {
-    if (!exists(join(home, '.config', 'systemd', 'user', 'whose-turn.service'))) {
+    if (!exists(AGENT_FILES.linux(home))) {
       return [detachedServer()];
     }
     return [['systemctl', ['--user', 'start', 'whose-turn']], detachedServer()];
@@ -61,7 +76,13 @@ export const ensureRunning = async ({
   uid = process.getuid?.(),
   wait = pause,
   tries = 5,
+  read = (path) => readFileSync(path, 'utf8'),
+  root = ROOT,
 } = {}) => {
+  const agent = AGENT_FILES[platform]?.(home);
+  if (agent && exists(agent) && staleAgent(read(agent), root, exists)) {
+    run('bash', [join(root, 'install.sh')]);
+  }
   if (await probe()) {
     return true;
   }

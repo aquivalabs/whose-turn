@@ -1,17 +1,25 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, existsSync, rmSync, copyFileSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
 
-const harness = (kernel) => {
-  const home = mkdtempSync(join(tmpdir(), 'wt-install-'));
+// The script runs from a copy laid out like an installed plugin, in a folder whose path has a space.
+const harness = (kernel, { built = true } = {}) => {
+  const home = realpathSync(mkdtempSync(join(tmpdir(), 'wt-install-')));
   const bin = join(home, 'stub-bin');
   const log = join(home, 'calls.log');
+  const root = join(home, 'plugin cache', 'whose-turn', '0.2.0');
   mkdirSync(bin);
+  mkdirSync(root, { recursive: true });
+  copyFileSync(join(ROOT, 'install.sh'), join(root, 'install.sh'));
+  if (built) {
+    mkdirSync(join(root, 'dist'));
+    writeFileSync(join(root, 'dist', 'index.html'), '<!doctype html>');
+  }
   const stub = (name, body) => {
     writeFileSync(join(bin, name), `#!/bin/sh\n${body}\n`);
     chmodSync(join(bin, name), 0o755);
@@ -22,9 +30,9 @@ const harness = (kernel) => {
     stub(name, `echo "${name} $*" >> "${log}"`);
   }
   const install = () =>
-    execFileSync('bash', [join(ROOT, 'install.sh')], { env: { HOME: home, PATH: `${bin}:/usr/bin:/bin` }, encoding: 'utf8' });
+    execFileSync('bash', [join(root, 'install.sh')], { env: { HOME: home, PATH: `${bin}:/usr/bin:/bin` }, encoding: 'utf8' });
   const calls = () => (existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n') : []);
-  return { home, bin, install, calls, cleanup: () => rmSync(home, { recursive: true, force: true }) };
+  return { home, bin, root, install, calls, cleanup: () => rmSync(home, { recursive: true, force: true }) };
 };
 
 test('Linux: writes a systemd user unit with the node path found at install time and enables it', { skip: process.platform === 'win32' }, (t) => {
@@ -32,8 +40,8 @@ test('Linux: writes a systemd user unit with the node path found at install time
   t.after(h.cleanup);
   const output = h.install();
   const unit = readFileSync(join(h.home, '.config/systemd/user/whose-turn.service'), 'utf8');
-  assert.match(unit, new RegExp(`^ExecStart="${h.bin}/node" "${ROOT}/server.mjs"$`, 'm'));
-  assert.match(unit, new RegExp(`^WorkingDirectory=${ROOT}$`, 'm'));
+  assert.match(unit, new RegExp(`^ExecStart="${h.bin}/node" "${h.root}/server.mjs"$`, 'm'));
+  assert.match(unit, new RegExp(`^WorkingDirectory=${h.root}$`, 'm'));
   assert.match(unit, new RegExp(`^Environment=PATH=${h.bin}:`, 'm'));
   assert.match(unit, /^Restart=on-failure$/m);
   assert.match(unit, /^WantedBy=default.target$/m);
@@ -46,7 +54,8 @@ test('macOS: writes the launch agent plist and bootstraps it', { skip: process.p
   t.after(h.cleanup);
   h.install();
   const plist = readFileSync(join(h.home, 'Library/LaunchAgents/local.whose-turn.plist'), 'utf8');
-  assert.match(plist, new RegExp(`<string>${h.bin}/node</string><string>${ROOT}/server.mjs</string>`));
+  assert.match(plist, new RegExp(`<string>${h.bin}/node</string><string>${h.root}/server.mjs</string>`));
+  assert.match(plist, new RegExp(`<key>WorkingDirectory</key><string>${h.root}</string>`));
   assert.match(plist, /<key>KeepAlive<\/key><true\/>/);
   const calls = h.calls();
   assert.equal(calls.length, 2);
@@ -58,5 +67,13 @@ test('another platform: prints the schtasks line and installs nothing', { skip: 
   const h = harness('MINGW64_NT');
   t.after(h.cleanup);
   assert.throws(() => h.install(), (error) => error.status === 1 && /schtasks \/Create \/SC ONLOGON/.test(error.stdout));
+  assert.deepEqual(h.calls(), []);
+});
+
+test('a copy without the built window: refuses with one line and installs nothing', { skip: process.platform === 'win32' }, (t) => {
+  const h = harness('Darwin', { built: false });
+  t.after(h.cleanup);
+  assert.throws(() => h.install(), (error) => error.status === 1 && /dist\/index\.html is missing\. A released whose-turn plugin package carries it/.test(error.stdout));
+  assert.equal(existsSync(join(h.home, 'Library/LaunchAgents/local.whose-turn.plist')), false);
   assert.deepEqual(h.calls(), []);
 });

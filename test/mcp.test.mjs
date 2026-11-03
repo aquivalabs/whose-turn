@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { appDir, startTestApi } from './fixtures/api.mjs';
@@ -41,6 +42,7 @@ test('the MCP server initialises, lists its tools and answers a summary call thr
   child.kill();
   api.close();
   assert.equal(replies[0].result.serverInfo.name, 'whose-turn');
+  assert.equal(replies[0].result.serverInfo.version, JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version);
   assert.deepEqual(replies[1].result.tools.map((tool) => tool.name), ['whose_turn_summary', 'whose_turn_state', 'whose_turn_todos', 'whose_turn_config', 'whose_turn_feedback', 'whose_turn_reports', 'whose_turn_inbox']);
   assert.equal(JSON.parse(replies[2].result.content[0].text).moves[0].key, 'PROJ-1');
 });
@@ -66,4 +68,14 @@ test('every writing MCP tool requires ws, and the server refuses a write that le
     child.kill();
     server.close();
   }
+});
+
+test('the plugin manifest carries the package version and the marketplace lists it as whose-turn@whose-turn', () => {
+  const read = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
+  const plugin = read('../.claude-plugin/plugin.json');
+  const marketplace = read('../.claude-plugin/marketplace.json');
+  assert.equal(plugin.version, read('../package.json').version);
+  assert.ok(plugin.description && plugin.author?.name && plugin.mcpServers['whose-turn']);
+  assert.equal(marketplace.name, 'whose-turn');
+  assert.deepEqual(marketplace.plugins.map((entry) => entry.name), ['whose-turn']);
 });
