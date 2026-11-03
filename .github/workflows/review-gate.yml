@@ -1,5 +1,5 @@
 name: review-gate
-# The same full gate `.githooks/pre-push` runs, run again where a push cannot be trusted to have run it.
+# The attestation and secret-scan half of the pre-push gate; `check.yml` runs the types, lint and tests half.
 # Why the merge commit's hash matches the local attestation only for a branch that contains main: CLAUDE.md, "Gates".
 on:
   pull_request:
@@ -16,5 +16,5 @@ jobs:
         with:
           node-version: 22
       - name: Review gate (attestation + secret scan)
-        # Self-contained: fetch + run the latest published harness; not tied to any repo scripts.
-        run: npx -y -p bladeforge-review-harness@latest review-gate --base origin/main
+        # Self-contained: fetch + run the pinned published harness; not tied to any repo scripts.
+        run: npx -y -p bladeforge-review-harness@0.3.1 review-gate --base origin/main

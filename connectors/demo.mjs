@@ -15,9 +15,9 @@ const ago = (hours) => toIsoUtc(base - hours * HOUR);
 const SITE = 'https://demo.example/browse/';
 const REPO = 'https://github.com/example/';
 
-const ticket = (key, summary, status, category, assignee, hoursAgo, sinceHours, by) => ({
+const ticket = (key, summary, status, category, assignee, hoursAgo, sinceHours, changedBy) => ({
   key, summary, status, status_category: category, assignee, updated: ago(hoursAgo), url: `${SITE}${key}`,
-  status_change: sinceHours === undefined ? null : { since: ago(sinceHours), by: by || assignee },
+  status_change: sinceHours === undefined ? null : { since: ago(sinceHours), by: changedBy || assignee },
 });
 const comment = (id, key, hoursAgo, author, body) => ({ id, key, at: ago(hoursAgo), author, body, url: `${SITE}${key}?focusedCommentId=${id}` });
 const pr = (number, key, title, repo, overrides = {}) => ({

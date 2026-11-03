@@ -6,5 +6,5 @@ npm run check
 # Ignores the ref pairs git passes on stdin: a per-push range would fail a rule the PR satisfies.
 python3 scripts/docs-check.py
 # Review gate — fresh passing /review attestation for this diff + secret scan.
-# Self-contained: fetch + run the latest published harness; nothing vendored in this repo.
-npx -y -p bladeforge-review-harness@latest review-gate
+# Self-contained: fetch + run the pinned published harness; nothing vendored in this repo.
+npx -y -p bladeforge-review-harness@0.3.1 review-gate

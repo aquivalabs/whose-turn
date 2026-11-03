@@ -230,7 +230,7 @@ export const poll = async ({ settings, http, cache, sinceIso, keyOf }) => {
   const context = { repo: settings.repo, org: settings.org || settings.repo.split('/')[0], me, bots: wordsRegex(settings.bots || ['github-actions', 'dependabot', '[bot]']), keyOf, sinceIso, cache };
   const [prsOutcome, asksOutcome] = await Promise.allSettled([pollPrs(api, context), pollAsks(api, context)]);
   const errors = {};
-  for (const [part, outcome] of [['pulls', prsOutcome], ['notifications', asksOutcome]]) {
+  for (const [part, outcome] of /** @type {[string, PromiseSettledResult<unknown>][]} */ ([['pulls', prsOutcome], ['notifications', asksOutcome]])) {
     if (outcome.status === 'rejected') {
       if (outcome.reason instanceof RateLimited) {
         throw outcome.reason;

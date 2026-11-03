@@ -19,13 +19,14 @@ const secrets = createSecrets(first.dataDir);
 const inbox = openInbox(first.dataDir);
 const reports = openReports(first.dataDir);
 let pollSeconds = first.pollSeconds;
-let healthLimits = first.health;
+/** @type {{ stale_minutes: number, failing_polls: number }} */
+let healthLimits = /** @type {any} */ (first.health);
 
 const registry = createRegistry({
   load: () => {
     const config = loadConfig();
     pollSeconds = config.pollSeconds;
-    healthLimits = config.health;
+    healthLimits = /** @type {any} */ (config.health);
     return config;
   },
   save: (rawWorkspaces) => saveWorkspaces(first.configFile, rawWorkspaces),
