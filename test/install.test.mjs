@@ -7,12 +7,12 @@ import { join, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
 
-// The script runs from a copy laid out like an installed plugin, in a folder whose path has a space.
+// The script runs from a copy laid out like the installed package, in a folder whose path has a space.
 const harness = (kernel, { built = true } = {}) => {
   const home = realpathSync(mkdtempSync(join(tmpdir(), 'wt-install-')));
   const bin = join(home, 'stub-bin');
   const log = join(home, 'calls.log');
-  const root = join(home, 'plugin cache', 'whose-turn', '0.2.0');
+  const root = join(home, 'plugin data', 'node_modules', 'whose-turn');
   mkdirSync(bin);
   mkdirSync(root, { recursive: true });
   copyFileSync(join(ROOT, 'install.sh'), join(root, 'install.sh'));
@@ -73,7 +73,7 @@ test('another platform: prints the schtasks line and installs nothing', { skip: 
 test('a copy without the built window: refuses with one line and installs nothing', { skip: process.platform === 'win32' }, (t) => {
   const h = harness('Darwin', { built: false });
   t.after(h.cleanup);
-  assert.throws(() => h.install(), (error) => error.status === 1 && /dist\/index\.html is missing\. A released whose-turn plugin package carries it/.test(error.stdout));
+  assert.throws(() => h.install(), (error) => error.status === 1 && /dist\/index\.html is missing\. A released whose-turn package carries it/.test(error.stdout));
   assert.equal(existsSync(join(h.home, 'Library/LaunchAgents/local.whose-turn.plist')), false);
   assert.deepEqual(h.calls(), []);
 });

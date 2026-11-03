@@ -92,26 +92,6 @@ test('resolvePort takes the env first, then the config file, then 8765', () => {
   assert.equal(resolvePort(join(dir, 'missing'), {}), 8765);
 });
 
-test('the plugin scripts and the server agree on a port set in the config', async () => {
-  const dir = scratchDir({ port: 8828 });
-  const saved = { data: process.env.WHOSE_TURN_DATA, port: process.env.WHOSE_TURN_PORT };
-  process.env.WHOSE_TURN_DATA = dir;
-  delete process.env.WHOSE_TURN_PORT;
-  try {
-    const lib = await import(`../bin/lib.mjs?agree=${Date.now()}`);
-    assert.equal(Number(lib.port), loadConfig({ WHOSE_TURN_DATA: dir }).port);
-    assert.equal(lib.base, 'http://127.0.0.1:8828');
-  } finally {
-    for (const [key, value] of [['WHOSE_TURN_DATA', saved.data], ['WHOSE_TURN_PORT', saved.port]]) {
-      if (value === undefined) {
-        delete process.env[key];
-      } else {
-        process.env[key] = value;
-      }
-    }
-  }
-});
-
 const problemsOf = (workspace) => withConfig({ workspaces: [{ id: 'w', ...workspace }] }).problems;
 
 test('a key_pattern that does not compile is a problem with the RegExp message', () => {

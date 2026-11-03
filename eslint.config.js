@@ -8,7 +8,7 @@ const webFiles = ['web/src/**/*.{ts,vue}'];
 const nodeGlobals = Object.fromEntries(
   ['process', 'Buffer', 'console', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'URL', 'URLSearchParams', 'fetch', 'AbortController', 'AbortSignal', 'TextEncoder', 'TextDecoder', 'structuredClone', 'queueMicrotask', 'Headers', 'Request', 'Response', 'FormData', 'Blob', 'WebSocket', 'EventSource', 'performance', 'BroadcastChannel'].map((name) => [name, 'readonly']),
 );
-const serverFiles = ['lib/**/*.mjs', 'connectors/**/*.mjs', 'bin/**/*.mjs', 'server.mjs', 'test/**/*.mjs'];
+const serverFiles = ['lib/**/*.mjs', 'connectors/**/*.mjs', 'server.mjs', 'test/**/*.mjs'];
 
 export default tseslint.config(
   { ignores: ['dist/**', 'coverage/**', 'node_modules/**'] },

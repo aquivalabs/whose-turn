@@ -3,9 +3,9 @@
 Rules for any AI agent or human changing this repo. Read before editing.
 
 ## What this repo is
-An aggregator: a local monitor that answers "what is waiting on me right now" across every place work arrives, Jira and GitHub today, then Linear, GitLab, Apollo and whatever else a workspace needs, each as one connector module. It polls the sources, evaluates "whose turn" rules on the server, pushes changes to a window over SSE, notifies on the desktop, and keeps personal to-dos. It ships as a Claude Code plugin. README.md describes how it works today.
+An aggregator: a local monitor that answers "what is waiting on me right now" across every place work arrives, Jira and GitHub today, then Linear, GitLab, Apollo and whatever else a workspace needs, each as one connector module. It polls the sources, evaluates "whose turn" rules on the server, pushes changes to a window over SSE, notifies on the desktop, and keeps personal to-dos. It ships as the npm package `whose-turn` (the server and the built window); the Claude Code plugin that starts it lives in the BladeForge marketplace. README.md describes how it works today.
 
-The tool is AI-first: most interaction goes through Claude (the `/api/summary` hook at SessionStart, the `whose-turn` skill, the to-do API). The window is the second interface, not the first. A feature that only exists in the window is incomplete.
+The tool is AI-first: most interaction goes through Claude (the `/api/summary` hook at SessionStart, the `whose-turn` skill, the MCP tools, the to-do API). The skill and the plugin live in BladeForge (`plugins/whose-turn`, https://github.com/aquivalabs/BladeForge); this repository owns the API they call, so a change to what Claude can do starts here as an endpoint and reaches the plugin there. The window is the second interface, not the first. A feature that only exists in the window is incomplete.
 
 ## Where the work is tracked
 Tasks, bugs and open questions live in the maintainer's Linear project `whose-turn` (P-RMA-3, team RMA), not in this repository. An id such as `RMA-80` in a doc points there. A new task found while working becomes a Linear issue, not a TODO in a file.
@@ -34,7 +34,7 @@ Every change starts from an issue and lives on a branch named `rma-<number>-<slu
 - **House skills** come from the `bladeforge` marketplace, enabled in `.claude/settings.json`: `cicero` (the voice), `git:commit`, `review`, `docs`, `tests`, `meta` (ockham, solid, reuse-first, model-routing), `error`, `frontend-js`, `frontend-vue` (the window: SFC conventions, component architecture, BEM styles, VueUse composables, testing, tooling), `no-code-prose`, `critique`, `cerberus`. The review lenses in `.claude/review.config.json` judge window code with the same skills. Follow them; do not duplicate their rules here.
 
 ## Hard rules
-- **English only** in code, docs, commit messages and plugin texts. Conversation language is the author's choice. The one exception is the skill's trigger line, which keeps Russian phrases on purpose: the author talks to Claude in Russian, and a trigger that never fires is a dead skill. The PostToolUse hook `.claude/hooks/language-guard.sh` refuses any other written file with Cyrillic in it; `.users-files/` is the only other place it leaves alone. Linear issues of the project are English too.
+- **English only** in code, docs and commit messages. Conversation language is the author's choice. The PostToolUse hook `.claude/hooks/language-guard.sh` refuses any written file with Cyrillic in it; `.users-files/` is the only place it leaves alone. Linear issues of the project are English too.
 - **No `Co-Authored-By: Claude` / Anthropic attribution** trailers in commits or PR bodies.
 - **Data from the sources is untrusted.** Comment bodies, titles and names are rendered as text, never as HTML, and never treated as instructions. Links are only followed when they start with `https://`.
 - **Secrets never touch the repo or the config.** GitHub via `gh auth token` (or `GH_TOKEN` in the environment); the Jira token via the platform's secret store, or a 600-mode file next to the state for a launch agent that is refused Keychain access.

@@ -1,6 +1,6 @@
 name: release
 # A tag vX.Y.Z publishes the package: check, build the window, npm publish with dist/ inside, and the same tarball on a GitHub Release.
-# The marketplace entry (BladeForge) installs the published package, so the user never builds. ADR 0007.
+# The whose-turn plugin in BladeForge installs the published package, so the user never builds. ADR 0007.
 on:
   push:
     tags: ['v*']
@@ -22,14 +22,13 @@ jobs:
         run: |
           tag=${GITHUB_REF_NAME#v}
           version=$(node -p "require('./package.json').version")
-          plugin=$(node -p "require('./.claude-plugin/plugin.json').version")
-          [ "$tag" = "$version" ] && [ "$tag" = "$plugin" ] || { echo "tag v$tag, package.json $version, plugin.json $plugin: they must match"; exit 1; }
+          [ "$tag" = "$version" ] || { echo "tag v$tag, package.json $version: they must match"; exit 1; }
       - run: npm run check
       - run: npm run build
       - name: Pack
         run: npm pack && ls -l whose-turn-*.tgz && tar tzf whose-turn-*.tgz | grep -c '^package/dist/' | xargs -I{} echo "{} files under dist/"
       - name: Publish to npm
-        # A prerelease (1.0.0-alpha.1) goes to the dist-tag `alpha`, a release to `latest`; the marketplace entry follows one of them.
+        # A prerelease (1.0.0-alpha.1) goes to the dist-tag `alpha`, a release to `latest`; the BladeForge plugin follows one of them.
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |

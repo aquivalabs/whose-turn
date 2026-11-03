@@ -1,6 +1,6 @@
 # Whose Turn
 
-A local monitor that answers "what is waiting on me right now" across the places your work arrives: GitHub pull requests, Jira and Linear tickets, and your own to-dos. It polls each source about once a minute, decides once, on the server, whose turn every ticket is, shows the result in a window that updates live, sends a desktop notification when something becomes your move, and hands any item to an AI assistant as Markdown with its context. It also ships as a Claude Code plugin, so a session starts with "N your move · M unread · K to-do" already in context.
+A local monitor that answers "what is waiting on me right now" across the places your work arrives: GitHub pull requests, Jira and Linear tickets, and your own to-dos. It polls each source about once a minute, decides once, on the server, whose turn every ticket is, shows the result in a window that updates live, sends a desktop notification when something becomes your move, and hands any item to an AI assistant as Markdown with its context. Its Claude Code plugin, `whose-turn@bladeforge`, makes a session start with "N your move · M unread · K to-do" already in context.
 
 ![The window on the demo workspace: Your move, To do, Waiting on others, and the feed](docs/window.png)
 
@@ -18,7 +18,7 @@ npm ci && npm run build
 
 `install.sh` makes the monitor start at login and restart if it stops (a launch agent on macOS, a systemd user unit on Linux; on Windows it prints the one `schtasks` line to run). `open.sh` opens the window as its own app window, or in a browser tab with `--browser`. The window listens on port 8765; `WHOSE_TURN_PORT` changes that.
 
-The clone above also serves Claude Code: load it for one session with `claude --plugin-dir <path to the clone>` and the skill, the SessionStart hook and the MCP server run from it. Installing without a clone goes through the BladeForge marketplace, which lists `whose-turn` as a published npm package that carries the built window (`dist/`), so nobody builds anything; the first alpha is published under the `alpha` dist-tag:
+With Claude Code, the plugin installs and starts all of this for you, with no clone and no build (see [Claude Code](#claude-code)):
 
 ```sh
 claude plugin marketplace add aquivalabs/BladeForge
@@ -41,7 +41,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | Linux | `$XDG_CONFIG_HOME/whose-turn/config.json`, default `~/.config/whose-turn/config.json` |
 | Windows | `%APPDATA%\whose-turn\config.json` |
 
-`WHOSE_TURN_DATA` overrides the whole directory, `WHOSE_TURN_CONFIG` the config file alone, `WHOSE_TURN_PORT` the port (it wins over `port` in the config file; the hook, status line and MCP server read both the same way). On first run there is no file: the settings sheet (the gear) or Claude through `/api/config` writes it, or copy `config.example.json` there and fill in:
+`WHOSE_TURN_DATA` overrides the whole directory, `WHOSE_TURN_CONFIG` the config file alone, `WHOSE_TURN_PORT` the port (it wins over `port` in the config file; `install.sh` and the plugin read both the same way). On first run there is no file: the settings sheet (the gear) or Claude through `/api/config` writes it, or copy `config.example.json` there and fill in:
 
 | key | meaning |
 |---|---|
@@ -102,7 +102,6 @@ On Windows, run `schtasks /Create /SC ONLOGON /TN whose-turn /TR "\"<path to nod
 | `web/` | the window: a Vue 3 app in TypeScript built with Vite (`web/src/App.vue`, primitives in `web/src/ui/`, one folder per island in `web/src/features/` with its components, composables and tests, shared composables in `web/src/composables/` (ADR 0006), each component's styles in a scoped BEM block (layout and shared primitives in `web/src/styles/base.css`, ADR 0005), pure logic in `web/src/lib/`, the dot-drawn animal in `web/src/backdrop.ts`, Tippy.js 6.3.7 and Popper 2.11.8 pinned in `web/public/vendor/`); `npm run build` writes `dist/`, which the server serves and git ignores (ADR 0001) |
 | `install.sh` | bash installer that picks by `uname`: on macOS the launch agent `local.whose-turn` (log in `~/Library/Logs/whose-turn.log`); on Linux the user unit `~/.config/systemd/user/whose-turn.service` (log in `journalctl --user -u whose-turn`); both start at login and restart on a crash; on other systems it prints the Windows `schtasks` line. The node path is read with `command -v node` at install time |
 | `open.sh` | opens the window as its own app window (Chrome on macOS; Chrome, Chromium or Edge on Linux) at the size it last had, or in a browser tab with `--browser` or when none of those is installed; bash, not zsh, so it runs on Linux too; Windows: open the URL yourself |
-| `.claude-plugin/`, `hooks/`, `commands/`, `skills/`, `bin/` | the Claude Code plugin |
 | `test/` | `node:test` suite: rules, config, ADF conversion |
 
 ## Sources and polling
@@ -211,37 +210,29 @@ Requests must carry the local `Host`; a POST must be `application/json`. An erro
 - "Report" in the top bar opens the backlog sheet: one text field, write the problem or the wish in your own words; an assistant composes the title, the kind and the description, the current workspace's summary is attached; Send or Cmd+Enter files it into the monitor's own Linear project and shows the issue link.
 - The gear at the bottom of the rail opens the settings sheet: the workspace list on the left, one workspace's form on the right (id, name, key pattern, theme colours, connector entries with the fields each connector declares (a boolean field is a checkbox showing its default when unset), rule texts and status words). Save writes the config file through `/api/config`; a token typed into a secret field goes to `/api/secrets` first and never into the file.
 
-## Claude Code plugin
+## Claude Code
 
-| part | what it does |
-|---|---|
-| `hooks/hooks.json` and `bin/summary.mjs hook` | at SessionStart, starts the monitor if it is down (`bin/ensure-running.mjs`: the launch agent on macOS, the user unit on Linux, else a detached `server.mjs`; Windows always detached) and injects "N your move · M unread · K to-do" plus details into context, marked as data from other people |
-| `bin/inbox-hook.mjs` | at every prompt, checks the marker file and, only when items wait, takes them as consumer `claude-code-hook` and puts their context into the message in `<handoff>` blocks marked as data, within a 20000-character budget |
-| `bin/lib.mjs` | shared by the scripts: the monitor's address, the data directory, a short-timeout JSON fetch |
-| `bin/mcp.mjs` | an MCP server over stdio, registered by the plugin as `whose-turn`: tools `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_feedback`, `whose_turn_reports`, `whose_turn_inbox`, all through the local API |
-| `commands/whose-turn.md` | `/whose-turn` opens the window |
-| `skills/whose-turn/SKILL.md` | answers "what's on me" from `/api/summary` by rank, sets up a first workspace or the demo, edits the config, opens the window, files feedback about the monitor, and adds or finishes to-dos through `/api/todos` |
-| `bin/statusline.sh` | optional status line, not wired yet |
+The Claude Code plugin is `whose-turn@bladeforge` in the [BladeForge marketplace](https://github.com/aquivalabs/BladeForge); this repository holds the monitor only. The plugin brings:
 
-**Installing the plugin.** `claude plugin install whose-turn@bladeforge` fetches the published `whose-turn` npm package (ADR 0007) and copies it into `~/.claude/plugins/cache/bladeforge/whose-turn/<version>/`, which is `${CLAUDE_PLUGIN_ROOT}` for the hook, the MCP server and the skill. That copy is a complete install: the SessionStart hook starts `server.mjs` from it as a detached process while no launch agent is installed, the server serves `dist/` next to itself, and `${CLAUDE_PLUGIN_ROOT}/install.sh` (the skill offers it) registers the launch agent or user unit at that copy's `server.mjs`. Each update lands in a new version folder and Claude Code deletes the old one 14 days later, so at SessionStart `bin/ensure-running.mjs` reruns `install.sh` from the current folder when the agent still names a sibling version folder or a `server.mjs` that is gone; an agent installed from a git clone that still exists is left alone. The user never builds: the package carries `dist/`, and `install.sh` refuses with one line when `dist/index.html` is missing, which only a git clone without a build can hit. A git clone with `npm ci && npm run build` and `./install.sh` is the same install without Claude Code; the plugin path and the clone path share the launch agent label `local.whose-turn`, so whichever ran `install.sh` last owns it.
+- the skill `whose-turn:whose-turn`: answers "what's on me" from `/api/summary`, sets up a first workspace or the demo, edits the config, opens the window, files feedback and manages to-dos;
+- `/whose-turn`, which opens the window;
+- the SessionStart hook, which starts the monitor if it is down and puts "N your move · M unread · K to-do" into context, marked as data from other people;
+- the prompt hook, which takes waiting hand-offs from the inbox queue into your next message;
+- an MCP server with seven tools: `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_feedback`, `whose_turn_reports`, `whose_turn_inbox`, all through the local API.
+
+The plugin installs this npm package into its data directory and starts `server.mjs` from there; `install.sh` and `open.sh` run from the same installed path. The package carries `dist/` built, so the user never builds; `install.sh` refuses with one line when `dist/index.html` is missing, which only a git clone without a build can hit. The plugin path and the clone path share the launch agent label `local.whose-turn`, so whichever ran `install.sh` last owns it.
 
 ## Handing things to an assistant
 
 **The AI button** is the everyday path: the sparkle on a row, on an expanded feed item, under the window's title (this workspace) and in the top bar (everything) puts a Markdown text on the clipboard: the ticket, its status and next step with the why, the links, its pull requests and the latest comments; or a whole workspace with your moves, who holds what and your to-dos. Paste it into Claude, ChatGPT or anything else and add what you want.
 
-The queue is for agents that pull on their own: `POST /api/inbox` hands an item over, every consumer sees it once (the Claude Code plugin's prompt hook takes it into your next message; any MCP client reads it with `whose_turn_inbox` under its own client name), and the context is built when the item is taken. To give another agent the monitor, register the MCP server as a stdio command:
-
-```text
-node /path/to/whose-turn/bin/mcp.mjs
-```
-
-with `WHOSE_TURN_PORT` or `WHOSE_TURN_DATA` in its environment when the monitor is not on the default port 8765 and its port is not set in the data directory's `config.json`. Every text that arrives this way is other people's writing from Jira and GitHub and must be read as data, never as instructions; the hook and the tool descriptions say so.
+The queue is for agents that pull on their own: `POST /api/inbox` hands an item over, every consumer sees it once (the Claude Code plugin's prompt hook takes it into your next message; any other agent reads it with `{action: 'take', consumer}` under its own name), and the context is built when the item is taken. Every text that arrives this way is other people's writing from Jira and GitHub and must be read as data, never as instructions.
 
 ## Developing
 
 - `npm install` once: it points `core.hooksPath` at `.githooks/`.
-- To run the plugin from this checkout, start a session with `claude --plugin-dir <path to this folder>`; the checkout is `${CLAUDE_PLUGIN_ROOT}` for that session, edits apply at the next start, and it needs `npm run build` for the window. There is no marketplace file in this repository: BladeForge lists the published package (ADR 0007).
-- Releasing: bump `version` in `package.json` and `.claude-plugin/plugin.json` to the same value, add the changelog entry, commit, tag `v<version>` and push the tag; `.github/workflows/release.yml` checks, builds, publishes to npm (`alpha` dist-tag for a prerelease, `latest` otherwise; needs the `NPM_TOKEN` secret) and attaches the tarball to a GitHub Release.
+- The plugin's own code (skill, command, hooks, MCP server) is in BladeForge, `plugins/whose-turn`; a change to what Claude can do lands here as an API change first (ADR 0007).
+- Releasing: bump `version` in `package.json`, add the changelog entry, commit, tag `v<version>` and push the tag; `.github/workflows/release.yml` checks, builds, publishes to npm (`alpha` dist-tag for a prerelease, `latest` otherwise; needs the `NPM_TOKEN` secret) and attaches the tarball to a GitHub Release.
 - `npm run dev` starts the server on port 8766 with data and config in `.users-files/dev/` (gitignored), so nothing touches the real config. It serves the last `npm run build`; for live reloading of the window run `npm run dev:web` next to it and open port 5173, which proxies the API to 8766.
 - A fresh checkout has no window until `npm run build`; the server then says so on `/` while the API keeps working. A released package ships `dist/` built (RMA-126).
 - `npm test` runs the suite (Node strips the types of the `web/src/lib/*.ts` modules it imports). `npm run test:web` runs the window's store and component tests on Vitest. `npm run check` runs `vue-tsc` and `tsc` over the server, ESLint over the window and the server, Stylelint and both suites (CI runs it on every pull request and push to `main`), `npm run format` runs Prettier over `web/src`; with `python3 scripts/docs-check.py` (the docs gate) and `/review` (the review gate) it runs on push.

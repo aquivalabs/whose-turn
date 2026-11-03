@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["lib/**/*.mjs", "connectors/**/*.mjs", "bin/**/*.mjs", "server.mjs"]
+  "include": ["lib/**/*.mjs", "connectors/**/*.mjs", "server.mjs"]
 }

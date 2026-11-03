@@ -1,6 +1,6 @@
 {
   "name": "whose-turn",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -10,11 +10,6 @@
     "server.mjs",
     "lib/",
     "connectors/",
-    "bin/",
-    "hooks/",
-    "commands/",
-    "skills/",
-    ".claude-plugin/plugin.json",
     "dist/",
     "install.sh",
     "open.sh",
@@ -37,7 +32,7 @@
     "dev:web": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "typecheck": "vue-tsc --noEmit && tsc -p tsconfig.server.json",
-    "lint": "eslint web/src lib connectors bin server.mjs test",
+    "lint": "eslint web/src lib connectors server.mjs test",
     "lint:style": "stylelint \"web/src/**/*.{vue,css}\"",
     "format": "prettier --write web/src",
     "check": "npm run typecheck && npm run lint && npm run lint:style && npm test && npm run test:web",

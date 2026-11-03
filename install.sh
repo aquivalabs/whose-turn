@@ -5,12 +5,12 @@
 set -e
 DIR=$(cd "$(dirname "$0")" && pwd -P)
 if [[ ! -f $DIR/dist/index.html ]]; then
-  echo "No built window in $DIR: dist/index.html is missing. A released whose-turn plugin package carries it; in a development checkout run npm run build first."
+  echo "No built window in $DIR: dist/index.html is missing. A released whose-turn package carries it; in a development checkout run npm run build first."
   exit 1
 fi
 NODE=$(command -v node) || { echo "Node 22 or newer is needed on PATH."; exit 1; }
 NODE_DIR=$(dirname "$NODE")
-PORT=$("$NODE" --input-type=module -e "const { pathToFileURL } = await import('node:url'); const { port } = await import(pathToFileURL(process.argv[1]).href); console.log(port)" "$DIR/bin/lib.mjs")
+PORT=$("$NODE" --input-type=module -e "const { pathToFileURL } = await import('node:url'); const { defaultDataDir, resolvePort } = await import(pathToFileURL(process.argv[1]).href); console.log(resolvePort(process.env.WHOSE_TURN_DATA || defaultDataDir()))" "$DIR/lib/config.mjs")
 URL="http://127.0.0.1:${PORT:-8765}/"
 
 install_macos() {
