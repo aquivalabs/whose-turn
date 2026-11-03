@@ -2,6 +2,11 @@
 
 All notable changes to whose-turn are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- A presentation film in the README (docs/media/whose-turn-film.mp4, 80 s). RMA-233.
+
 ## [1.0.0-alpha.4] - 2026-11-03
 
 ### Changed
