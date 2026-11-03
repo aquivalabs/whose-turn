@@ -6,7 +6,8 @@ set -e
 DIR=$(cd "$(dirname "$0")" && pwd -P)
 NODE=$(command -v node) || { echo "Node 22 or newer is needed on PATH."; exit 1; }
 NODE_DIR=$(dirname "$NODE")
-URL="http://127.0.0.1:8765/"
+PORT=$("$NODE" --input-type=module -e "import { port } from '$DIR/bin/lib.mjs'; console.log(port)")
+URL="http://127.0.0.1:${PORT:-8765}/"
 
 install_macos() {
   local plist=$HOME/Library/LaunchAgents/local.whose-turn.plist

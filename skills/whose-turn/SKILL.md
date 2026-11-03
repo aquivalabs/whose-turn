@@ -5,7 +5,7 @@ description: Use when the user asks what is going on with their tasks, what is w
 
 # Whose Turn
 
-The local monitor at `http://127.0.0.1:8765` already polls Jira and GitHub every minute.
+The local monitor at `http://127.0.0.1:8765` (the default; use the `port` from `config.json` or `WHOSE_TURN_PORT` when set) already polls Jira and GitHub every minute.
 
 1. `curl -s http://127.0.0.1:8765/api/summary` gives `moves` (each `key`, `next`, `url`, and `ws` naming the workspace), `new_events`, `todos`, `polled_at`, `errors`, `health` (`ok` and `alerts`: stale data or a source failing several polls in a row; say so when it is not ok) and `workspaces` with the same per workspace.
 2. For detail, `curl -s 'http://127.0.0.1:8765/api/state?ws=<id>'` gives `turn` (the rows with `why` and `url`) and `feed` of one workspace; add `&full=1` for the raw `tickets`, `comments`, `prs`, `activity` and `events`. `/api/workspaces` lists the ids.

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadConfig, DEFAULT_RULES } from '../lib/config.mjs';
+import { loadConfig, resolvePort, DEFAULT_RULES } from '../lib/config.mjs';
 
 const withConfig = (value) => {
   const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
@@ -76,4 +76,38 @@ test('a workspace id must be lowercase letters, digits and hyphens; only a missi
   const missing = ids([undefined, 'b']);
   assert.deepEqual(missing.problems, []);
   assert.equal(missing.workspaces[0].id, 'ws1');
+});
+
+const scratchDir = (config) => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  writeFileSync(join(dir, 'config.json'), JSON.stringify(config));
+  return dir;
+};
+
+test('resolvePort takes the env first, then the config file, then 8765', () => {
+  const dir = scratchDir({ port: 8828 });
+  assert.equal(resolvePort(dir, { WHOSE_TURN_PORT: '8830' }), 8830);
+  assert.equal(resolvePort(dir, {}), 8828);
+  assert.equal(resolvePort(scratchDir({}), {}), 8765);
+  assert.equal(resolvePort(join(dir, 'missing'), {}), 8765);
+});
+
+test('the plugin scripts and the server agree on a port set in the config', async () => {
+  const dir = scratchDir({ port: 8828 });
+  const saved = { data: process.env.WHOSE_TURN_DATA, port: process.env.WHOSE_TURN_PORT };
+  process.env.WHOSE_TURN_DATA = dir;
+  delete process.env.WHOSE_TURN_PORT;
+  try {
+    const lib = await import(`../bin/lib.mjs?agree=${Date.now()}`);
+    assert.equal(Number(lib.port), loadConfig({ WHOSE_TURN_DATA: dir }).port);
+    assert.equal(lib.base, 'http://127.0.0.1:8828');
+  } finally {
+    for (const [key, value] of [['WHOSE_TURN_DATA', saved.data], ['WHOSE_TURN_PORT', saved.port]]) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
 });

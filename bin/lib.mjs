@@ -1,23 +1,12 @@
 /** Shared by the plugin's scripts: where the monitor listens, a safe one-line text, and a short-timeout JSON fetch. */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
+import { defaultDataDir, resolvePort } from '../lib/config.mjs';
 
-export const port = process.env.WHOSE_TURN_PORT || '8765';
+export const dataDir = () => process.env.WHOSE_TURN_DATA || defaultDataDir();
+
+export const port = resolvePort(dataDir());
 export const base = `http://127.0.0.1:${port}`;
-
-export const dataDir = () => {
-  if (process.env.WHOSE_TURN_DATA) {
-    return process.env.WHOSE_TURN_DATA;
-  }
-  if (process.platform === 'darwin') {
-    return join(homedir(), 'Library', 'Application Support', 'whose-turn');
-  }
-  if (process.platform === 'win32') {
-    return join(process.env.APPDATA || homedir(), 'whose-turn');
-  }
-  return join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'whose-turn');
-};
 
 export const inboxHasItems = () => existsSync(join(dataDir(), 'inbox.pending'));
 
