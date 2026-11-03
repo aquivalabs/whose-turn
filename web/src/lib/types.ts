@@ -27,6 +27,7 @@ export interface Workspace {
   /** The seed the scheme was built from: the configured one, or the one derived from the id. */
   theme_seed?: string;
   open_moves?: number;
+  failing_sources?: number;
 }
 
 /** One row of "whose turn": the server decided its group, rank and next step. */
@@ -191,6 +192,7 @@ export interface FieldSpec {
   list?: boolean;
   boolean?: boolean;
   default?: boolean;
+  choices?: string[];
   hint?: string;
 }
 

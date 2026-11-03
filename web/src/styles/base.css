@@ -548,6 +548,10 @@
   border-color: transparent;
 }
 
+.input[aria-invalid='true'] {
+  border-color: var(--md-error);
+}
+
 /* Alert: a problem line; inline under the control it belongs to. */
 .alert {
   margin: 0 4px 8px;
@@ -557,6 +561,14 @@
   font-family: var(--md-font);
   background: var(--md-warn-container);
   color: var(--md-on-warn-container);
+}
+
+.alert__action {
+  margin-left: 8px;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .alert--inline {

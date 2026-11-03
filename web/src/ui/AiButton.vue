@@ -1,9 +1,9 @@
 <script setup lang="ts">
-// The AI button: one sparkle everywhere; it copies the item with its context as text for any assistant.
-import { computed } from 'vue';
+// The AI button: a copy icon with a sparkle badge everywhere; it copies the item with its context as text for any assistant.
+import { computed, ref, watch } from 'vue';
 import { refAutoReset } from '@vueuse/core';
 import { handOffText } from '@/lib/api.ts';
-import { SPARKLE } from '@/lib/icons.ts';
+import { COPY, SPARKLE } from '@/lib/icons.ts';
 const props = defineProps<{ query: Record<string, string>; big?: boolean }>();
 const TIPS: Record<string, string> = {
   '': 'Copy for AI: this with its context as text, ready to paste into Claude or any other assistant',
@@ -12,6 +12,8 @@ const TIPS: Record<string, string> = {
 };
 const state = refAutoReset<'' | 'sent' | 'failed'>('', 1600);
 const tip = computed(() => TIPS[state.value]);
+const button = ref<(HTMLButtonElement & { _tippy?: { setContent: (text: string) => void } }) | null>(null);
+watch(tip, (text) => button.value?._tippy?.setContent(text));
 const copy = () =>
   handOffText(props.query)
     .then((text) => navigator.clipboard.writeText(text))
@@ -26,6 +28,7 @@ const copy = () =>
 </script>
 <template>
   <button
+    ref="button"
     type="button"
     class="ai-button"
     :class="{
@@ -38,12 +41,16 @@ const copy = () =>
     @click.stop="copy"
   >
     <svg class="ai-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path :d="COPY" fill="currentColor" />
+    </svg>
+    <svg class="ai-button__badge" viewBox="0 0 24 24" aria-hidden="true">
       <path :d="SPARKLE" fill="currentColor" />
     </svg>
   </button>
 </template>
 <style scoped>
 .ai-button {
+  position: relative;
   display: inline-grid;
   place-items: center;
   width: 26px;
@@ -61,6 +68,14 @@ const copy = () =>
 .ai-button__icon {
   width: 15px;
   height: 15px;
+}
+
+.ai-button__badge {
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  width: 12px;
+  height: 12px;
 }
 
 .ai-button:hover {

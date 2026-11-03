@@ -6,7 +6,7 @@ export const id = 'demo';
 export const label = 'Demo';
 export const links = () => [{ label: 'Demo tracker', url: 'https://demo.example/' }];
 export const fields = [
-  { key: 'scenario', label: 'Scenario', hint: 'northwind, atlas or garden', required: true },
+  { key: 'scenario', label: 'Scenario', hint: 'northwind, atlas or garden', required: true, choices: ['northwind', 'atlas', 'garden'] },
   { key: 'part', label: 'Part', hint: 'tickets (the tracker side), code (PRs and asks), or empty for both' },
 ];
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The workspace header: the name, the counts in words, the copy-workspace sparkle, the quick links, and four tiles; it folds to one line with the counts, like every island.
+// The workspace header: the name, the copy-workspace sparkle, the quick links, and four tiles; it folds to one line with the counts, like every island.
 import { snapshot, counts } from '@/store.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
@@ -14,13 +14,6 @@ const { collapsed, toggle } = useFold('header');
   >
     <div class="workspace-header__title">
       <h1 class="workspace-header__name">{{ snapshot.workspace.name || 'Whose Turn' }}</h1>
-      <p class="workspace-header__line workspace-header__sentence">
-        <b class="workspace-header__count">{{ counts.mine }}</b> waiting on you,
-        <b class="workspace-header__count">{{ counts.others }}</b> waiting on someone else<span
-          v-if="counts.failing"
-          >, <b class="workspace-header__count">{{ counts.failing }}</b> failing</span
-        >.
-      </p>
       <p v-if="collapsed" class="workspace-header__line workspace-header__strip">
         Your move <b class="workspace-header__count">{{ counts.mine }}</b> · Waiting on others
         <b class="workspace-header__count">{{ counts.others }}</b> · Failing
@@ -30,7 +23,7 @@ const { collapsed, toggle } = useFold('header');
       <p class="workspace-header__line workspace-header__give">
         <AiButton :query="{ ws: snapshot.workspace.id, kind: 'workspace' }" big /><span
           class="ai-hint"
-          >AI: copy this workspace</span
+          >Copy for AI: this workspace</span
         >
         <span class="workspace-header__links"
           ><ExtLink
@@ -46,7 +39,7 @@ const { collapsed, toggle } = useFold('header');
       type="button"
       class="fold-toggle workspace-header__fold"
       :class="{ 'fold-toggle--folded': collapsed }"
-      aria-label="Collapse or expand header"
+      aria-label="Fold the header"
       data-tip="Fold the header; it stays folded until you open it again"
       @click.stop="toggle"
     >
@@ -234,8 +227,7 @@ const { collapsed, toggle } = useFold('header');
 }
 
 .workspace-header--collapsed .workspace-header__tiles,
-.workspace-header--collapsed .workspace-header__give,
-.workspace-header--collapsed .workspace-header__sentence {
+.workspace-header--collapsed .workspace-header__give {
   display: none;
 }
 

@@ -98,11 +98,15 @@ export const themeVariables = computed(() => {
   return theme && theme.light && theme.dark ? theme[dark.value ? 'dark' : 'light'] : {};
 });
 export const counts = computed(() => snapshot.counts);
-export const alerts = computed(() => [
-  ...(snapshot.problems || []),
-  ...snapshot.health.alerts.map((alert) => alert.text),
-  ...Object.entries(snapshot.errors || {}).map(([source, text]) => source + ': ' + text),
-]);
+export const alerts = computed(() => {
+  const name = snapshot.workspace.name;
+  const prefix = name ? name + ': ' : '';
+  return [
+    ...(snapshot.problems || []),
+    ...snapshot.health.alerts.map((alert) => alert.text),
+    ...Object.entries(snapshot.errors || {}).map(([source, text]) => prefix + source + ': ' + text),
+  ];
+});
 /** Opens the settings sheet on the current workspace, scrolled to a section when one is named. */
 export const openSettings = (section = '') => {
   ui.settingsAt = section;
@@ -272,7 +276,7 @@ export const switchWorkspace = (id: string) => {
 const postWs = <T>(url: string, body: object) =>
   post<T & { error?: ApiError }>(url, { ws: snapshot.workspace.id, ...body });
 /** Sends one marks change and takes the marks, rows and counts the server recomputed; resolves with the problem line to show next to its control, empty when the server confirmed it. */
-export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen?: string[] }) =>
+export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen?: string[]; unseen?: string[] }) =>
   postWs<Pick<Snapshot, 'marks' | 'turn' | 'counts'>>('/api/marks', body).then(
     (reply) => {
       const problem = writeProblem(reply);

@@ -9,9 +9,11 @@ import {
   themeVariables,
   currentLayer,
   closeTopLayer,
+  openSettings,
   reportWindowSize,
 } from './store.ts';
 import { repaint } from './backdrop.ts';
+import { useDialogFocus, useShortcuts } from './composables/useKeyboard.ts';
 import Rail from './features/rail/Rail.vue';
 import StatusBar from './features/status/StatusBar.vue';
 import WorkspaceHeader from './features/header/WorkspaceHeader.vue';
@@ -27,6 +29,8 @@ const firstRun = computed(
   () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
 );
 const covered = computed(() => currentLayer.value !== null);
+useDialogFocus(covered);
+useShortcuts(covered);
 watch(themeVariables, repaint, { flush: 'post' });
 onKeyStroke('Escape', closeTopLayer, { target: document });
 onMounted(() => {
@@ -38,7 +42,10 @@ onMounted(() => {
     <Rail :inert="covered" @settings="ui.settings = true" />
     <div class="app__shell">
       <StatusBar :inert="covered" @report="ui.feedback = true" />
-      <div v-if="alerts.length" class="alert" :inert="covered">{{ alerts.join('  ·  ') }}</div>
+      <div v-if="alerts.length" class="alert" :inert="covered">
+        {{ alerts.join('  ·  ') }}
+        <button type="button" class="alert__action" @click="openSettings()">Open Settings</button>
+      </div>
       <div id="wt" class="dashboard dashboard--fit">
         <canvas id="backdrop" class="dashboard__backdrop" aria-hidden="true"></canvas>
         <WorkspaceHeader :inert="covered" />

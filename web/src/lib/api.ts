@@ -26,6 +26,10 @@ const detailOf = <T extends ApiErrorDetail['@type']>(
     (detail): detail is Extract<ApiErrorDetail, { '@type': T }> => detail['@type'] === type,
   );
 
+/** The field violations of a google.rpc.Status error envelope: each names a field path such as workspaces[0].id. */
+export const violationsOf = (error: ApiError): { field: string; description: string }[] =>
+  detailOf(error, 'BadRequest')?.field_violations || [];
+
 /** The field problems of a google.rpc.Status error envelope, or its one message. */
 export const problemsOf = (error: ApiError): string[] => {
   const violations = detailOf(error, 'BadRequest');

@@ -59,6 +59,7 @@ onMounted(() => {
         </article>
       </section>
     </template>
+    <a class="report-page__back" href="/">Back to the window</a>
   </main>
 </template>
 <style scoped>
@@ -74,6 +75,12 @@ onMounted(() => {
   font-family: var(--md-font);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.report-page__back {
+  display: inline-block;
+  margin-top: 24px;
+  color: var(--md-primary);
 }
 
 .report-page__head {

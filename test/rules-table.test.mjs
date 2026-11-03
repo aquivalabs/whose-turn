@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileRules, turnRows } from '../lib/rules.mjs';
 import { DEFAULT_RULES, normaliseWorkspaces } from '../lib/config.mjs';
+import './fixtures/demo-connector.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 import { ticket, pr, comment } from './fixtures/rules.mjs';
 
@@ -174,4 +175,15 @@ test('a hiding table is still saved by POST /api/config', async () => {
   } finally {
     server.close();
   }
+});
+
+test('POST /api/config names the field of an empty id, an unknown enumeration value and a bad key pattern', async () => {
+  const { status, body } = await postConfig([
+    { id: '' },
+    { id: 'b', key_pattern: '(', rules: { backlog_rows: 'maybe' }, connectors: [{ type: 'demo', scenario: 'nope' }] },
+  ]);
+  const fields = body.error.details[1].field_violations.map((violation) => violation.field).sort();
+  assert.equal(status, 400);
+  assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
+  assert.deepEqual(fields, ['workspaces[0].id', 'workspaces[1].connectors[0].scenario', 'workspaces[1].key_pattern', 'workspaces[1].rules.backlog_rows']);
 });

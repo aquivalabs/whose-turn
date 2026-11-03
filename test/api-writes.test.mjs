@@ -66,6 +66,7 @@ test('a marks write with a wrong shape is refused naming the field, a valid one 
     const wrong = [
       [{ seen: 'abc' }, 'seen'],
       [{ seen: [1] }, 'seen'],
+      [{ unseen: 'abc' }, 'unseen'],
       [{ base: 'x' }, 'base'],
       [{ base: 4102444800000 }, 'base'],
       [{ handled: { 'NW-1': 'soon' } }, 'handled.NW-1'],

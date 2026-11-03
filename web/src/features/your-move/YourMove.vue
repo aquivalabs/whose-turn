@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed, reactive } from 'vue';
+import { refAutoReset } from '@vueuse/core';
 import { snapshot, ui, now, setMarks } from '@/store.ts';
 import { yourRows } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
@@ -54,7 +55,14 @@ const mark = async (item: YourRow) => {
     problems.set(id, problem);
   } else {
     problems.delete(id);
+    justHandled.value = item.handled ? '' : id;
   }
+};
+const justHandled = refAutoReset('', 8000);
+const undoHandled = () => {
+  const id = justHandled.value;
+  justHandled.value = '';
+  return setMarks({ handled: { [id]: null } });
 };
 </script>
 <template>
@@ -67,6 +75,10 @@ const mark = async (item: YourRow) => {
     <template #head
       ><Segmented v-model="moveView" :options="options" label="Show" class="your-move__view"
     /></template>
+    <p v-if="justHandled" class="your-move__undo" role="status">
+      Marked handled.
+      <button type="button" class="your-move__undo-btn" @click="undoHandled">Undo</button>
+    </p>
     <RowScroll floor>
       <table class="table">
         <thead>
@@ -160,6 +172,19 @@ const mark = async (item: YourRow) => {
   </Island>
 </template>
 <style scoped>
+.your-move__undo {
+  margin: 0;
+  padding: 4px 0;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+}
+
+.your-move__undo-btn {
+  color: var(--md-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .your-move__view {
   margin-left: 10px;
 }

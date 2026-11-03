@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The rail: one icon per workspace, the open-moves badge, drag to reorder, the gear.
 // docs/adr/0002-vueuse-in-the-window.md, docs/adr/0006-window-layers.md
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
 import { GEAR, workspaceIconParts } from '@/lib/icons.ts';
@@ -31,6 +31,11 @@ const colours = computed(() =>
   ),
 );
 
+const failing = (workspace: Workspace) =>
+  workspace.id === snapshot.workspace.id
+    ? Object.keys(snapshot.errors || {}).length > 0
+    : Boolean(workspace.failing_sources);
+
 const blurAfterMouse = (event: MouseEvent) => {
   if (event.detail > 0) {
     (event.currentTarget as HTMLElement).blur();
@@ -43,6 +48,22 @@ const onSwitch = (event: MouseEvent, id: string) => {
 const onSettings = (event: MouseEvent) => {
   emit('settings');
   blurAfterMouse(event);
+};
+
+/** Alt+Arrow on a focused workspace icon moves it one place, the keyboard path of the drag. */
+const onKeyMove = async (event: KeyboardEvent, workspace: Workspace) => {
+  const step = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
+  const ids = snapshot.workspaces.map((entry) => entry.id);
+  const at = ids.indexOf(workspace.id);
+  if (!event.altKey || !step || at + step < 0 || at + step >= ids.length) {
+    return;
+  }
+  event.preventDefault();
+  const anchor = event.currentTarget as HTMLElement;
+  ids.splice(at + step, 0, ...ids.splice(at, 1));
+  await reorderWorkspaces(ids);
+  await nextTick();
+  anchor.focus();
 };
 
 const dragged = ref('');
@@ -103,6 +124,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       :aria-selected="workspace.id === snapshot.workspace.id"
       draggable="true"
       @click.prevent="onSwitch($event, workspace.id)"
+      @keydown="onKeyMove($event, workspace)"
       @dragstart="onDragStart($event, workspace)"
       @dragend="onDragEnd"
       @dragover="onDragOver($event, workspace)"
@@ -134,6 +156,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
         </text>
       </svg>
       <span class="rail__label">{{ workspace.name }}</span>
+      <span v-if="failing(workspace)" class="rail__warn" title="A source of this workspace fails">!</span>
       <span v-if="workspace.open_moves" class="rail__badge">{{ workspace.open_moves }}</span>
     </a>
     <span class="rail__spacer"></span>
@@ -273,6 +296,22 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 .rail:has(:focus-visible) .rail__badge {
   position: static;
   flex: none;
+}
+
+.rail__warn {
+  position: absolute;
+  left: 26px;
+  top: 26px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--md-error);
+  color: var(--md-on-error);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .rail__spacer {

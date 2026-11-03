@@ -16,14 +16,20 @@ const rows = computed(() => {
   return waitingRows(snapshot.turn).map((row) => ({
     row,
     since: row.status_since ? age(row.status_since) : null,
+    own: row.status_group === 'backlog',
   }));
 });
+const note = computed(() =>
+  rows.value.length && rows.value.every(({ own }) => own)
+    ? 'Your backlog'
+    : 'Someone else holds the next step',
+);
 </script>
 <template>
   <Island
     id="waiting"
     title="Waiting on others"
-    note="Someone else holds the next step"
+    :note="note"
     tip="Tickets you touched in the last 30 days where someone else holds the next step: a reviewer, QA, or a new owner."
   >
     <p v-if="!rows.length" class="empty">Nothing is waiting on someone else.</p>
@@ -42,7 +48,7 @@ const rows = computed(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="{ row, since } in rows" :key="row.row_id">
+          <tr v-for="{ row, since, own } in rows" :key="row.row_id">
             <TicketCell :row="row" />
             <td>
               <span class="pill" :class="modifier('pill', statusTone(row.status_group))">{{
@@ -50,7 +56,7 @@ const rows = computed(() => {
               }}</span>
             </td>
             <td>
-              {{ row.whose }}
+              {{ own ? 'you' : row.whose }}
               <span
                 v-if="since"
                 class="age"
@@ -70,7 +76,7 @@ const rows = computed(() => {
                   ?
                 </button></span
               >
-              <template v-else>{{ row.next }}</template>
+              <template v-else-if="!own">{{ row.next }}</template>
             </td>
             <PrCell :row="row" />
             <td class="table__actions">

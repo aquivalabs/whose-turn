@@ -2,7 +2,7 @@
 // Settings: the workspace list on the left, one workspace's form on the right, drawn from the catalogues the server sends; the server validates, stores secrets, writes config.json and reloads.
 import { ref, computed, watch, nextTick, useTemplateRef } from 'vue';
 import { snapshot, ui, reload } from '@/store.ts';
-import { getJson, post, problemsOf } from '@/lib/api.ts';
+import { getJson, post, problemsOf, violationsOf } from '@/lib/api.ts';
 import { SERVER_DOWN, writeProblem } from '@/lib/problems.ts';
 import {
   normaliseForForm,
@@ -50,6 +50,8 @@ const catalogue = ref<ConnectorSpec[]>([]);
 const fields = ref<FormFields>({ workspace: [], theme: [], rules: [], statuses: [] });
 const configFile = ref('');
 const problems = ref<string[]>([]);
+const fieldErrors = ref<Record<string, string>>({});
+const loadedIds = new Map<number, string>();
 const tables = ref<Record<string, RuleRow[]>>({});
 const tableWarnings = ref<Record<string, string[]>>({});
 const connectorsHead = useTemplateRef<HTMLElement>('connectors-head');
@@ -64,6 +66,14 @@ const dirty = computed(
     !unloaded.value &&
     (typedCount.value > 0 || settingsKey(list.value) !== loadedKey.value),
 );
+/** The server's message for one field of the open workspace, addressed like workspaces[0].rules.backlog_rows. */
+const errorAt = (path: string) => fieldErrors.value[`workspaces[${selected.value}].${path}`] || '';
+const idHint = computed(() => {
+  const was = current.value && loadedIds.get(uidOf(current.value));
+  return was && current.value && was !== current.value.id
+    ? `Its to-dos and marks stay under the old id "${was}"; they do not follow the rename.`
+    : '';
+});
 const ID_SPEC: FieldSpec = { key: 'id', label: 'Entry id' };
 const LABEL_SPEC: FieldSpec = { key: 'label', label: 'Label' };
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
@@ -102,6 +112,12 @@ const setSecret = (entry: ConnectorEntry, key: string, value: string) => {
   typed.set(entry, Object.assign(typed.get(entry) || {}, { [key]: value }));
   typedCount.value += 1;
 };
+/** The id stays in the form as an empty string so the server can name it as missing; every other field leaves the config when emptied. */
+const setWorkspaceField = (
+  workspace: RawWorkspace,
+  key: string,
+  value: string | string[] | boolean | undefined,
+) => (key === 'id' ? (workspace.id = String(value ?? '')) : setOrDrop(workspace, key, value));
 const addWorkspace = () => {
   list.value.push(
     normaliseForForm({ id: 'new-' + (list.value.length + 1), name: 'New workspace' }),
@@ -159,6 +175,9 @@ const open = () =>
       );
       configFile.value = reply.config_file || '';
       problems.value = reply.problems || [];
+      fieldErrors.value = {};
+      loadedIds.clear();
+      list.value.forEach((workspace) => loadedIds.set(uidOf(workspace), workspace.id));
       tables.value = reply.tables || {};
       tableWarnings.value = reply.table_warnings || {};
       loadedKey.value = settingsKey(list.value);
@@ -194,7 +213,16 @@ const save = async () => {
       secrets: pendingSecrets(list.value, typed),
     });
     if (reply.error) {
-      problems.value = problemsOf(reply.error);
+      const found = violationsOf(reply.error);
+      fieldErrors.value = Object.fromEntries(
+        found.filter((entry) => entry.field !== 'workspaces').map((entry) => [entry.field, entry.description]),
+      );
+      problems.value = found.length
+        ? found.filter((entry) => entry.field === 'workspaces').map((entry) => entry.description)
+        : problemsOf(reply.error);
+      if (found.length && !problems.value.length) {
+        problems.value = ['Fix the marked fields; nothing was saved.'];
+      }
       return;
     }
     close();
@@ -286,8 +314,10 @@ watch(
               v-for="spec in fields.workspace"
               :key="spec.key"
               :spec="spec"
+              :hint="spec.key === 'id' ? idHint : ''"
+              :error="errorAt(spec.key)"
               :model-value="fieldValue(current, spec.key)"
-              @update:model-value="setOrDrop(current, spec.key, $event)"
+              @update:model-value="setWorkspaceField(current, spec.key, $event)"
             />
             <h4 class="sheet-form__heading">Theme</h4>
             <FieldRow
@@ -328,6 +358,7 @@ watch(
                 v-for="spec in entrySpec.fields"
                 :key="spec.key"
                 :spec="spec"
+                :error="errorAt('connectors[' + index + '].' + spec.key)"
                 :model-value="fieldValue(entry, spec.key)"
                 @update:model-value="setOrDrop(entry, spec.key, $event)"
                 @secret="(key, value) => setSecret(entry, key, value)"
@@ -349,6 +380,7 @@ watch(
               v-for="spec in fields.rules"
               :key="spec.key"
               :spec="spec"
+              :error="errorAt('rules.' + spec.key)"
               :model-value="fieldValue(current.rules, spec.key)"
               @update:model-value="setOrDrop(current.rules, spec.key, $event)"
             />

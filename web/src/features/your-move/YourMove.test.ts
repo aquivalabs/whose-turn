@@ -61,3 +61,13 @@ test('a stream reconnect clears the problem lines of refused rows', async () => 
 
   await vi.waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
 });
+
+test('Handled offers Undo for a moment, and Undo moves the row back', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  render(YourMove);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+
+  expect(setMarks).toHaveBeenLastCalledWith({ handled: { 'nw-1': null } });
+});

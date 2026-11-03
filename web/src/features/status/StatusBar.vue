@@ -84,7 +84,7 @@ const openAsApp = () => {
       {{ opening ? 'Opening…' : 'Open as app' }}
     </button>
     <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint"
-      >AI: copy everything</span
+      >Copy for AI: everything</span
     >
   </div>
 </template>
@@ -113,8 +113,6 @@ const openAsApp = () => {
 
 .status-bar__report {
   gap: 6px;
-  color: var(--md-error);
-  border-color: var(--md-error);
 }
 
 .status-bar__icon {

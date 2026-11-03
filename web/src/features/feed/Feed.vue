@@ -74,8 +74,19 @@ const problem = ref('');
 useClearOnReconnect(() => {
   problem.value = '';
 });
+const cleared = ref<{ base: number; added: string[] } | null>(null);
 const markAll = async () => {
+  const already = new Set(snapshot.marks.seen);
+  const before = { base: snapshot.marks.base, added: snapshot.feed.map((item) => item.id).filter((id) => !already.has(id)) };
   problem.value = await setMarks({ seen: snapshot.feed.map((item) => item.id), base: Date.now() });
+  cleared.value = problem.value ? null : before;
+};
+const restoreMarks = async () => {
+  const before = cleared.value;
+  cleared.value = null;
+  if (before) {
+    problem.value = await setMarks({ unseen: before.added, base: before.base });
+  }
 };
 </script>
 <template>
@@ -100,6 +111,10 @@ const markAll = async () => {
       <Segmented v-model="feedState.view" :options="VIEWS" label="Feed view" />
     </div>
     <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
+    <p v-if="cleared" class="feed__undo" role="status">
+      Marked all read.
+      <button type="button" class="feed__undo-btn" @click="restoreMarks">Undo</button>
+    </p>
     <div class="feed__search">
       <input
         v-model.trim="feedState.query"
@@ -138,7 +153,7 @@ const markAll = async () => {
               type="button"
               class="feed__group-caret"
               :aria-expanded="group.open"
-              :aria-label="'Collapse or expand ' + group.id"
+              :aria-label="'Fold ' + group.id"
             >
               ›
             </button>
@@ -157,7 +172,7 @@ const markAll = async () => {
                 <span
                   class="feed__group-count"
                   :class="{ 'feed__group-count--new': group.unread }"
-                  >{{ group.unread ? group.unread + ' new' : group.items.length }}</span
+                  >{{ group.unread ? group.unread + ' new' : group.items.length + (group.items.length === 1 ? ' event' : ' events') }}</span
                 >
                 <span class="feed__group-kinds">{{ group.kinds }}</span>
                 <span class="timestamp feed__group-when">{{ group.when }}</span>
@@ -200,6 +215,24 @@ const markAll = async () => {
   </Island>
 </template>
 <style scoped>
+@media (width <= 1500px) {
+  .feed :deep(.island__note-text) {
+    display: none;
+  }
+}
+
+.feed__undo {
+  margin: 0 0 4px;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+}
+
+.feed__undo-btn {
+  color: var(--md-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .feed__bar {
   display: flex;
   flex: none;

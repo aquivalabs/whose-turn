@@ -6,8 +6,9 @@ const props = withDefaults(
     spec: FieldSpec;
     placeholder?: string;
     hint?: string;
+    error?: string;
   }>(),
-  { placeholder: '', hint: '' },
+  { placeholder: '', hint: '', error: '' },
 );
 const emit = defineEmits<{ secret: [key: string, value: string] }>();
 const value = defineModel<string | string[] | boolean>();
@@ -42,6 +43,17 @@ const setList = (typedText: string) =>
       />
       {{ hint || spec.hint }}
     </label>
+    <select
+      v-else-if="spec.choices"
+      class="input"
+      :aria-invalid="Boolean(error)"
+      :value="text()"
+      @change="set(typed($event))"
+    >
+      <option v-if="!spec.required && !spec.choices.includes(text())" value="">(default)</option>
+      <option v-if="text() && !spec.choices.includes(text())" :value="text()">{{ text() }}</option>
+      <option v-for="choice in spec.choices" :key="choice" :value="choice">{{ choice }}</option>
+    </select>
     <input
       v-else-if="spec.secret"
       class="input"
@@ -70,6 +82,7 @@ const setList = (typedText: string) =>
       v-else-if="spec.list"
       class="input"
       type="text"
+      :aria-invalid="Boolean(error)"
       :value="list().join(', ')"
       @input="setList(typed($event))"
     />
@@ -77,10 +90,12 @@ const setList = (typedText: string) =>
       v-else
       class="input"
       type="text"
+      :aria-invalid="Boolean(error)"
       :placeholder="placeholder"
       :value="text()"
       @input="set(typed($event))"
     />
+    <small v-if="error" class="field-row__error" role="alert">{{ error }}</small>
     <small v-if="!spec.boolean && (hint || spec.hint)" class="field-row__hint">{{ hint || spec.hint }}</small>
   </div>
 </template>
@@ -101,6 +116,12 @@ const setList = (typedText: string) =>
   grid-column: 2;
   color: var(--md-on-surface-variant);
   font-size: 11px;
+}
+
+.field-row__error {
+  grid-column: 2;
+  color: var(--md-error);
+  font-size: 12px;
 }
 
 .field-row__check {
