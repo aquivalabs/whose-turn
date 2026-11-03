@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createFeedback, openReports } from '../lib/feedback.mjs';
+import { startApi } from '../lib/api.mjs';
 
 const settings = { workspace: 'your-space', team: 'PROJ', project: 'monitor' };
 const secrets = { get: async (service, account) => (service === 'whose-turn-feedback' && account === 'your-space' ? 'lin_api_write' : '') };
@@ -83,4 +84,23 @@ test('the detail of one report carries the comments as answers, and flags a clos
   assert.equal(silent.outcome, 'dropped');
   assert.equal(silent.unanswered, true);
   assert.equal(await openReports(dir).detail({ settings, secrets, http: offline }, 'PROJ-999'), null);
+});
+
+test('the server refuses a remark at once when feedback is not configured, without running the composer', async () => {
+  const dir = reportsDir();
+  const marker = join(dir, 'composer-ran');
+  const composer = { command: process.execPath, args: ['-e', `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'ran')`] };
+  const registry = { workspaces: [], rawWorkspaces: [], problems: [], feedback: { composer }, subscribe: () => () => {} };
+  const port = 19000 + Math.floor(Math.random() * 1000);
+  const server = await startApi({ port, appDir: new URL('..', import.meta.url).pathname, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/api/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: 'the chevron wraps' }) });
+    const body = await response.json();
+    assert.equal(response.status, 400);
+    assert.equal(body.error.details[0].reason, 'INVALID_ARGUMENT');
+    assert.match(body.error.details[0].metadata.detail, /feedback is not configured/);
+    assert.equal(existsSync(marker), false);
+  } finally {
+    server.close();
+  }
 });

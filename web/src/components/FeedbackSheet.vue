@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Report: one field in the user's words; the server's composer shapes the issue; the list below shows what this machine filed with the state Linear reports.
 import { ref, watch, nextTick } from 'vue';
+import { refAutoReset } from '@vueuse/core';
 import { snapshot, ui } from '../store.ts';
 import { getJson, post, problemsOf } from '../lib/api.ts';
 import type { ApiError, FiledReport } from '../lib/types.ts';
@@ -28,19 +29,39 @@ const sending = ref(false);
 const problems = ref<string[]>([]);
 const done = ref<{ identifier: string; title: string } | null>(null);
 const project = ref('');
+const configured = ref(true);
+const copied = refAutoReset<'' | 'sent' | 'failed'>('', 1600);
 const reports = ref<ReportLine[]>([]);
 const reportPage = (id: string) => '/report?id=' + encodeURIComponent(id);
 const load = () =>
   getJson<FeedbackList>('/api/feedback').then((list) => {
-    project.value = list.configured
-      ? 'Linear · ' + list.project
-      : 'not configured: set feedback in the config';
+    configured.value = list.configured;
+    project.value = list.configured ? 'Linear · ' + list.project : 'not connected';
     reports.value = list.reports || [];
   });
 const close = () => {
   ui.feedback = false;
 };
+const copy = () => {
+  const remark = text.value.trim();
+  if (!remark) {
+    problems.value = ['Write at least one line.'];
+    return;
+  }
+  problems.value = [];
+  navigator.clipboard.writeText(remark).then(
+    () => {
+      copied.value = 'sent';
+    },
+    () => {
+      copied.value = 'failed';
+    },
+  );
+};
 const send = () => {
+  if (!configured.value) {
+    return;
+  }
   const remark = text.value.trim();
   if (!remark) {
     problems.value = ['Write at least one line.'];
@@ -96,6 +117,7 @@ watch(
           class="wt-btn tonal"
           role="button"
           tabindex="0"
+          :aria-disabled="!configured"
           @click="send"
           @keydown.enter.prevent="send"
           >{{ sending ? 'Composing…' : 'Send' }}</span
@@ -116,12 +138,29 @@ watch(
           v-model="text"
           class="wt-input wt-feedback-text"
           rows="5"
-          placeholder="Describe the problem or the wish in your own words. Cmd+Enter sends."
+          :placeholder="
+            'Describe the problem or the wish in your own words.' +
+            (configured ? ' Cmd+Enter sends.' : '')
+          "
           autocomplete="off"
           @keydown.meta.enter.prevent="send"
           @keydown.ctrl.enter.prevent="send"
         ></textarea>
-        <p class="wt-feedback-note">
+        <p v-if="!configured" class="wt-feedback-note">
+          The maintainer's tracker is not connected on this machine, so nothing can be sent from
+          here. Copy your remark and pass it on yourself.
+          <span
+            class="wt-btn"
+            role="button"
+            tabindex="0"
+            @click="copy"
+            @keydown.enter.prevent="copy"
+            >{{
+              copied === 'sent' ? 'Copied' : copied === 'failed' ? 'Could not copy' : 'Copy remark'
+            }}</span
+          >
+        </p>
+        <p v-else class="wt-feedback-note">
           An assistant turns it into a proper issue (title, kind, description) and files it in the
           Whose Turn backlog with this workspace's summary attached.
         </p>
