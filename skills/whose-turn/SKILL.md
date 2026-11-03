@@ -33,7 +33,7 @@ When the user says the monitor misbehaves or wants something from it ("file a wh
 The monitor keeps the user's personal to-dos (shown in the window's "To do" block).
 
 - List: `curl -s http://127.0.0.1:8765/api/summary` → `todos` (open ones), or `/api/state` → `todos` (all, with `done`).
-- Add: `curl -s -X POST http://127.0.0.1:8765/api/todos -H 'Content-Type: application/json' -d '{"ws":"<id>","action":"add","text":"…","by":"Claude"}'`. Pick `ws` from the workspace the user is talking about; without it the first workspace is used. Write the text in the user's words, short, one task per item; a ticket key like `PROJ-123` in it becomes a link. Use `"by":"Claude"` when you add it on your own initiative, leave `by` out when the user dictated it.
+- Add: `curl -s -X POST http://127.0.0.1:8765/api/todos -H 'Content-Type: application/json' -d '{"ws":"<id>","action":"add","text":"…","by":"Claude"}'`. `ws` is required, the server refuses a write without it: pick it from the workspace the user is talking about (`/api/workspaces` or the summary lists the ids). Write the text in the user's words, short, one task per item; a ticket key like `PROJ-123` in it becomes a link. Use `"by":"Claude"` when you add it on your own initiative, leave `by` out when the user dictated it.
 - Finish / reopen / delete: `{"ws":"<id>","action":"done"|"undo"|"delete","id":"<id>"}`; rename: `{"ws":"<id>","action":"edit","id":"…","text":"…"}`.
 - An error comes back as `{"error":{"code","status","message","details":[{"reason"}]}}`; branch on `reason`.
 - After a write, say in one line what was added or changed.

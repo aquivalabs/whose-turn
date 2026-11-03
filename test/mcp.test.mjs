@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
+import { startApi } from '../lib/api.mjs';
 
 const stubApi = async () => {
   const server = createServer((request, response) => {
@@ -42,4 +43,27 @@ test('the MCP server initialises, lists its tools and answers a summary call thr
   assert.equal(replies[0].result.serverInfo.name, 'whose-turn');
   assert.deepEqual(replies[1].result.tools.map((tool) => tool.name), ['whose_turn_summary', 'whose_turn_state', 'whose_turn_todos', 'whose_turn_config', 'whose_turn_feedback', 'whose_turn_reports', 'whose_turn_inbox']);
   assert.equal(JSON.parse(replies[2].result.content[0].text).moves[0].key, 'PROJ-1');
+});
+
+test('every writing MCP tool requires ws, and the server refuses a write that leaves it out', async () => {
+  const appDir = new URL('..', import.meta.url).pathname;
+  const port = 18000 + Math.floor(Math.random() * 1000);
+  const registry = { workspaces: [], rawWorkspaces: [], problems: [], subscribe: () => () => {} };
+  const server = await startApi({ port, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  const child = spawn(process.execPath, [`${appDir}bin/mcp.mjs`], { env: { ...process.env, WHOSE_TURN_PORT: String(port) } });
+  try {
+    const replies = await talk(child, [
+      { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+      { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'whose_turn_todos', arguments: { action: 'add', text: 'x' } } },
+    ]);
+    const todos = replies[0].result.tools.find((tool) => tool.name === 'whose_turn_todos');
+    assert.ok(todos.inputSchema.required.includes('ws'));
+    assert.equal(replies[1].result.isError, true);
+    const error = JSON.parse(replies[1].result.content[0].text).error;
+    assert.equal(error.status, 'INVALID_ARGUMENT');
+    assert.match(error.details[0].metadata.detail, /\bws\b/);
+  } finally {
+    child.kill();
+    server.close();
+  }
 });
