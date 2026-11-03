@@ -76,7 +76,7 @@
       "checks": [
         {
           "name": "docs-check",
-          "command": "python3 scripts/docs-check.py"
+          "command": "node scripts/docs-check.mjs"
         }
       ]
     },

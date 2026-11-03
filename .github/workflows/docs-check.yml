@@ -10,9 +10,9 @@ jobs:
           fetch-depth: 0
       - name: Ensure origin/main ref
         run: git fetch origin main:refs/remotes/origin/main
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.9"
+          node-version: 22
       - name: Run docs check
         run: |
-          python3 scripts/docs-check.py
+          node scripts/docs-check.mjs

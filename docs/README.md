@@ -34,5 +34,5 @@ against the diff; nothing else in the standard is diff-scoped.
 
 Everything under `docs/` that the installer seeded — this file, the layer READMEs, the worked mechanism
 example — is written once and then owned by this project. Re-running the installer never overwrites any of
-it again. Only `scripts/docs-check.py` and `.claude/docs.config.schema.json` are refreshed on every re-run;
+it again. Only `scripts/docs-check.mjs` and `.claude/docs.config.schema.json` are refreshed on every re-run;
 edit this file and the layer READMEs freely as the project learns what it needs.
