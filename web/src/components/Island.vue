@@ -1,19 +1,11 @@
 <script setup lang="ts">
 // One panel of the dashboard: a head with the title, a note and a hint, a body, and a chevron that folds it; the fold is remembered in the browser.
-import { computed } from 'vue';
-import { useLocalStorage } from '@vueuse/core';
+import { useFold } from '../composables/useFold.ts';
 const props = withDefaults(
   defineProps<{ id: string; title: string; note?: string; tip?: string; extraClass?: string }>(),
   { note: '', tip: '', extraClass: '' },
 );
-// One list for every island; each instance sees the others' writes through the storage event VueUse sends.
-const folded = useLocalStorage<string[]>('wt-collapsed', [], { writeDefaults: false });
-const collapsed = computed(() => folded.value.includes(props.id));
-const toggle = () => {
-  folded.value = collapsed.value
-    ? folded.value.filter((id) => id !== props.id)
-    : [...folded.value, props.id];
-};
+const { collapsed, toggle } = useFold(props.id);
 </script>
 <template>
   <section :id="id" class="wt-island" :class="[extraClass, { 'is-collapsed': collapsed }]">
