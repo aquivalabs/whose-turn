@@ -61,3 +61,51 @@ test('a stream reconnect clears the line of a refused action', async () => {
 
   await vi.waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
 });
+
+const one = () => {
+  snapshot.todos = [{ id: 't1', text: 'call the vendor', created: '2026-11-02T10:00:00Z', done: null }];
+};
+
+test('the pencil turns the row into an input and Enter saves through edit', async () => {
+  vi.mocked(todoAct).mockResolvedValue('');
+  one();
+  render(Todos);
+  await fireEvent.click(await screen.findByRole('button', { name: 'Edit to-do' }));
+  const box = await screen.findByRole('textbox', { name: 'Edit to-do' });
+
+  await fireEvent.update(box, ' call the supplier ');
+  await fireEvent.keyDown(box, { key: 'Enter' });
+
+  expect(todoAct).toHaveBeenCalledWith({ action: 'edit', id: 't1', text: 'call the supplier' });
+  await vi.waitFor(() => expect(screen.queryByRole('textbox', { name: 'Edit to-do' })).toBeNull());
+  snapshot.todos = [];
+});
+
+test('Escape cancels an edit without calling the server', async () => {
+  vi.mocked(todoAct).mockClear();
+  one();
+  render(Todos);
+  await fireEvent.dblClick(await screen.findByText('call the vendor'));
+  const box = await screen.findByRole('textbox', { name: 'Edit to-do' });
+
+  await fireEvent.update(box, 'something else');
+  await fireEvent.keyDown(box, { key: 'Escape' });
+
+  expect(todoAct).not.toHaveBeenCalled();
+  expect(await screen.findByText('call the vendor')).toBeTruthy();
+  snapshot.todos = [];
+});
+
+test('delete offers Undo, which adds the text back', async () => {
+  vi.mocked(todoAct).mockReset();
+  vi.mocked(todoAct).mockResolvedValue('');
+  one();
+  render(Todos);
+  await fireEvent.click(await screen.findByRole('button', { name: 'Delete to-do' }));
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+
+  expect(todoAct).toHaveBeenLastCalledWith({ action: 'add', text: 'call the vendor' });
+  await vi.waitFor(() => expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull());
+  snapshot.todos = [];
+});

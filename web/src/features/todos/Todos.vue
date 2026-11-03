@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // To do: the user's own notes, kept by the server per workspace; a ticket key in the text becomes a link.
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, useTemplateRef } from 'vue';
 import { snapshot, now, todoAct } from '@/store.ts';
 import type { Todo } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
@@ -62,7 +62,43 @@ const add = async () => {
   }
 };
 const flip = (todo: Todo) => send({ action: todo.done ? 'undo' : 'done', id: todo.id });
-const remove = (todo: Todo) => send({ action: 'delete', id: todo.id });
+const removed = ref<Todo | null>(null);
+const remove = async (todo: Todo) => {
+  if (await send({ action: 'delete', id: todo.id })) {
+    removed.value = todo;
+  }
+};
+const restore = async () => {
+  const todo = removed.value;
+  removed.value = null;
+  if (todo && (await send({ action: 'add', text: todo.text })) && todo.done) {
+    const back = (snapshot.todos || []).find((item) => item.text === todo.text && !item.done);
+    if (back) {
+      await send({ action: 'done', id: back.id });
+    }
+  }
+};
+const editing = ref('');
+const editText = ref('');
+const editBox = useTemplateRef<HTMLInputElement[]>('editBox');
+const startEdit = async (todo: Todo) => {
+  editing.value = todo.id;
+  editText.value = todo.text;
+  await nextTick();
+  editBox.value?.[0]?.focus();
+};
+const cancelEdit = () => {
+  editing.value = '';
+};
+const saveEdit = async (todo: Todo) => {
+  const text = editText.value.trim();
+  if (!text || text === todo.text) {
+    return cancelEdit();
+  }
+  if (await send({ action: 'edit', id: todo.id, text })) {
+    cancelEdit();
+  }
+};
 const view = computed({
   get: () => (showDone.value ? 'done' : 'open'),
   set: (id) => {
@@ -97,6 +133,10 @@ const options = computed(() => [
       <button type="button" class="btn btn--tonal" @click="add">Add</button>
     </div>
     <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
+    <p v-if="removed" class="todos__undo" role="status">
+      To-do deleted.
+      <button type="button" class="todos__undo-btn" @click="restore">Undo</button>
+    </p>
     <ul class="todos__list">
       <li
         v-for="{ todo, parts: pieces, meta } in rows"
@@ -113,7 +153,20 @@ const options = computed(() => [
           :aria-label="todo.done ? 'Mark not done' : 'Mark done'"
           @click="flip(todo)"
         ></button>
-        <span class="todos__text"
+        <input
+          v-if="editing === todo.id"
+          ref="editBox"
+          v-model="editText"
+          class="input todos__edit"
+          type="text"
+          maxlength="500"
+          aria-label="Edit to-do"
+          autocomplete="off"
+          @keydown.enter="saveEdit(todo)"
+          @keydown.esc="cancelEdit"
+          @blur="cancelEdit"
+        />
+        <span v-else class="todos__text" @dblclick="startEdit(todo)"
           ><template v-for="(piece, index) in pieces" :key="index"
             ><ExtLink v-if="piece.url !== undefined" :text="piece.text" :url="piece.url" /><template
               v-else
@@ -122,6 +175,9 @@ const options = computed(() => [
           ></span
         >
         <span class="todos__meta">{{ meta }}</span>
+        <button type="button" class="todos__pencil" aria-label="Edit to-do" @click="startEdit(todo)">
+          &#9998;
+        </button>
         <button type="button" class="todos__delete" aria-label="Delete to-do" @click="remove(todo)">
           ×
         </button>
@@ -162,7 +218,7 @@ const options = computed(() => [
 
 .todos__item {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto 20px;
+  grid-template-columns: 20px minmax(0, 1fr) auto 20px 20px;
   align-items: center;
   gap: 10px;
   padding: 7px 20px;
@@ -222,6 +278,27 @@ const options = computed(() => [
   white-space: nowrap;
 }
 
+.todos__edit {
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  font-size: 14px;
+}
+
+.todos__undo {
+  margin: 0;
+  padding: 4px 0;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+}
+
+.todos__undo-btn {
+  color: var(--md-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.todos__pencil,
 .todos__delete {
   color: var(--md-on-surface-variant);
   font-size: 16px;
@@ -231,10 +308,12 @@ const options = computed(() => [
   opacity: 0;
 }
 
+.todos__pencil:focus-visible,
 .todos__delete:focus-visible {
   opacity: 1;
 }
 
+.todos__item:hover .todos__pencil,
 .todos__item:hover .todos__delete {
   opacity: 1;
 }

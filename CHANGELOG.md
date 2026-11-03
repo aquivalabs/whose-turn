@@ -8,6 +8,7 @@ All notable changes to whose-turn are recorded here. The format follows [Keep a 
 - The launch agent and the systemd unit start `launch.sh`, which resolves node at every start (login shell, PATH, then the install-time path), so removing a version-manager Node no longer breaks them. RMA-215.
 
 ### Added
+- To-do: a pencil or a double click edits the text in place (Enter saves through `edit`, Escape cancels), and a deleted to-do offers Undo. RMA-172.
 - A presentation film in the README (docs/media/whose-turn-film.mp4, 80 s). RMA-233.
 
 ## [1.0.0-alpha.4] - 2026-11-03
