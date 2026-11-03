@@ -259,13 +259,13 @@
   .wt-fit .wt-main:has(#waiting.is-collapsed) #your-move:not(.is-collapsed) { max-height: none; flex: 1 1 0; }
   .wt-fit .wt-main:has(#waiting.is-collapsed):has(#your-move.is-collapsed) #todo:not(.is-collapsed) { max-height: none; flex: 1 1 0; }
   .wt-fit .wt-main > .wt-island.is-collapsed { flex: 0 0 auto !important; max-height: none !important; }
-  .wt-head .wt-collapse { position: absolute; z-index: 1; top: 8px; right: 8px; color: inherit; }
-  .wt-head { position: relative; }
-  .wt-head.is-collapsed { grid-template-columns: 1fr; padding: 4px 8px; }
+  .wt-head { grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 32px; }
+  .wt-head .wt-collapse { grid-column: 3; grid-row: 1; align-self: center; justify-self: center; margin: 0; color: inherit; }
+  .wt-head.is-collapsed { grid-template-columns: minmax(0, 1fr) 32px; padding: 4px 8px; }
   .wt-head.is-collapsed .wt-title { padding: 4px 8px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
   .wt-head.is-collapsed .wt-title h1 { font-size: 18px; line-height: 28px; }
   .wt-head.is-collapsed .wt-tiles, .wt-head.is-collapsed .wt-give, .wt-head.is-collapsed .wt-sentence { display: none; }
-  .wt-head.is-collapsed .wt-collapse { top: 6px; }
+  .wt-head.is-collapsed .wt-collapse { grid-column: 2; }
   .wt-head.is-collapsed .wt-strip { font-size: 13px; }
   .wt-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .wt-mark { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; border: 1px solid var(--md-outline); color: var(--md-on-surface); }
@@ -300,7 +300,9 @@
     .wt-fit .wt-scroll::-webkit-scrollbar-thumb, .wt-fit .wt-feed-list::-webkit-scrollbar-thumb { background: var(--md-outline-variant); border-radius: 4px; }
   }
   @media (max-width: 900px) {
-    .wt-head { grid-template-columns: 1fr; }
+    .wt-head, .wt-head.is-collapsed { grid-template-columns: minmax(0, 1fr) 32px; }
+    .wt-head .wt-collapse { grid-column: 2; }
+    .wt-tiles { grid-column: 1 / -1; }
     .wt-layout { grid-template-columns: 1fr; }
     .wt-feed { position: static; max-height: none; }
     .wt-feed-list { max-height: 28rem; }
