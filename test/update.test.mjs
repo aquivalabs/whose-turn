@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import { mkdirSync, mkdtempSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { channelOf, createUpdater, installedRoot, probeAgent, restartServer, runsInstalled } from '../lib/update.mjs';
+import { CHANNEL, createUpdater, installedRoot, probeAgent, restartServer, runsInstalled } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 
 const scratch = () => mkdtempSync(join(tmpdir(), 'wt-update-'));
@@ -20,7 +20,7 @@ const updaterWith = (tags, extra = {}) => {
 
 test('a newer version under the channel tag is offered and announced once', async () => {
   // Setup
-  const { updater, notes, asked } = updaterWith({ latest: '1.0.0-alpha.1', alpha: '1.0.0-alpha.3' });
+  const { updater, notes, asked } = updaterWith({ latest: '1.0.0-alpha.3', alpha: '1.0.0-alpha.3' });
   // Exercise
   const first = await updater.check();
   await updater.check();
@@ -34,7 +34,7 @@ test('the announcement is remembered across a restart of the server', async () =
   // Setup
   const dataDir = scratch();
   const notes = [];
-  const make = () => createUpdater({ http: { fetchJson: async () => ({ alpha: '1.0.0-alpha.3' }) }, dataDir, version: '1.0.0-alpha.2', installed: true, notify: (title) => notes.push(title), restart: async () => {} });
+  const make = () => createUpdater({ http: { fetchJson: async () => ({ latest: '1.0.0-alpha.3' }) }, dataDir, version: '1.0.0-alpha.2', installed: true, notify: (title) => notes.push(title), restart: async () => {} });
   // Exercise
   await make().check();
   await make().check();
@@ -67,7 +67,7 @@ test('an unreachable registry or a malformed tag leaves the offer as it was', as
 
 test('a checkout never asks the registry and is never offered an update', async () => {
   // Setup
-  const { updater, asked } = updaterWith({ alpha: '1.0.0-alpha.3' }, { installed: false });
+  const { updater, asked } = updaterWith({ latest: '1.0.0-alpha.3' }, { installed: false });
   // Exercise
   const status = await updater.check();
   // Verify
@@ -88,10 +88,8 @@ test('the server counts as installed only when its root is the plugin install, s
   assert.equal(runsInstalled(installedRoot(scratch()), dataDir), false);
 });
 
-test('a prerelease follows its own dist-tag, a release follows latest', () => {
-  assert.equal(channelOf('1.0.0-alpha.2'), 'alpha');
-  assert.equal(channelOf('1.0.0-beta'), 'beta');
-  assert.equal(channelOf('1.2.3'), 'latest');
+test('every install follows the latest dist-tag', () => {
+  assert.equal(CHANNEL, 'latest');
 });
 
 /** A run that resolves when the test says so, with '' for success or npm's message. */
@@ -108,7 +106,7 @@ test('POST /api/update installs the channel version into the package location, r
   // Setup
   const installer = deferredRun();
   let restarts = 0;
-  const { updater } = updaterWith({ alpha: '1.0.0-alpha.3' }, { run: installer.run, npm: 'fake-npm', restart: async () => { restarts += 1; } });
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: installer.run, npm: 'fake-npm', restart: async () => { restarts += 1; } });
   await updater.check();
   const { server, post, get } = await startTestApi({ updater });
   try {
@@ -143,7 +141,7 @@ test('a failed install keeps the old copy answering and reports failed with npm\
   // Setup
   const installer = deferredRun();
   let restarts = 0;
-  const { updater } = updaterWith({ alpha: '1.0.0-alpha.3' }, { run: installer.run, restart: async () => { restarts += 1; } });
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: installer.run, restart: async () => { restarts += 1; } });
   await updater.check();
   const { server, post, get } = await startTestApi({ updater });
   try {
@@ -179,7 +177,7 @@ test('POST /api/update with nothing to apply is refused as a failed precondition
 test('the stream carries the update status first and every change after', async () => {
   // Setup
   const installer = deferredRun();
-  const { updater } = updaterWith({ alpha: '1.0.0-alpha.3' }, { run: installer.run });
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: installer.run });
   await updater.check();
   const { server, url, post } = await startTestApi({ updater });
   const controller = new AbortController();

@@ -7,7 +7,7 @@ All notable changes to whose-turn are recorded here. The format follows [Keep a 
 ## [1.0.0-alpha.3] - 2026-11-03
 
 ### Added
-- Self-update of the installed package. Every ten minutes the server reads the npm dist-tags (the channel of its own version, `alpha` during the alpha) and, when a different version is out, reports it as `update` in `/api/summary`, `/api/state` and the stream, and raises one desktop notification per version. `POST /api/update` installs it into the package's own location and restarts the server; the status bar shows "<version> is out · Update", then "Updating…", then "Updated to <version>". A checkout is never offered an update. New reasons `UPDATE_IN_PROGRESS` (409) and `UPDATE_UNAVAILABLE` (412). RMA-231.
+- Self-update of the installed package. Every ten minutes the server reads the npm dist-tags (`latest`, which every publish moves) and, when a different version is out, reports it as `update` in `/api/summary`, `/api/state` and the stream, and raises one desktop notification per version. `POST /api/update` installs it into the package's own location and restarts the server; the status bar shows "<version> is out · Update", then "Updating…", then "Updated to <version>". A checkout is never offered an update. New reasons `UPDATE_IN_PROGRESS` (409) and `UPDATE_UNAVAILABLE` (412). RMA-231.
 
 ### Fixed
 - The window opens its event stream again. Since RMA-197 the store waited for a `CLOSED` status that VueUse never reports before the first open, so the window never subscribed to `/api/stream` and picked up new polls only on a reload.
