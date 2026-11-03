@@ -1,42 +1,65 @@
 name: release
-# A tag vX.Y.Z publishes the package: check, build the window, npm publish with dist/ inside, and the same tarball on a GitHub Release.
-# The whose-turn plugin in BladeForge installs the published package, so the user never builds. ADR 0007.
+# A version bump in main releases it: check, build the window, npm publish with dist/ inside, then the tag and the same tarball on a GitHub Release.
+# Nobody pushes a tag (RMA-239). The whose-turn plugin in BladeForge installs the published package, so the user never builds. ADR 0007.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: [package.json]
+  workflow_dispatch:
 permissions:
   contents: write
   id-token: write
+concurrency:
+  group: release
+  cancel-in-progress: false
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: The tag names the package version
-        run: |
-          tag=${GITHUB_REF_NAME#v}
-          version=$(node -p "require('./package.json').version")
-          [ "$tag" = "$version" ] || { echo "tag v$tag, package.json $version: they must match"; exit 1; }
-      - run: npm run check
-      - run: npm run build
-      - name: Pack
-        run: npm pack && ls -l whose-turn-*.tgz && tar tzf whose-turn-*.tgz | grep -c '^package/dist/' | xargs -I{} echo "{} files under dist/"
-      - name: Trusted publishing needs npm 11.5 or newer; Node 22 ships npm 10
-        run: npm install -g npm@latest && npm --version
-      - name: Publish to npm
-        # No token: npm trusts this workflow through OIDC (the package's trusted publisher, RMA-235), and `id-token: write` above is what lets it. Every publish moves `latest`, prereleases included, because every install follows it (RMA-230, RMA-231); a prerelease also gets its channel tag (`alpha`).
-        run: |
-          version=${GITHUB_REF_NAME#v}
-          npm publish whose-turn-*.tgz --provenance --access public --tag latest
-          case "$version" in *-*) channel=${version#*-}; npm dist-tag add "whose-turn@$version" "${channel%%.*}";; esac
-      - name: GitHub Release with the tarball
+      - name: The version, and whether it is already released
+        id: version
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          case "$GITHUB_REF_NAME" in *-*) pre=--prerelease;; *) pre=;; esac
-          gh release create "$GITHUB_REF_NAME" whose-turn-*.tgz --title "$GITHUB_REF_NAME" --notes "See CHANGELOG.md." $pre
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if gh release view "v$version" >/dev/null 2>&1 || git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+            echo "v$version is already released; nothing to do."
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.new == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.version.outputs.new == 'true'
+        run: npm ci
+      - if: steps.version.outputs.new == 'true'
+        run: npm run check
+      - if: steps.version.outputs.new == 'true'
+        run: npm run build
+      - name: Pack
+        if: steps.version.outputs.new == 'true'
+        run: npm pack && ls -l whose-turn-*.tgz && tar tzf whose-turn-*.tgz | grep -c '^package/dist/' | xargs -I{} echo "{} files under dist/"
+      - name: Trusted publishing needs npm 11.5 or newer; Node 22 ships npm 10
+        if: steps.version.outputs.new == 'true'
+        run: npm install -g npm@latest && npm --version
+      - name: Publish to npm
+        if: steps.version.outputs.new == 'true'
+        # No token: npm trusts this workflow through OIDC (the package's trusted publisher, RMA-235), and `id-token: write` above is what lets it. Every publish moves `latest`, prereleases included, because every install follows it (RMA-230, RMA-231); a prerelease also gets its channel tag (`alpha`).
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          npm publish whose-turn-*.tgz --provenance --access public --tag latest
+          case "$VERSION" in *-*) channel=${VERSION#*-}; npm dist-tag add "whose-turn@$VERSION" "${channel%%.*}";; esac
+      - name: The tag and a GitHub Release with the tarball
+        if: steps.version.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          case "$VERSION" in *-*) pre=--prerelease;; *) pre=;; esac
+          gh release create "v$VERSION" whose-turn-*.tgz --target "$GITHUB_SHA" --title "v$VERSION" --notes "See CHANGELOG.md." $pre
