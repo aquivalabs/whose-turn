@@ -7,7 +7,7 @@ import { topLayer } from '../web/src/lib/layers.ts';
 import { liveStatus } from '../web/src/lib/live-status.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
 import { latestWins } from '../web/src/lib/latest-wins.ts';
-import { writeProblem, UNREACHABLE_TEXT, TEXT_KEPT } from '../web/src/lib/problems.ts';
+import { writeProblem, errorProblem, UNREACHABLE_TEXT, TEXT_KEPT } from '../web/src/lib/problems.ts';
 
 const marks = { seen: ['b'], base: new Date('2026-11-01T00:00:00Z').getTime(), handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
 const items = [
@@ -133,6 +133,17 @@ test('a refused write names what was not saved, a network failure the server-dow
   assert.equal(writeProblem({}), '');
   assert.equal(writeProblem([{ id: 't1' }]), '');
   assert.equal(writeProblem({ seen: [], base: 0, handled: {} }), '');
+});
+
+test('a refused request says what its reason means, not the raw message', () => {
+  const envelope = (reason, message = 'raw upstream text') => ({ error: { message, details: [{ '@type': 'ErrorInfo', reason }] } });
+  assert.equal(writeProblem(envelope('NO_WORKSPACE')), 'No workspace configured. Open Settings.');
+  assert.match(writeProblem(envelope('NOT_CONFIGURED')), /^The maintainer's tracker is not connected/);
+  assert.equal(writeProblem(envelope('UPSTREAM_FAILED')), 'The tracker did not answer; try again in a minute.');
+  assert.equal(writeProblem(envelope('RATE_LIMITED')), 'The source is rate-limited; the monitor backs off.');
+  assert.equal(writeProblem(envelope('INTERNAL', 'disk full')), 'The local server failed; see its log.');
+  assert.equal(writeProblem(envelope('INVALID_ARGUMENT', 'a title is required')), 'Not saved: a title is required');
+  assert.equal(errorProblem(envelope('NO_SUCH_WORKSPACE', 'No such workspace.').error, 'Could not load'), 'Could not load: No such workspace.');
 });
 
 test('the live status is red when every source fails, amber when some do, green otherwise', () => {

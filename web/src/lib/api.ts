@@ -28,6 +28,12 @@ export const problemsOf = (error: ApiError): string[] => {
   return [info && info.metadata && info.metadata.detail ? info.metadata.detail : error.message];
 };
 
+/** The app-specific reason of a google.rpc.Status error envelope, or an empty string. */
+export const reasonOf = (error: ApiError): string => {
+  const info = (error.details || []).find((detail) => detail['@type'] === 'ErrorInfo');
+  return (info && info.reason) || '';
+};
+
 /** The hand-off text of a row, a thread, a feed item or a workspace, for the clipboard. */
 export const handOffText = (query: Record<string, string>): Promise<string> =>
   fetch('/api/handoff?' + new URLSearchParams(query)).then((response) =>

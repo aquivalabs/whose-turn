@@ -93,12 +93,44 @@ test('an unexpected exception in a handler answers INTERNAL, an unknown path sti
     assert.equal(failed.status, 500);
     assert.equal(error.status, 'INTERNAL');
     assert.equal(error.details[0].reason, 'INTERNAL');
-    assert.equal(error.details[0].metadata.detail, 'disk full');
+    assert.doesNotMatch(JSON.stringify(error), /disk full/);
+    assert.equal(error.details.some((detail) => detail['@type'] === 'DebugInfo'), false);
     const unknown = await fetch(`http://127.0.0.1:${port + 3}/api/nowhere`);
     assert.equal(unknown.status, 404);
     assert.equal((await unknown.json()).error.details[0].reason, 'NOT_FOUND');
   } finally {
     console.error = logged;
+    server.close();
+  }
+});
+
+test('the raw exception text of an INTERNAL answer reaches the client only under WHOSE_TURN_DEBUG=1', async () => {
+  const workspace = { id: 'w', updateMarks: () => { throw new Error('disk full'); } };
+  const server = await startApi({ port: port + 4, appDir, registry: { ...registry, workspaces: [workspace] }, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  const logged = console.error;
+  console.error = () => {};
+  process.env.WHOSE_TURN_DEBUG = '1';
+  try {
+    const error = (await (await postTo(port + 4, '/api/marks', { ws: 'w', seen: ['a'] })).json()).error;
+    assert.equal(error.message, 'The local server failed on this request; the details are in its log.');
+    assert.equal(error.details.find((detail) => detail['@type'] === 'DebugInfo').detail, 'disk full');
+  } finally {
+    delete process.env.WHOSE_TURN_DEBUG;
+    console.error = logged;
+    server.close();
+  }
+});
+
+test('a request that needs a workspace answers NO_WORKSPACE when none is configured, while /api/state keeps its empty snapshot', async () => {
+  const server = await startApi({ port: port + 5, appDir, registry, requestPoll: () => {}, saveConfig: async () => {}, secrets: {}, inbox: {}, http: {}, reports: { list: () => [], add: () => {} } });
+  try {
+    const handoff = await fetch(`http://127.0.0.1:${port + 5}/api/handoff?kind=workspace`);
+    assert.equal(handoff.status, 412);
+    assert.equal((await handoff.json()).error.details[0].reason, 'NO_WORKSPACE');
+    const state = await fetch(`http://127.0.0.1:${port + 5}/api/state`);
+    assert.equal(state.status, 200);
+    assert.deepEqual(await state.json(), { workspaces: [], problems: [] });
+  } finally {
     server.close();
   }
 });

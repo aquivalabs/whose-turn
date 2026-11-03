@@ -114,11 +114,15 @@ export interface StreamEvent {
 
 /** A google.rpc.Status error envelope, as every refused write returns it. */
 export interface ApiError {
+  code?: number;
+  status?: string;
   message: string;
   details?: {
     '@type': string;
+    reason?: string;
+    domain?: string;
     field_violations?: { description: string }[];
-    metadata?: { detail?: string };
+    metadata?: { detail?: string; upstream_status?: number };
   }[];
 }
 

@@ -10,14 +10,14 @@ import {
   useNow,
   useSessionStorage,
 } from '@vueuse/core';
-import { getJson, post } from './lib/api.ts';
+import { getJson, post, reasonOf } from './lib/api.ts';
 import { latestWins } from './lib/latest-wins.ts';
-import { NO_WORKSPACE_MESSAGE, retryWithoutWorkspace } from './lib/load-retry.ts';
+import { retryWithoutWorkspace } from './lib/load-retry.ts';
 import { openCount, turnCounts, withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { topLayer, type Layer } from './lib/layers.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
-import { SERVER_DOWN, TEXT_KEPT, writeProblem } from './lib/problems.ts';
+import { SERVER_DOWN, TEXT_KEPT, errorProblem, writeProblem } from './lib/problems.ts';
 import type { ApiError, FeedItem, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
@@ -153,8 +153,8 @@ export const load = (asked = ui.ws): Promise<Snapshot> => {
         return snapshot;
       }
       if (reply.error) {
-        if (!retryWithoutWorkspace(asked)) {
-          ui.status = NO_WORKSPACE_MESSAGE;
+        if (reasonOf(reply.error) !== 'NO_SUCH_WORKSPACE' || !retryWithoutWorkspace(asked)) {
+          ui.status = errorProblem(reply.error, 'Could not load');
           return snapshot;
         }
         return load('');
