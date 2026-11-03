@@ -17,6 +17,8 @@ export const fields = [
   { key: 'bots', label: 'Bot logins', hint: 'comma-separated; their comments never count as a reply', list: true },
 ];
 
+export const persistedCache = ['prs', 'asks'];
+
 const TOKEN_TTL = 10 * 60 * 1000;
 
 const ghToken = async (account, cache) => {

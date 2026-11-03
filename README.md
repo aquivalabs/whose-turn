@@ -48,7 +48,7 @@ A flat config with `github`, `jira` and `rules` at the top level still loads as 
 Secrets never go into the config. GitHub uses `gh auth token`. The Jira API token lives in the macOS Keychain under the service and the account email; paste it into the settings sheet or send it through the API, and the server stores it. Elsewhere, or for a launch agent that is refused Keychain access, the server keeps it in `<data>/secrets/<service>@<account>` with mode 600.
 
 
-State lives next to the config, per workspace: `workspaces/<id>/state.json` (last poll), `marks.json` (read, handled, notified), `todos.json`.
+State lives next to the config, per workspace: `workspaces/<id>/state.json` (last poll), `marks.json` (read, handled, notified), `todos.json`, `cache.json` (fetched PR details, so a restart does not refetch them; versioned, never holds a token).
 
 ## Files
 
