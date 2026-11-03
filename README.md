@@ -209,7 +209,7 @@ Open it at `http://127.0.0.1:<port>/` (or with `open.sh` as an app window). One 
 
 **What changed.** The feed on the right is newest first, grouped by ticket. A ticket that is your move has an amber bar. Unread items are lit until you click them, and "Mark all read" clears them (with Undo). Search filters by any words and opens the matching groups; the source buttons narrow it to one source, "Flat" drops the grouping. Only written things expand, and "Open formatted" shows the comment as it was written.
 
-**Fold, copy, ask.** Every panel folds with the chevron before its title and stays folded. The AI button on a row, a ticket thread, a workspace or the top bar copies that context as Markdown for any assistant.
+**Fold, resize, copy, ask.** Every panel folds with the chevron before its title and stays folded. Drag a panel's edge to resize it (arrow keys work on the focused handle, double click resets); the size is kept per workspace and never goes below the header and one full row. The AI button on a row, a ticket thread, a workspace or the top bar copies that context as Markdown for any assistant.
 
 **Add a source.** First run shows one card with "Add a source". Later, the gear at the bottom of the rail opens Settings: the workspaces on the left, one workspace on the right with its sources, rule texts and colours. Save writes the config; a token goes to the secret store and never into the file. A failing source gets one line in the red banner above the panels, which opens Settings.
 

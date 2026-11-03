@@ -1,21 +1,123 @@
 <script setup lang="ts">
-// One panel of the dashboard: a head with the title, a note and a hint, a body, and a chevron before the title that folds it; the fold is remembered in the browser. The glass surface is the global island primitive; a caller's class falls through to the section.
+// One panel of the dashboard: a head with the title, a note and a hint, a body, a chevron before the title that folds it, and a drag handle that sizes it (height, or width for `resize="width"`); fold and size are remembered in the browser. The glass surface is the global island primitive; a caller's class falls through to the section.
+import { onMounted, ref, useTemplateRef } from 'vue';
+import { useMutationObserver, useResizeObserver } from '@vueuse/core';
 import { useFold } from '@/composables/useFold.ts';
+import { ceilingHeight, floorHeight, usePanelSize } from '@/composables/usePanelSize.ts';
 import Chevron from './Chevron.vue';
+import ResizeHandle from './ResizeHandle.vue';
 const props = withDefaults(
-  defineProps<{ id: string; title: string; note?: string; tip?: string; column?: boolean }>(),
+  defineProps<{
+    id: string;
+    title: string;
+    note?: string;
+    tip?: string;
+    column?: boolean;
+    resize?: 'height' | 'width';
+  }>(),
   {
     note: '',
     tip: '',
+    resize: 'height',
   },
 );
+const MIN_WIDTH = 280;
+const MAIN_MIN_WIDTH = 360;
 const { collapsed, toggle } = useFold(props.id);
+const { size, set } = usePanelSize(props.id);
+const root = useTemplateRef<HTMLElement>('root');
+const floor = ref(0);
+const pixels = (value: string) => parseFloat(value) || 0;
+const scrolledAbove = (row: HTMLElement, stop: HTMLElement) => {
+  let offset = 0;
+  for (let node = row.parentElement; node && node !== stop; node = node.parentElement) {
+    offset += node.scrollTop;
+  }
+  return offset;
+};
+const siblingsBelow = (body: HTMLElement, row: HTMLElement) => {
+  const owner = [...body.children].find((child) => child.contains(row));
+  const after = owner ? [...body.children].slice([...body.children].indexOf(owner) + 1) : [];
+  return after
+    .filter((node) => !node.classList.contains('row-scroll__more'))
+    .reduce((sum, node) => {
+      const element = node as HTMLElement;
+      return sum + (pixels(getComputedStyle(element).minHeight) || element.offsetHeight);
+    }, 0);
+};
+const measure = () => {
+  const el = root.value;
+  const body = el?.querySelector<HTMLElement>('.island__body');
+  if (!el || !body || collapsed.value || props.resize !== 'height') {
+    return;
+  }
+  const rows = body.querySelectorAll<HTMLElement>('tbody > tr, .todos__list > li');
+  const top = el.getBoundingClientRect().top;
+  const padding = pixels(getComputedStyle(body).paddingBottom);
+  if (!rows.length) {
+    floor.value = Math.ceil(body.offsetTop + body.scrollHeight);
+    return;
+  }
+  const bottom = rows[0].getBoundingClientRect().bottom - top + scrolledAbove(rows[0], el);
+  floor.value = floorHeight(bottom + siblingsBelow(body, rows[0]) + padding + 2, rows.length);
+};
+let frame = 0;
+const schedule = () => {
+  cancelAnimationFrame(frame);
+  frame = requestAnimationFrame(measure);
+};
+onMounted(() => {
+  const body = root.value?.querySelector<HTMLElement>('.island__body');
+  if (body) {
+    useMutationObserver(body, schedule, { childList: true, subtree: true });
+    useResizeObserver(body, schedule);
+  }
+  schedule();
+});
+const neighbours = (el: HTMLElement) =>
+  [...(el.parentElement?.children ?? [])]
+    .filter((node): node is HTMLElement => node !== el && node instanceof HTMLElement)
+    .map((node) => ({
+      collapsed: node.classList.contains('island--collapsed'),
+      height: node.offsetHeight,
+      floor: pixels(node.style.getPropertyValue('--island-floor')),
+    }));
+const bounds = () => {
+  const el = root.value as HTMLElement;
+  measure();
+  if (props.resize === 'width') {
+    const layout = el.parentElement as HTMLElement;
+    const gap = pixels(getComputedStyle(layout).columnGap);
+    return {
+      current: el.offsetWidth,
+      min: MIN_WIDTH,
+      max: layout.clientWidth - gap - MAIN_MIN_WIDTH,
+    };
+  }
+  const column = el.parentElement as HTMLElement;
+  const gap = pixels(getComputedStyle(column).rowGap);
+  return {
+    current: el.offsetHeight,
+    min: floor.value,
+    max: Math.max(ceilingHeight(column.clientHeight, gap, neighbours(el)), column.clientHeight),
+  };
+};
 </script>
 <template>
   <section
     :id="id"
+    ref="root"
     class="island"
-    :class="{ 'island--collapsed': collapsed, 'island--column': column }"
+    :class="{
+      'island--collapsed': collapsed,
+      'island--column': column,
+      'island--sized': size !== null && resize === 'height',
+    }"
+    :style="
+      resize === 'height'
+        ? { '--island-floor': floor + 'px', '--island-height': (size ?? 0) + 'px' }
+        : undefined
+    "
   >
     <div class="island__head">
       <Chevron
@@ -33,6 +135,15 @@ const { collapsed, toggle } = useFold(props.id);
       </p>
     </div>
     <div class="island__body"><slot /></div>
+    <ResizeHandle
+      v-if="!collapsed"
+      :label="'Resize ' + title"
+      :axis="resize === 'width' ? 'x' : 'y'"
+      :grow="resize === 'width' ? -1 : 1"
+      :bounds="bounds"
+      @resize="set"
+      @reset="set(null)"
+    />
   </section>
 </template>
 <style scoped>

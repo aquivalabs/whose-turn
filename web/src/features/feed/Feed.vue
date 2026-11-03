@@ -104,6 +104,7 @@ const restoreMarks = async () => {
     tip="Newest first: comments, reviews, merges and failed checks on your PRs, and ticket changes. Each item opens where it happened."
     class="feed"
     column
+    resize="width"
   >
     <template #head
       ><span v-if="newCount" class="feed__new-count">{{ newCount }} new</span></template

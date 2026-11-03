@@ -17,6 +17,7 @@ import { dark } from './scheme.ts';
 import { workspaceIconParts, workspaceIconSvg } from './lib/icons.ts';
 import { mulberry32 } from './lib/random.ts';
 import { useDialogFocus, useShortcuts } from './composables/useKeyboard.ts';
+import { usePanelSize } from './composables/usePanelSize.ts';
 import Rail from './features/rail/Rail.vue';
 import StatusBar from './features/status/StatusBar.vue';
 import WorkspaceHeader from './features/header/WorkspaceHeader.vue';
@@ -30,6 +31,10 @@ import FeedbackSheet from './features/feedback/FeedbackSheet.vue';
 import SettingsSheet from './features/settings/SettingsSheet.vue';
 const firstRun = computed(
   () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
+);
+const { size: feedWidth } = usePanelSize('feed');
+const layoutStyle = computed(() =>
+  feedWidth.value === null ? undefined : { '--feed-width': feedWidth.value + 'px' },
 );
 const covered = computed(() => currentLayer.value !== null);
 useDialogFocus(covered);
@@ -73,7 +78,7 @@ onMounted(() => {
         <canvas id="backdrop" class="dashboard__backdrop" aria-hidden="true"></canvas>
         <WorkspaceHeader :inert="covered" />
         <FirstRun v-if="firstRun" :inert="covered" />
-        <div v-else class="dashboard__layout" :inert="covered">
+        <div v-else class="dashboard__layout" :style="layoutStyle" :inert="covered">
           <div class="dashboard__main">
             <YourMove class="dashboard__move" /><Todos class="dashboard__todo" /><Waiting
               class="dashboard__waiting"

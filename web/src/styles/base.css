@@ -98,7 +98,7 @@
 .dashboard__layout {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--feed-width, 31%);
   align-items: start;
 }
 
@@ -135,6 +135,8 @@
     flex-direction: column;
     gap: 12px;
     min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
 
   .dashboard--fit .dashboard__main > .island {
@@ -157,8 +159,17 @@
     flex: 1 1 0;
   }
 
-  .dashboard--fit .dashboard__waiting:not(.island--collapsed) {
-    min-height: 5rem;
+  .dashboard--fit .dashboard__main > .island:not(.island--collapsed) {
+    min-height: var(--island-floor, 5rem);
+  }
+
+  .dashboard--fit .dashboard__main > .island--sized:not(.island--collapsed) {
+    flex: 0 0 var(--island-height);
+    max-height: none;
+  }
+
+  .dashboard--fit .dashboard__main > .dashboard__waiting.island--sized:not(.island--collapsed) {
+    flex-grow: 1;
   }
 
   .dashboard--fit .dashboard__feed {
@@ -172,14 +183,14 @@
 /* A folded island gives its room to the next open one below it. */
 .dashboard--fit
   .dashboard__main:has(.dashboard__waiting.island--collapsed)
-  .dashboard__move:not(.island--collapsed) {
+  .dashboard__move:not(.island--collapsed, .island--sized) {
   max-height: none;
   flex: 1 1 0;
 }
 
 .dashboard--fit
   .dashboard__main:has(.dashboard__waiting.island--collapsed):has(.dashboard__move.island--collapsed)
-  .dashboard__todo:not(.island--collapsed) {
+  .dashboard__todo:not(.island--collapsed, .island--sized) {
   max-height: none;
   flex: 1 1 0;
 }
@@ -211,6 +222,7 @@
 
 /* Island: the glass surface every panel stands on. */
 .island {
+  position: relative;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--glass-edge);

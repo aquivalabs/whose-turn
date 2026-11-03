@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Recently done: a block under Your move with the last tickets that are done, folded by default; the fold is remembered in the browser.
-import { computed } from 'vue';
+import { computed, useTemplateRef } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
 import { snapshot, now } from '@/store.ts';
 import { recentlyDone, statusTone } from '@/lib/moves.ts';
@@ -9,6 +9,28 @@ import { age, when } from '@/lib/time.ts';
 import TicketCell from '@/ui/TicketCell.vue';
 import AiButton from '@/ui/AiButton.vue';
 import Chevron from '@/ui/Chevron.vue';
+import ResizeHandle from '@/ui/ResizeHandle.vue';
+import { usePanelSize } from '@/composables/usePanelSize.ts';
+const LIST_MAX = 480;
+const { size: listHeight, set: setListHeight } = usePanelSize('recently-done');
+const list = useTemplateRef<HTMLElement>('list');
+const scrollerRoom = (element: HTMLElement) => {
+  const scroller = element.closest('.island__body')?.querySelector<HTMLElement>('.row-scroll');
+  return scroller
+    ? Math.max(0, scroller.clientHeight - (parseFloat(getComputedStyle(scroller).minHeight) || 0))
+    : 0;
+};
+const listBounds = () => {
+  const element = list.value as HTMLElement;
+  const first = element.querySelector('tbody > tr');
+  const bottom = (first ?? element).getBoundingClientRect().bottom - element.getBoundingClientRect().top;
+  const padding = parseFloat(getComputedStyle(element).paddingBottom) || 0;
+  return {
+    current: element.offsetHeight,
+    min: Math.ceil(bottom + element.scrollTop + padding),
+    max: Math.min(LIST_MAX, element.offsetHeight + scrollerRoom(element)),
+  };
+};
 const open = useLocalStorage('wt-recent-open', false, {
   writeDefaults: false,
   serializer: { read: (raw) => raw === '1', write: (value) => (value ? '1' : '0') },
@@ -30,7 +52,11 @@ const rows = computed(() => {
       <Chevron tag="span" :open="open" />
       Recently done <span class="count">{{ rows.length }}</span>
     </summary>
-    <div class="recently-done__list">
+    <div
+      ref="list"
+      class="recently-done__list"
+      :style="listHeight === null ? undefined : { maxHeight: listHeight + 'px', height: listHeight + 'px' }"
+    >
       <table class="table">
         <thead>
           <tr>
@@ -63,10 +89,21 @@ const rows = computed(() => {
         </tbody>
       </table>
     </div>
+    <ResizeHandle
+      v-if="open"
+      label="Resize Recently done"
+      axis="y"
+      top
+      :grow="-1"
+      :bounds="listBounds"
+      @resize="setListHeight"
+      @reset="setListHeight(null)"
+    />
   </details>
 </template>
 <style scoped>
 .recently-done {
+  position: relative;
   display: flex;
   flex: 0 1 auto;
   flex-direction: column;

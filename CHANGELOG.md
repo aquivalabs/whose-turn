@@ -8,6 +8,7 @@ All notable changes to whose-turn are recorded here. The format follows [Keep a 
 - The launch agent and the systemd unit start `launch.sh`, which resolves node at every start (login shell, PATH, then the install-time path), so removing a version-manager Node no longer breaks them. RMA-215.
 
 ### Added
+- Panels are resizable: Your move, To do and Waiting on others by their bottom edge, What changed by its left edge, Recently done by its top edge. The size is remembered per workspace, never goes below the header and one full row (the column scrolls when the minimums do not fit), double click gives it back to the layout, and `scripts/panel-matrix.mjs` checks the layout matrix with Playwright. RMA-246.
 - To-do: a pencil or a double click edits the text in place (Enter saves through `edit`, Escape cancels), and a deleted to-do offers Undo. RMA-172.
 - A presentation film in the README (docs/media/whose-turn-film.mp4, 80 s). RMA-233.
 
