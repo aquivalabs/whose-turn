@@ -22,7 +22,7 @@ For Claude Code, add the repository as a plugin marketplace and install the plug
 
 ```sh
 claude plugin marketplace add OWNER/whose-turn
-claude plugin install whose-turn@whose-turn-local
+claude plugin install whose-turn@whose-turn
 ```
 
 ## First run
