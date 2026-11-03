@@ -184,3 +184,7 @@ a full body.
 
 A change to the interpreter (`species.ts`), the shape painter (`silhouette.ts`), a base file under
 `web/src/species/base/`, or the way `backdrop.ts` picks a species or pose.
+
+## Pinning
+
+Without a pin the backdrop rolls a new seed per workspace on every load. `workspaces[].theme.animal` (`{species, seed}`) fixes it: the window passes both to `show`, a refresh no longer rerolls, and unpinning drops the key. Written through `POST /api/animal`.

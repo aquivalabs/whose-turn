@@ -207,3 +207,50 @@ test('a port in use rejects startApi with one line naming the port and WHOSE_TUR
     holder.close();
   }
 });
+
+const animalRegistry = (raw) => {
+  const registry = emptyRegistry({
+    rawWorkspaces: raw,
+    workspaces: [{ id: 'home', describe: () => ({ id: 'home' }) }],
+  });
+  return registry;
+};
+
+test('POST /api/animal pins species and seed into the workspace theme and unpinning removes them', async () => {
+  // Setup
+  const saves = [];
+  const registry = animalRegistry([{ id: 'home', theme: { seed: '#3d7a5c' } }, { id: 'other' }]);
+  const { server, post } = await startTestApi({ registry, saveConfig: async (raw) => { saves.push(raw); } });
+  try {
+    // Exercise
+    const pinned = await post('/api/animal', { ws: 'home', species: 'fox', seed: 12 });
+    registry.rawWorkspaces = saves[0];
+    const released = await post('/api/animal', { ws: 'home', pin: false });
+    // Verify
+    assert.equal(pinned.status, 200);
+    assert.deepEqual(saves[0], [{ id: 'home', theme: { seed: '#3d7a5c', animal: { species: 'fox', seed: 12 } } }, { id: 'other' }]);
+    assert.equal(released.status, 200);
+    assert.deepEqual(saves[1], [{ id: 'home', theme: { seed: '#3d7a5c' } }, { id: 'other' }]);
+  } finally {
+    server.close();
+  }
+});
+
+test('unpinning a theme that held only the animal drops the theme, and a pin without a seed is refused', async () => {
+  // Setup
+  const saves = [];
+  const registry = animalRegistry([{ id: 'home', theme: { animal: { species: 'fox', seed: 1 } } }]);
+  const { server, post } = await startTestApi({ registry, saveConfig: async (raw) => { saves.push(raw); } });
+  try {
+    // Exercise
+    const released = await post('/api/animal', { ws: 'home', pin: false });
+    const refused = await post('/api/animal', { ws: 'home', species: 'fox' });
+    // Verify
+    assert.equal(released.status, 200);
+    assert.deepEqual(saves, [[{ id: 'home' }]]);
+    assert.equal(refused.status, 400);
+    assert.equal(saves.length, 1);
+  } finally {
+    server.close();
+  }
+});

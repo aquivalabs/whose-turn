@@ -17,6 +17,11 @@ export interface QuickLink {
   url: string;
 }
 
+export interface PinnedAnimal {
+  species: string;
+  seed: number;
+}
+
 export interface Workspace {
   id: string;
   name: string;
@@ -26,6 +31,8 @@ export interface Workspace {
   theme: Theme | null;
   /** The seed the scheme was built from: the configured one, or the one derived from the id. */
   theme_seed?: string;
+  /** The animal pinned to the workspace, or null while a new one is drawn on every load. */
+  animal?: PinnedAnimal | null;
   open_moves?: number;
   failing_sources?: number;
 }

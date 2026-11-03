@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The workspace header: the name, the copy-workspace sparkle, the quick links, and four tiles; it folds to one line with the counts, like every island.
-import { snapshot, counts } from '@/store.ts';
+import { snapshot, counts, setAnimalPin } from '@/store.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
 import ExtLink from '@/ui/ExtLink.vue';
@@ -25,6 +25,19 @@ const { collapsed, toggle } = useFold('header');
           class="ai-hint"
           >Copy for AI: this workspace</span
         >
+        <button
+          type="button"
+          class="workspace-header__pin"
+          :aria-pressed="Boolean(snapshot.workspace.animal)"
+          :data-tip="
+            snapshot.workspace.animal
+              ? 'Let the pinned animal go; a new one is drawn on every load again'
+              : 'Keep this animal behind the workspace on every load'
+          "
+          @click="setAnimalPin(!snapshot.workspace.animal)"
+        >
+          {{ snapshot.workspace.animal ? 'Let the animal go' : 'Pin the animal' }}
+        </button>
         <span class="workspace-header__links"
           ><ExtLink
             v-for="link in snapshot.workspace.links || []"
@@ -118,6 +131,24 @@ const { collapsed, toggle } = useFold('header');
   align-items: center;
   gap: 8px;
   margin-top: 8px;
+}
+
+.workspace-header__pin {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  background: rgb(var(--glass), 0.55);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.workspace-header__pin:hover,
+.workspace-header__pin[aria-pressed='true'] {
+  background: rgb(var(--glass), 0.85);
 }
 
 .workspace-header__links {

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { SERVER_DOWN } from './lib/problems.ts';
 
 vi.mock('./backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
+const pinned = { species: 'fox', seed: 9 };
 
 const reply = (body: unknown) => ({ json: () => Promise.resolve(body) }) as Response;
 const workspaceReply = (id: string) => ({ workspace: { id, name: id.toUpperCase() } });
@@ -159,4 +160,35 @@ test('start opens the event stream once the first load has answered', async () =
   await store.start();
   store.connect();
   expect(opened).toHaveBeenCalledTimes(1);
+});
+
+test('a pinned animal is passed to the backdrop on load and a refresh keeps it', async () => {
+  const store = await freshStore();
+  const backdrop = await import('./backdrop.ts');
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(reply({ workspace: { id: 'home', name: 'Home', animal: pinned } })),
+  );
+  await store.reload();
+  expect(backdrop.show).toHaveBeenLastCalledWith({ workspace: 'home', ...pinned });
+  vi.mocked(backdrop.show).mockClear();
+
+  store.refresh();
+
+  expect(backdrop.show).not.toHaveBeenCalled();
+});
+
+test('pinning posts the animal on screen and reloads the workspace', async () => {
+  const store = await freshStore();
+  vi.stubGlobal('window', Object.assign(window, { whoseTurnBackdrop: { current: pinned } }));
+  store.snapshot.workspace.id = 'home';
+  const fetchStub = vi.fn().mockResolvedValue(reply({ workspaces: [] }));
+  vi.stubGlobal('fetch', fetchStub);
+
+  await store.setAnimalPin(true);
+
+  const [url, init] = fetchStub.mock.calls[0];
+  expect(url).toBe('/api/animal');
+  expect(JSON.parse(init.body)).toEqual({ ws: 'home', ...pinned });
+  expect(fetchStub.mock.calls.length).toBeGreaterThan(1);
 });

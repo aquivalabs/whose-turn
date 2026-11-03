@@ -180,7 +180,7 @@ export const load = (asked = ui.ws): Promise<Snapshot> => {
       Object.assign(snapshot, reply);
       ui.ws = snapshot.workspace.id;
       ui.status = '';
-      showBackdrop({ workspace: snapshot.workspace.id });
+      showBackdrop({ workspace: snapshot.workspace.id, ...snapshot.workspace.animal });
       document.title = 'Whose Turn · ' + snapshot.workspace.name;
       return snapshot;
     },
@@ -337,5 +337,19 @@ export const refresh = () => {
     ui.status = '';
     tellProblem(failure);
   });
-  showBackdrop({ workspace: snapshot.workspace.id, seed: Math.floor(Math.random() * 4294967296) });
+  if (!snapshot.workspace.animal) {
+    showBackdrop({ workspace: snapshot.workspace.id, seed: Math.floor(Math.random() * 4294967296) });
+  }
+};
+/** Pins the animal on screen to the workspace, or lets the pinned one go; the server writes `theme.animal` to the config. */
+export const setAnimalPin = (pin: boolean) => {
+  const { species, seed } = window.whoseTurnBackdrop.current;
+  return postWs<object>('/api/animal', pin ? { species, seed } : { pin: false }).then(
+    (reply) => {
+      if (tellProblem(reply, { refused: 'The animal was not saved' })) {
+        return reload();
+      }
+    },
+    (failure: Error) => tellProblem(failure, { refused: 'The animal was not saved' }),
+  );
 };
