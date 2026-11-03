@@ -12,10 +12,16 @@
       "threshold": 7,
       "skills": [
         "frontend-js:conventions",
+        "frontend-vue:sfc-conventions",
+        "frontend-vue:component-architecture",
+        "frontend-vue:bem-styles",
+        "frontend-vue:composables-vueuse",
+        "frontend-vue:testing",
         "frontend-css:rem",
         "error:format",
         "meta:ockham",
         "meta:solid",
+        "meta:reuse-first",
         "no-code-prose:policy"
       ]
     },
@@ -25,6 +31,7 @@
       "threshold": 8,
       "skills": [
         "meta:solid",
+        "meta:reuse-first",
         "error:architecture"
       ],
       "rules": [

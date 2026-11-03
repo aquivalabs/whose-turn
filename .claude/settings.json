@@ -21,7 +21,8 @@
     "no-code-prose@bladeforge": true,
     "cerberus@bladeforge": true,
     "frontend@bladeforge": true,
-    "frontend-css@bladeforge": true
+    "frontend-css@bladeforge": true,
+    "frontend-vue@bladeforge": true
   },
   "includeCoAuthoredBy": false,
   "worktree": {
