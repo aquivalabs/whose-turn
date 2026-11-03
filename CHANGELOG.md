@@ -2,7 +2,7 @@
 
 All notable changes to whose-turn are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-alpha.4] - 2026-11-03
 
 ### Changed
 - The self-update installs the new version with `--ignore-scripts`, as the plugin's first install does. RMA-236.
