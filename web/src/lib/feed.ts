@@ -70,7 +70,8 @@ export const hasBody = (item: FeedItem) =>
   String(item.body || '').trim() !== '';
 
 /** What a PR item is about: its ticket key, else its title; empty for a ticket item, whose reference is the key (RMA-167). */
-export const subjectOf = (item: FeedItem) => (item.ref !== item.key ? item.key || item.title || '' : '');
+export const subjectOf = (item: FeedItem) =>
+  item.ref !== item.key ? item.key || item.title || '' : '';
 
 /** The collapsed line under an item: the subject, then the text, without repeating a text that is the title itself. */
 export const itemLine = (item: FeedItem) =>
