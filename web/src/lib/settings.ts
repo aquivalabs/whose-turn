@@ -79,7 +79,7 @@ export const pendingSecrets = (
 export const setOrDrop = (
   target: Record<string, unknown>,
   key: string,
-  value: string | string[],
+  value: string | string[] | undefined,
 ) => {
   if (value && value.length) {
     target[key] = value;

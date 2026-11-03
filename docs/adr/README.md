@@ -49,6 +49,7 @@ Example shape: `0001-choose-the-message-queue.md`.
 | 0003 | [Comment Markdown stays a hand-written tokeniser behind a DOM builder](0003-markdown-rendering.md) | accepted |
 | 0004 | [The window gets a DOM test tier on Vitest; node:test keeps the server and the pure modules](0004-window-test-tier.md) | accepted |
 | 0005 | [Each component owns its styles in a scoped BEM block; the global sheet keeps layout and primitives](0005-scoped-bem-styles.md) | accepted |
+| 0006 | [The window's components sit in layers: ui primitives, one folder per feature, shared composables](0006-window-layers.md) | accepted |
 
 ## Referencing an ADR from code
 

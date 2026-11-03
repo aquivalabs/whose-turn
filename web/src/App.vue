@@ -12,17 +12,17 @@ import {
   reportWindowSize,
 } from './store.ts';
 import { repaint } from './backdrop.ts';
-import Rail from './components/Rail.vue';
-import StatusBar from './components/StatusBar.vue';
-import WorkspaceHeader from './components/WorkspaceHeader.vue';
-import YourMove from './components/YourMove.vue';
-import Todos from './components/Todos.vue';
-import Waiting from './components/Waiting.vue';
-import Feed from './components/Feed.vue';
-import FirstRun from './components/FirstRun.vue';
-import CommentModal from './components/CommentModal.vue';
-import FeedbackSheet from './components/FeedbackSheet.vue';
-import SettingsSheet from './components/SettingsSheet.vue';
+import Rail from './features/rail/Rail.vue';
+import StatusBar from './features/status/StatusBar.vue';
+import WorkspaceHeader from './features/header/WorkspaceHeader.vue';
+import YourMove from './features/your-move/YourMove.vue';
+import Todos from './features/todos/Todos.vue';
+import Waiting from './features/waiting/Waiting.vue';
+import Feed from './features/feed/Feed.vue';
+import FirstRun from './features/first-run/FirstRun.vue';
+import CommentModal from './features/feed/CommentModal.vue';
+import FeedbackSheet from './features/feedback/FeedbackSheet.vue';
+import SettingsSheet from './features/settings/SettingsSheet.vue';
 const firstRun = computed(
   () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
 );

@@ -7,6 +7,7 @@ const server = `http://127.0.0.1:${process.env.WHOSE_TURN_PORT || '8766'}`;
 export default defineConfig({
   root: 'web',
   plugins: [vue()],
+  resolve: { alias: { '@': resolve(import.meta.dirname, 'web/src') } },
   build: {
     outDir: resolve(import.meta.dirname, 'dist'),
     emptyOutDir: true,

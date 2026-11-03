@@ -19,7 +19,7 @@ to the contract below, open `/sheet?species=otter` (the dev server serves it as 
 | `web/src/lib/silhouette.ts` | Paints shapes (spline tubes and blobs, cut-outs) onto a canvas. |
 | `web/src/lib/random.ts` | The seeded random the expressions draw from. |
 | `web/src/backdrop.ts` | Picks species, pose and layout from the seed; draws the dots. |
-| `web/sheet.html`, `web/src/components/SheetPage.vue` | The test sheet at `/sheet`. |
+| `web/sheet.html`, `web/src/features/sheet/SheetPage.vue` | The test sheet at `/sheet`. |
 | `test/species.test.mjs` | Interpreter tests and a sweep over every bundled species. |
 
 ## Coordinates

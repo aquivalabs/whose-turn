@@ -22,7 +22,7 @@ requests and mentions, and for unanswered @-mentions in ticket comments are buil
 | `lib/rules.mjs` | `compileRules` expands the workspace table and the status-group order once per workspace; `ticketRow` matches the table and applies `then` |
 | `lib/config.mjs` | `normaliseRules` validates `rules.table` on load and on `POST /api/config` |
 | `lib/api.mjs` | `GET /api/config` returns `facts` (the dictionary) and `tables` (the effective rows per workspace) |
-| `web/src/components/SettingsSheet.vue` | Shows the effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into text |
+| `web/src/features/settings/SettingsSheet.vue` | Shows the effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into text |
 
 ## How it behaves
 

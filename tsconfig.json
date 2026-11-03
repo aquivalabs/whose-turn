@@ -12,7 +12,8 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "paths": { "@/*": ["./web/src/*"] }
   },
   "include": ["web/src/**/*.ts", "web/src/**/*.vue"]
 }

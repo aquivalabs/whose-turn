@@ -1,4 +1,4 @@
-// One store for the window: the workspace state the server computed, the window's own choices, and the data flow (load, SSE, marks, to-dos, the config order).
+// One store for the window: the workspace state the server computed, the window state more than one part reads, and the data flow (load, SSE, marks, to-dos, the config order). An island's own choices live in its feature folder; ADR 0006.
 import { shallowReactive, reactive, computed, watch } from 'vue';
 import {
   refAutoReset,
@@ -43,13 +43,7 @@ export const snapshot = shallowReactive<Snapshot>({
 });
 export const ui = reactive({
   ws: new URLSearchParams(location.search).get('ws') || lastWorkspace.value,
-  feed: 'all',
-  feedView: useLocalStorage('wt-feed-view', 'ticket', STORED),
-  feedQuery: '',
-  openGroups: new Set<string>(),
-  move: 'open',
   open: new Set<string>(),
-  showDone: false,
   mode: resolveMode(location.search, lastMode.value),
   live: false,
   reconnects: 0,
