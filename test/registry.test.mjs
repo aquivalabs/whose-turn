@@ -47,3 +47,35 @@ test('a save that only reorders keeps every workspace object and follows the new
   assert.deepEqual(registry.workspaces, [b, a]);
   assert.equal(built.length, 2);
 });
+
+test('a build failure on save writes nothing and answers INVALID_CONFIG with the exception message', async () => {
+  let written = 0;
+  const registry = createRegistry({
+    load: () => ({ workspaces: [{ id: 'a' }], rawWorkspaces: [{ id: 'a' }], problems: [], configFile: 'x.json' }),
+    save: () => { written += 1; },
+    build: (definition) => {
+      if (definition.bad) {
+        throw new SyntaxError('Invalid regular expression: /(/');
+      }
+      return fakeWorkspace(definition);
+    },
+  });
+  await assert.rejects(registry.save([{ id: 'a' }, { id: 'b', bad: true }]), (error) => error.reason === 'INVALID_CONFIG' && /Invalid regular expression/.test(error.violations[0]));
+  assert.equal(written, 0);
+  assert.deepEqual(registry.workspaces.map((workspace) => workspace.id), ['a']);
+});
+
+test('a workspace whose build throws at load is dropped with a problem line and the rest start', () => {
+  const registry = createRegistry({
+    load: () => ({ workspaces: [{ id: 'a' }, { id: 'b' }], rawWorkspaces: [], problems: [], configFile: 'x.json' }),
+    save: () => {},
+    build: (definition) => {
+      if (definition.id === 'b') {
+        throw new SyntaxError('Invalid regular expression: /(/');
+      }
+      return fakeWorkspace(definition);
+    },
+  });
+  assert.deepEqual(registry.workspaces.map((workspace) => workspace.id), ['a']);
+  assert.match(registry.problems[0], /Workspace "b" was dropped: Invalid regular expression/);
+});

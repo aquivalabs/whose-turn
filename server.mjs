@@ -2,7 +2,7 @@
 /** Whose Turn server: loads the workspace config, polls every workspace's connectors on one loop with rate-limit backoff, checks the health of the data on its own timer, serves the window and the local API, reloads workspaces when the config is saved. Node 22, no dependencies. */
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadConfig, saveWorkspaces } from './lib/config.mjs';
+import { loadConfig, saveWorkspaces, normaliseWorkspaces } from './lib/config.mjs';
 import { createHttpClient } from './lib/http-client.mjs';
 import { nextDelay } from './lib/backoff.mjs';
 import { createSecrets } from './lib/secrets.mjs';
@@ -29,6 +29,7 @@ const registry = createRegistry({
     return config;
   },
   save: (rawWorkspaces) => saveWorkspaces(first.configFile, rawWorkspaces),
+  normalise: (rawWorkspaces) => normaliseWorkspaces(rawWorkspaces).workspaces,
   build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: config.historyDays, http, secrets, limits: () => healthLimits }),
 });
 

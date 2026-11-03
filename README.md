@@ -26,7 +26,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `feedback.composer` | the user's own agent that turns a remark into an issue: `{command, args}` of a CLI that reads the prompt on stdin and prints JSON (`{title, kind, body}`, or a wrapper with a `result` string that contains it); default `claude -p --output-format json --model claude-haiku-5-5`, so Claude Code on the user's subscription; `codex exec` or anything alike works the same way |
 | `feedback.bug_words` | extra words, in any language, that make the fallback composer (used when the agent CLI gives no usable answer) call a remark a bug; matched as stems at a word start; the English defaults bug, broken, crash, error, fail, wrong always apply |
 | `workspaces[].id`, `name` | a short id used in the API and on disk (lowercase letters, digits and hyphens, up to 40, starting with a letter or digit; a missing id becomes `ws<n>`) and the display name |
-| `workspaces[].key_pattern` | regex for ticket keys in PR titles and to-dos; the default matches any Jira-style key |
+| `workspaces[].key_pattern` | regex for ticket keys in PR titles and to-dos; the default matches any Jira-style key; a pattern that does not compile is refused on save |
 | `workspaces[].connectors` | an object keyed by type, or a list of `{type, id?, label?, …}` entries when one type appears twice |
 | `…connectors.github.repo` | the repository whose PRs are yours, `owner/name` |
 | `…github.org` | notifications are kept only from this org; defaults to the repo owner |
@@ -38,7 +38,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `…jira.token_service` | the secret-store entry holding the token, default `whose-turn-jira` |
 | `…jira.jql` | which tickets to watch |
 | `workspaces[].links` | quick links shown in the header, as `"Label https://…"` strings or `{label, url}`; the repository, the Jira site and the Linear team come from the connectors by themselves |
-| `workspaces[].rules` | the team's process, see Rules below |
+| `workspaces[].rules` | the team's process, see Rules below; `statuses` groups, `automation_authors` and `question_words` must be lists of strings (statuses non-empty) or the save is refused |
 | `…connectors.linear.workspace`, `team`, `project` | the Linear workspace slug (the part after linear.app/), and optionally one team key or one project name; the personal API key goes to the secret store under the workspace slug |
 | `…connectors.demo.scenario` | `northwind` (a web team with Jira-like tickets and PRs), `atlas` (a mobile team with other status names) or `garden` (a side project, PRs only); invented data, no network |
 | `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark Material 3 scheme from it (`lib/palette.mjs`); without it the stylesheet's blue stays |

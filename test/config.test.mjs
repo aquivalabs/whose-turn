@@ -111,3 +111,25 @@ test('the plugin scripts and the server agree on a port set in the config', asyn
     }
   }
 });
+
+const problemsOf = (workspace) => withConfig({ workspaces: [{ id: 'w', ...workspace }] }).problems;
+
+test('a key_pattern that does not compile is a problem with the RegExp message', () => {
+  assert.match(problemsOf({ key_pattern: '(' })[0], /key_pattern is not a valid regular expression: Invalid regular expression/);
+  assert.deepEqual(problemsOf({ key_pattern: '\\bPROJ-\\d+\\b' }), []);
+});
+
+test('rules.statuses groups must be lists of non-empty strings', () => {
+  assert.match(problemsOf({ rules: { statuses: { qa: 'ready' } } })[0], /rules\.statuses\.qa must be a list/);
+  assert.match(problemsOf({ rules: { statuses: { qa: ['ok', ' '] } } })[0], /rules\.statuses\.qa/);
+  assert.match(problemsOf({ rules: { statuses: ['qa'] } })[0], /rules\.statuses must be an object/);
+});
+
+test('automation_authors must be a list of strings', () => {
+  assert.match(problemsOf({ rules: { automation_authors: 'bot' } })[0], /rules\.automation_authors must be a list of strings/);
+  assert.match(problemsOf({ rules: { automation_authors: [1] } })[0], /rules\.automation_authors/);
+});
+
+test('question_words must be a list of strings', () => {
+  assert.match(problemsOf({ rules: { question_words: { a: 1 } } })[0], /rules\.question_words must be a list of strings/);
+});
