@@ -1,12 +1,29 @@
 {
   "name": "whose-turn",
-  "version": "0.2.0",
+  "version": "1.0.0-alpha.1",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/aquivalabs/whose-turn.git"
   },
-  "private": true,
+  "files": [
+    "server.mjs",
+    "lib/",
+    "connectors/",
+    "bin/",
+    "hooks/",
+    "commands/",
+    "skills/",
+    ".claude-plugin/plugin.json",
+    "dist/",
+    "install.sh",
+    "open.sh",
+    "config.example.json",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Local monitor that answers what is waiting on you across Jira, GitHub and Linear.",
   "type": "module",
   "engines": {

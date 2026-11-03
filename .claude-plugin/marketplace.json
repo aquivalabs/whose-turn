@@ -1,8 +1,0 @@
-{
-  "name": "whose-turn",
-  "owner": { "name": "rmasl" },
-  "description": "Whose Turn: a local monitor of what is waiting on you, as a Claude Code plugin.",
-  "plugins": [
-    { "name": "whose-turn", "source": "./", "description": "Local monitor of your Jira, GitHub and Linear work: whose turn it is, what changed, your to-dos, a summary at session start and an MCP server." }
-  ]
-}

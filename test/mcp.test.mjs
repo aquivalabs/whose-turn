@@ -70,12 +70,10 @@ test('every writing MCP tool requires ws, and the server refuses a write that le
   }
 });
 
-test('the plugin manifest carries the package version and the marketplace lists it as whose-turn@whose-turn', () => {
+test('the plugin manifest carries the package version, the display fields and the MCP server', () => {
   const read = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8'));
   const plugin = read('../.claude-plugin/plugin.json');
-  const marketplace = read('../.claude-plugin/marketplace.json');
   assert.equal(plugin.version, read('../package.json').version);
   assert.ok(plugin.description && plugin.author?.name && plugin.mcpServers['whose-turn']);
-  assert.equal(marketplace.name, 'whose-turn');
-  assert.deepEqual(marketplace.plugins.map((entry) => entry.name), ['whose-turn']);
+  assert.equal(plugin.repository, 'https://github.com/aquivalabs/whose-turn');
 });
