@@ -28,15 +28,17 @@ const rows = computed(() => {
   >
     <p v-if="!rows.length" class="empty">Nothing is waiting on someone else.</p>
     <RowScroll v-else>
-      <table class="table">
+      <table class="table waiting__table">
         <thead>
           <tr>
-            <th>Ticket</th>
-            <th>Status</th>
-            <th>With</th>
+            <th class="waiting__col waiting__col--ticket">Ticket</th>
+            <th class="waiting__col waiting__col--status">Status</th>
+            <th class="waiting__col waiting__col--with">With</th>
             <th class="hide-narrow">Waiting for</th>
-            <th>PR</th>
-            <th class="table__actions-col"><span class="visually-hidden">Copy for AI</span></th>
+            <th class="waiting__col waiting__col--pr">PR</th>
+            <th class="table__actions-col waiting__col waiting__col--actions">
+              <span class="visually-hidden">Copy for AI</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -84,6 +86,27 @@ const rows = computed(() => {
   </Island>
 </template>
 <style scoped>
+.waiting__table {
+  table-layout: fixed;
+}
+
+.waiting__col--ticket {
+  width: 22%;
+}
+
+.waiting__col--status,
+.waiting__col--with {
+  width: 6.5rem;
+}
+
+.waiting__col--pr {
+  width: 4.5rem;
+}
+
+.waiting__col--actions {
+  width: 2rem;
+}
+
 .waiting__reason {
   display: block;
   min-width: 0;
