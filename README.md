@@ -11,7 +11,7 @@ Everything runs on your machine: a Node 22 server on `127.0.0.1`, a window built
 You need Node 22 or newer and, for GitHub, the `gh` CLI signed in.
 
 ```sh
-git clone https://github.com/OWNER/whose-turn && cd whose-turn
+git clone https://github.com/aquivalabs/whose-turn && cd whose-turn
 npm ci && npm run build
 ./install.sh && ./open.sh
 ```
@@ -21,7 +21,7 @@ npm ci && npm run build
 For Claude Code, add the repository as a plugin marketplace and install the plugin:
 
 ```sh
-claude plugin marketplace add OWNER/whose-turn
+claude plugin marketplace add aquivalabs/whose-turn
 claude plugin install whose-turn@whose-turn
 ```
 

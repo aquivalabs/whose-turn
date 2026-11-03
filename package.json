@@ -2,6 +2,10 @@
   "name": "whose-turn",
   "version": "0.2.0",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aquivalabs/whose-turn.git"
+  },
   "private": true,
   "description": "Local monitor that answers what is waiting on you across Jira, GitHub and Linear.",
   "type": "module",
