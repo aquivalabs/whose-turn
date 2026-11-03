@@ -1,7 +1,7 @@
 <script setup>
 // The window: the rail, the status line, and the dashboard that fills the rest; sheets open over it. State and data flow live in store.js.
 import { onMounted, watch } from 'vue';
-import { ui, alerts, themeVariables, load, connect, closeSheets } from './store.js';
+import { ui, alerts, themeVariables, load, connect, closeSheets, reportWindowSize } from './store.js';
 import { repaint } from './backdrop.js';
 import Rail from './components/Rail.vue';
 import StatusBar from './components/StatusBar.vue';
@@ -16,6 +16,7 @@ import SettingsSheet from './components/SettingsSheet.vue';
 watch(themeVariables, repaint, { flush: 'post' });
 onMounted(() => {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheets(); });
+  reportWindowSize();
   load().then(connect);
 });
 </script>

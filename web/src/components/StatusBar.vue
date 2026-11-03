@@ -1,7 +1,9 @@
 <script setup>
-// The line above the dashboard: Report, the live dot and the last check, Refresh, and the copy-everything sparkle.
+// The line above the dashboard: Report, the live dot and the last check, Refresh, the app/tab switch, and the copy-everything sparkle.
 import { computed } from 'vue';
 import { S, ui, now, refresh } from '../store.js';
+import { post } from '../lib/api.js';
+import { tabUrl } from '../lib/window-mode.js';
 import { ago } from '../lib/time.js';
 import { BUG } from '../lib/icons.js';
 import AiButton from './AiButton.vue';
@@ -16,6 +18,8 @@ const status = computed(() => { void now.value; return ui.status || ('Live · la
     <span class="wt-live" :class="{ off: !ui.live }"></span>
     <span>{{ status }}</span>
     <span class="wt-btn" role="button" tabindex="0" @click="refresh" @keydown.enter.prevent="refresh">Refresh now</span>
+    <a v-if="ui.mode === 'app'" class="wt-btn" :href="tabUrl(ui.ws)" target="_blank" rel="noopener">Open in browser</a>
+    <span v-else class="wt-btn" role="button" tabindex="0" @click="post('/api/open', { mode: 'app' })" @keydown.enter.prevent="post('/api/open', { mode: 'app' })">Open as app</span>
     <AiButton :query="{ all: '1' }" /><span class="wt-give-hint">AI: copy everything</span>
   </div>
 </template>

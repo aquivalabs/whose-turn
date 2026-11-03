@@ -50,7 +50,7 @@ const saveConfig = async (rawWorkspaces) => {
   await Promise.all(created.map((workspace) => workspace.poll()));
 };
 
-await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports });
+await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir });
 console.log(`whose-turn on http://127.0.0.1:${first.port} · data ${first.dataDir} · workspaces ${registry.workspaces.map((workspace) => workspace.id).join(', ') || 'none'}`);
 for (const problem of registry.problems) {
   console.error(problem);

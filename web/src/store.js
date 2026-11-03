@@ -3,18 +3,34 @@ import { shallowReactive, reactive, ref, computed } from 'vue';
 import { getJson, post } from './lib/api.js';
 import { turnCounts } from './lib/moves.js';
 import { orderWorkspaces } from './lib/settings.js';
+import { resolveMode, sizeBody } from './lib/window-mode.js';
 import { show as showBackdrop } from './backdrop.js';
 
 const remembered = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 const remember = (key, value) => { try { localStorage.setItem(key, value); } catch { /* storage may be blocked */ } };
+const sessionGet = (key) => { try { return sessionStorage.getItem(key) || ''; } catch { return ''; } };
+const sessionSet = (key, value) => { try { sessionStorage.setItem(key, value); } catch { /* storage may be blocked */ } };
 
 // The server's snapshot: replaced wholesale on every load, never mutated in place, so shallow reactivity is enough.
 export const S = shallowReactive({ workspaces: [], workspace: { id: '', name: '', connectors: [], links: [], key_pattern: '', theme: null }, turn: [], feed: [], marks: { seen: [], base: 0, handled: {} }, todos: [], errors: {}, problems: [], polled_at: '' });
 export const ui = reactive({
   ws: new URLSearchParams(location.search).get('ws') || remembered('wt-ws', ''),
   feed: 'all', feedView: remembered('wt-feed-view', 'ticket'), feedQuery: '', openGroups: new Set(), move: 'open', open: new Set(), showDone: false,
+  mode: resolveMode(location.search, sessionGet('wt-mode')),
   live: false, status: 'Connecting…', modal: null, feedback: false, settings: false,
 });
+
+sessionSet('wt-mode', ui.mode);
+
+/** An app window reports its size after each resize, so the next one opens the same size. */
+export const reportWindowSize = () => {
+  if (ui.mode !== 'app') return;
+  let timer = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => post('/api/window', sizeBody(window)), 600);
+  });
+};
 
 const DARK = window.matchMedia('(prefers-color-scheme: dark)');
 const isDarkNow = () => {
