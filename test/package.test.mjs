@@ -5,7 +5,9 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const root = new URL('..', import.meta.url);
 const packed = () => {
-  const [{ files }] = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }));
+  // npm 10 prints an array of packages, npm 12 an object keyed by package name.
+  const out = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }));
+  const [{ files }] = Array.isArray(out) ? out : Object.values(out);
   return files.map((f) => f.path);
 };
 

@@ -17,8 +17,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Trusted publishing needs npm 11.5 or newer; Node 22 ships npm 10
-        run: npm install -g npm@latest && npm --version
       - name: The tag names the package version
         run: |
           tag=${GITHUB_REF_NAME#v}
@@ -28,6 +26,8 @@ jobs:
       - run: npm run build
       - name: Pack
         run: npm pack && ls -l whose-turn-*.tgz && tar tzf whose-turn-*.tgz | grep -c '^package/dist/' | xargs -I{} echo "{} files under dist/"
+      - name: Trusted publishing needs npm 11.5 or newer; Node 22 ships npm 10
+        run: npm install -g npm@latest && npm --version
       - name: Publish to npm
         # No token: npm trusts this workflow through OIDC (the package's trusted publisher, RMA-235), and `id-token: write` above is what lets it. Every publish moves `latest`, prereleases included, because every install follows it (RMA-230, RMA-231); a prerelease also gets its channel tag (`alpha`).
         run: |
