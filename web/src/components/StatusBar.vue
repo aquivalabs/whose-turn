@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The line above the dashboard: Report, the live dot and the last check, Refresh, the app/tab switch, and the copy-everything sparkle.
 import { computed } from 'vue';
-import { snapshot, ui, now, refresh } from '../store.ts';
+import { snapshot, ui, now, notice, refresh } from '../store.ts';
 import { post } from '../lib/api.ts';
 import { tabUrl } from '../lib/window-mode.ts';
 import { ago } from '../lib/time.ts';
@@ -39,6 +39,7 @@ const openAsApp = () => post('/api/open', { mode: 'app' });
     </span>
     <span class="wt-live" :class="{ off: !ui.live || stale }"></span>
     <span>{{ status }}</span>
+    <span v-if="notice" class="wt-notice" role="alert">{{ notice }}</span>
     <span
       class="wt-btn"
       role="button"

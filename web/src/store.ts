@@ -1,6 +1,7 @@
 // One store for the window: the workspace state the server computed, the window's own choices, and the data flow (load, SSE, marks, to-dos, the config order).
 import { shallowReactive, reactive, computed, watch } from 'vue';
 import {
+  refAutoReset,
   useDebounceFn,
   useEventListener,
   useEventSource,
@@ -53,6 +54,9 @@ export const ui = reactive({
 });
 
 lastMode.value = ui.mode;
+
+/** A refused write's message: shown beside the live text for a few seconds, then gone. */
+export const notice = refAutoReset('', 6000);
 
 /** An app window reports its size after each resize, so the next one opens the same size. */
 export const reportWindowSize = () => {
@@ -109,16 +113,20 @@ export const reload = () => {
   return load();
 };
 
-// The browser's EventSource retries on its own; every message is a new object, so each one reaches the watcher.
+// Chromium gives up on a refused reconnect, so VueUse retries every second until the server is back; every message is a new object, so each one reaches the watcher.
 const stream = useEventSource<[], StreamEvent>('/api/stream', [], {
   immediate: false,
   autoConnect: false,
+  autoReconnect: true,
   serializer: { read: (raw) => JSON.parse(raw || 'null') },
 });
 watch(
   stream.status,
   (status) => {
     ui.live = status === 'OPEN';
+    if (ui.live) {
+      ui.status = '';
+    }
   },
   { flush: 'sync' },
 );
@@ -137,6 +145,7 @@ watch(
     if (!message || (snapshot.workspace.id && message.ws !== snapshot.workspace.id)) {
       return;
     }
+    ui.status = '';
     if (message.version !== version) {
       version = message.version;
       load();
@@ -160,7 +169,7 @@ export const switchWorkspace = (id: string) => {
 
 const refused = (reply: { error?: ApiError } | null, what: string) => {
   if (reply && reply.error) {
-    ui.status = what + ': ' + (reply.error.message || 'refused');
+    notice.value = what + ': ' + (reply.error.message || 'refused');
     return true;
   }
   return false;
