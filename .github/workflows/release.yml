@@ -28,12 +28,13 @@ jobs:
       - name: Pack
         run: npm pack && ls -l whose-turn-*.tgz && tar tzf whose-turn-*.tgz | grep -c '^package/dist/' | xargs -I{} echo "{} files under dist/"
       - name: Publish to npm
-        # A prerelease (1.0.0-alpha.1) goes to the dist-tag `alpha`, a release to `latest`; the BladeForge plugin follows one of them.
+        # Every publish moves `latest`, prereleases included, because every install follows it (RMA-230, RMA-231); a prerelease also gets its channel tag (`alpha`).
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          case "$GITHUB_REF_NAME" in *-*) tag=alpha;; *) tag=latest;; esac
-          npm publish whose-turn-*.tgz --provenance --access public --tag "$tag"
+          version=${GITHUB_REF_NAME#v}
+          npm publish whose-turn-*.tgz --provenance --access public --tag latest
+          case "$version" in *-*) channel=${version#*-}; npm dist-tag add "whose-turn@$version" "${channel%%.*}";; esac
       - name: GitHub Release with the tarball
         env:
           GH_TOKEN: ${{ github.token }}
