@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { reactive } from 'vue';
 import { groupFeed, isNew, matchesQuery } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, isHandled, recentlyDone } from '../web/src/lib/moves.ts';
+import { topLayer } from '../web/src/lib/layers.ts';
 import { liveStatus } from '../web/src/lib/live-status.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
 import { writeProblem, UNREACHABLE_TEXT, TEXT_KEPT } from '../web/src/lib/problems.ts';
@@ -148,4 +149,11 @@ test('a clipped table counts the rows that end below the visible bottom, forgivi
   assert.equal(hiddenBelow([100, 200, 300], 300), 0);
   assert.equal(hiddenBelow([100, 210, 300], 200, 13), 1);
   assert.equal(hiddenBelow([], 0), 0);
+});
+
+test('Escape goes to the topmost layer: the comment modal, then Settings, then Report', () => {
+  assert.equal(topLayer({ modal: {}, settings: true, feedback: true }), 'modal');
+  assert.equal(topLayer({ modal: null, settings: true, feedback: true }), 'settings');
+  assert.equal(topLayer({ modal: null, settings: false, feedback: true }), 'feedback');
+  assert.equal(topLayer({ modal: null, settings: false, feedback: false }), null);
 });

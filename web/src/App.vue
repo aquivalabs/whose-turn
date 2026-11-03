@@ -9,7 +9,8 @@ import {
   themeVariables,
   load,
   connect,
-  closeSheets,
+  currentLayer,
+  closeTopLayer,
   reportWindowSize,
 } from './store.ts';
 import { repaint } from './backdrop.ts';
@@ -27,8 +28,9 @@ import SettingsSheet from './components/SettingsSheet.vue';
 const firstRun = computed(
   () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
 );
+const covered = computed(() => currentLayer.value !== null);
 watch(themeVariables, repaint, { flush: 'post' });
-onKeyStroke('Escape', closeSheets, { target: document });
+onKeyStroke('Escape', closeTopLayer, { target: document });
 onMounted(() => {
   reportWindowSize();
   load().then(connect);
@@ -36,15 +38,15 @@ onMounted(() => {
 </script>
 <template>
   <div class="wt-app" :style="themeVariables">
-    <Rail @settings="ui.settings = true" />
+    <Rail :inert="covered" @settings="ui.settings = true" />
     <div class="wt-shell">
-      <StatusBar @report="ui.feedback = true" />
-      <div v-if="alerts.length" class="wt-alert">{{ alerts.join('  ·  ') }}</div>
+      <StatusBar :inert="covered" @report="ui.feedback = true" />
+      <div v-if="alerts.length" class="wt-alert" :inert="covered">{{ alerts.join('  ·  ') }}</div>
       <div id="wt" class="wt wt-fit">
         <canvas id="backdrop" class="wt-backdrop" aria-hidden="true"></canvas>
-        <WorkspaceHeader />
-        <FirstRun v-if="firstRun" />
-        <div v-else class="wt-layout">
+        <WorkspaceHeader :inert="covered" />
+        <FirstRun v-if="firstRun" :inert="covered" />
+        <div v-else class="wt-layout" :inert="covered">
           <div class="wt-main"><YourMove /><Todos /><Waiting /></div>
           <Feed @open="ui.modal = $event" />
         </div>

@@ -42,8 +42,8 @@ const onSwitch = (event: MouseEvent, id: string) => {
   switchWorkspace(id);
 };
 const onSettings = (event: MouseEvent) => {
-  blurAfterMouse(event);
   emit('settings');
+  blurAfterMouse(event);
 };
 
 const dragged = ref('');

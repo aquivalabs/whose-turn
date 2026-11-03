@@ -14,6 +14,7 @@ import { getJson, post } from './lib/api.ts';
 import { NO_WORKSPACE_MESSAGE, retryWithoutWorkspace } from './lib/load-retry.ts';
 import { openCount, turnCounts, withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
+import { topLayer, type Layer } from './lib/layers.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
 import { SERVER_DOWN, TEXT_KEPT, writeProblem } from './lib/problems.ts';
 import type { ApiError, FeedItem, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
@@ -102,15 +103,40 @@ export const openSettings = (section = '') => {
   ui.settingsAt = section;
   ui.settings = true;
 };
-export const closeSheets = () => {
-  if (ui.settings && ui.settingsDirty) {
+/** The layer on top right now, or null when the window itself is in front. */
+export const currentLayer = computed(() => topLayer(ui));
+/** Closes only the topmost layer; Settings with unsaved edits asks first. */
+export const closeTopLayer = () => {
+  const layer = currentLayer.value;
+  if (layer === 'modal') ui.modal = null;
+  if (layer === 'feedback') ui.feedback = false;
+  if (layer !== 'settings') return;
+  if (ui.settingsDirty) {
     ui.settingsAsk = true;
     return;
   }
-  ui.modal = null;
   ui.settings = false;
-  ui.feedback = false;
 };
+
+const openers = new Map<Layer, Element | null>();
+const rememberOpener = (layer: Layer, isOpen: boolean) => {
+  if (isOpen) openers.set(layer, document.activeElement);
+};
+const returnFocus = (layer: Layer, isOpen: boolean) => {
+  if (isOpen) return;
+  const opener = openers.get(layer);
+  openers.delete(layer);
+  if (opener instanceof HTMLElement) opener.focus();
+};
+const layerFlags: Record<Layer, () => boolean> = {
+  modal: () => Boolean(ui.modal),
+  settings: () => ui.settings,
+  feedback: () => ui.feedback,
+};
+Object.entries(layerFlags).forEach(([layer, isOpen]) => {
+  watch(isOpen, (open) => rememberOpener(layer as Layer, open), { flush: 'sync' });
+  watch(isOpen, (open) => returnFocus(layer as Layer, open), { flush: 'post' });
+});
 
 type StateReply = Snapshot & { error?: ApiError };
 
