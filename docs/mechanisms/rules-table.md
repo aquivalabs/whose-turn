@@ -77,7 +77,7 @@ The PR of a ticket is the one `pickPr` chooses: an open PR over a closed one, th
 updated.
 
 **Status groups.** `ticket.status` is the first group in `rules.statuses` whose words match the status, in
-the order `backlog`, `passed`, `code_review`, `qa`, `on_hold`, then any extra group the workspace defines.
+the order `backlog`, `passed`, `code_review`, `qa`, `release`, `on_hold`, then any extra group the workspace defines.
 A status that matches no group falls back to its category: `todo`, `in_progress` or `done`. A workspace can
 add a group, for example `"statuses": { "design": ["in design"] }`, and test `ticket.status: "design"`.
 
@@ -102,6 +102,7 @@ A row with an empty `when` matches every ticket. There are no expressions, scrip
 | `you` | "your move"; shown as `You` |
 | `reviewer` | "waiting on others"; shown as the list of every reviewer of the ticket's open PR, else `Reviewer`: requested ones (people and teams) as plain names, then reviewers by their latest review, `✓ name` approved, `✗ name` changes requested, a comment-only review a bare name only while they have no later state, dismissed reviews ignored, your own login and the author left out. The row also carries `reviewers` (`name`, `state` of `''`, `approved`, `changes`) for the window; the names go through `youOr` |
 | `qa` | "waiting on others"; shown as `QA` |
+| `release` | "waiting on others"; shown as `Release` |
 | `them` | "waiting on others"; shown with the assignee's name |
 | `hidden` | in neither list; `next` is optional |
 
@@ -137,11 +138,12 @@ The user's own name is shown as `you` wherever a person appears: the `With` cell
 11. Code review status, open approved PR: you, `approved_next`.
 12. Code review status: reviewer, "Code review".
 13. Testing status (`qa`): them, "Testing".
-14. On hold with a reason: them, "On hold: {ticket.hold_reason}", `hold`.
-15. On hold: them, "On hold".
-16. Not done, on you, started: you, "Continue the work", `rank` 2, `started`; the why says "no pull request is waiting on anyone".
-17. Not done, on you: you, "Pick it up"; same why ending.
-18. Anything else: them, "Not yours now".
+14. Release status (`release`: ready for release, ready to release, awaiting release): `release`, "the next release". The PR rows above come first, so a pending PR step still wins.
+15. On hold with a reason: them, "On hold: {ticket.hold_reason}", `hold`.
+16. On hold: them, "On hold".
+17. Not done, on you, started: you, "Continue the work", `rank` 2, `started`; the why says "no pull request is waiting on anyone".
+18. Not done, on you: you, "Pick it up"; same why ending.
+19. Anything else: them, "Not yours now".
 
 `workspaces[].rules.table` is a list of rows. Without it the default table applies. With it, the list
 replaces the default. The text `"default"` placed anywhere in the list stands for the default rows at that

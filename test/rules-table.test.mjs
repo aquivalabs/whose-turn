@@ -94,8 +94,8 @@ test('a bad table is refused with the row and the unknown fact or operator named
   assert.deepEqual(problems, [
     'Workspace "w": rules.table row 2: unknown fact "pr.colour"; GET /api/config lists the facts; the table is ignored.',
     'Workspace "w": rules.table row 3: unknown operator "matches" on "pr.base"; use gt, gte, lt, lte, prefix or present; the table is ignored.',
-    'Workspace "w": rules.table row 4: "ticket.status" is one of backlog, passed, code_review, qa, on_hold, todo, in_progress, done, got "shipped"; the table is ignored.',
-    'Workspace "w": rules.table row 4: "then.whose" is one of you, reviewer, qa, them, hidden, got "boss"; the table is ignored.',
+    'Workspace "w": rules.table row 4: "ticket.status" is one of backlog, passed, code_review, qa, release, on_hold, todo, in_progress, done, got "shipped"; the table is ignored.',
+    'Workspace "w": rules.table row 4: "then.whose" is one of you, reviewer, qa, release, them, hidden, got "boss"; the table is ignored.',
     'Workspace "w": rules.table row 4: unknown fact "{pr.author}" in the text; the table is ignored.',
   ]);
 });

@@ -25,6 +25,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - Handled now asks for the note first: Save or Skip marks the row handled, and closing the window with Escape leaves the row open. RMA-271.
 
 ### Fixed
+- A ticket waiting for a release no longer shows as your move; it waits under Waiting on others. RMA-322.
 - Folding and unfolding the workspace header, and the panels, is now one smooth change in height instead of overshooting and jumping back. RMA-318.
 - A panel that was folded when the page loaded now shows its rows when you unfold it, instead of staying empty. RMA-319.
 - Your move no longer keeps growing when it is empty and Recently done has rows. RMA-307.

@@ -173,3 +173,19 @@ test('a review request names the PR in the next step only when it has a ticket',
   const keyed = only(rows({ asks: [ask({ key: 'PROJ-1' })] }), (candidate) => candidate.row_id === 'gha:1');
   assert.equal(keyed.next, 'Review PR other-repo#12');
 });
+
+test('a ticket waiting for a release assigned to me waits under Waiting on others, and an open PR step still wins', () => {
+  const waiting = only(rows({ tickets: [ticket({ status: 'Ready for release' })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(waiting.group, 'others');
+  assert.equal(waiting.whose, 'Release');
+  assert.equal(waiting.next, 'the next release');
+  assert.equal(waiting.status_group, 'release');
+  const failing = only(rows({ tickets: [ticket({ status: 'Awaiting release' })], prs: [pr({ checks: 'failing' })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(failing.group, 'you');
+  assert.equal(failing.next, 'Look at the failing checks');
+});
+
+test('a workspace that sets its own statuses keeps the release group from the defaults', () => {
+  const rules = { ...DEFAULT_RULES, statuses: { ...DEFAULT_RULES.statuses, release: ['shipping'] } };
+  assert.equal(only(rows({ tickets: [ticket({ status: 'Shipping' })] }, rules), (candidate) => candidate.row_id === 'PROJ-1').whose, 'Release');
+});
