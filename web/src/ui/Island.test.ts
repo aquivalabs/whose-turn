@@ -132,3 +132,20 @@ describe('an empty island with a table of its own below the row scroller', () =>
     expect(parseFloat(readings.at(-1) ?? '')).toBeLessThan(300);
   });
 });
+
+describe('a panel folded when the page loads', () => {
+  beforeEach(() => localStorage.setItem('wt-collapsed', JSON.stringify(['late'])));
+  afterEach(() => localStorage.clear());
+
+  test('mounts no body while folded and shows its rows once it is unfolded', async () => {
+    const { container } = render(Island, {
+      props: { id: 'late', title: 'Late' },
+      slots: { default: () => h('p', 'the rows') },
+    });
+
+    expect(container.querySelector('.island__body')).toBeNull();
+    await fireEvent.click(screen.getByRole('button', { name: 'Open Late' }));
+
+    expect(container.querySelector('.island__body')?.textContent).toBe('the rows');
+  });
+});

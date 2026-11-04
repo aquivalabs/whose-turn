@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useMutationObserver, useResizeObserver } from '@vueuse/core';
 import { useFold } from '@/composables/useFold.ts';
 import { glideThrough } from '@/motion.ts';
@@ -85,14 +85,11 @@ const schedule = () => {
   cancelAnimationFrame(frame);
   frame = requestAnimationFrame(measure);
 };
-onMounted(() => {
-  const body = root.value?.querySelector<HTMLElement>('.island__body');
-  if (body) {
-    useMutationObserver(body, schedule, { childList: true, subtree: true });
-    useResizeObserver(body, schedule);
-  }
-  schedule();
-});
+const body = useTemplateRef<HTMLElement>('body');
+useMutationObserver(body, schedule, { childList: true, subtree: true });
+useResizeObserver(body, schedule);
+onMounted(schedule);
+watch(collapsed, () => nextTick(schedule));
 const sized = computed(() => size.value !== null && props.resize === 'height' && hasRows.value);
 const neighbours = (el: HTMLElement) =>
   [...(el.parentElement?.children ?? [])]
@@ -156,7 +153,8 @@ const bounds = () => {
         </button>
       </p>
     </div>
-    <div class="island__body"><slot /></div>
+    <!-- Not hidden with display:none: a row that mounts under a hidden ancestor never plays its enter motion and stays invisible, so a folded body is not mounted at all (RMA-319). -->
+    <div v-if="!collapsed" ref="body" class="island__body"><slot /></div>
     <ResizeHandle
       v-if="!collapsed"
       :label="'Resize ' + title"
@@ -226,10 +224,6 @@ const bounds = () => {
   flex-direction: column;
   min-height: 0;
   padding-top: 4px;
-}
-
-.island.island--collapsed .island__body {
-  display: none;
 }
 
 @media (width >= 901px) {
