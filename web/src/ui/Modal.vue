@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // A dialog over the window: title bar with Close, scrolling body (padded unless `flush`), optional footer.
 // A click on the backdrop asks to close. docs/mechanisms/motion.md § The dialog
-import { Motion } from 'motion-v';
+import { M as Motion } from 'motion-v';
 import { fade, rise } from '@/motion.ts';
 defineProps<{ title: string; labelId: string; flush?: boolean; cardClass?: string }>();
 const emit = defineEmits<{ close: [] }>();

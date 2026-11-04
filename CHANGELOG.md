@@ -5,6 +5,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Changed
+- The window opens faster: the code that runs the animations now loads after the window's own code instead of before it, so the first screen no longer waits for it. RMA-314.
+- The last row leaving Waiting on others fades out with the list before "Nothing is waiting on someone else." appears. A folded group in What changed and a closing Recently done now fold smoothly instead of vanishing at once. RMA-314.
 - An install pinned to one version no longer shows the Update button and is never updated, whether from the window or by Claude. RMA-330.
 - Monitor settings now keep each number within a sensible range: polling from 15 seconds to an hour, history from 1 to 365 days, stale after 1 minute to a day, failing polls 1 to 100. The fields show the limits, and a value outside them is refused, so a typo can no longer switch polling or the health alerts off. RMA-332.
 - A new version of Whose Turn no longer installs by itself when a Claude session starts. Claude tells you it is out and installs it only when you say yes; the Update button in the window works as before. RMA-329.

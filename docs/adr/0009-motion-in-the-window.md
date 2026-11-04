@@ -33,6 +33,8 @@ The window's motion is `motion-v`, pinned exactly to `2.9.0` in `package.json` (
 
 **Amendment, 2026-11-04 (RMA-316).** The first tokens moved too fast and read as snapping; they are now 320, 480 and 640 ms with `cubic-bezier(0.33, 1, 0.68, 1)` and a softer spring. How the code uses them, fold by fold, is the mechanism page [motion](../mechanisms/motion.md).
 
+**Amendment, 2026-11-04 (RMA-314).** The size is cut by `LazyMotion`: components are the small `M`, the feature set and `animate` sit behind one lazily imported module, and the entry chunk went from 267.2 kB (90.8 kB gzip) to 123.7 kB (44.2 kB); the new chunk is 145.7 kB (48.2 kB) and loads right after it, so the total is unchanged and the first script is smaller. How it is wired is the mechanism page [motion](../mechanisms/motion.md).
+
 ## Consequences
 
 Easier: exits, list gliding and folds come from one engine and one set of numbers; a new banner or row is one `v-bind="fade"` or `v-bind="listed"` away; reduced motion is a single switch.

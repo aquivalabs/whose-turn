@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The line above the dashboard: Report, the live dot and the last check, the update chip, the notifications switch, Refresh, the app/tab switch, and the copy-everything sparkle.
-import { AnimatePresence, Motion } from 'motion-v';
+import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { computed, ref } from 'vue';
 import { snapshot, ui, now, notice, refresh, tellProblem } from '@/store.ts';

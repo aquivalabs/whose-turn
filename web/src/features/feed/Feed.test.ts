@@ -3,6 +3,7 @@ import { nextTick } from 'vue';
 import { expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { setMarks, snapshot, ui } from '@/store.ts';
+import { exits } from '@/test-motion.ts';
 import type { FeedItem } from '@/lib/types.ts';
 import Feed from './Feed.vue';
 import { useFeedState } from './useFeedState.ts';
@@ -87,4 +88,23 @@ test('the unread count of the folded strip sits in the strip, where it is writte
 
   expect(container.querySelector('.island--strip .feed__new-count')?.textContent).toBe('1 new');
   localStorage.clear();
+});
+
+test('a ticket group folding keeps its events on the page until the exit has played', async () => {
+  snapshot.feed = [{ id: 'a', source: 's', key: 'NW-1', at: '2026-11-02T10:00:00Z' }] as FeedItem[];
+  const state = useFeedState();
+  state.query = '';
+  state.view = 'ticket';
+  state.openGroups.clear();
+  state.openGroups.add('NW-1');
+  exits.hold();
+  const { container } = render(Feed);
+  expect(container.querySelector('.feed__children')).not.toBeNull();
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Fold NW-1' }));
+
+  expect(container.querySelector('.feed__children')).not.toBeNull();
+  exits.release();
+  await vi.waitFor(() => expect(container.querySelector('.feed__children')).toBeNull());
+  state.openGroups.clear();
 });

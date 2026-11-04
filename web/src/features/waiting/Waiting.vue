@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // Waiting on others: tickets you touched where someone else holds the next step.
 import { computed } from 'vue';
-import { AnimatePresence, Motion } from 'motion-v';
-import { listed } from '@/motion.ts';
+import { AnimatePresence, M as Motion } from 'motion-v';
+import { fade, leaving, listed } from '@/motion.ts';
 import { snapshot, now } from '@/store.ts';
 import { waitingRows, statusTone, hasPrColumn } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
@@ -40,8 +40,11 @@ const note = computed(() =>
     <template #head
       ><span v-if="rows.length" class="count">{{ rows.length }}</span></template
     >
-    <p v-if="!rows.length" class="empty">Nothing is waiting on someone else.</p>
-    <RowScroll v-else>
+    <!-- docs/mechanisms/motion.md § The empty text waits for the list to leave -->
+    <AnimatePresence mode="wait" :initial="false">
+    <Motion v-if="!rows.length" key="empty" v-bind="fade" as="p" class="empty">Nothing is waiting on someone else.</Motion>
+    <Motion v-else key="list" v-bind="fade" class="island__fade">
+    <RowScroll>
       <table class="table waiting__table">
         <thead>
           <tr>
@@ -55,7 +58,7 @@ const note = computed(() =>
             </th>
           </tr>
         </thead>
-        <AnimatePresence>
+        <AnimatePresence @before-leave="leaving">
         <Motion v-for="{ row, since, own } in rows" :key="row.row_id" v-bind="listed" as="tbody">
           <tr>
             <TicketCell :row="row" />
@@ -114,6 +117,8 @@ const note = computed(() =>
         </AnimatePresence>
       </table>
     </RowScroll>
+    </Motion>
+    </AnimatePresence>
   </Island>
 </template>
 <style scoped>

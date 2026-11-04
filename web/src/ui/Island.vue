@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useMutationObserver, useResizeObserver } from '@vueuse/core';
 import { useFold } from '@/composables/useFold.ts';
-import { glideThrough } from '@/motion.ts';
+import { glideThrough, LEAVING } from '@/motion.ts';
 import { ceilingHeight, floorHeight, usePanelSize } from '@/composables/usePanelSize.ts';
 import Chevron from './Chevron.vue';
 import ResizeHandle from './ResizeHandle.vue';
@@ -53,7 +53,12 @@ const scrolledAbove = (row: HTMLElement, stop: HTMLElement) => {
   return offset;
 };
 // docs/mechanisms/motion.md § The island's floor
-const OWN_ROWS = ':scope > .row-scroll tbody > tr, :scope > .todos__list > li';
+const STAYING = `:not([${LEAVING}])`;
+const OWN_ROWS = [
+  `:scope > .row-scroll tbody${STAYING} > tr`,
+  `:scope > .island__fade > .row-scroll tbody${STAYING} > tr`,
+  `:scope > .todos__list > li${STAYING}`,
+].join(', ');
 // docs/mechanisms/motion.md § The island's natural height
 const naturalHeight = (element: HTMLElement) => {
   const content = element.classList.contains('row-scroll') ? element.firstElementChild : null;
@@ -97,7 +102,7 @@ const schedule = () => {
   frame = requestAnimationFrame(measure);
 };
 const body = useTemplateRef<HTMLElement>('body');
-useMutationObserver(body, schedule, { childList: true, subtree: true });
+useMutationObserver(body, schedule, { childList: true, subtree: true, attributes: true, attributeFilter: [LEAVING] });
 useResizeObserver(body, schedule);
 onMounted(schedule);
 watch(collapsed, () => nextTick(schedule));

@@ -1,7 +1,6 @@
 // The window's motion tokens and presets (docs/adr/0009-motion-in-the-window.md). The durations and easing mirror the --motion-* variables in styles/tokens.css; reduced motion turns every duration to zero.
 import { computed, nextTick } from 'vue';
 import { usePreferredReducedMotion } from '@vueuse/core';
-import { animate } from 'motion-v';
 
 const DURATION = { fast: 0.32, base: 0.48, slow: 0.64 } as const;
 const EASE: [number, number, number, number] = [0.33, 1, 0.68, 1];
@@ -22,10 +21,26 @@ const preset = (from: Record<string, number>, seconds: number) =>
     transition: tween(seconds),
   }));
 
+const loadMotion = () => import('./motion-features.ts');
+/** The feature set for `LazyMotion`, fetched as its own chunk. docs/mechanisms/motion.md § The features load on demand */
+export const loadFeatures = () => loadMotion().then((module) => module.domMax);
+
+/** Marks a row that Vue keeps in the DOM for its exit, so measuring code can skip it. docs/mechanisms/motion.md § The island's floor */
+export const LEAVING = 'data-leaving';
+export const leaving = (element: Element) => element.setAttribute(LEAVING, '');
+
 /** Appears and disappears by opacity alone: chips, banners, notices, dots. */
 export const fade = preset({ opacity: 0 }, DURATION.base);
 /** Fades and rises: a dialog card. */
 export const rise = preset({ opacity: 0, y: 12 }, DURATION.slow);
+/** A group's children: opens and closes by height and opacity. */
+export const fold = computed(() => ({
+  initial: { opacity: 0, height: 0 },
+  animate: { opacity: 1, height: 'auto' },
+  exit: { opacity: 0, height: 0 },
+  transition: tween(DURATION.base),
+  style: { overflow: 'hidden' },
+}));
 const slide = preset({ opacity: 0, x: -10 }, DURATION.base);
 
 /** A row of a short list: slides and fades in and out, and glides to its new place when the rows around it come, go or reorder. */
@@ -66,6 +81,7 @@ export const glideThrough = async (
   // docs/mechanisms/motion.md § The old value goes back on at once
   element.style[property] = from;
   try {
+    const { animate } = await loadMotion();
     await animate(element, { [property]: [from, to] }, tween(DURATION.base));
   } finally {
     element.style[property] = '';

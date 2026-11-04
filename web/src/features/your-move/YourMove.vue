@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed, reactive } from 'vue';
-import { AnimatePresence, Motion } from 'motion-v';
+import { AnimatePresence, M as Motion } from 'motion-v';
 import { snapshot, ui, now, setMarks, justHandled } from '@/store.ts';
 import { yourRows, hasPrColumn } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
@@ -17,7 +17,7 @@ import AiButton from '@/ui/AiButton.vue';
 import RecentlyDone from './RecentlyDone.vue';
 import RowScroll from '@/ui/RowScroll.vue';
 import { useMoveView } from './useMoveView.ts';
-import { fade, listed } from '@/motion.ts';
+import { fade, leaving, listed } from '@/motion.ts';
 const moveView = useMoveView();
 const view = computed(() => {
   void now.value;
@@ -113,7 +113,7 @@ const undoHandled = () => {
             <th class="table__actions-col"><span class="visually-hidden">Mark</span></th>
           </tr>
         </thead>
-        <AnimatePresence>
+        <AnimatePresence @before-leave="leaving">
         <Motion v-for="item in view.rows" :key="item.row.row_id" v-bind="listed" as="tbody">
           <tr
             class="your-move__row"

@@ -11,6 +11,7 @@ import AiButton from '@/ui/AiButton.vue';
 import Chevron from '@/ui/Chevron.vue';
 import ResizeHandle from '@/ui/ResizeHandle.vue';
 import { usePanelSize } from '@/composables/usePanelSize.ts';
+import { glideThrough } from '@/motion.ts';
 const LIST_MAX = 480;
 const { size: listHeight, set: setListHeight } = usePanelSize(() => `${snapshot.workspace.id}:recently-done`);
 const list = useTemplateRef<HTMLElement>('list');
@@ -35,9 +36,9 @@ const open = useLocalStorage('wt-recent-open', false, {
   writeDefaults: false,
   serializer: { read: (raw) => raw === '1', write: (value) => (value ? '1' : '0') },
 });
-const remember = (event: Event) => {
-  open.value = (event.target as HTMLDetailsElement).open;
-};
+const root = useTemplateRef<HTMLElement>('root');
+// docs/mechanisms/motion.md § Recently done glides
+const toggle = () => glideThrough(root.value, 'height', () => (open.value = !open.value));
 const rows = computed(() => {
   void now.value;
   return recentlyDone(snapshot.turn).map((row) => ({
@@ -47,8 +48,8 @@ const rows = computed(() => {
 });
 </script>
 <template>
-  <details v-if="rows.length" class="recently-done" :open="open" @toggle="remember">
-    <summary class="recently-done__summary">
+  <details v-if="rows.length" ref="root" class="recently-done" :open="open">
+    <summary class="recently-done__summary" @click.prevent="toggle">
       <Chevron tag="span" :open="open" />
       Recently done <span class="count">{{ rows.length }}</span>
     </summary>

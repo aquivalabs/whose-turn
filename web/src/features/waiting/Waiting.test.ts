@@ -1,7 +1,9 @@
 import type * as Store from '@/store.ts';
 import { expect, test, vi } from 'vitest';
+import { nextTick } from 'vue';
 import { render, screen } from '@testing-library/vue';
 import { snapshot } from '@/store.ts';
+import { exits } from '@/test-motion.ts';
 import type { TurnRow } from '@/lib/types.ts';
 import Waiting from './Waiting.vue';
 
@@ -66,4 +68,34 @@ test('a row waiting on reviewers lists every one, marks who approved and who ask
   ]);
   expect(container.textContent).not.toContain('+');
   expect([...container.querySelectorAll('.waiting__mark')].map((mark) => mark.textContent)).toEqual(['✓', '✗']);
+});
+
+test('the last row leaving Waiting on others fades the list out first and shows the empty text after', async () => {
+  snapshot.turn = [backlogRow];
+  exits.hold();
+  const { container } = render(Waiting);
+  expect(screen.queryByText('Nothing is waiting on someone else.')).toBeNull();
+
+  snapshot.turn = [];
+  await nextTick();
+
+  expect(container.querySelector('.waiting__table')).not.toBeNull();
+  expect(screen.queryByText('Nothing is waiting on someone else.')).toBeNull();
+
+  exits.release();
+
+  await screen.findByText('Nothing is waiting on someone else.');
+  expect(container.querySelector('.waiting__table')).toBeNull();
+});
+
+test('a row leaving Waiting on others is marked while it is still in the page', async () => {
+  snapshot.turn = [backlogRow, { ...backlogRow, row_id: 'b-2', key: 'B-2' }];
+  exits.hold();
+  const { container } = render(Waiting);
+
+  snapshot.turn = [backlogRow];
+  await nextTick();
+
+  expect(container.querySelectorAll('.waiting__table tbody')).toHaveLength(2);
+  expect(container.querySelectorAll('.waiting__table tbody[data-leaving]')).toHaveLength(1);
 });

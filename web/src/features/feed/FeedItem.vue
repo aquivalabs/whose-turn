@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // One feed item: the source badge, the reference, the kind, who, when, and the comment expanded in place with its actions. Expanding and reading are events; the feed applies them.
 import { computed } from 'vue';
-import { Motion } from 'motion-v';
+import { M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { snapshot, now } from '@/store.ts';
 import { toneOf, hasBody, badgeOf, subjectOf, itemLine } from '@/lib/feed.ts';

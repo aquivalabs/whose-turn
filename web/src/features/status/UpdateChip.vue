@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The self-update chip: the offer, a spinner while the server installs and restarts, and a reload prompt once it runs the new version (RMA-231, RMA-255).
-import { AnimatePresence, Motion } from 'motion-v';
+import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { computed, onMounted, ref, watch } from 'vue';
 import { refAutoReset, useTimeoutFn } from '@vueuse/core';

@@ -2,8 +2,8 @@
 // The window: the rail, the status line, and the dashboard that fills the rest; sheets open over it. State and data flow live in store.ts.
 import { computed, onMounted, watch } from 'vue';
 import { onKeyStroke, useFavicon } from '@vueuse/core';
-import { AnimatePresence, Motion, MotionConfig } from 'motion-v';
-import { fade, reduced } from './motion.ts';
+import { AnimatePresence, LazyMotion, M as Motion, MotionConfig } from 'motion-v';
+import { fade, loadFeatures, reduced } from './motion.ts';
 import {
   ui,
   snapshot,
@@ -78,6 +78,7 @@ onMounted(() => {
 });
 </script>
 <template>
+  <LazyMotion :features="loadFeatures">
   <MotionConfig reduced-motion="user" :skip-animations="reduced">
   <div class="app" :style="themeVariables">
     <Rail
@@ -124,6 +125,7 @@ onMounted(() => {
     </div>
   </div>
   </MotionConfig>
+  </LazyMotion>
 </template>
 <style scoped>
 .app__shell {

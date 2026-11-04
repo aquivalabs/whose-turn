@@ -58,6 +58,46 @@ describe('a remembered height', () => {
   });
 });
 
+test('rows that are leaving do not count: a panel whose rows are all leaving has no rows and no remembered height', async () => {
+  localStorage.setItem('wt-panel-sizes', JSON.stringify({ leaving: 400 }));
+  const { container } = render(Island, {
+    props: { id: 'leaving-panel', title: 'Panel', sizeKey: 'leaving' },
+    slots: {
+      default: () =>
+        h(RowScroll, () =>
+          h('table', [h('tbody', { 'data-leaving': '' }, [h('tr', [h('td', 'row')])])]),
+        ),
+    },
+  });
+  const panel = container.querySelector('.island') as HTMLElement;
+
+  await vi.waitFor(() => expect(panel.classList.contains('island--sized')).toBe(false));
+  localStorage.clear();
+});
+
+test('a row that starts leaving takes the remembered height away, and the floor is measured again', async () => {
+  localStorage.setItem('wt-panel-sizes', JSON.stringify({ going: 400 }));
+  const leaving = ref(false);
+  const { container } = render(Island, {
+    props: { id: 'going-panel', title: 'Panel', sizeKey: 'going' },
+    slots: {
+      default: () =>
+        h(RowScroll, () =>
+          h('table', [
+            h('tbody', leaving.value ? { 'data-leaving': '' } : {}, [h('tr', [h('td', 'row')])]),
+          ]),
+        ),
+    },
+  });
+  const panel = container.querySelector('.island') as HTMLElement;
+  await vi.waitFor(() => expect(panel.classList.contains('island--sized')).toBe(true));
+
+  leaving.value = true;
+
+  await vi.waitFor(() => expect(panel.classList.contains('island--sized')).toBe(false));
+  localStorage.clear();
+});
+
 test('the floor is measured from the first row when every row has its own tbody', async () => {
   const { container } = render(Island, {
     props: { id: 'split-panel', title: 'Panel' },

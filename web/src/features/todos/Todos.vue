@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // To do: the user's own notes, kept by the server per workspace; a ticket key in the text becomes a link.
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
-import { AnimatePresence, Motion } from 'motion-v';
-import { fade, listed } from '@/motion.ts';
+import { AnimatePresence, M as Motion } from 'motion-v';
+import { fade, leaving, listed } from '@/motion.ts';
 import { snapshot, now, todoAct } from '@/store.ts';
 import type { Todo } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
@@ -147,7 +147,7 @@ const options = computed(() => [
       </Motion>
     </AnimatePresence>
     <ul class="todos__list">
-      <AnimatePresence>
+      <AnimatePresence @before-leave="leaving">
       <Motion
         v-for="{ todo, parts: pieces, meta } in rows"
         :key="todo.id"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Monitor settings: what belongs to the whole monitor and not to one workspace; notifications save at once like the bell, the four numbers save with Save, and the server validates them.
-import { AnimatePresence, Motion } from 'motion-v';
+import { AnimatePresence, M as Motion } from 'motion-v';
 import { computed, ref } from 'vue';
 import { snapshot, ui, reload, restoreWorkspace, toggleNotifications } from '@/store.ts';
 import { listed } from '@/motion.ts';

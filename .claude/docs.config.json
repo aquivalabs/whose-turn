@@ -56,6 +56,8 @@
       "id": "motion",
       "paths": [
         "web/src/motion.ts",
+        "web/src/motion-features.ts",
+        "web/src/features/your-move/RecentlyDone.vue",
         "web/src/ui/Island.vue",
         "web/src/ui/Modal.vue",
         "web/src/test-motion.ts",

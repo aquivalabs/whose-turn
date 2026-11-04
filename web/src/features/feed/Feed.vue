@@ -7,8 +7,8 @@ import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed
 import type { FeedGroup } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
-import { AnimatePresence, Motion } from 'motion-v';
-import { fade } from '@/motion.ts';
+import { AnimatePresence, M as Motion } from 'motion-v';
+import { fade, fold } from '@/motion.ts';
 import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
@@ -225,8 +225,9 @@ const restoreMarks = async () => {
               :query="{ ws: snapshot.workspace.id, kind: 'thread', ref: group.id }"
             />
           </div>
-          <ul v-if="group.open" class="feed__children">
-            <AnimatePresence>
+          <AnimatePresence :initial="false">
+          <Motion v-if="group.open" v-bind="fold" as="ul" class="feed__children">
+            <AnimatePresence :initial="false">
             <FeedItemRow
               v-for="item in group.items"
               :key="item.id"
@@ -240,7 +241,8 @@ const restoreMarks = async () => {
               @seen="markSeen"
             />
             </AnimatePresence>
-          </ul>
+          </Motion>
+          </AnimatePresence>
         </Motion>
         </AnimatePresence>
       </template>

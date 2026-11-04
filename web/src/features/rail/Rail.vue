@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // docs/adr/0002-vueuse-in-the-window.md, docs/adr/0006-window-layers.md
-import { AnimatePresence, Motion } from 'motion-v';
+import { AnimatePresence, M as Motion } from 'motion-v';
 import { computed, nextTick, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
