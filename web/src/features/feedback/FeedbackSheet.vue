@@ -128,7 +128,7 @@ watch(
           @keydown.ctrl.enter.prevent="send"
         ></textarea>
         <p class="feedback-sheet__note">
-          Only what you write, the monitor version and a description of your system (OS, browser, screen, language, time zone) are sent.
+          Only what you write, the monitor version and a description of your system are sent: OS and processor type, Node version, how the monitor was installed, browser, screen and window size, language, time zone, light or dark, app or tab, and which kinds of source you use.
         </p>
         <p v-if="done" class="empty">
           Filed as

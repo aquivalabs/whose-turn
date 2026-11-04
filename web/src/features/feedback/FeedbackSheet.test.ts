@@ -21,7 +21,7 @@ const openSheet = async (fetch: ReturnType<typeof vi.fn>) => {
 test('the sheet always lets you send, and says in one line that only what you write, the version and your system are sent', async () => {
   await openSheet(vi.fn().mockResolvedValue(answer({ reports: [] })));
 
-  expect(screen.getByText(/Only what you write, the monitor version and a description of your system \(OS, browser, screen, language, time zone\) are sent/)).toBeTruthy();
+  expect(screen.getByText(/Only what you write, the monitor version and a description of your system are sent: OS and processor type, Node version/)).toBeTruthy();
   expect(screen.queryByText(/not connected/)).toBeNull();
   expect(screen.queryByRole('button', { name: 'Copy remark' })).toBeNull();
   expect(screen.getByRole('button', { name: 'Send' }).getAttribute('aria-disabled')).toBe('false');
