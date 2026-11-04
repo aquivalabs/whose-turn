@@ -76,8 +76,8 @@ const key = (event: KeyboardEvent) => {
 }
 
 .resize-handle::after {
-  background: var(--md-outline-variant);
-  opacity: 0.45;
+  background: var(--md-outline);
+  opacity: 0.55;
 }
 
 .resize-handle:hover::before,
@@ -119,8 +119,8 @@ const key = (event: KeyboardEvent) => {
 
 .resize-handle--y::after {
   inset: 0;
-  width: 32px;
-  height: 4px;
+  width: 40px;
+  height: 5px;
 }
 
 .resize-handle--x {
@@ -138,8 +138,8 @@ const key = (event: KeyboardEvent) => {
 
 .resize-handle--x::after {
   inset: 0;
-  width: 4px;
-  height: 32px;
+  width: 5px;
+  height: 40px;
 }
 
 @media (width <= 900px) {
