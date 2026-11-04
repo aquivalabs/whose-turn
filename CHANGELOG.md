@@ -2,9 +2,11 @@
 
 All notable changes to whose-turn are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-alpha.6] - 2026-11-04
 
 ### Fixed
+- A secret with a line break in its value, service or account is refused instead of reaching the macOS keychain command. RMA-251.
+- A panel size is saved per workspace and panel without the panel reaching into the store; sizes saved by alpha.5 are dropped once. RMA-251.
 - After a self-update the window says so and asks for a reload: the chip spins while the server installs and restarts, then reads "Updated to <version> · Reload"; before, the old page kept running and its clicks did nothing. RMA-255.
 
 ## [1.0.0-alpha.5] - 2026-11-04
