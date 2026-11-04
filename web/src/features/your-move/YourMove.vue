@@ -117,6 +117,7 @@ const undoHandled = () => {
                   class="hint-label"
                   aria-label="Why this is your move"
                   :data-tip="item.row.why"
+                  data-tip-click
                 >
                   why
                 </button>

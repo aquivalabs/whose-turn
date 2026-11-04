@@ -3,6 +3,8 @@ import type { BackdropApi } from './backdrop.ts';
 
 export interface TippyInstance {
   reference: Element;
+  state: { isVisible: boolean };
+  show: () => void;
   hide: () => void;
   destroy: () => void;
 }
@@ -11,12 +13,17 @@ interface TippyDelegateOptions {
   target: string;
   content: (element: HTMLElement) => string;
   onShow?: (instance: TippyInstance) => boolean | undefined;
+  onHide?: (instance: TippyInstance) => boolean | undefined;
   onHidden?: (instance: TippyInstance) => void;
   onDestroy?: (instance: TippyInstance) => void;
   [option: string]: unknown;
 }
 
 declare global {
+  interface Element {
+    _tippy?: TippyInstance;
+  }
+
   interface Window {
     tippy?: { delegate: (root: Element, options: TippyDelegateOptions) => unknown };
     whoseTurnBackdrop: BackdropApi;
