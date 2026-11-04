@@ -180,3 +180,38 @@ test('start opens the event stream once the first load has answered', async () =
   store.connect();
   expect(opened).toHaveBeenCalledTimes(1);
 });
+
+test('a refused state request for a remembered workspace is retried once without it, and not when none was asked for', async () => {
+  const store = await freshStore();
+  const gone = {
+    error: { message: 'no', details: [{ '@type': 'ErrorInfo', reason: 'NO_SUCH_WORKSPACE', metadata: {} }] },
+  };
+  const fetchStub = vi.fn((url: string) =>
+    Promise.resolve(reply(url.includes('ws=') ? gone : workspaceReply('home'))),
+  );
+  vi.stubGlobal('fetch', fetchStub);
+
+  await store.load('old');
+  expect(store.ui.ws).toBe('home');
+  expect(fetchStub).toHaveBeenCalledTimes(2);
+
+  fetchStub.mockClear();
+  fetchStub.mockResolvedValue(reply(gone));
+  await store.load('');
+  expect(fetchStub).toHaveBeenCalledTimes(1);
+});
+
+test('restoring a workspace posts one hide request with null and reloads the state', async () => {
+  const store = await freshStore();
+  const fetchStub = vi.fn((url: string) =>
+    Promise.resolve(reply(url.startsWith('/api/state') ? workspaceReply('home') : { workspaces: [] })),
+  );
+  vi.stubGlobal('fetch', fetchStub);
+
+  await store.restoreWorkspace('parked-one');
+
+  const [url, init] = fetchStub.mock.calls[0] as unknown as [string, RequestInit];
+  expect(url).toBe('/api/workspaces/hidden');
+  expect(JSON.parse(String(init.body))).toEqual({ id: 'parked-one', hidden: null });
+  expect(fetchStub.mock.calls.some(([target]) => String(target).startsWith('/api/state'))).toBe(true);
+});

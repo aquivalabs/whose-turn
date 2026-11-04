@@ -53,6 +53,29 @@ test('the feed search clears when the open workspace changes', async () => {
   expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('');
 });
 
+test('typing in the feed search filters 150 ms after the last keystroke, not on every key', async () => {
+  vi.useFakeTimers();
+  try {
+    snapshot.feed = [
+      { id: 'a', source: 's', key: 'NW-1', at: '2026-11-02T10:00:00Z' },
+      { id: 'b', source: 's', key: 'NW-2', at: '2026-11-02T11:00:00Z' },
+    ] as FeedItem[];
+    useFeedState().query = '';
+    render(Feed);
+    const box = screen.getByRole('searchbox') as HTMLInputElement;
+
+    await fireEvent.update(box, 'NW-');
+    await fireEvent.update(box, 'NW-2');
+    vi.advanceTimersByTime(149);
+    expect(useFeedState().query).toBe('');
+
+    vi.advanceTimersByTime(1);
+    expect(useFeedState().query).toBe('NW-2');
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
 test('the unread count of the folded strip sits in the strip, where it is written top to bottom', async () => {
   localStorage.setItem('wt-collapsed', JSON.stringify(['feed']));
   snapshot.marks = { seen: [], base: 0, handled: {}, info: {} };

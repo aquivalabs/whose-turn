@@ -132,7 +132,7 @@ const quiet = (id: string, hidden: '' | 'parked' | 'paused') => ({
   hidden,
 });
 
-test('parked and paused workspaces are listed with their mode, and Restore saves the config without their hidden key', async () => {
+test('parked and paused workspaces are listed with their mode, and Restore asks the hide endpoint to show that one workspace', async () => {
   snapshot.workspaces = [quiet('a', ''), quiet('b', 'parked'), quiet('c', 'paused')];
   sent = [];
   vi.stubGlobal(
@@ -162,10 +162,7 @@ test('parked and paused workspaces are listed with their mode, and Restore saves
 
   await waitFor(() =>
     expect(sent).toEqual([
-      {
-        url: '/api/config',
-        body: { workspaces: [{ id: 'a' }, { id: 'b' }, { id: 'c', hidden: 'paused' }], secrets: [] },
-      },
+      { url: '/api/workspaces/hidden', body: { id: 'b', hidden: null } },
     ]),
   );
   snapshot.workspaces = [];

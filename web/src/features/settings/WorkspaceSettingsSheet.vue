@@ -1,10 +1,8 @@
 <script setup lang="ts">
 // Workspace settings: one workspace's form (or an empty one for a new workspace), drawn from the catalogues the server sends; the server validates, stores secrets, writes config.json and reloads.
 import { AnimatePresence } from 'motion-v';
-import { ref, computed, watch, nextTick, useTemplateRef } from 'vue';
+import { ref, computed, nextTick, useTemplateRef } from 'vue';
 import { snapshot, ui, reload, switchWorkspace } from '@/store.ts';
-import { getJson, post, problemsOf, violationsOf } from '@/lib/api.ts';
-import { SERVER_DOWN, writeProblem } from '@/lib/problems.ts';
 import {
   normaliseForForm,
   forSaving,
@@ -16,7 +14,6 @@ import {
 } from '@/lib/settings.ts';
 import type { StoredWorkspace } from '@/lib/settings.ts';
 import type {
-  ApiError,
   ConnectorEntry,
   FactWords,
   FieldSpec,
@@ -25,7 +22,7 @@ import type {
 } from '@/lib/types.ts';
 import FieldRow from '@/ui/FieldRow.vue';
 import SettingsFrame from './SettingsFrame.vue';
-import { useSheetGuard } from './useSheetGuard.ts';
+import { useConfigSheet } from './useConfigSheet.ts';
 
 interface ConnectorSpec {
   type: string;
@@ -58,8 +55,6 @@ const list = ref<RawWorkspace[]>([]);
 const selected = ref(0);
 const catalogue = ref<ConnectorSpec[]>([]);
 const fields = ref<FormFields>({ workspace: [], theme: [], rules: [], statuses: [] });
-const problems = ref<string[]>([]);
-const fieldErrors = ref<Record<string, string>>({});
 const loadedIds = new Map<number, string>();
 const facts = ref<FactWords>({});
 const tables = ref<Record<string, RuleRow[]>>({});
@@ -69,18 +64,54 @@ const typed = new Map<ConnectorEntry, Record<string, string>>();
 const typedCount = ref(0);
 const loadedKey = ref('');
 const adding = ref(false);
-const unloaded = ref('');
-const dirty = computed(
-  () =>
-    ui.settings &&
-    !unloaded.value &&
-    (typedCount.value > 0 || settingsKey(list.value) !== loadedKey.value),
-);
 const close = () => {
   ui.settings = false;
   ui.settingsNew = false;
+  ui.settingsAt = '';
 };
-const { ask, requestClose, answer } = useSheetGuard(() => ui.settings, () => Boolean(dirty.value), close);
+const {
+  ask,
+  requestClose,
+  answer,
+  confirm,
+  problems,
+  fieldErrors,
+  unloaded,
+  dirty,
+  save: saveTo,
+} = useConfigSheet<ConfigReply>({
+  isOpen: () => ui.settings,
+  close,
+  changed: () => typedCount.value > 0 || settingsKey(list.value) !== loadedKey.value,
+  apply: (reply) => {
+    list.value = (reply.workspaces || []).map(normaliseForForm);
+    catalogue.value = reply.connectors || [];
+    fields.value = reply.fields;
+    typed.clear();
+    typedCount.value = 0;
+    selected.value = Math.max(
+      0,
+      list.value.findIndex((workspace) => workspace.id === snapshot.workspace.id),
+    );
+    loadedIds.clear();
+    list.value.forEach((workspace) => loadedIds.set(uidOf(workspace), workspace.id));
+    facts.value = reply.facts || {};
+    tables.value = reply.tables || {};
+    tableWarnings.value = reply.table_warnings || {};
+    loadedKey.value = settingsKey(list.value);
+    adding.value = ui.settingsNew || !list.value.length;
+    if (adding.value) {
+      addWorkspace();
+      loadedKey.value = settingsKey(list.value);
+    }
+    return nextTick().then(() => {
+      if (ui.settingsAt === 'connectors') {
+        connectorsHead.value?.scrollIntoView({ block: 'start' });
+      }
+      ui.settingsAt = '';
+    });
+  },
+});
 /** The server's message for one field of the open workspace, addressed like workspaces[0].rules.backlog_rows. */
 const errorAt = (path: string) => fieldErrors.value[`workspaces[${selected.value}].${path}`] || '';
 const idHint = computed(() => {
@@ -111,12 +142,12 @@ const connectorCards = computed(() =>
     spec: specOf(entry),
   })),
 );
-/** A field's stored value as FieldRow shows it; an edit goes back through setOrDrop, so an emptied field leaves the config. */
 /** The hint under an empty seed field: the colour the server derived from the workspace id, once it is saved. */
 const derivedSeedHint = (id: string) => {
   const seed = snapshot.workspaces.find((workspace) => workspace.id === id)?.theme_seed;
   return seed ? `empty: ${seed}, derived from the workspace id` : 'empty derives one from the workspace id';
 };
+/** A field's stored value as FieldRow shows it; an edit goes back through setOrDrop, so an emptied field leaves the config. */
 const fieldValue = (target: Record<string, unknown>, key: string) =>
   target[key] as string | string[] | undefined;
 const setSecret = (entry: ConnectorEntry, key: string, value: string) => {
@@ -141,12 +172,7 @@ const askRemoveWorkspace = () => {
   if (!current.value) {
     return;
   }
-  ask.value = {
-    text: `Delete ${current.value.name || current.value.id}? Its to-dos and marks stay on disk.`,
-    yes: 'Delete',
-    no: 'Keep',
-    run: removeWorkspace,
-  };
+  confirm(`Delete ${current.value.name || current.value.id}? Its to-dos and marks stay on disk.`, 'Delete', 'Keep', removeWorkspace);
 };
 const addConnector = (spec: ConnectorSpec) => current.value?.connectors.push({ type: spec.type });
 const removeConnector = (index: number) => {
@@ -161,90 +187,23 @@ const askRemoveConnector = (index: number) => {
     return;
   }
   const label = specOf(current.value.connectors[index]).label;
-  ask.value = {
-    text: `Remove the ${label} source from ${current.value.name || current.value.id}?`,
-    yes: 'Remove',
-    no: 'Keep',
-    run: () => removeConnector(index),
-  };
+  confirm(`Remove the ${label} source from ${current.value.name || current.value.id}?`, 'Remove', 'Keep', () => removeConnector(index));
 };
-const open = () =>
-  getJson<ConfigReply>('/api/config')
-    .then((reply) => {
-      unloaded.value = '';
-      list.value = (reply.workspaces || []).map(normaliseForForm);
-      catalogue.value = reply.connectors || [];
-      fields.value = reply.fields;
-      typed.clear();
-      typedCount.value = 0;
-      ask.value = null;
-      selected.value = Math.max(
-        0,
-        list.value.findIndex((workspace) => workspace.id === snapshot.workspace.id),
-      );
-      problems.value = reply.problems || [];
-      fieldErrors.value = {};
-      loadedIds.clear();
-      list.value.forEach((workspace) => loadedIds.set(uidOf(workspace), workspace.id));
-      facts.value = reply.facts || {};
-      tables.value = reply.tables || {};
-      tableWarnings.value = reply.table_warnings || {};
-      loadedKey.value = settingsKey(list.value);
-      adding.value = ui.settingsNew || !list.value.length;
-      if (adding.value) {
-        addWorkspace();
-        loadedKey.value = settingsKey(list.value);
-      }
-    })
-    .catch(() => {
-      unloaded.value = SERVER_DOWN + '; settings cannot be loaded.';
-    })
-    .then(nextTick)
-    .then(() => {
-      if (ui.settingsAt === 'connectors') {
-        connectorsHead.value?.scrollIntoView({ block: 'start' });
-      }
-      ui.settingsAt = '';
-    });
-const save = async () => {
-  try {
-    const reply = await post<{ error?: ApiError }>('/api/config', {
+const save = () =>
+  saveTo(
+    {
       workspaces: list.value.map((workspace) => forSaving(workspace)),
       secrets: pendingSecrets(list.value, typed),
-    });
-    if (reply.error) {
-      const found = violationsOf(reply.error);
-      fieldErrors.value = Object.fromEntries(
-        found.filter((entry) => entry.field !== 'workspaces').map((entry) => [entry.field, entry.description]),
-      );
-      problems.value = found.length
-        ? found.filter((entry) => entry.field === 'workspaces').map((entry) => entry.description)
-        : problemsOf(reply.error);
-      if (found.length && !problems.value.length) {
-        problems.value = ['Fix the marked fields; nothing was saved.'];
+    },
+    async () => {
+      const created = adding.value ? current.value?.id : '';
+      close();
+      await reload();
+      if (created) {
+        await switchWorkspace(created);
       }
-      return;
-    }
-    const created = adding.value ? current.value?.id : '';
-    close();
-    await reload();
-    if (created) {
-      await switchWorkspace(created);
-    }
-  } catch (error) {
-    problems.value = [
-      writeProblem(error, { unreachable: SERVER_DOWN + '; your changes are kept, save again.' }),
-    ];
-  }
-};
-watch(
-  () => ui.settings,
-  (isOpen) => {
-    if (isOpen) {
-      open();
-    }
-  },
-);
+    },
+  );
 </script>
 <template>
   <AnimatePresence>
@@ -252,7 +211,7 @@ watch(
       v-if="ui.settings"
       :title="adding ? 'New workspace' : 'Workspace settings'"
       label-id="settings-title"
-      :dirty="Boolean(dirty)"
+      :dirty="dirty"
       :ask="ask"
       :unloaded="unloaded"
       :problems="problems"

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
 import { computed, nextTick, ref, watch } from 'vue';
+import { watchDebounced } from '@vueuse/core';
 import { snapshot, ui, now, setMarks, tellProblem } from '@/store.ts';
 import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
 import type { FeedGroup } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
 import { AnimatePresence, Motion } from 'motion-v';
-import { fade, listed } from '@/motion.ts';
+import { fade } from '@/motion.ts';
 import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
@@ -41,6 +42,11 @@ const feedFilter = computed({
     feedState.source = id;
   },
 });
+const SEARCH_DEBOUNCE_MS = 150;
+// The box shows every keystroke; the list filters 150 ms after the last one.
+const typed = ref(feedState.query);
+watch(() => feedState.query, (query) => (typed.value = query));
+watchDebounced(typed, (text) => (feedState.query = text), { debounce: SEARCH_DEBOUNCE_MS });
 watch(
   () => snapshot.workspace.id,
   () => {
@@ -157,7 +163,7 @@ const restoreMarks = async () => {
     </AnimatePresence>
     <div class="feed__search">
       <input
-        v-model.trim="feedState.query"
+        v-model.trim="typed"
         class="input feed__search-input"
         type="search"
         placeholder="Search the feed: key, author, words…"
@@ -174,11 +180,11 @@ const restoreMarks = async () => {
     </p>
     <ol v-else class="feed__list">
       <template v-if="feedState.view === 'ticket'">
-        <AnimatePresence>
+        <AnimatePresence :initial="false">
         <Motion
           v-for="group in groups"
           :key="group.id"
-          v-bind="listed"
+          v-bind="fade"
           as="li"
           class="feed__group"
           :class="{
@@ -239,7 +245,7 @@ const restoreMarks = async () => {
         </AnimatePresence>
       </template>
       <template v-else>
-        <AnimatePresence>
+        <AnimatePresence :initial="false">
         <FeedItemRow
           v-for="item in rows"
           :key="item.id"

@@ -30,10 +30,19 @@ const strip = computed(() => collapsed.value && props.resize === 'width');
 const { size, set } = usePanelSize(() => props.sizeKey);
 const root = useTemplateRef<HTMLElement>('root');
 // A fold glides: the panel's height, or for the width strip the layout's columns, tweens from where it was to where the stylesheet puts it.
-const toggle = () =>
-  props.resize === 'width'
-    ? glideThrough(root.value?.parentElement, 'gridTemplateColumns', flip)
-    : glideThrough(root.value, 'height', flip);
+// The observers sleep while it runs and the island is measured once when it ends: the layout moves every frame of a glide.
+let gliding = false;
+const toggle = async () => {
+  gliding = true;
+  try {
+    await (props.resize === 'width'
+      ? glideThrough(root.value?.parentElement, 'gridTemplateColumns', flip)
+      : glideThrough(root.value, 'height', flip));
+  } finally {
+    gliding = false;
+    schedule();
+  }
+};
 const floor = ref(0);
 const hasRows = ref(true);
 const pixels = (value: string) => parseFloat(value) || 0;
@@ -82,6 +91,9 @@ const measure = () => {
 };
 let frame = 0;
 const schedule = () => {
+  if (gliding) {
+    return;
+  }
   cancelAnimationFrame(frame);
   frame = requestAnimationFrame(measure);
 };

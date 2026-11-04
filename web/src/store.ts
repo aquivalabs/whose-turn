@@ -12,7 +12,6 @@ import {
 } from '@vueuse/core';
 import { getJson, post, reasonOf } from './lib/api.ts';
 import { latestWins } from './lib/latest-wins.ts';
-import { retryWithoutWorkspace } from './lib/load-retry.ts';
 import { withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { topLayer, type Layer } from './lib/layers.ts';
@@ -218,7 +217,7 @@ export const load = (asked = ui.ws): Promise<Snapshot> => {
         return snapshot;
       }
       if (reply.error) {
-        if (reasonOf(reply.error) !== 'NO_SUCH_WORKSPACE' || !retryWithoutWorkspace(asked)) {
+        if (reasonOf(reply.error) !== 'NO_SUCH_WORKSPACE' || !asked) {
           ui.status = errorProblem(reply.error, 'Could not load');
           return snapshot;
         }
@@ -399,25 +398,16 @@ export const reorderWorkspaces = (ids: string[]) =>
       },
       (failure: Error) => tellProblem(failure, { refused: 'The order was not saved' }),
     );
-/** Brings a parked or paused workspace back into the rail: the same raw entries without its `hidden` key. */
+/** Brings a parked or paused workspace back into the rail through the server's one hide endpoint. */
 export const restoreWorkspace = (id: string) =>
-  getJson<{ workspaces: ({ id: string; hidden?: string } & object)[] }>('/api/config')
-    .then((config) =>
-      post<{ error?: ApiError }>('/api/config', {
-        workspaces: config.workspaces.map((entry) =>
-          entry.id === id ? Object.fromEntries(Object.entries(entry).filter(([key]) => key !== 'hidden')) : entry,
-        ),
-        secrets: [],
-      }),
-    )
-    .then(
-      (reply) => {
-        if (tellProblem(reply, { refused: 'The workspace was not restored' })) {
-          reload();
-        }
-      },
-      (failure: Error) => tellProblem(failure, { refused: 'The workspace was not restored' }),
-    );
+  post<{ error?: ApiError }>('/api/workspaces/hidden', { id, hidden: null }).then(
+    (reply) => {
+      if (tellProblem(reply, { refused: 'The workspace was not restored' })) {
+        reload();
+      }
+    },
+    (failure: Error) => tellProblem(failure, { refused: 'The workspace was not restored' }),
+  );
 export const refresh = () => {
   ui.status = 'Checking now…';
   post('/api/refresh').catch((failure: Error) => {

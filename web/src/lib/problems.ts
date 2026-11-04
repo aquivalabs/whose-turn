@@ -1,9 +1,9 @@
 // What a write that did not go through tells the user, next to the control that sent it.
 import { reasonOf } from './api.ts';
-import { NO_WORKSPACE_MESSAGE } from './load-retry.ts';
 import type { ApiError } from './types.ts';
 
 const UNREACHABLE = 'unreachable';
+export const NO_WORKSPACE_MESSAGE = 'No workspace configured. Add one with + in the rail.';
 export const SERVER_DOWN = 'The local server is not answering';
 export const UNREACHABLE_TEXT = SERVER_DOWN + '; try again once it is back.';
 export const TEXT_KEPT = SERVER_DOWN + '; your text is kept.';

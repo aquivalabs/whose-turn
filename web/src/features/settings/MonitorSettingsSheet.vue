@@ -1,15 +1,13 @@
 <script setup lang="ts">
 // Monitor settings: what belongs to the whole monitor and not to one workspace; notifications save at once like the bell, the four numbers save with Save, and the server validates them.
 import { AnimatePresence, Motion } from 'motion-v';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { snapshot, ui, reload, restoreWorkspace, toggleNotifications } from '@/store.ts';
 import { listed } from '@/motion.ts';
-import { getJson, post, problemsOf, violationsOf } from '@/lib/api.ts';
-import { SERVER_DOWN, writeProblem } from '@/lib/problems.ts';
-import type { ApiError, FieldSpec } from '@/lib/types.ts';
+import type { FieldSpec } from '@/lib/types.ts';
 import FieldRow from '@/ui/FieldRow.vue';
 import SettingsFrame from './SettingsFrame.vue';
-import { useSheetGuard } from './useSheetGuard.ts';
+import { useConfigSheet } from './useConfigSheet.ts';
 
 interface ConfigReply {
   settings?: Record<string, number>;
@@ -21,67 +19,33 @@ interface ConfigReply {
 const draft = ref<Record<string, string>>({});
 const specs = ref<FieldSpec[]>([]);
 const configFile = ref('');
-const problems = ref<string[]>([]);
-const fieldErrors = ref<Record<string, string>>({});
 const loadedKey = ref('');
-const unloaded = ref('');
-const dirty = computed(
-  () => ui.monitor && !unloaded.value && JSON.stringify(draft.value) !== loadedKey.value,
-);
 const hiddenWorkspaces = computed(() => snapshot.workspaces.filter((workspace) => workspace.hidden));
-const close = () => {
-  ui.monitor = false;
-};
-const { ask, requestClose, answer } = useSheetGuard(() => ui.monitor, () => dirty.value, close);
-
-const open = () =>
-  getJson<ConfigReply>('/api/config')
-    .then((reply) => {
-      unloaded.value = '';
-      const fieldsOf = reply.settings_fields || {};
-      specs.value = Object.entries(fieldsOf).map(([key, spec]) => ({
-        key,
-        label: spec.label,
-        hint: spec.hint,
-      }));
-      draft.value = Object.fromEntries(
-        Object.keys(fieldsOf).map((key) => [key, String(reply.settings?.[key] ?? '')]),
-      );
-      loadedKey.value = JSON.stringify(draft.value);
-      configFile.value = reply.config_file || '';
-      problems.value = reply.problems || [];
-      fieldErrors.value = {};
-    })
-    .catch(() => {
-      unloaded.value = SERVER_DOWN + '; settings cannot be loaded.';
-    });
-const save = async () => {
-  try {
-    const reply = await post<{ error?: ApiError }>('/api/config', {
-      settings: Object.fromEntries(Object.entries(draft.value).map(([key, text]) => [key, Number(text)])),
-    });
-    if (reply.error) {
-      const found = violationsOf(reply.error);
-      fieldErrors.value = Object.fromEntries(found.map((entry) => [entry.field, entry.description]));
-      problems.value = found.length ? ['Fix the marked fields; nothing was saved.'] : problemsOf(reply.error);
-      return;
-    }
-    close();
-    reload();
-  } catch (error) {
-    problems.value = [
-      writeProblem(error, { unreachable: SERVER_DOWN + '; your changes are kept, save again.' }),
-    ];
-  }
-};
-watch(
-  () => ui.monitor,
-  (isOpen) => {
-    if (isOpen) {
-      open();
-    }
+const { ask, requestClose, answer, problems, fieldErrors, unloaded, dirty, save: saveTo } = useConfigSheet<ConfigReply>({
+  isOpen: () => ui.monitor,
+  close: () => {
+    ui.monitor = false;
   },
-);
+  changed: () => JSON.stringify(draft.value) !== loadedKey.value,
+  apply: (reply) => {
+    const fieldsOf = reply.settings_fields || {};
+    specs.value = Object.entries(fieldsOf).map(([key, spec]) => ({
+      key,
+      label: spec.label,
+      hint: spec.hint,
+    }));
+    draft.value = Object.fromEntries(
+      Object.keys(fieldsOf).map((key) => [key, String(reply.settings?.[key] ?? '')]),
+    );
+    loadedKey.value = JSON.stringify(draft.value);
+    configFile.value = reply.config_file || '';
+  },
+});
+const save = () =>
+  saveTo({ settings: Object.fromEntries(Object.entries(draft.value).map(([key, text]) => [key, Number(text)])) }, () => {
+    ui.monitor = false;
+    reload();
+  });
 </script>
 <template>
   <AnimatePresence>
