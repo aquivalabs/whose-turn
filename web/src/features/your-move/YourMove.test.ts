@@ -2,7 +2,7 @@ import type * as Store from '@/store.ts';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { setMarks, showInFeed, snapshot, ui } from '@/store.ts';
-import type { TurnRow } from '@/lib/types.ts';
+import { turnRow as row } from '@/test-rows.ts';
 import YourMove from './YourMove.vue';
 import NoteModal from './NoteModal.vue';
 import { useMoveView } from './useMoveView.ts';
@@ -15,20 +15,6 @@ vi.mock('@/store.ts', async (importOriginal) => ({
 }));
 
 const LONG = 'Looks done, please test the export. '.repeat(20).trim();
-
-const row = (id: string, handled: boolean): TurnRow => ({
-  row_id: id,
-  key: id.toUpperCase(),
-  summary: 'Summary of ' + id,
-  ticket_url: 'https://tracker.example/' + id,
-  group: 'you',
-  rank: 1,
-  updated: '2026-11-02T10:00:00Z',
-  activity_at: '2026-11-02T10:00:00Z',
-  status: 'In review',
-  handled,
-  next: 'Review ' + id,
-});
 
 beforeEach(() => {
   snapshot.turn = [row('nw-1', false), row('nw-2', true)];

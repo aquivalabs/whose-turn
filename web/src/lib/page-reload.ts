@@ -9,7 +9,7 @@ export const rememberUpdated = (version: string): void => {
   try {
     sessionStorage.setItem(UPDATED_KEY, version);
   } catch {
-    return;
+    // docs/adr/0002-vueuse-in-the-window.md
   }
 };
 
