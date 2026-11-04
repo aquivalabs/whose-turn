@@ -1,0 +1,26 @@
+name: mutation-gate
+# Nightly mutation run over the pure judges listed in stryker.config.json; see AGENTS.md "Gates".
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run mutation
+      - name: keep the report when the gate fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: .stryker-tmp/mutation-report.html
+          if-no-files-found: warn

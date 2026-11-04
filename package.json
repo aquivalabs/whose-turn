@@ -37,13 +37,15 @@
     "lint:style": "stylelint \"web/src/**/*.{vue,css}\"",
     "format": "prettier --write web/src",
     "check": "npm run typecheck && npm run lint && npm run lint:style && npm test && npm run test:web",
-    "test:web": "vitest run"
+    "test:web": "vitest run",
+    "mutation": "stryker run"
   },
   "bin": {
     "whose-turn": "server.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@stryker-mutator/core": "^10.1.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/vue": "8.1.0",
     "@types/node": "22.19.19",
@@ -66,5 +68,12 @@
     "vue": "^3.5.0",
     "vue-eslint-parser": "10.4.1",
     "vue-tsc": "3.3.13"
+  },
+  "overrides": {
+    "qs": "^6.16.1",
+    "fast-uri": "^3.1.9",
+    "zod": "^4.6.7",
+    "minimatch": "^11.0.4",
+    "glob": "^14.0.3"
   }
 }

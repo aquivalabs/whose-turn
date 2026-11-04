@@ -11,3 +11,4 @@ config.json
 
 # The built window; CI builds it for a release, the server serves it when present.
 dist/
+.stryker-tmp/
