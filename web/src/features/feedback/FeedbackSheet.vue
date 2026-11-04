@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Report: one field in the user's words; the server's composer shapes the issue and files it with the maintainer's tracker; the list below shows what this machine filed with the state the tracker reports.
-import { ref, watch, nextTick } from 'vue';
+import { computed, ref, watch, nextTick } from 'vue';
 import { snapshot, ui } from '@/store.ts';
 import { dark } from '@/scheme.ts';
 import { getJson, post, problemsOf } from '@/lib/api.ts';
@@ -14,7 +14,7 @@ import Modal from '@/ui/Modal.vue';
 
 type ReportLine = Pick<
   FiledReport,
-  'id' | 'title' | 'state' | 'outcome' | 'filed_at' | 'changed_at'
+  'id' | 'title' | 'state' | 'outcome' | 'filed_at' | 'changed_at' | 'mine'
 >;
 interface FeedbackList {
   reports?: ReportLine[];
@@ -41,6 +41,7 @@ const load = () =>
       problems.value = [SERVER_DOWN + '; past reports cannot be loaded.'];
     },
   );
+const everyone = computed(() => reports.value.some((report) => report.mine !== undefined));
 const close = () => {
   ui.feedback = false;
 };
@@ -131,10 +132,11 @@ watch(
         · {{ done.title }}
       </p>
       <div v-if="reports.length" class="feedback-sheet__reports">
-        <h4 class="sheet-form__heading">Your reports</h4>
+        <h4 class="sheet-form__heading">{{ everyone ? 'All reports' : 'Your reports' }}</h4>
         <div v-for="report in reports" :key="report.id" class="feedback-sheet__report">
           <a :href="reportPage(report.id)" target="_blank" rel="noopener">{{ report.id }}</a>
           <span class="feedback-sheet__report-title">{{ report.title }}</span>
+          <span v-if="report.mine" class="pill">yours</span>
           <span class="pill" :class="modifier('pill', outcomeTone(report.outcome))">{{
             report.state || 'filed'
           }}</span>

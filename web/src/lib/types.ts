@@ -236,5 +236,6 @@ export interface FiledReport {
   filed_at: string;
   changed_at?: string;
   unanswered?: boolean;
+  mine?: boolean;
   answers: { by?: string; at: string; text: string }[];
 }

@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- If you maintain Whose Turn, the Report sheet lists every user report, not only yours, and marks the ones you filed. Everyone else still sees only their own. RMA-306.
 - A ticket in code review now shows the names of the reviewers still asked to review its pull request, instead of just "Reviewer". RMA-298.
 
 ### Changed

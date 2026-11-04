@@ -73,3 +73,31 @@ test('the sheet sends the remark, who sent it and the workspace id, and no conte
       },
     });
 });
+
+test('a list that marks reports as mine is headed All reports and flags the user\'s own', async () => {
+  const at = '2026-11-04T10:00:00.000Z';
+  await openSheet(
+    vi.fn().mockResolvedValue(
+      answer({
+        reports: [
+          { id: 'RMA-2', title: 'Someone else', state: 'Open', outcome: 'open', filed_at: at, mine: false },
+          { id: 'RMA-1', title: 'Mine', state: 'Open', outcome: 'open', filed_at: at, mine: true },
+        ],
+      }),
+    ),
+  );
+
+  expect(await screen.findByText('All reports')).toBeTruthy();
+  expect(screen.getAllByText('yours')).toHaveLength(1);
+});
+
+test('a plain list keeps the Your reports heading and no marker', async () => {
+  await openSheet(
+    vi.fn().mockResolvedValue(
+      answer({ reports: [{ id: 'RMA-1', title: 'Mine', state: 'Open', outcome: 'open', filed_at: '2026-11-04T10:00:00.000Z' }] }),
+    ),
+  );
+
+  expect(await screen.findByText('Your reports')).toBeTruthy();
+  expect(screen.queryByText('yours')).toBeNull();
+});

@@ -278,3 +278,70 @@ test('the monitor version and the clean client report go to the relay', async ()
   assert.equal(sent.environment.mode, 'tab');
   assert.equal(sent.environment.ip, undefined);
 });
+
+const adminStub = ({ issues = [], status = 0 } = {}) => {
+  const calls = [];
+  const http = { fetchJson: async (url, options = {}) => {
+    calls.push({ url, ...options });
+    if (url.includes('all=1')) {
+      if (status) {
+        throw Object.assign(new Error(`HTTP ${status}`), { upstreamStatus: status });
+      }
+      return { issues };
+    }
+    return { issues: issues.filter((issue) => issue.identifier === 'RMA-500') };
+  } };
+  return { http, calls };
+};
+const TOKEN = 'secret-admin-token-0123456789abcdef';
+const everyIssues = [relayIssue({ identifier: 'RMA-502', title: 'Someone else' }), relayIssue(), relayIssue({ identifier: 'RMA-499', title: 'Older', outcome: 'done' })];
+
+test('without an admin token the list is this machine\'s own reports and carries no mine marker', async () => {
+  const { http, calls } = adminStub({ issues: everyIssues });
+  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => '' });
+  reports.add({ id: 'RMA-500', title: 'The chevron wraps', filed_at: '2026-11-02T10:00:00.000Z' });
+  const list = await reports.states();
+  assert.deepEqual(list.map((report) => report.id), ['RMA-500']);
+  assert.equal('mine' in list[0], false);
+  assert.ok(calls.every((call) => !call.url.includes('all=1')));
+});
+
+test('with an admin token the relay lists every report newest first, each marked mine when this machine filed it, and any id has a page', async () => {
+  const { http, calls } = adminStub({ issues: everyIssues });
+  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => TOKEN });
+  reports.add({ id: 'RMA-500', title: 'The chevron wraps', filed_at: '2026-11-02T10:00:00.000Z' });
+  const list = await reports.states();
+  assert.deepEqual(list.map((report) => [report.id, report.mine]), [['RMA-502', false], ['RMA-500', true], ['RMA-499', false]]);
+  assert.equal(list[0].title, 'Someone else');
+  assert.equal(calls[0].headers.Authorization, `Bearer ${TOKEN}`);
+  assert.equal(calls.length, 1);
+  const other = await reports.detail('RMA-502');
+  assert.equal(other.title, 'Someone else');
+  assert.equal(await reports.detail('RMA-404'), null);
+});
+
+test('a 401 from the relay falls back to this machine\'s own reports without a word', async () => {
+  const { http } = adminStub({ issues: everyIssues, status: 401 });
+  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => 'wrong' });
+  reports.add({ id: 'RMA-500', title: 'The chevron wraps', filed_at: '2026-11-02T10:00:00.000Z' });
+  const list = await reports.states();
+  assert.deepEqual(list.map((report) => report.id), ['RMA-500']);
+  assert.equal('mine' in list[0], false);
+  assert.equal(await reports.detail('RMA-502'), null);
+});
+
+test('the admin token never appears in an API response', async () => {
+  const { http } = adminStub({ issues: everyIssues });
+  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => TOKEN });
+  reports.add({ id: 'RMA-500', title: 'The chevron wraps', filed_at: '2026-11-02T10:00:00.000Z' });
+  const { server, get } = await startTestApi({ registry: emptyRegistry(), reports, http });
+  try {
+    const list = await (await get('/api/feedback')).text();
+    const one = await (await get('/api/feedback?id=RMA-502')).text();
+    assert.match(list, /RMA-502/);
+    assert.match(one, /Someone else/);
+    assert.ok(!list.includes(TOKEN) && !one.includes(TOKEN));
+  } finally {
+    server.close();
+  }
+});
