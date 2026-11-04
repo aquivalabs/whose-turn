@@ -11,7 +11,6 @@ vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn
 const reply: Changelog = {
   current: '1.2.0',
   versions: [
-    { version: 'Unreleased', date: '', sections: [{ kind: 'Added', items: ['Coming soon.'] }] },
     {
       version: '1.2.0',
       date: '2026-11-04',
@@ -43,10 +42,10 @@ test('the sheet lists every version newest first, marks the running one and rend
   const { container } = render(WhatsNewSheet);
   ui.whatsNew = true;
 
-  await screen.findByText('Not released yet');
+  await screen.findByText('1.2.0');
 
   const names = [...container.querySelectorAll('.whats-new__name')].map((node) => node.textContent?.trim());
-  expect(names).toEqual(['Not released yet', '1.2.0', '1.1.0', '1.0.0']);
+  expect(names).toEqual(['1.2.0', '1.1.0', '1.0.0']);
   expect(screen.getByText('Running')).toBeTruthy();
   expect(screen.getByText('No notes for this version.')).toBeTruthy();
   expect(container.querySelector('strong')?.textContent).toBe('bold');
@@ -63,7 +62,7 @@ test('opening the sheet flags the versions since the last visit and marks them s
   expect(unseen.value.map((entry) => entry.version)).toEqual(['1.2.0', '1.1.0']);
 
   ui.whatsNew = true;
-  await screen.findByText('Not released yet');
+  await screen.findByText('1.2.0');
   await nextTick();
 
   expect(container.querySelectorAll('.whats-new__tag:not(.whats-new__tag--running)')).toHaveLength(2);
@@ -87,7 +86,7 @@ test('the Close button hides the sheet', async () => {
   stubChangelog();
   render(WhatsNewSheet);
   ui.whatsNew = true;
-  await screen.findByText('Not released yet');
+  await screen.findByText('1.2.0');
 
   await fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 

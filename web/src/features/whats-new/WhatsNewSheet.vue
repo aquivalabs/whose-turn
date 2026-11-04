@@ -3,7 +3,7 @@
 import { ref, watch } from 'vue';
 import { ui } from '@/store.ts';
 import { useWhatsNew } from '@/composables/useWhatsNew.ts';
-import { UNRELEASED, versionMarkdown } from '@/lib/whats-new.ts';
+import { versionMarkdown } from '@/lib/whats-new.ts';
 import MarkdownView from '@/ui/MarkdownView.vue';
 
 const { changelog, problem, unseen, load, markSeen } = useWhatsNew();
@@ -47,7 +47,7 @@ watch(
         <article v-for="entry in changelog.versions" :key="entry.version" class="whats-new__version">
           <header class="whats-new__head">
             <h4 class="whats-new__name">
-              {{ entry.version === UNRELEASED ? 'Not released yet' : entry.version }}
+              {{ entry.version }}
             </h4>
             <span v-if="entry.date" class="whats-new__date">{{ entry.date }}</span>
             <span

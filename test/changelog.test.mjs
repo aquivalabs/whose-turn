@@ -88,14 +88,14 @@ test('loadChangelog answers null when the file is missing', () => {
   assert.equal(loadChangelog(mkdtempSync(join(tmpdir(), 'wt-changelog-')), '1.0.0'), null);
 });
 
-test('GET /api/changelog returns the current version and the parsed versions', async () => {
+test('GET /api/changelog returns the current version and the released versions', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'wt-changelog-'));
   writeFileSync(join(dir, 'CHANGELOG.md'), SAMPLE);
   const { server, get } = await startTestApi({ changelog: loadChangelog(dir, '1.2.0') });
   try {
     const reply = await (await get('/api/changelog')).json();
     assert.equal(reply.current, '1.2.0');
-    assert.equal(reply.versions.length, 4);
+    assert.equal(reply.versions.length, 3);
   } finally {
     server.close();
   }
@@ -121,4 +121,10 @@ test('an entry drops the tracker ids at its end or in brackets, and keeps ids in
   assert.equal(withoutIds('Since RMA-197 the store waited too long.'), 'Since RMA-197 the store waited too long.');
   assert.equal(withoutIds('Reads files in UTF-8.'), 'Reads files in UTF-8.');
   assert.equal(withoutIds('No ids here.'), 'No ids here.');
+});
+
+test('the API reply leaves out Unreleased: a user only reads versions that shipped', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'wt-changelog-'));
+  writeFileSync(join(dir, 'CHANGELOG.md'), SAMPLE);
+  assert.deepEqual(loadChangelog(dir, '1.2.0').versions.map((entry) => entry.version), ['1.2.0', '1.1.0', '1.0.0']);
 });
