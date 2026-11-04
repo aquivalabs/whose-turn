@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRegistry } from '../lib/registry.mjs';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { loadConfig, saveNotifications, saveWorkspaces } from '../lib/config.mjs';
 
 const fakeWorkspace = (definition) => {
   const listeners = [];
@@ -78,4 +82,21 @@ test('a workspace whose build throws at load is dropped with a problem line and 
   });
   assert.deepEqual(registry.workspaces.map((workspace) => workspace.id), ['a']);
   assert.match(registry.problems[0], /Workspace "b" was dropped: Invalid regular expression/);
+});
+
+test('the real notifications save reloads the registry, so a toggle applies live without a restart', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'wt-registry-'));
+  const env = { WHOSE_TURN_DATA: dir };
+  const configFile = loadConfig(env).configFile;
+  const registry = createRegistry({
+    load: () => loadConfig(env),
+    save: (raw) => saveWorkspaces(configFile, raw),
+    saveNotifications: (notifications) => saveNotifications(configFile, notifications),
+    build: (definition) => fakeWorkspace(definition),
+  });
+  assert.equal(registry.notifications.desktop, true);
+  await registry.saveNotifications({ desktop: false });
+  assert.equal(registry.notifications.desktop, false);
+  await registry.saveNotifications({ desktop: true });
+  assert.equal(registry.notifications.desktop, true);
 });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The switch for desktop notifications across the whole monitor; the setting lives in the config, so it survives a restart (RMA-283).
+// Switch for desktop notifications; see README, notifications.desktop.
 import { computed, ref } from 'vue';
 import { snapshot, tellProblem } from '@/store.ts';
 import { post } from '@/lib/api.ts';

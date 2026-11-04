@@ -237,3 +237,44 @@ test('GET /api/feedback lists the reports with their states and /api/feedback?id
     server.close();
   }
 });
+
+const workspace = (id, sourceTypes) => ({ id, sourceTypes });
+const fileReport = async ({ registry, appDir, version = '1.2.3', ...body }) => {
+  const { http, calls } = stub();
+  const reports = { list: () => [], add: () => {}, states: async () => [], relayUrl: RELAY };
+  const options = { registry: emptyRegistry(registry), http, reports, version };
+  const api = await startTestApi(appDir ? { ...options, appDir } : options);
+  try {
+    const response = await api.post('/api/feedback', { kind: 'bug', title: 'T', ...body });
+    assert.equal(response.status, 200);
+    return calls.find((call) => call.method === 'POST').body;
+  } finally {
+    api.server.close();
+  }
+};
+const two = { workspaces: [workspace('a', ['github', 'jira']), workspace('b', ['linear'])] };
+
+test('the report names the sources of the workspace in ws only', async () => {
+  const sent = await fileReport({ registry: two, ws: 'b' });
+  assert.deepEqual(sent.environment.sources, ['linear']);
+});
+
+test('without ws the report names the sources of every workspace', async () => {
+  const sent = await fileReport({ registry: two });
+  assert.deepEqual(sent.environment.sources, ['github', 'jira', 'linear']);
+});
+
+test('install is npm when the app runs from node_modules, source otherwise', async () => {
+  const installed = await fileReport({ registry: two, appDir: '/data/app/node_modules/whose-turn/' });
+  assert.equal(installed.environment.install, 'npm');
+  const checkout = await fileReport({ registry: two });
+  assert.equal(checkout.environment.install, 'source');
+});
+
+test('the monitor version and the clean client report go to the relay', async () => {
+  const sent = await fileReport({ registry: two, version: '9.8.7', client: { theme: 'dark', mode: 'tab', ip: '1.2.3.4' } });
+  assert.equal(sent.version, '9.8.7');
+  assert.equal(sent.environment.theme, 'dark');
+  assert.equal(sent.environment.mode, 'tab');
+  assert.equal(sent.environment.ip, undefined);
+});

@@ -6,7 +6,7 @@ import { dark } from '@/scheme.ts';
 import { getJson, post, problemsOf } from '@/lib/api.ts';
 import { SERVER_DOWN, TEXT_KEPT, writeProblem } from '@/lib/problems.ts';
 import type { ApiError, FiledReport } from '@/lib/types.ts';
-import { browserOf } from '@/lib/browser.ts';
+import { describeClient } from '@/lib/client-report.ts';
 import { ago } from '@/lib/time.ts';
 import { outcomeTone } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
@@ -23,21 +23,6 @@ interface FeedbackReply {
   issue?: { identifier: string; title: string };
   reports?: ReportLine[];
 }
-
-/** What only the browser knows about itself, for a bug that depends on the screen, the language or the theme; no address, no raw user agent. */
-const describeClient = () => ({
-  browser: browserOf(navigator),
-  display: {
-    width: screen.width,
-    height: screen.height,
-    scale: devicePixelRatio,
-    viewport: [innerWidth, innerHeight],
-  },
-  locale: navigator.language,
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  theme: dark.value ? 'dark' : 'light',
-  mode: ui.mode,
-});
 
 const text = ref('');
 const field = ref<HTMLTextAreaElement | null>(null);
@@ -72,7 +57,15 @@ const send = () => {
     text: remark,
     from: 'the window',
     ws: snapshot.workspace.id,
-    client: describeClient(),
+    client: describeClient({
+      navigator,
+      screen,
+      devicePixelRatio,
+      innerWidth,
+      innerHeight,
+      dark: dark.value,
+      mode: ui.mode,
+    }),
   })
     .then((reply) => {
       sending.value = false;
