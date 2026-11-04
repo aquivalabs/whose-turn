@@ -56,6 +56,8 @@ export const ui = reactive({
   reportNews: false,
   whatsNew: false,
   settings: false,
+  settingsNew: false,
+  monitor: false,
   settingsDirty: false,
   settingsAsk: false,
   settingsAt: '',
@@ -75,6 +77,24 @@ export const tellProblem = (outcome: unknown, options?: Parameters<typeof writeP
     notice.value = problem;
   }
   return !problem;
+};
+
+let savingNotifications = false;
+/** Flips desktop notifications for the whole monitor, at once on screen and saved through the server; a refusal puts the old value back and says why. The bell and the monitor settings share it. */
+export const toggleNotifications = async () => {
+  if (savingNotifications) {
+    return;
+  }
+  savingNotifications = true;
+  const before = snapshot.notifications;
+  snapshot.notifications = { desktop: !before.desktop };
+  const settle = (outcome: unknown) => {
+    if (!tellProblem(outcome, { refused: 'The notification setting was not saved' })) {
+      snapshot.notifications = before;
+    }
+  };
+  await post('/api/notifications', { desktop: snapshot.notifications.desktop }).then(settle, settle);
+  savingNotifications = false;
 };
 
 /** An app window reports its size after each resize, so the next one opens the same size. */
@@ -124,26 +144,34 @@ export const alerts = computed(() => {
     ...errors.filter(([key]) => !owner(key)).map(([source, text]) => prefix + source + ': ' + text),
   ];
 });
-/** Opens the settings sheet on the current workspace, scrolled to a section when one is named. */
+/** Opens the workspace settings on the current workspace, scrolled to a section when one is named. */
 export const openSettings = (section = '') => {
   ui.settingsAt = section;
+  ui.settingsNew = false;
+  ui.settings = true;
+};
+/** Opens the workspace settings on an empty form for a new workspace. */
+export const openNewWorkspace = () => {
+  ui.settingsAt = '';
+  ui.settingsNew = true;
   ui.settings = true;
 };
 /** The layer on top right now, or null when the window itself is in front. */
 export const currentLayer = computed(() => topLayer(ui));
-/** Closes only the topmost layer; Settings with unsaved edits asks first. */
+/** Closes only the topmost layer; a settings sheet with unsaved edits asks first. */
 export const closeTopLayer = () => {
   const layer = currentLayer.value;
   if (layer === 'modal') ui.modal = null;
   if (layer === 'note') ui.note = '';
   if (layer === 'feedback') ui.feedback = false;
   if (layer === 'whatsNew') ui.whatsNew = false;
-  if (layer !== 'settings') return;
+  if (layer !== 'settings' && layer !== 'monitor') return;
   if (ui.settingsDirty) {
     ui.settingsAsk = true;
     return;
   }
   ui.settings = false;
+  ui.monitor = false;
 };
 
 const openers = new Map<Layer, Element | null>();
@@ -160,6 +188,7 @@ const layerFlags: Record<Layer, () => boolean> = {
   modal: () => Boolean(ui.modal),
   note: () => Boolean(ui.note),
   settings: () => ui.settings,
+  monitor: () => ui.monitor,
   feedback: () => ui.feedback,
   whatsNew: () => ui.whatsNew,
 };

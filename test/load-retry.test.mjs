@@ -8,5 +8,5 @@ test('a refused state request is retried only when a workspace was asked for', (
 });
 
 test('the empty-list message points at Settings', () => {
-  assert.equal(NO_WORKSPACE_MESSAGE, 'No workspace configured. Open Settings.');
+  assert.equal(NO_WORKSPACE_MESSAGE, 'No workspace configured. Add one with + in the rail.');
 });

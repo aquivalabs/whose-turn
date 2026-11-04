@@ -177,7 +177,7 @@ test('a refused write names what was not saved, a network failure the server-dow
 
 test('a refused request says what its reason means, not the raw message', () => {
   const envelope = (reason, message = 'raw upstream text') => ({ error: { message, details: [{ '@type': 'ErrorInfo', reason }] } });
-  assert.equal(writeProblem(envelope('NO_WORKSPACE')), 'No workspace configured. Open Settings.');
+  assert.equal(writeProblem(envelope('NO_WORKSPACE')), 'No workspace configured. Add one with + in the rail.');
   assert.equal(writeProblem(envelope('UPSTREAM_FAILED')), 'The tracker did not answer; try again in a minute.');
   assert.equal(writeProblem(envelope('RATE_LIMITED')), 'The source is rate-limited; the monitor backs off.');
   assert.equal(writeProblem(envelope('INTERNAL', 'disk full')), 'The local server failed; see its log.');

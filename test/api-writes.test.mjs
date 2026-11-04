@@ -252,3 +252,26 @@ test('POST /api/notifications saves the setting and reports it; a missing or non
     server.close();
   }
 });
+
+test('a settings write saves the global keys and answers them; a bad one is refused naming the field and saves nothing', async () => {
+  // Setup
+  const saved = [];
+  const registry = emptyRegistry({ settings: { poll_seconds: 60 }, saveSettings: async (settings) => { saved.push(settings); } });
+  const { server, post, get } = await startTestApi({ registry });
+  try {
+    // Exercise
+    const good = await post('/api/config', { settings: { poll_seconds: 30, failing_polls: 4 } });
+    const bad = await post('/api/config', { settings: { poll_seconds: -1, nope: 1 } });
+    const config = await (await get('/api/config')).json();
+    // Verify
+    assert.equal(good.status, 200);
+    assert.deepEqual(saved, [{ poll_seconds: 30, failing_polls: 4 }]);
+    assert.equal(bad.status, 400);
+    const fields = (await bad.json()).error.details.flatMap((detail) => (detail.fieldViolations || detail.field_violations || []).map((entry) => entry.field));
+    assert.deepEqual(fields, ['settings.poll_seconds', 'settings.nope']);
+    assert.deepEqual(config.settings, { poll_seconds: 60 });
+    assert.deepEqual(Object.keys(config.settings_fields), ['poll_seconds', 'history_days', 'stale_minutes', 'failing_polls']);
+  } finally {
+    server.close();
+  }
+});

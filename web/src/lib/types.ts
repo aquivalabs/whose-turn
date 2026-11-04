@@ -26,6 +26,8 @@ export interface Workspace {
   theme: Theme | null;
   /** The seed the scheme was built from: the configured one, or the one derived from the id. */
   theme_seed?: string;
+  /** False when the workspace turned its backdrop animal off. */
+  backdrop?: boolean;
   open_moves?: number;
   failing_sources?: number;
 }

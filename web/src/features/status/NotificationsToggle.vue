@@ -1,28 +1,10 @@
 <script setup lang="ts">
 // Switch for desktop notifications; see README, notifications.desktop.
-import { computed, ref } from 'vue';
-import { snapshot, tellProblem } from '@/store.ts';
-import { post } from '@/lib/api.ts';
+import { computed } from 'vue';
+import { snapshot, toggleNotifications as toggle } from '@/store.ts';
 import { BELL, BELL_OFF } from '@/lib/icons.ts';
 
 const on = computed(() => snapshot.notifications.desktop);
-const saving = ref(false);
-
-const toggle = async () => {
-  if (saving.value) {
-    return;
-  }
-  saving.value = true;
-  const before = snapshot.notifications;
-  snapshot.notifications = { desktop: !before.desktop };
-  const settle = (outcome: unknown) => {
-    if (!tellProblem(outcome, { refused: 'The notification setting was not saved' })) {
-      snapshot.notifications = before;
-    }
-  };
-  await post('/api/notifications', { desktop: snapshot.notifications.desktop }).then(settle, settle);
-  saving.value = false;
-};
 </script>
 
 <template>

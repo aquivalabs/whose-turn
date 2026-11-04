@@ -1,0 +1,138 @@
+<script setup lang="ts">
+// Monitor settings: what belongs to the whole monitor and not to one workspace; notifications save at once like the bell, the four numbers save with Save, and the server validates them.
+import { computed, ref, watch } from 'vue';
+import { snapshot, ui, reload, toggleNotifications } from '@/store.ts';
+import { getJson, post, problemsOf, violationsOf } from '@/lib/api.ts';
+import { SERVER_DOWN, writeProblem } from '@/lib/problems.ts';
+import type { ApiError, FieldSpec } from '@/lib/types.ts';
+import FieldRow from '@/ui/FieldRow.vue';
+import SettingsFrame from './SettingsFrame.vue';
+import { useSheetGuard } from './useSheetGuard.ts';
+
+interface ConfigReply {
+  settings?: Record<string, number>;
+  settings_fields?: Record<string, { label: string; hint: string }>;
+  config_file?: string;
+  problems?: string[];
+}
+
+const draft = ref<Record<string, string>>({});
+const specs = ref<FieldSpec[]>([]);
+const configFile = ref('');
+const problems = ref<string[]>([]);
+const fieldErrors = ref<Record<string, string>>({});
+const loadedKey = ref('');
+const unloaded = ref('');
+const dirty = computed(
+  () => ui.monitor && !unloaded.value && JSON.stringify(draft.value) !== loadedKey.value,
+);
+const close = () => {
+  ui.monitor = false;
+};
+const { ask, requestClose, answer } = useSheetGuard(() => ui.monitor, () => dirty.value, close);
+
+const open = () =>
+  getJson<ConfigReply>('/api/config')
+    .then((reply) => {
+      unloaded.value = '';
+      const fieldsOf = reply.settings_fields || {};
+      specs.value = Object.entries(fieldsOf).map(([key, spec]) => ({
+        key,
+        label: spec.label,
+        hint: spec.hint,
+      }));
+      draft.value = Object.fromEntries(
+        Object.keys(fieldsOf).map((key) => [key, String(reply.settings?.[key] ?? '')]),
+      );
+      loadedKey.value = JSON.stringify(draft.value);
+      configFile.value = reply.config_file || '';
+      problems.value = reply.problems || [];
+      fieldErrors.value = {};
+    })
+    .catch(() => {
+      unloaded.value = SERVER_DOWN + '; settings cannot be loaded.';
+    });
+const save = async () => {
+  try {
+    const reply = await post<{ error?: ApiError }>('/api/config', {
+      settings: Object.fromEntries(Object.entries(draft.value).map(([key, text]) => [key, Number(text)])),
+    });
+    if (reply.error) {
+      const found = violationsOf(reply.error);
+      fieldErrors.value = Object.fromEntries(found.map((entry) => [entry.field, entry.description]));
+      problems.value = found.length ? ['Fix the marked fields; nothing was saved.'] : problemsOf(reply.error);
+      return;
+    }
+    close();
+    reload();
+  } catch (error) {
+    problems.value = [
+      writeProblem(error, { unreachable: SERVER_DOWN + '; your changes are kept, save again.' }),
+    ];
+  }
+};
+watch(
+  () => ui.monitor,
+  (isOpen) => {
+    if (isOpen) {
+      open();
+    }
+  },
+);
+</script>
+<template>
+  <SettingsFrame
+    v-if="ui.monitor"
+    title="Monitor settings"
+    label-id="monitor-title"
+    :dirty="dirty"
+    :ask="ask"
+    :unloaded="unloaded"
+    :problems="problems"
+    @close="requestClose"
+    @save="save"
+    @answer="answer"
+  >
+    <div class="sheet-form">
+      <h4 class="sheet-form__heading">Notifications</h4>
+      <label class="monitor-settings__switch">
+        <input
+          type="checkbox"
+          role="switch"
+          :checked="snapshot.notifications.desktop"
+          @change="toggleNotifications"
+        />
+        Desktop notifications for every workspace; saved as you click, like the bell in the status
+        bar
+      </label>
+      <h4 class="sheet-form__heading">Polling and health</h4>
+      <FieldRow
+        v-for="spec in specs"
+        :key="spec.key"
+        v-model="draft[spec.key]"
+        :spec="spec"
+        :error="fieldErrors['settings.' + spec.key]"
+      />
+      <h4 class="sheet-form__heading">Config file</h4>
+      <p class="monitor-settings__file">{{ configFile }}</p>
+    </div>
+  </SettingsFrame>
+</template>
+<style scoped>
+.monitor-settings__switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+}
+
+.monitor-settings__file {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+</style>

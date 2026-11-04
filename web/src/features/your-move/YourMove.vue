@@ -53,7 +53,7 @@ const emptyText = computed(() => {
     ? 'No data: ' +
         failing.join(', ') +
         (failing.length === 1 ? ' is' : ' are') +
-        ' failing. Check Settings.'
+        ' failing. Check the workspace settings.'
     : 'Nothing is waiting on you.';
 });
 const problems = reactive(new Map<string, string>());

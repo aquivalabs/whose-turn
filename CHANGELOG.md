@@ -5,6 +5,10 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- Each workspace now has its own settings, opened with the gear at the top right of its header: name, links, look, sources, rules and Delete workspace, for that workspace only. RMA-304.
+- The gear at the bottom of the rail now opens Monitor settings: desktop notifications on or off, how often to poll, how many days of history to keep, and when to warn about stale or failing sources, with the path of the config file. RMA-304.
+- A + at the end of the workspace list adds a workspace: it opens the same form, empty, and switches to the new workspace when you save. RMA-304.
+- A workspace can turn off the dotted backdrop animal: untick Backdrop animal under Look in its settings, and the plain background stays. RMA-300.
 - The Report button shows a dot and gives a short wiggle now and then when one of the reports has news: a new state or a new answer, and for the maintainer also a new user report. It calms down once you open the Report sheet. The monitor looks at most every ten minutes, and the wiggle is off when your system asks for reduced motion. RMA-311.
 - If you maintain Whose Turn, the Report sheet lists every user report, not only yours, and marks the ones you filed. Everyone else still sees only their own. RMA-306.
 - A ticket in code review now shows the names of the reviewers still asked to review its pull request, instead of just "Reviewer". RMA-298.

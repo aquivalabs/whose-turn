@@ -17,7 +17,7 @@ test('a missing config is reported as a problem, not a crash', () => {
   const config = withConfig(null);
   assert.equal(config.workspaces.length, 1);
   assert.deepEqual(config.workspaces[0].connectors, []);
-  assert.match(config.problems[0], /No workspace config yet: open Settings \(the gear\)/);
+  assert.match(config.problems[0], /No workspace config yet: add a source in the workspace settings/);
   assert.ok(config.problems[0].includes(config.configFile));
 });
 

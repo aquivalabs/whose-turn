@@ -3,12 +3,12 @@
 import { computed, nextTick, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
-import { GEAR, NEW_RELEASES, workspaceIconParts } from '@/lib/icons.ts';
+import { GEAR, NEW_RELEASES, PLUS, workspaceIconParts } from '@/lib/icons.ts';
 import { movedIds } from '@/lib/settings.ts';
 import type { Workspace } from '@/lib/types.ts';
 import { mulberry32 } from '@/lib/random.ts';
 import { useWhatsNew } from '@/composables/useWhatsNew.ts';
-const emit = defineEmits<{ settings: []; whatsNew: [] }>();
+const emit = defineEmits<{ settings: []; addWorkspace: []; whatsNew: [] }>();
 const { unseen } = useWhatsNew();
 
 const parts = computed(() =>
@@ -48,6 +48,10 @@ const onSwitch = (event: MouseEvent, id: string) => {
 };
 const onSettings = (event: MouseEvent) => {
   emit('settings');
+  blurAfterMouse(event);
+};
+const onAddWorkspace = (event: MouseEvent) => {
+  emit('addWorkspace');
   blurAfterMouse(event);
 };
 const onWhatsNew = (event: MouseEvent) => {
@@ -163,6 +167,17 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       <span v-if="failing(workspace)" class="rail__warn" title="A source of this workspace fails">!</span>
       <span v-if="workspace.open_moves" class="rail__badge">{{ workspace.open_moves }}</span>
     </a>
+    <a
+      class="rail__item"
+      href="#add-workspace"
+      aria-label="Add workspace"
+      @click.prevent="onAddWorkspace"
+    >
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
+        <path :d="PLUS" fill="currentColor" />
+      </svg>
+      <span class="rail__label">Add workspace</span>
+    </a>
     <span class="rail__spacer"></span>
     <a class="rail__item" href="#whats-new" aria-label="What's new" @click.prevent="onWhatsNew">
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
@@ -171,11 +186,16 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       <span class="rail__label">What's new</span>
       <span v-if="unseen.length" class="rail__dot" title="Unseen changes"></span>
     </a>
-    <a class="rail__item" href="#settings" aria-label="Settings" @click.prevent="onSettings">
+    <a
+      class="rail__item"
+      href="#settings"
+      aria-label="Monitor settings"
+      @click.prevent="onSettings"
+    >
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
         <path :d="GEAR" fill="currentColor" />
       </svg>
-      <span class="rail__label">Settings</span>
+      <span class="rail__label">Monitor settings</span>
     </a>
   </nav>
 </template>

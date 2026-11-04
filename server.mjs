@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadConfig, saveWorkspaces, saveNotifications, normaliseWorkspaces } from './lib/config.mjs';
+import { loadConfig, saveWorkspaces, saveNotifications, saveSettings, normaliseWorkspaces } from './lib/config.mjs';
 import { createHttpClient } from './lib/http-client.mjs';
 import { nextDelay } from './lib/backoff.mjs';
 import { createSecrets } from './lib/secrets.mjs';
@@ -36,6 +36,7 @@ const updater = createUpdater({
   restart: () => restartServer({ server, root: appDir, dataDir: first.dataDir }),
 });
 let pollSeconds = first.pollSeconds;
+let historyDays = first.historyDays;
 /** @type {{ stale_minutes: number, failing_polls: number }} */
 let healthLimits = /** @type {any} */ (first.health);
 
@@ -43,13 +44,15 @@ const registry = createRegistry({
   load: () => {
     const config = loadConfig();
     pollSeconds = config.pollSeconds;
+    historyDays = config.historyDays;
     healthLimits = /** @type {any} */ (config.health);
     return config;
   },
   save: (rawWorkspaces) => saveWorkspaces(first.configFile, rawWorkspaces),
   saveNotifications: (notifications) => saveNotifications(first.configFile, notifications),
+  saveSettings: (settings) => saveSettings(first.configFile, settings),
   normalise: (rawWorkspaces) => normaliseWorkspaces(rawWorkspaces).workspaces,
-  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: config.historyDays, http, secrets, limits: () => healthLimits, notify }),
+  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify }),
 });
 
 let wake = null;

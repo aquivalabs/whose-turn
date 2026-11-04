@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { snapshot, counts } from '@/store.ts';
+import { snapshot, counts, openSettings } from '@/store.ts';
+import { GEAR } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
 import ExtLink from '@/ui/ExtLink.vue';
@@ -34,16 +35,29 @@ const { collapsed, toggle } = useFold('header');
         /></span>
       </p>
     </div>
-    <button
-      type="button"
-      class="fold-toggle workspace-header__fold"
-      :class="{ 'fold-toggle--folded': collapsed }"
-      aria-label="Fold the header"
-      data-tip="Fold the header; it stays folded until you open it again"
-      @click.stop="toggle"
-    >
-      ▾
-    </button>
+    <div class="workspace-header__tools">
+      <button
+        type="button"
+        class="fold-toggle workspace-header__settings"
+        aria-label="Workspace settings"
+        data-tip="Workspace settings: this workspace's name and links, its look, sources and rules"
+        @click.stop="openSettings()"
+      >
+        <svg viewBox="0 0 24 24" class="workspace-header__gear" aria-hidden="true">
+          <path :d="GEAR" fill="currentColor" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="fold-toggle workspace-header__fold"
+        :class="{ 'fold-toggle--folded': collapsed }"
+        aria-label="Fold the header"
+        data-tip="Fold the header; it stays folded until you open it again"
+        @click.stop="toggle"
+      >
+        ▾
+      </button>
+    </div>
     <div class="workspace-header__tiles">
       <div
         class="workspace-header__tile"
@@ -144,12 +158,25 @@ const { collapsed, toggle } = useFold('header');
   background: rgb(var(--glass), 0.85);
 }
 
-.workspace-header__fold {
+.workspace-header__tools {
   grid-row: 1;
   grid-column: 3;
-  place-self: center center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workspace-header__fold,
+.workspace-header__settings {
   margin: 0;
   color: inherit;
+}
+
+.workspace-header__gear {
+  width: 18px;
+  height: 18px;
 }
 
 .workspace-header__tiles {
@@ -211,7 +238,7 @@ const { collapsed, toggle } = useFold('header');
 }
 
 .workspace-header--collapsed {
-  grid-template-columns: minmax(0, 1fr) 32px;
+  grid-template-columns: minmax(0, 1fr) auto;
   padding: 4px 8px;
 }
 
@@ -233,8 +260,10 @@ const { collapsed, toggle } = useFold('header');
   display: none;
 }
 
-.workspace-header--collapsed .workspace-header__fold {
+.workspace-header--collapsed .workspace-header__tools {
   grid-column: 2;
+  flex-direction: row;
+  align-items: center;
 }
 
 .workspace-header--collapsed .workspace-header__strip {
@@ -247,7 +276,7 @@ const { collapsed, toggle } = useFold('header');
     grid-template-columns: minmax(0, 1fr) 32px;
   }
 
-  .workspace-header__fold {
+  .workspace-header__tools {
     grid-column: 2;
   }
 

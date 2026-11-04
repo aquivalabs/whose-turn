@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadConfig, saveWorkspaces, saveNotifications, normaliseWorkspaces } from '../lib/config.mjs';
+import { loadConfig, saveWorkspaces, saveNotifications, saveSettings, settingsViolations, normaliseWorkspaces } from '../lib/config.mjs';
 
 test('saving the workspace list keeps the other top-level keys and drops the flat legacy keys', () => {
   const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
@@ -88,4 +88,42 @@ test('saveNotifications starts from an empty config when the file is missing or 
   saveNotifications(broken, { desktop: false });
   assert.deepEqual(JSON.parse(readFileSync(broken, 'utf8')), { notifications: { desktop: false } });
   assert.equal(readFileSync(`${broken}.bak`, 'utf8'), '{ not json');
+});
+
+test('a workspace theme with only backdrop false is valid and keeps the seed derived', () => {
+  const { problems, workspaces } = normaliseWorkspaces([{ id: 'a', theme: { backdrop: false } }, { id: 'b', theme: { seed: '#3d7a5c' } }, { id: 'c', theme: { seed: '#3D7A5C', backdrop: false } }]);
+  assert.deepEqual(problems, []);
+  assert.deepEqual(workspaces.map((workspace) => workspace.theme), [{ backdrop: false }, { seed: '#3d7a5c' }, { seed: '#3d7a5c', backdrop: false }]);
+});
+
+test('theme.backdrop that is not a boolean is reported and the backdrop stays on', () => {
+  const { problems, workspaces } = normaliseWorkspaces([{ id: 'a', theme: { backdrop: 'no' } }]);
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /theme.backdrop must be true or false/);
+  assert.equal(workspaces[0].theme, null);
+});
+
+test('saving settings writes the four global keys and keeps everything else', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const file = join(dir, 'config.json');
+  writeFileSync(file, JSON.stringify({ port: 9100, workspaces: [{ id: 'home' }] }));
+  saveSettings(file, { poll_seconds: 30, history_days: 7, stale_minutes: 20, failing_polls: 5 });
+  const written = JSON.parse(readFileSync(file, 'utf8'));
+  assert.deepEqual(written, { port: 9100, workspaces: [{ id: 'home' }], poll_seconds: 30, history_days: 7, stale_minutes: 20, failing_polls: 5 });
+  const loaded = loadConfig({ WHOSE_TURN_DATA: dir });
+  assert.deepEqual(loaded.settings, { poll_seconds: 30, history_days: 7, stale_minutes: 20, failing_polls: 5 });
+  assert.equal(loaded.pollSeconds, 30);
+  assert.equal(loaded.historyDays, 7);
+});
+
+test('loading a config without the global keys reports their defaults', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  assert.deepEqual(loadConfig({ WHOSE_TURN_DATA: dir }).settings, { poll_seconds: 60, history_days: 14, stale_minutes: 15, failing_polls: 3 });
+});
+
+test('settings violations name each bad key and refuse unknown ones', () => {
+  assert.deepEqual(settingsViolations({ poll_seconds: 30, failing_polls: 4 }), []);
+  const found = settingsViolations({ poll_seconds: 0, history_days: 1.5, stale_minutes: 'x', port: 1 });
+  assert.deepEqual(found.map((entry) => entry.field), ['settings.poll_seconds', 'settings.history_days', 'settings.stale_minutes', 'settings.port']);
+  assert.equal(settingsViolations('x')[0].field, 'settings');
 });

@@ -10,6 +10,7 @@ import {
   currentLayer,
   closeTopLayer,
   openSettings,
+  openNewWorkspace,
   reportWindowSize,
 } from './store.ts';
 import { repaint } from './backdrop.ts';
@@ -30,7 +31,8 @@ import FirstRun from './features/first-run/FirstRun.vue';
 import CommentModal from './features/feed/CommentModal.vue';
 import NoteModal from './features/your-move/NoteModal.vue';
 import FeedbackSheet from './features/feedback/FeedbackSheet.vue';
-import SettingsSheet from './features/settings/SettingsSheet.vue';
+import WorkspaceSettingsSheet from './features/settings/WorkspaceSettingsSheet.vue';
+import MonitorSettingsSheet from './features/settings/MonitorSettingsSheet.vue';
 import WhatsNewSheet from './features/whats-new/WhatsNewSheet.vue';
 import { useWhatsNew } from './composables/useWhatsNew.ts';
 const firstRun = computed(
@@ -46,6 +48,7 @@ const covered = computed(() => currentLayer.value !== null);
 useDialogFocus(covered);
 useShortcuts(covered);
 watch(themeVariables, repaint, { flush: 'post' });
+watch(() => snapshot.workspace.backdrop !== false, repaint, { flush: 'post' });
 const FALLBACK = {
   light: { fill: '#d8e2ff', ink: '#001a41', dot: '#2c5697' },
   dark: { fill: '#2b4678', ink: '#d8e2ff', dot: '#adc6ff' },
@@ -74,15 +77,22 @@ onMounted(() => {
 </script>
 <template>
   <div class="app" :style="themeVariables">
-    <Rail :inert="covered" @settings="ui.settings = true" @whats-new="ui.whatsNew = true" />
+    <Rail
+      :inert="covered"
+      @settings="ui.monitor = true"
+      @add-workspace="openNewWorkspace()"
+      @whats-new="ui.whatsNew = true"
+    />
     <div class="app__shell">
       <StatusBar :inert="covered" @report="ui.feedback = true" />
       <div v-if="alerts.length" class="alert" :inert="covered">
         {{ alerts.join('  ·  ') }}
-        <button type="button" class="alert__action" @click="openSettings()">Open Settings</button>
+        <button type="button" class="alert__action" @click="openSettings()">
+          Open workspace settings
+        </button>
       </div>
       <div id="wt" class="dashboard dashboard--fit">
-        <canvas id="backdrop" class="dashboard__backdrop" aria-hidden="true"></canvas>
+        <canvas v-if="snapshot.workspace.backdrop !== false" id="backdrop" class="dashboard__backdrop" aria-hidden="true"></canvas>
         <WorkspaceHeader :inert="covered" />
         <FirstRun v-if="firstRun" :inert="covered" />
         <div
@@ -100,7 +110,8 @@ onMounted(() => {
           <Feed class="dashboard__feed" @open="ui.modal = $event" />
         </div>
         <FeedbackSheet />
-        <SettingsSheet />
+        <WorkspaceSettingsSheet />
+        <MonitorSettingsSheet />
         <WhatsNewSheet />
         <CommentModal />
         <NoteModal />
