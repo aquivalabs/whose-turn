@@ -115,16 +115,16 @@ const { collapsed, toggle } = useFold('header');
 
 .workspace-header__give {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 8px 16px;
   margin-top: 8px;
+  white-space: nowrap;
 }
 
 .workspace-header__links {
   display: inline-flex;
-  flex-wrap: wrap;
   gap: 6px;
-  margin-left: 10px;
 }
 
 /* Only a followed link is a chip; a source link that is not https stays plain text. */
