@@ -135,11 +135,57 @@ const openAsApp = () => {
 }
 
 .status-bar__report--wiggle {
-  animation: status-bar-wiggle 0.8s ease-in-out;
+  animation: status-bar-wiggle 1.2s ease-in-out;
+}
+
+@keyframes status-bar-bug {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+
+  15% {
+    transform: rotate(-18deg) scale(1.2);
+  }
+
+  30% {
+    transform: rotate(16deg) scale(1.2);
+  }
+
+  45% {
+    transform: rotate(-12deg) scale(1.15);
+  }
+
+  60% {
+    transform: rotate(9deg) scale(1.1);
+  }
+
+  75% {
+    transform: rotate(-5deg) scale(1.05);
+  }
+}
+
+@keyframes status-bar-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--md-primary) 60%, transparent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-bar__report--wiggle,
+  .status-bar__report--wiggle .status-bar__icon,
+  .status-bar__dot {
+    animation: none;
+  }
 }
 
 .status-bar__dot {
   position: absolute;
+  animation: status-bar-pulse 1.6s ease-out infinite;
   top: -3px;
   right: -3px;
   box-sizing: border-box;
@@ -229,5 +275,9 @@ const openAsApp = () => {
   .status-bar__live {
     animation: none;
   }
+}
+
+.status-bar__report--wiggle .status-bar__icon {
+  animation: status-bar-bug 1.2s ease-in-out;
 }
 </style>
