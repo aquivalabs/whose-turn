@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { CONNECTORS } from '../connectors/index.mjs';
+import { feedRows } from '../lib/rules.mjs';
 import { passedRows, traceOf } from '../lib/trace.mjs';
 
 const ME = 'Alex Doe';
@@ -150,8 +151,8 @@ test('the detail shows your own name as "you" and keeps a long comment whole', (
   const at = new Date().toISOString();
   const reassigned = { key: 'K-1', source: 's', at, kind: 'reassigned', text: 'Alex Doe → Sam Tester' };
   const long = 'word '.repeat(300).trim();
-  const feed = [{ kind: 'comment', key: 'K-1', at, who: 'you', body: long }];
-  const trace = traceOf(pair(), [reassigned], feed, { s: 'Alex Doe' });
+  const feed = [{ kind: 'comment', key: 'K-1', at, who: 'you', body: long }, ...feedRows({ events: [reassigned] }, { me: { s: 'Alex Doe' }, rules: {} })];
+  const trace = traceOf(pair(), [reassigned], feed);
   assert.equal(trace.detail.assignee, 'you → Sam Tester');
   assert.equal(trace.detail.comment.text, long);
 });
