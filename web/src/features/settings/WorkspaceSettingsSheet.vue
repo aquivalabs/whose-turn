@@ -48,6 +48,12 @@ interface ConfigReply {
   table_warnings?: Record<string, string[]>;
 }
 
+const MODES = [
+  { value: '', label: 'Visible', line: 'Checked every minute and shown in the list.' },
+  { value: 'parked', label: 'Park', line: 'Hidden from the list, checked every 15 minutes. Comes back by itself when something needs you.' },
+  { value: 'paused', label: 'Pause', line: 'Hidden and not checked at all. Stays hidden until you bring it back.' },
+];
+
 const list = ref<RawWorkspace[]>([]);
 const selected = ref(0);
 const catalogue = ref<ConnectorSpec[]>([]);
@@ -267,6 +273,19 @@ watch(
             :model-value="fieldValue(current, spec.key)"
             @update:model-value="setWorkspaceField(current, spec.key, $event)"
           />
+          <fieldset class="settings-sheet__modes">
+            <legend class="field-row__label">In the list</legend>
+            <label v-for="mode in MODES" :key="mode.value" class="settings-sheet__mode">
+              <input
+                type="radio"
+                name="hidden-mode"
+                :checked="(current.hidden || '') === mode.value"
+                @change="setOrDrop(current, 'hidden', mode.value || undefined)"
+              />
+              <span class="settings-sheet__mode-name">{{ mode.label }}</span>
+              <span class="settings-sheet__mode-line">{{ mode.line }}</span>
+            </label>
+          </fieldset>
           <h4 class="sheet-form__heading">Look</h4>
           <FieldRow
             v-for="spec in fields.theme"
@@ -384,6 +403,33 @@ watch(
 .settings-sheet__connector-name {
   flex: 1;
   font-weight: 600;
+}
+
+.settings-sheet__modes {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings-sheet__mode {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  font-size: 14px;
+}
+
+.settings-sheet__mode-name {
+  font-weight: 500;
+}
+
+.settings-sheet__mode-line {
+  grid-column: 2;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
 }
 
 .settings-sheet__actions {

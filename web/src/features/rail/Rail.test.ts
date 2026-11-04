@@ -33,7 +33,9 @@ test('parked and paused workspaces leave the rail and the bottom line counts the
   expect(screen.getByRole('link', { name: 'A' })).toBeTruthy();
   expect(screen.queryByRole('link', { name: 'B' })).toBeNull();
   expect(screen.queryByRole('link', { name: 'D' })).toBeNull();
-  expect(screen.getByRole('link', { name: '3 hidden' }).getAttribute('title')).toBe('2 parked · 1 paused');
+  expect(screen.getByRole('link', { name: '3 hidden' }).getAttribute('data-tip')).toBe(
+    'Hidden workspaces: 2 parked · 1 paused. Open to bring one back.',
+  );
 });
 
 test('the line is absent when nothing is hidden, and a parked-only rail reads "1 hidden"', () => {

@@ -222,3 +222,24 @@ test('the rule sentences use the words the server sends with each fact', async (
   expect(screen.getByText('When the deploy region is given:')).toBeTruthy();
   expect(screen.getByText('your move, "Check {the deploy region}"')).toBeTruthy();
 });
+
+test('each way of showing the workspace carries its explanation, and Park saves hidden: parked', async () => {
+  await openSheet();
+
+  expect(screen.getByText('Checked every minute and shown in the list.')).toBeTruthy();
+  expect(
+    screen.getByText(
+      'Hidden from the list, checked every 15 minutes. Comes back by itself when something needs you.',
+    ),
+  ).toBeTruthy();
+  expect(
+    screen.getByText('Hidden and not checked at all. Stays hidden until you bring it back.'),
+  ).toBeTruthy();
+  expect((screen.getByRole('radio', { name: /Visible/ }) as HTMLInputElement).checked).toBe(true);
+
+  await fireEvent.click(screen.getByRole('radio', { name: /Park/ }));
+  await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+  await waitFor(() => expect(sent).toHaveLength(1));
+  expect((sent[0].body.workspaces[0] as { hidden?: string }).hidden).toBe('parked');
+});

@@ -203,7 +203,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
         class="rail__item rail__hidden"
         href="#hidden-workspaces"
         :aria-label="hiddenCount + ' hidden'"
-        :title="hiddenLine"
+        :data-tip="'Hidden workspaces: ' + hiddenLine + '. Open to bring one back.'"
         @click.prevent="onSettings"
       >
         <span class="rail__hidden-count" aria-hidden="true">{{ hiddenCount }}</span>

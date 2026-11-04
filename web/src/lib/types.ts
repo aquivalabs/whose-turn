@@ -226,8 +226,6 @@ export interface FieldSpec {
   boolean?: boolean;
   default?: boolean;
   choices?: string[];
-  /** The label of the empty choice, where "(default)" would mislead. */
-  none?: string;
   hint?: string;
 }
 

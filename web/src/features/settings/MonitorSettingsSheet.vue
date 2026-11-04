@@ -136,6 +136,7 @@ watch(
                 type="button"
                 class="btn"
                 :aria-label="'Restore ' + workspace.name"
+                data-tip="Show it in the list again and check it every minute."
                 @click="restoreWorkspace(workspace.id)"
               >
                 Restore
