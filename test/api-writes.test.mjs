@@ -207,3 +207,23 @@ test('a port in use rejects startApi with one line naming the port and WHOSE_TUR
     holder.close();
   }
 });
+
+test('a secret with a line break in the value, service or account is refused naming the field and never stored', async () => {
+  // Setup
+  const stored = [];
+  const { server, post } = await startTestApi({ secrets: { set: async (...args) => stored.push(args) } });
+  try {
+    for (const field of ['service', 'account', 'value']) {
+      // Exercise
+      const response = await post('/api/secrets', { service: 'svc', account: 'me', value: 'v', [field]: 'a\nb' });
+      // Verify
+      const error = (await response.json()).error;
+      assert.equal(response.status, 400, field);
+      assert.equal(error.status, 'INVALID_ARGUMENT', field);
+      assert.match(error.details[0].metadata.detail, new RegExp(`^${field} `), field);
+    }
+    assert.deepEqual(stored, []);
+  } finally {
+    server.close();
+  }
+});
