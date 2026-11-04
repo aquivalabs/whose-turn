@@ -154,6 +154,7 @@ export interface Snapshot extends Marked {
   problems: string[];
   polled_at: string;
   update: UpdateStatus;
+  notifications: { desktop: boolean };
 }
 
 /** One message of /api/stream: a workspace's poll, or the update status when it changes. */

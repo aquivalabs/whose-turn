@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- A bell in the status bar, "Notifications on", turns desktop notifications off for the whole monitor and back on. When they are off the button turns red and says "Notifications off", and the choice is kept after a restart. RMA-283.
 - Anyone can now send a report from the Report sheet and see its answer, without connecting anything. A report goes to the maintainer's tracker, so it leaves your machine, and the sheet says so. RMA-280.
 
 ### Changed

@@ -41,6 +41,7 @@ export const snapshot = shallowReactive<Snapshot>({
   problems: [],
   polled_at: '',
   update: { current: '', latest: '', available: false, state: 'idle' },
+  notifications: { desktop: true },
 });
 export const ui = reactive({
   ws: new URLSearchParams(location.search).get('ws') || lastWorkspace.value,

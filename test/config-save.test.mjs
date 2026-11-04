@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadConfig, saveWorkspaces, normaliseWorkspaces } from '../lib/config.mjs';
+import { loadConfig, saveWorkspaces, saveNotifications, normaliseWorkspaces } from '../lib/config.mjs';
 
 test('saving the workspace list keeps the other top-level keys and drops the flat legacy keys', () => {
   const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
@@ -56,4 +56,15 @@ test('the retired feedback tracker keys are dropped on load and on save, the com
   saveWorkspaces(file, [{ id: 'home' }]);
   assert.equal('feedback' in JSON.parse(readFileSync(file, 'utf8')), false);
   assert.equal(loadConfig({ WHOSE_TURN_CONFIG: file, WHOSE_TURN_DATA: dir }).feedback, null);
+});
+
+test('saveNotifications writes the setting and keeps the other keys; loadConfig reads it back', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const file = join(dir, 'config.json');
+  saveWorkspaces(file, [{ id: 'w' }]);
+  saveNotifications(file, { desktop: false });
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { workspaces: [{ id: 'w' }], notifications: { desktop: false } });
+  assert.deepEqual(loadConfig({ WHOSE_TURN_DATA: dir }).notifications, { desktop: false });
+  saveWorkspaces(file, [{ id: 'w' }]);
+  assert.deepEqual(loadConfig({ WHOSE_TURN_DATA: dir }).notifications, { desktop: false });
 });

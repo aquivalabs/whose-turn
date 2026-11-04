@@ -113,3 +113,17 @@ test('automation_authors must be a list of strings', () => {
 test('question_words must be a list of strings', () => {
   assert.match(problemsOf({ rules: { question_words: { a: 1 } } })[0], /rules\.question_words must be a list of strings/);
 });
+
+test('desktop notifications are on unless notifications.desktop is false', () => {
+  assert.deepEqual(withConfig({ workspaces: [] }).notifications, { desktop: true });
+  assert.deepEqual(withConfig({ notifications: { desktop: false } }).notifications, { desktop: false });
+  assert.deepEqual(withConfig({ notifications: { desktop: true } }).notifications, { desktop: true });
+});
+
+test('a notifications block of the wrong shape is reported and notifications stay on', () => {
+  for (const notifications of [{ desktop: 'no' }, 'off', [false]]) {
+    const config = withConfig({ notifications });
+    assert.deepEqual(config.notifications, { desktop: true });
+    assert.ok(config.problems.some((problem) => problem.startsWith('notifications.desktop must be true or false')));
+  }
+});

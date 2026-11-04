@@ -53,3 +53,14 @@ test('tests and scratch servers stay silent: a test runner or WHOSE_TURN_NOTIFY=
 test('this very test run is muted, so the suite never reaches the desktop', () => {
   assert.equal(muted(), true);
 });
+
+test('the notifications.desktop setting stops notify from firing, and turning it on again fires', () => {
+  const calls = [];
+  let desktop = false;
+  const send = () => notify('T', 'B', { platform: 'linux', run: (...call) => calls.push(call), enabled: desktop });
+  send();
+  assert.deepEqual(calls, []);
+  desktop = true;
+  send();
+  assert.equal(calls.length, 1);
+});

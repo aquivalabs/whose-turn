@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadConfig, saveWorkspaces, normaliseWorkspaces } from './lib/config.mjs';
+import { loadConfig, saveWorkspaces, saveNotifications, normaliseWorkspaces } from './lib/config.mjs';
 import { createHttpClient } from './lib/http-client.mjs';
 import { nextDelay } from './lib/backoff.mjs';
 import { createSecrets } from './lib/secrets.mjs';
@@ -12,7 +12,7 @@ import { createRegistry } from './lib/registry.mjs';
 import { openInbox } from './lib/inbox.mjs';
 import { openReports } from './lib/feedback.mjs';
 import { startApi } from './lib/api.mjs';
-import { notify } from './lib/notify.mjs';
+import { notifier } from './lib/notify.mjs';
 import { loadChangelog } from './lib/changelog.mjs';
 import { createUpdater, restartServer, runsInstalled } from './lib/update.mjs';
 
@@ -24,6 +24,7 @@ const inbox = openInbox(first.dataDir);
 const reports = openReports(first.dataDir);
 const { version } = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8'));
 let server;
+const notify = notifier(() => registry.notifications.desktop);
 const updater = createUpdater({
   http,
   dataDir: first.dataDir,
@@ -46,8 +47,9 @@ const registry = createRegistry({
     return config;
   },
   save: (rawWorkspaces) => saveWorkspaces(first.configFile, rawWorkspaces),
+  saveNotifications: (notifications) => saveNotifications(first.configFile, notifications),
   normalise: (rawWorkspaces) => normaliseWorkspaces(rawWorkspaces).workspaces,
-  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: config.historyDays, http, secrets, limits: () => healthLimits }),
+  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: config.historyDays, http, secrets, limits: () => healthLimits, notify }),
 });
 
 let wake = null;
