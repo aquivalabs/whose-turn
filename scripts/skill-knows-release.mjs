@@ -9,9 +9,9 @@ const run = promisify(execFile);
 const HINT = 'merge the skill sync first (RMA-325)';
 const SKILL_VERSION_PATH = 'repos/aquivalabs/BladeForge/contents/plugins/whose-turn/monitor-version?ref=main';
 
-/** The skill's covered version from BladeForge main through gh; a missing file or a failed call throws. */
-export const fetchSkillVersion = async () => {
-  const { stdout } = await run('gh', ['api', SKILL_VERSION_PATH, '--jq', '.content']);
+/** The skill's covered version from BladeForge main through gh; a missing file or a failed call throws; the gh runner is injectable. */
+export const fetchSkillVersion = async (runGh = run) => {
+  const { stdout } = await runGh('gh', ['api', SKILL_VERSION_PATH, '--jq', '.content']);
   return Buffer.from(stdout, 'base64').toString('utf8').trim();
 };
 

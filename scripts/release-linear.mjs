@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Moves every whose-turn issue in Ready for release to Done; user reports get "Shipped in <version>." Dry run unless --apply.
-// Flags: --version, --team, --project, --keychain-service, --keychain-account. RMA-321.
+// Moves Ready for release issues to Done; dry run unless --apply. README § Developing, Releasing.
+// Flags: --version, --team, --project, --keychain-service, --keychain-account.
+// Defaults come from the config's optional release object (team, project, keychain_service, keychain_account). RMA-321.
 import { readFileSync } from 'node:fs';
 import { userInfo } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -92,31 +93,43 @@ const OPTIONS = {
   'keychain-account': { type: 'string' },
 };
 
+const CONFIG_KEYS = { team: 'team', project: 'project', keychainService: 'keychain_service', keychainAccount: 'keychain_account' };
+
+/** The defaults with the config's optional release object laid over them. */
+export const defaultsFrom = (release = {}) => Object.fromEntries(Object.entries(DEFAULTS).map(([key, fallback]) => [key, release[CONFIG_KEYS[key]] ?? fallback]));
+
 /** The flags with the defaults applied; an unknown flag or one without a value throws. */
-export const parseArgs = (argv) => {
+export const parseArgs = (argv, defaults = DEFAULTS) => {
   const { values } = nodeParseArgs({ args: argv, options: OPTIONS, strict: true });
   const given = { apply: values.apply, version: values.version, team: values.team, project: values.project, keychainService: values['keychain-service'], keychainAccount: values['keychain-account'] };
-  return { apply: false, ...DEFAULTS, ...Object.fromEntries(Object.entries(given).filter(([, value]) => value !== undefined)) };
+  return { apply: false, ...defaults, ...Object.fromEntries(Object.entries(given).filter(([, value]) => value !== undefined)) };
 };
 
-const main = async () => {
-  const { apply, version: given, ...options } = parseArgs(process.argv.slice(2));
+/** The whole run; the config, the secret lookup, fetch and the output are injectable. */
+export const main = async ({
+  argv = process.argv.slice(2),
+  config = loadConfig(),
+  getKey = (service, account) => createSecrets(config.dataDir).get(service, account),
+  fetchFn = fetch,
+  log = console.log,
+} = {}) => {
+  const { apply, version: given, ...options } = parseArgs(argv, defaultsFrom(config.release));
   const version = given || JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
-  const key = await createSecrets(loadConfig().dataDir).get(options.keychainService, options.keychainAccount);
+  const key = await getKey(options.keychainService, options.keychainAccount);
   if (!key) {
     throw new Error(`No Linear key in the secret store (service ${options.keychainService}, account ${options.keychainAccount})`);
   }
-  const call = callWith(fetch, key);
+  const call = callWith(fetchFn, key);
   const plan = planRelease({ ...(await readReady(call, options)), version });
-  console.log(`${apply ? 'Applying' : 'Dry run'}: ${plan.moves.length} issue(s) from ${READY} to ${DONE} for ${version}`);
+  log(`${apply ? 'Applying' : 'Dry run'}: ${plan.moves.length} issue(s) from ${READY} to ${DONE} for ${version}`);
   for (const move of plan.moves) {
-    console.log(`  ${move.identifier}  ${move.title}${move.comment ? `  [comment: ${move.comment}]` : ''}`);
+    log(`  ${move.identifier}  ${move.title}${move.comment ? `  [comment: ${move.comment}]` : ''}`);
   }
   if (apply) {
     await applyPlan(call, plan);
-    console.log('Done.');
+    log('Done.');
   } else {
-    console.log('Nothing written. Pass --apply to write.');
+    log('Nothing written. Pass --apply to write.');
   }
 };
 

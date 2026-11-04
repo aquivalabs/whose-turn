@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULTS, applyPlan, parseArgs, planRelease, readReady } from '../scripts/release-linear.mjs';
+import { DEFAULTS, applyPlan, defaultsFrom, main, parseArgs, planRelease, readReady } from '../scripts/release-linear.mjs';
 
 const issue = (n, labels = []) => ({ id: `id-${n}`, identifier: `RMA-${n}`, title: `Issue ${n}`, labels: { nodes: labels.map((name) => ({ name })) } });
 
@@ -92,4 +92,40 @@ test('readReady takes team and project from its options', async () => {
   await readReady(call, { team: 'ABC', project: 'other' });
   assert.equal(sent[0].variables.team, 'ABC');
   assert.equal(sent[0].variables.project, 'other');
+});
+
+test('the config\'s release object replaces the defaults it names and flags replace both', () => {
+  const defaults = defaultsFrom({ team: 'ABC', keychain_service: 'svc' });
+  assert.deepEqual(defaults, { ...DEFAULTS, team: 'ABC', keychainService: 'svc' });
+  assert.equal(parseArgs([], defaults).team, 'ABC');
+  assert.equal(parseArgs(['--team', 'XYZ'], defaults).team, 'XYZ');
+  assert.deepEqual(defaultsFrom(), DEFAULTS);
+});
+
+test('a missing Linear key names the service and account and sends nothing', async () => {
+  let sent = false;
+  const failure = main({ argv: ['--version', '1.0.0'], config: { release: { keychain_service: 'svc', keychain_account: 'acct' } }, getKey: async () => null, fetchFn: async () => { sent = true; }, log: () => {} });
+  await assert.rejects(failure, /No Linear key in the secret store \(service svc, account acct\)/);
+  assert.equal(sent, false);
+});
+
+test('a dry run looks the key up from the config and writes nothing', async () => {
+  const lookups = [];
+  const requests = [];
+  const lines = [];
+  const fetchFn = async (url, init) => {
+    requests.push(JSON.parse(init.body));
+    return { ok: true, status: 200, json: async () => ({ data: { teams: { nodes: [{ states: { nodes: [{ id: 'd', name: 'Done', type: 'completed' }] } }] }, issues: { pageInfo: { hasNextPage: false }, nodes: [issue(7, ['User report'])] } } }) };
+  };
+  await main({
+    argv: ['--version', '2.0.0'],
+    config: { release: { team: 'ABC', project: 'proj', keychain_service: 'svc', keychain_account: 'acct' } },
+    getKey: async (service, account) => { lookups.push([service, account]); return 'key'; },
+    fetchFn,
+    log: (line) => lines.push(line),
+  });
+  assert.deepEqual(lookups, [['svc', 'acct']]);
+  assert.equal(requests.length, 1);
+  assert.deepEqual([requests[0].variables.team, requests[0].variables.project], ['ABC', 'proj']);
+  assert.match(lines.join('\n'), /Dry run: 1 issue\(s\).*for 2\.0\.0[\s\S]*RMA-7[\s\S]*Nothing written/);
 });
