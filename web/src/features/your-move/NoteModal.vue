@@ -43,6 +43,14 @@ const openInFeed = () => {
   showInFeed(event);
 };
 const detail = computed(() => info.value?.detail);
+const comment = computed(() => {
+  const ref = detail.value?.comment;
+  if (typeof ref !== 'string') {
+    return ref;
+  }
+  const item = snapshot.feed.find((entry) => entry.id === ref);
+  return item && { author: item.who || '', text: item.body || item.text || '' };
+});
 const happened = computed(() => detail.value?.what || info.value?.outcome || '');
 </script>
 <template>
@@ -71,11 +79,11 @@ const happened = computed(() => detail.value?.what || info.value?.outcome || '')
         <dt>Event</dt>
         <dd>{{ detail.summary }}</dd>
       </template>
-      <template v-if="detail?.comment">
+      <template v-if="comment">
         <dt>Comment</dt>
         <dd>
-          <span class="note-modal__author">{{ detail.comment.author }}:</span>
-          {{ detail.comment.text }}
+          <span class="note-modal__author">{{ comment.author }}:</span>
+          {{ comment.text }}
         </dd>
       </template>
       <dt>When</dt>

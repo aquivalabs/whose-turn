@@ -125,6 +125,7 @@ test('a manual mark with a note shows the note on its own line with the time', a
 
 test('a pass-on line shows the outcome; a click opens the modal with the full event and the comment', async () => {
   snapshot.turn = [{ ...row('nw-4', true), group: 'others', next: 'Not yours now' }];
+  snapshot.feed = [{ id: 'comment:s:1', ref: 'NW-4', kind: 'comment', who: 'Sam', at: '2026-11-04T10:00:00Z', source: 's', text: 'Looks done', body: LONG }];
   snapshot.marks.info = {
     'nw-4': {
       auto: true,
@@ -134,7 +135,7 @@ test('a pass-on line shows the outcome; a click opens the modal with the full ev
         what: 'Passed to Sam · Ready for QA',
         assignee: 'you → Sam',
         status: 'In Progress → Ready for QA',
-        comment: { author: 'Sam', text: LONG },
+        comment: 'comment:s:1',
       },
     },
   };
@@ -153,6 +154,34 @@ test('a pass-on line shows the outcome; a click opens the modal with the full ev
   expect(screen.queryByText('passed on')).toBeNull();
   await fireEvent.click(screen.getByRole('button', { name: 'Open in feed' }));
   expect(showInFeed).toHaveBeenCalledWith('event:NW-4:t:reassigned');
+});
+
+test('a pass-on whose comment left the feed shows the outcome line and no comment', async () => {
+  snapshot.turn = [{ ...row('nw-4', true), group: 'others', next: 'Not yours now' }];
+  snapshot.feed = [];
+  snapshot.marks.info = {
+    'nw-4': { auto: true, outcome: 'Passed to Sam · Looks done', event: 'e', detail: { comment: 'comment:s:gone' } },
+  };
+  useMoveView().value = 'handled';
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+
+  await fireEvent.click(await screen.findByRole('button', { name: /Passed to Sam/ }));
+
+  expect((await screen.findByText('What happened')).nextElementSibling?.textContent).toBe('Passed to Sam · Looks done');
+  expect(screen.queryByText('Comment')).toBeNull();
+});
+
+test('a trace saved with a copied comment still shows it', async () => {
+  snapshot.turn = [{ ...row('nw-4', true), group: 'others', next: 'Not yours now' }];
+  snapshot.marks.info = {
+    'nw-4': { auto: true, outcome: 'Passed to Sam', event: 'e', detail: { comment: { author: 'Sam', text: 'Copied words' } } },
+  };
+  useMoveView().value = 'handled';
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+
+  await fireEvent.click(await screen.findByRole('button', { name: /Passed to Sam/ }));
+
+  expect(await screen.findByText('Copied words')).toBeTruthy();
 });
 
 test('a trace saved before the head phrase had its own field still shows its outcome in the modal', async () => {

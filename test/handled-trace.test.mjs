@@ -128,12 +128,12 @@ test('a comment from the day before the move joins the outcome and the detail', 
   const now = Date.now();
   const reassigned = { key: 'K-1', source: 's', at: new Date(now).toISOString(), kind: 'reassigned', text: 'Alex Doe → Sam Tester' };
   const status = { key: 'K-1', source: 's', at: new Date(now).toISOString(), kind: 'status', text: 'Code Review → Ready for QA' };
-  const fresh = { kind: 'comment', key: 'K-1', at: new Date(now - 3600000).toISOString(), who: 'Alex Doe', body: 'Ready,\n  please test the export' };
+  const fresh = { kind: 'comment', key: 'K-1', at: new Date(now - 3600000).toISOString(), id: 'comment:s:7', who: 'Alex Doe', body: 'Ready,\n  please test the export' };
   const stale = { kind: 'comment', key: 'K-1', at: new Date(now - 3 * 86400000).toISOString(), who: 'Alex Doe', body: 'Old news' };
   const trace = traceOf(pair(), [reassigned, status], [fresh]);
   assert.equal(trace.outcome, 'Passed to Sam Tester · Ready for QA · Ready, please test the export');
   assert.equal(trace.detail.what, 'Passed to Sam Tester · Ready for QA');
-  assert.deepEqual(trace.detail.comment, { author: 'Alex Doe', text: 'Ready, please test the export' });
+  assert.equal(trace.detail.comment, 'comment:s:7');
   assert.equal(traceOf(pair(), [reassigned, status], [stale]).outcome, 'Passed to Sam Tester · Ready for QA');
 });
 
@@ -147,12 +147,14 @@ test('a note on a handled row can be edited later and cleared with an empty line
   assert.equal(workspace.snapshot(false).marks.info['PROJ-1']?.note, undefined);
 });
 
-test('the detail shows your own name as "you" and keeps a long comment whole', () => {
+test('the detail shows your own name as "you" and refers to a long comment by its feed id', () => {
   const at = new Date().toISOString();
   const reassigned = { key: 'K-1', source: 's', at, kind: 'reassigned', text: 'Alex Doe → Sam Tester' };
   const long = 'word '.repeat(300).trim();
-  const feed = [{ kind: 'comment', key: 'K-1', at, who: 'you', body: long }, ...feedRows({ events: [reassigned] }, { me: { s: 'Alex Doe' }, rules: {} })];
+  const feed = [{ kind: 'comment', id: 'comment:s:9', key: 'K-1', at, who: 'you', body: long }, ...feedRows({ events: [reassigned] }, { me: { s: 'Alex Doe' }, rules: {} })];
   const trace = traceOf(pair(), [reassigned], feed);
   assert.equal(trace.detail.assignee, 'you → Sam Tester');
-  assert.equal(trace.detail.comment.text, long);
+  assert.equal(trace.detail.comment, 'comment:s:9');
+  assert.ok(trace.outcome.length < 200);
+  assert.ok(!JSON.stringify(trace.detail).includes(long));
 });

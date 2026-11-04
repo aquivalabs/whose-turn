@@ -90,14 +90,15 @@ export interface HandledInfo {
   outcome?: string;
   /** The id of the feed item that moved the row. */
   event?: string;
-  /** What the event carried: who it went to, the status change and the latest comment. */
+  /** What the event carried: who it went to, the status change and a reference to the latest comment. */
   detail?: {
     /** The head phrase of the outcome, before the status and comment parts. */
     what?: string;
     summary?: string;
     assignee?: string;
     status?: string;
-    comment?: { author: string; text: string };
+    /** The feed id of the comment; marks saved before 2026-11-04 carry a copy `{author, text}` instead. */
+    comment?: string | { author: string; text: string };
   };
 }
 
