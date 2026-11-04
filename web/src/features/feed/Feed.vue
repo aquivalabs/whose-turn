@@ -288,7 +288,8 @@ const restoreMarks = async () => {
   padding: 7px 0;
   font-size: 11px;
   line-height: 1;
-  word-spacing: -0.4em;
+  letter-spacing: -0.2em;
+  word-spacing: -0.5em;
   writing-mode: vertical-rl;
   text-orientation: upright;
 }
