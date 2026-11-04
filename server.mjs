@@ -52,7 +52,7 @@ const registry = createRegistry({
   saveNotifications: (notifications) => saveNotifications(first.configFile, notifications),
   saveSettings: (settings) => saveSettings(first.configFile, settings),
   normalise: (rawWorkspaces) => normaliseWorkspaces(rawWorkspaces).workspaces,
-  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify }),
+  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify, unpark: (id) => registry.setHidden(id, '') }),
 });
 
 let wake = null;
@@ -65,7 +65,7 @@ const sleep = (seconds) => new Promise((resolve) => {
 const pollLoop = async () => {
   let delay = pollSeconds;
   for (;;) {
-    const outcomes = await Promise.all(registry.workspaces.map((workspace) => workspace.poll()));
+    const outcomes = await Promise.all(registry.workspaces.map((workspace) => workspace.pollIfDue()));
     delay = nextDelay(outcomes, delay, pollSeconds);
     await sleep(delay);
   }
@@ -73,7 +73,7 @@ const pollLoop = async () => {
 
 const saveConfig = async (rawWorkspaces) => {
   const created = await registry.save(rawWorkspaces);
-  await Promise.all(created.map((workspace) => workspace.poll()));
+  await Promise.all(created.map((workspace) => workspace.pollIfDue()));
 };
 
 try {

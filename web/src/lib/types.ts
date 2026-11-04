@@ -17,6 +17,8 @@ export interface QuickLink {
   url: string;
 }
 
+export type HiddenMode = 'parked' | 'paused';
+
 export interface Workspace {
   id: string;
   name: string;
@@ -30,6 +32,10 @@ export interface Workspace {
   backdrop?: boolean;
   open_moves?: number;
   failing_sources?: number;
+  /** How the workspace is kept out of the rail: parked is checked every 15 minutes, paused not at all; empty when shown. */
+  hidden?: HiddenMode | '';
+  /** A parked workspace came back and its feed line is not seen yet: the rail's dot. */
+  returned?: boolean;
 }
 
 /** One row of "whose turn": the server decided its group, rank and next step. */
@@ -170,6 +176,8 @@ export interface WorkspaceEvent {
   version: number;
   polled_at: string;
   open_moves: number;
+  hidden?: HiddenMode | '';
+  returned?: boolean;
 }
 
 /** One `details[]` entry of the error envelope, by its `@type` (lib/errors.mjs). */
@@ -218,6 +226,8 @@ export interface FieldSpec {
   boolean?: boolean;
   default?: boolean;
   choices?: string[];
+  /** The label of the empty choice, where "(default)" would mislead. */
+  none?: string;
   hint?: string;
 }
 

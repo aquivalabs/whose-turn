@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // docs/adr/0002-vueuse-in-the-window.md, docs/adr/0006-window-layers.md
+import { AnimatePresence, Motion } from 'motion-v';
 import { computed, nextTick, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
@@ -7,18 +8,28 @@ import { GEAR, NEW_RELEASES, PLUS, workspaceIconParts } from '@/lib/icons.ts';
 import { movedIds } from '@/lib/settings.ts';
 import type { Workspace } from '@/lib/types.ts';
 import { mulberry32 } from '@/lib/random.ts';
+import { fade, listed } from '@/motion.ts';
 import { useWhatsNew } from '@/composables/useWhatsNew.ts';
 const emit = defineEmits<{ settings: []; addWorkspace: []; whatsNew: [] }>();
 const { unseen } = useWhatsNew();
 
+const shown = computed(() => snapshot.workspaces.filter((workspace) => !workspace.hidden));
+const hiddenCount = computed(() => snapshot.workspaces.length - shown.value.length);
+const hiddenLine = computed(() => {
+  const count = (mode: string) => snapshot.workspaces.filter((workspace) => workspace.hidden === mode).length;
+  return [`${count('parked')} parked`, `${count('paused')} paused`]
+    .filter((part) => !part.startsWith('0 '))
+    .join(' · ');
+});
+
 const parts = computed(() =>
   Object.fromEntries(
-    snapshot.workspaces.map((workspace) => [workspace.id, workspaceIconParts(workspace, mulberry32)]),
+    shown.value.map((workspace) => [workspace.id, workspaceIconParts(workspace, mulberry32)]),
   ),
 );
 const colours = computed(() =>
   Object.fromEntries(
-    snapshot.workspaces.map((workspace) => {
+    shown.value.map((workspace) => {
       const scheme = workspace.theme ? workspace.theme[dark.value ? 'dark' : 'light'] : null;
       return [
         workspace.id,
@@ -61,7 +72,7 @@ const onWhatsNew = (event: MouseEvent) => {
 
 const onKeyMove = async (event: KeyboardEvent, workspace: Workspace) => {
   const step = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
-  const ids = snapshot.workspaces.map((entry) => entry.id);
+  const ids = shown.value.map((entry) => entry.id);
   const at = ids.indexOf(workspace.id);
   if (!event.altKey || !step || at + step < 0 || at + step >= ids.length) {
     return;
@@ -110,7 +121,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   }
   event.preventDefault();
   const ids = movedIds(
-    snapshot.workspaces.map((entry) => entry.id),
+    shown.value.map((entry) => entry.id),
     dragged.value,
     workspace.id,
     dropBefore(event),
@@ -121,9 +132,12 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 </script>
 <template>
   <nav class="rail" aria-label="Workspaces">
-    <a
-      v-for="workspace in snapshot.workspaces"
+    <AnimatePresence>
+    <Motion
+      v-for="workspace in shown"
       :key="workspace.id"
+      v-bind="listed"
+      as="a"
       class="rail__item"
       :class="{ 'rail__item--dragging': dragged === workspace.id }"
       :data-drop="drop.id === workspace.id ? drop.side : null"
@@ -165,8 +179,10 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       </svg>
       <span class="rail__label">{{ workspace.name }}</span>
       <span v-if="failing(workspace)" class="rail__warn" title="A source of this workspace fails">!</span>
+      <span v-if="workspace.returned" class="rail__dot" title="Back in the rail: something needs you"></span>
       <span v-if="workspace.open_moves" class="rail__badge">{{ workspace.open_moves }}</span>
-    </a>
+    </Motion>
+    </AnimatePresence>
     <a
       class="rail__item"
       href="#add-workspace"
@@ -179,6 +195,20 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       <span class="rail__label">Add workspace</span>
     </a>
     <span class="rail__spacer"></span>
+    <AnimatePresence>
+      <Motion
+        v-if="hiddenLine"
+        v-bind="fade"
+        as="a"
+        class="rail__item rail__hidden"
+        href="#hidden-workspaces"
+        :aria-label="hiddenLine"
+        @click.prevent="onSettings"
+      >
+        <span class="rail__hidden-count" aria-hidden="true">{{ hiddenCount }}</span>
+        <span class="rail__label">{{ hiddenLine }}</span>
+      </Motion>
+    </AnimatePresence>
     <a class="rail__item" href="#whats-new" aria-label="What's new" @click.prevent="onWhatsNew">
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
         <path :d="NEW_RELEASES" fill="currentColor" />
@@ -301,6 +331,11 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   transition: opacity var(--motion-fast) var(--motion-ease);
 }
 
+.rail__hidden .rail__label {
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+}
+
 .rail:hover .rail__label,
 .rail:has(:focus-visible) .rail__label {
   opacity: 1;
@@ -355,6 +390,17 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   border: 2px solid var(--md-surface);
   border-radius: 50%;
   background: var(--md-primary);
+}
+
+.rail__hidden-count {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .rail__spacer {

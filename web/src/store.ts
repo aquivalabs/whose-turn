@@ -224,6 +224,9 @@ export const load = (asked = ui.ws): Promise<Snapshot> => {
         }
         return load('');
       }
+      if (asked && reply.workspace.hidden && reply.workspaces.some((entry) => !entry.hidden)) {
+        return load('');
+      }
       Object.assign(snapshot, reply);
       ui.ws = snapshot.workspace.id;
       ui.status = '';
@@ -278,6 +281,10 @@ watch(
     if ('report_news' in message) {
       ui.reportNews = message.report_news && !ui.feedback;
       return;
+    }
+    const known = snapshot.workspaces.find((entry) => entry.id === message.ws);
+    if (known && ((known.hidden || '') !== (message.hidden || '') || Boolean(known.returned) !== Boolean(message.returned))) {
+      load();
     }
     if (typeof message.open_moves === 'number') {
       snapshot.workspaces = withOpenMoves(snapshot.workspaces, message.ws, message.open_moves);
@@ -391,6 +398,25 @@ export const reorderWorkspaces = (ids: string[]) =>
         }
       },
       (failure: Error) => tellProblem(failure, { refused: 'The order was not saved' }),
+    );
+/** Brings a parked or paused workspace back into the rail: the same raw entries without its `hidden` key. */
+export const restoreWorkspace = (id: string) =>
+  getJson<{ workspaces: ({ id: string; hidden?: string } & object)[] }>('/api/config')
+    .then((config) =>
+      post<{ error?: ApiError }>('/api/config', {
+        workspaces: config.workspaces.map((entry) =>
+          entry.id === id ? Object.fromEntries(Object.entries(entry).filter(([key]) => key !== 'hidden')) : entry,
+        ),
+        secrets: [],
+      }),
+    )
+    .then(
+      (reply) => {
+        if (tellProblem(reply, { refused: 'The workspace was not restored' })) {
+          reload();
+        }
+      },
+      (failure: Error) => tellProblem(failure, { refused: 'The workspace was not restored' }),
     );
 export const refresh = () => {
   ui.status = 'Checking now…';

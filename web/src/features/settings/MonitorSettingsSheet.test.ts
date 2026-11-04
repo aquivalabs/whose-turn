@@ -121,3 +121,52 @@ test('the notifications switch saves at once through the same route as the bell'
   await waitFor(() => expect(sent).toEqual([{ url: '/api/notifications', body: { desktop: false } }]));
   expect(snapshot.notifications.desktop).toBe(false);
 });
+
+const quiet = (id: string, hidden: '' | 'parked' | 'paused') => ({
+  id,
+  name: id.toUpperCase(),
+  connectors: [],
+  links: [],
+  key_pattern: '',
+  theme: null,
+  hidden,
+});
+
+test('parked and paused workspaces are listed with their mode, and Restore saves the config without their hidden key', async () => {
+  snapshot.workspaces = [quiet('a', ''), quiet('b', 'parked'), quiet('c', 'paused')];
+  sent = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string, init?: { body?: string }) => {
+      if (init?.body) {
+        sent.push({ url, body: JSON.parse(init.body) });
+        return Promise.resolve({ json: () => Promise.resolve({}) });
+      }
+      return url === '/api/config'
+        ? Promise.resolve({
+            json: () =>
+              Promise.resolve({
+                ...reply,
+                workspaces: [{ id: 'a' }, { id: 'b', hidden: 'parked' }, { id: 'c', hidden: 'paused' }],
+              }),
+          })
+        : new Promise(() => undefined);
+    }),
+  );
+  await openFromRail();
+
+  expect(screen.getByText('parked')).toBeTruthy();
+  expect(screen.getByText('paused')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Restore A' })).toBeNull();
+  await fireEvent.click(screen.getByRole('button', { name: 'Restore B' }));
+
+  await waitFor(() =>
+    expect(sent).toEqual([
+      {
+        url: '/api/config',
+        body: { workspaces: [{ id: 'a' }, { id: 'b' }, { id: 'c', hidden: 'paused' }], secrets: [] },
+      },
+    ]),
+  );
+  snapshot.workspaces = [];
+});

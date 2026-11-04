@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // Monitor settings: what belongs to the whole monitor and not to one workspace; notifications save at once like the bell, the four numbers save with Save, and the server validates them.
-import { AnimatePresence } from 'motion-v';
+import { AnimatePresence, Motion } from 'motion-v';
 import { computed, ref, watch } from 'vue';
-import { snapshot, ui, reload, toggleNotifications } from '@/store.ts';
+import { snapshot, ui, reload, restoreWorkspace, toggleNotifications } from '@/store.ts';
+import { listed } from '@/motion.ts';
 import { getJson, post, problemsOf, violationsOf } from '@/lib/api.ts';
 import { SERVER_DOWN, writeProblem } from '@/lib/problems.ts';
 import type { ApiError, FieldSpec } from '@/lib/types.ts';
@@ -27,6 +28,7 @@ const unloaded = ref('');
 const dirty = computed(
   () => ui.monitor && !unloaded.value && JSON.stringify(draft.value) !== loadedKey.value,
 );
+const hiddenWorkspaces = computed(() => snapshot.workspaces.filter((workspace) => workspace.hidden));
 const close = () => {
   ui.monitor = false;
 };
@@ -115,6 +117,32 @@ watch(
           :spec="spec"
           :error="fieldErrors['settings.' + spec.key]"
         />
+        <template v-if="hiddenWorkspaces.length">
+          <h4 class="sheet-form__heading">Parked and paused workspaces</h4>
+          <p class="monitor-settings__note">
+            Parked: checked every 15 minutes, back in the rail when something needs you. Paused: not
+            checked at all, back only when you restore it.
+          </p>
+          <AnimatePresence>
+            <Motion
+              v-for="workspace in hiddenWorkspaces"
+              :key="workspace.id"
+              v-bind="listed"
+              class="monitor-settings__hidden"
+            >
+              <strong class="monitor-settings__hidden-name">{{ workspace.name }}</strong>
+              <span class="monitor-settings__hidden-mode">{{ workspace.hidden }}</span>
+              <button
+                type="button"
+                class="btn"
+                :aria-label="'Restore ' + workspace.name"
+                @click="restoreWorkspace(workspace.id)"
+              >
+                Restore
+              </button>
+            </Motion>
+          </AnimatePresence>
+        </template>
         <h4 class="sheet-form__heading">Config file</h4>
         <p class="monitor-settings__file">{{ configFile }}</p>
       </div>
@@ -126,6 +154,30 @@ watch(
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+}
+
+.monitor-settings__note {
+  margin: 0;
+  color: var(--md-on-surface-variant);
+  font-size: 13px;
+}
+
+.monitor-settings__hidden {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.monitor-settings__hidden-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monitor-settings__hidden-mode {
   color: var(--md-on-surface-variant);
   font-size: 13px;
 }

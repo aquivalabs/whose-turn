@@ -50,7 +50,7 @@ const setList = (typedText: string) =>
       :value="text()"
       @change="set(typed($event))"
     >
-      <option v-if="!spec.required && !spec.choices.includes(text())" value="">(default)</option>
+      <option v-if="!spec.required && !spec.choices.includes(text())" value="">{{ spec.none || '(default)' }}</option>
       <option v-if="text() && !spec.choices.includes(text())" :value="text()">{{ text() }}</option>
       <option v-for="choice in spec.choices" :key="choice" :value="choice">{{ choice }}</option>
     </select>
