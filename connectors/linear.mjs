@@ -17,9 +17,9 @@ export const fields = [
 ];
 
 const QUERY = `
-query Mine($filter: IssueFilter!, $after: String) {
+query Mine($filter: IssueFilter!, $after: String, $archived: Boolean) {
   viewer { id name displayName }
-  issues(filter: $filter, first: 50, after: $after, orderBy: updatedAt) {
+  issues(filter: $filter, first: 50, after: $after, orderBy: updatedAt, includeArchived: $archived) {
     pageInfo { hasNextPage endCursor }
     nodes {
       id identifier title url updatedAt completedAt
@@ -69,12 +69,12 @@ const apiKey = async (settings, secrets, cache) => {
   return token;
 };
 
-const fetchAll = async (http, key, filter) => {
+const fetchAll = async (http, key, filter, archived = false) => {
   const nodes = [];
   let after = null;
   let viewer = null;
   for (let page = 0; page < 10; page += 1) {
-    const data = await linearQuery(http, key, QUERY, { filter, after });
+    const data = await linearQuery(http, key, QUERY, { filter, after, archived });
     viewer = data.viewer;
     nodes.push(...data.issues.nodes);
     if (!data.issues.pageInfo.hasNextPage) {
@@ -105,7 +105,7 @@ export const normalise = (issues, viewer) => {
 
 export const poll = async ({ settings, http, secrets, cache }) => {
   const key = await apiKey(settings, secrets, cache);
-  const [open, done] = await Promise.all([fetchAll(http, key, buildFilter(settings, false)), fetchAll(http, key, buildFilter(settings, true))]);
+  const [open, done] = await Promise.all([fetchAll(http, key, buildFilter(settings, false)), fetchAll(http, key, buildFilter(settings, true), true)]);
   const seen = new Set();
   const issues = [...open.nodes, ...done.nodes].filter((issue) => !seen.has(issue.id) && seen.add(issue.id));
   const result = normalise(issues, open.viewer || done.viewer || {});
