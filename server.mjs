@@ -24,7 +24,7 @@ const inbox = openInbox(first.dataDir);
 const reports = openReports(first.dataDir, { http, relayUrl: process.env.WHOSE_TURN_FEEDBACK_URL || RELAY_URL });
 const { version } = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8'));
 let server;
-const notify = notifier(() => registry.notifications.desktop);
+const notify = notifier(() => process.env.WHOSE_TURN_NOTIFY !== 'off' && registry.notifications.desktop);
 const updater = createUpdater({
   http,
   dataDir: first.dataDir,

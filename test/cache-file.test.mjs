@@ -84,7 +84,7 @@ const definition = { id: 'w', name: 'W', key_pattern: 'PROJ-\\d+', rules: DEFAUL
 
 const startAndPoll = async (dir, numbers) => {
   const calls = [];
-  const workspace = createWorkspace(definition, { dataDir: dir, historyDays: 14, http: stubHttp(calls, numbers), secrets: { get: async () => '' } });
+  const workspace = createWorkspace(definition, { dataDir: dir, historyDays: 14, http: stubHttp(calls, numbers), secrets: { get: async () => '' }, notify: () => {} });
   await workspace.poll();
   return calls;
 };
@@ -111,7 +111,7 @@ test('a poll that fails to reach any connector leaves the file untouched', async
     const dir = scratch();
     await startAndPoll(dir, [1]);
     const before = readFileSync(cachePath(dir), 'utf8');
-    const workspace = createWorkspace(definition, { dataDir: dir, historyDays: 14, http: { fetchJson: async () => { throw new Error('offline'); } }, secrets: { get: async () => '' } });
+    const workspace = createWorkspace(definition, { dataDir: dir, historyDays: 14, http: { fetchJson: async () => { throw new Error('offline'); } }, secrets: { get: async () => '' }, notify: () => {} });
     await workspace.poll();
     assert.equal(readFileSync(cachePath(dir), 'utf8'), before);
   });
