@@ -20,7 +20,7 @@ npm ci && npm run build
 
 `install.sh` makes the monitor start at login and restart if it stops (a launch agent on macOS, a systemd user unit on Linux; on Windows it prints the one `schtasks` line to run). `open.sh` opens the window as its own app window, or in a browser tab with `--browser`. The window listens on port 8765; `WHOSE_TURN_PORT` changes that. A clone updates with `git pull` and a rebuild; it is never offered the in-app update.
 
-With Claude Code, the plugin installs and starts all of this for you, with no clone and no build (see [Claude Code](#claude-code)). That install updates itself: the server checks npm every ten minutes, tells you about a new version with a desktop notification and a chip in the status bar, and installs it and restarts on one click (`POST /api/update`). While it works the chip spins ("Installing…", then "Restarting…") and the window stays usable; when the server runs the new version the chip turns into "Updated to <version> · Reload", because the open window still runs the old page until you reload it.
+With Claude Code, the plugin installs and starts all of this for you, with no clone and no build (see [Claude Code](#claude-code)). That install updates on your word: the server checks npm every ten minutes, tells you about a new version with a desktop notification and a chip in the status bar, and installs it and restarts on one click (`POST /api/update`) or when you say yes to Claude. While it works the chip spins ("Installing…", then "Restarting…") and the window stays usable; when the server runs the new version the chip turns into "Updated to <version> · Reload", because the open window still runs the old page until you reload it.
 
 ```sh
 claude plugin marketplace add aquivalabs/BladeForge
@@ -242,9 +242,9 @@ The Claude Code plugin is `whose-turn@bladeforge` in the [BladeForge marketplace
 
 - the skill `whose-turn:whose-turn`: answers "what's on me" from `/api/summary`, sets up a first workspace, edits the config, opens the window, files feedback and manages to-dos;
 - `/whose-turn`, which opens the window;
-- the SessionStart hook, which starts the monitor if it is down and puts "N your move · M unread · K to-do" into context, marked as data from other people;
+- the SessionStart hook, which starts the monitor if it is down and puts "N your move · M unread · K to-do" into context, marked as data from other people, and announces a new monitor version so Claude can ask before installing it;
 - the prompt hook, which takes waiting hand-offs from the inbox queue into your next message;
-- an MCP server with seven tools: `whose_turn_summary`, `whose_turn_state`, `whose_turn_todos`, `whose_turn_config`, `whose_turn_feedback`, `whose_turn_reports`, `whose_turn_inbox`, all through the local API.
+- an MCP server whose `whose_turn_*` tools call the local API; the plugin's skill lists them.
 
 The plugin installs this npm package into its data directory and starts `server.mjs` from there; `install.sh` and `open.sh` run from the same installed path. The package carries `dist/` built, so the user never builds; `install.sh` refuses with one line when `dist/index.html` is missing, which only a git clone without a build can hit. The plugin path and the clone path share the launch agent label `local.whose-turn`, so whichever ran `install.sh` last owns it.
 

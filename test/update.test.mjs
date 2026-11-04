@@ -27,7 +27,7 @@ test('a newer version under the channel tag is offered and announced once', asyn
   // Verify
   assert.equal(asked[0], 'http://registry.test/-/package/whose-turn/dist-tags');
   assert.deepEqual(first, { current: '1.0.0-alpha.2', latest: '1.0.0-alpha.3', available: true, state: 'idle' });
-  assert.deepEqual(notes, [['Whose Turn 1.0.0-alpha.3 is out', 'Update from the window or your next session.']]);
+  assert.deepEqual(notes, [['Whose Turn 1.0.0-alpha.3 is out', 'Update from the window.']]);
 });
 
 test('the announcement is remembered across a restart of the server', async () => {

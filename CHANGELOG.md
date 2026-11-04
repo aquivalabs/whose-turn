@@ -2,6 +2,11 @@
 
 What changed for you in each version of Whose Turn. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/). The window shows this list under What's new; the ids at the end of an entry are ours and the window leaves them out.
 
+## [Unreleased]
+
+### Changed
+- A new version of Whose Turn no longer installs by itself when a Claude session starts. Claude tells you it is out and installs it only when you say yes; the Update button in the window works as before. RMA-329.
+
 ## [1.0.0-alpha.9] - 2026-11-04
 
 ### Added
