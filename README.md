@@ -22,7 +22,7 @@ npm ci && npm run build
 
 `install.sh` makes the monitor start at login and restart if it stops (a launch agent on macOS, a systemd user unit on Linux; on Windows it prints the one `schtasks` line to run). `open.sh` opens the window as its own app window, or in a browser tab with `--browser`. The window listens on port 8765; `WHOSE_TURN_PORT` changes that. A clone updates with `git pull` and a rebuild; it is never offered the in-app update.
 
-With Claude Code, the plugin installs and starts all of this for you, with no clone and no build (see [Claude Code](#claude-code)). That install updates itself: the server checks npm every ten minutes, tells you about a new version with a desktop notification and a chip in the status bar, and installs it and restarts on one click (`POST /api/update`).
+With Claude Code, the plugin installs and starts all of this for you, with no clone and no build (see [Claude Code](#claude-code)). That install updates itself: the server checks npm every ten minutes, tells you about a new version with a desktop notification and a chip in the status bar, and installs it and restarts on one click (`POST /api/update`). While it works the chip spins ("Installing…", then "Restarting…") and the window stays usable; when the server runs the new version the chip turns into "Updated to <version> · Reload", because the open window still runs the old page until you reload it.
 
 ```sh
 claude plugin marketplace add aquivalabs/BladeForge

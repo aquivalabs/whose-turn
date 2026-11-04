@@ -2,6 +2,11 @@
 
 All notable changes to whose-turn are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- After a self-update the window says so and asks for a reload: the chip spins while the server installs and restarts, then reads "Updated to <version> · Reload"; before, the old page kept running and its clicks did nothing. RMA-255.
+
 ## [1.0.0-alpha.5] - 2026-11-04
 
 ### Fixed
