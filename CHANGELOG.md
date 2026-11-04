@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Fixed
+- If the ticket you are writing a note for leaves Your move while the note window is open, the window closes and the rest of the monitor stays usable. Before, nothing could be clicked and no window was visible. RMA-274.
 - A Linear issue you archived after finishing it still counts as done, in Recently done and in Done in the last 30 days. RMA-241.
 - You no longer get stray notifications from our test runs, such as one about a "Northwind" workspace you never had. RMA-264.
 - Clicking a "?" icon or a "why" link shows its explanation again, a second click or Escape closes it, and on a touch screen a tap opens it. Hints on buttons and panel edges still show only on hover. RMA-263.

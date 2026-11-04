@@ -159,6 +159,13 @@ const layerFlags: Record<Layer, () => boolean> = {
   feedback: () => ui.feedback,
   whatsNew: () => ui.whatsNew,
 };
+watch(
+  () => snapshot.turn.some((row) => row.row_id === ui.note),
+  (present) => {
+    if (!present) ui.note = '';
+  },
+  { flush: 'sync' },
+);
 Object.entries(layerFlags).forEach(([layer, isOpen]) => {
   watch(isOpen, (open) => rememberOpener(layer as Layer, open), { flush: 'sync' });
   watch(isOpen, (open) => returnFocus(layer as Layer, open), { flush: 'post' });
