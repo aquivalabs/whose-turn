@@ -116,6 +116,7 @@ const bounds = () => {
     :class="{
       'island--collapsed': collapsed,
       'island--column': column,
+      'island--strip': collapsed && resize === 'width',
       'island--sized': sized,
     }"
     :style="
@@ -124,7 +125,7 @@ const bounds = () => {
         : undefined
     "
   >
-    <div class="island__head">
+    <div class="island__head" @click="collapsed && resize === 'width' && toggle()">
       <Chevron
         :open="!collapsed"
         :aria-label="'Fold ' + title"
@@ -216,6 +217,28 @@ const bounds = () => {
 }
 
 @media (width >= 901px) {
+  .island--strip {
+    cursor: pointer;
+  }
+
+  .island--strip .island__head {
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
+    padding: 12px 0;
+  }
+
+  .island--strip .island__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    writing-mode: vertical-rl;
+  }
+
+  .island--strip .island__note {
+    display: none;
+  }
+
   .dashboard--fit .dashboard__main .island__body {
     display: flex;
     flex: 1 1 auto;

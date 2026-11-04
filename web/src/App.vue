@@ -18,6 +18,7 @@ import { workspaceIconParts, workspaceIconSvg } from './lib/icons.ts';
 import { mulberry32 } from './lib/random.ts';
 import { useDialogFocus, useShortcuts } from './composables/useKeyboard.ts';
 import { usePanelSize } from './composables/usePanelSize.ts';
+import { useFold } from './composables/useFold.ts';
 import Rail from './features/rail/Rail.vue';
 import StatusBar from './features/status/StatusBar.vue';
 import WorkspaceHeader from './features/header/WorkspaceHeader.vue';
@@ -39,6 +40,7 @@ const { size: feedWidth } = usePanelSize(() => `${snapshot.workspace.id}:feed`);
 const layoutStyle = computed(() =>
   feedWidth.value === null ? undefined : { '--feed-width': feedWidth.value + 'px' },
 );
+const { collapsed: feedFolded } = useFold('feed');
 const whatsNew = useWhatsNew();
 const covered = computed(() => currentLayer.value !== null);
 useDialogFocus(covered);
@@ -83,7 +85,13 @@ onMounted(() => {
         <canvas id="backdrop" class="dashboard__backdrop" aria-hidden="true"></canvas>
         <WorkspaceHeader :inert="covered" />
         <FirstRun v-if="firstRun" :inert="covered" />
-        <div v-else class="dashboard__layout" :style="layoutStyle" :inert="covered">
+        <div
+          v-else
+          class="dashboard__layout"
+          :class="{ 'dashboard__layout--feed-folded': feedFolded }"
+          :style="layoutStyle"
+          :inert="covered"
+        >
           <div class="dashboard__main">
             <YourMove class="dashboard__move" /><Todos class="dashboard__todo" /><Waiting
               class="dashboard__waiting"

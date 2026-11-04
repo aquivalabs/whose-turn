@@ -96,6 +96,8 @@
 }
 
 .dashboard__layout {
+  --strip-width: 48px;
+
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) var(--feed-width, 31%);
@@ -200,9 +202,17 @@
   max-height: none;
 }
 
-.dashboard--fit .dashboard__feed.island--collapsed {
-  height: auto;
-  align-self: start;
+@media (width >= 901px) {
+  .dashboard__layout.dashboard__layout--feed-folded {
+    grid-template-columns: minmax(0, 1fr) var(--strip-width);
+  }
+}
+
+@media (width <= 900px) {
+  .dashboard--fit .dashboard__feed.island--collapsed {
+    height: auto;
+    align-self: start;
+  }
 }
 
 @media (width <= 900px) {

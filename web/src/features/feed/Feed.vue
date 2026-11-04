@@ -281,6 +281,13 @@ const restoreMarks = async () => {
   font-weight: 800;
 }
 
+.feed.island--strip .feed__new-count {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  writing-mode: horizontal-tb;
+}
+
 .feed__mark-read {
   flex: none;
   padding: 4px 8px;
