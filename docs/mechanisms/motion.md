@@ -16,6 +16,7 @@ The window's movement: panels fold, rows slide in and out, dialogs fade, all thr
 | `web/src/features/your-move/RecentlyDone.vue` | the Recently done block: its fold glides |
 | `web/src/ui/Island.vue` | a panel: its fold, its floor and its natural height |
 | `web/src/ui/Modal.vue` | the dialog: the backdrop and the card |
+| `web/src/ui/Swap.vue` | faces that take turns (the empty text and the list, the update chip): the one on show leaves before the other enters |
 | `web/src/test-motion.ts` | the stand-in the Vitest tier uses instead of `motion-v` |
 
 ## How it behaves
@@ -30,8 +31,15 @@ the chunk is in; until then they sit in their start state for a moment. RMA-314.
 
 ### The empty text waits for the list
 
-Waiting on others puts its list and its empty text in one `AnimatePresence` in mode `wait`, keyed `list` and
-`empty`, so the list fades out (the wrapper's `island__fade` class) and only then the text appears.
+Waiting on others puts its list and its empty text in `Swap`, one `AnimatePresence` whose children are keyed `list`
+and `empty`. When the face changes, `Swap` renders nothing at once (a swap from nothing shows the new face at once), so the old face leaves (the list fades through
+its wrapper's `island__fade` class), and puts the new face in when the presence reports `exit-complete`.
+
+It is not `AnimatePresence mode="wait"`. That mode is Vue's out-in `Transition`, which re-renders its own instance
+when the leave ends, and `motion-v` ends an exit at once, inside the patch, while the element has no registered
+motion state, which is the case until the lazy feature chunk is in. The re-render then runs on a half-patched
+instance and throws `Cannot read properties of null (reading 'parentNode')`. RMA-337. The update chip swaps its faces
+through `Swap` too, and nothing uses mode `wait`.
 
 ### A group and Recently done fold on the way out
 
@@ -83,11 +91,12 @@ it leaves the same way.
 
 `web/src/test-setup.ts` replaces `motion-v` with `web/src/test-motion.ts`. It renders `Motion` (and `M`) as its
 plain tag, drops the animation props (`initial`, `animate`, `exit`, `layout`, `transition`, `whileHover`,
-`whilePress`), passes `AnimatePresence`, `MotionConfig` and `LazyMotion` through and resolves `animate` at once, so
-behaviour tests never wait for an animation. A test that needs to see an exit calls `exits.hold()` before it
-renders: `AnimatePresence` then becomes Vue's own `Transition` or `TransitionGroup`, like the real one, and every
-exit stays open until `exits.release()`. The tokens and the reduced-motion switch are tested in
-`web/src/motion.test.ts`; the real library runs only in the browser build.
+`whilePress`), passes `MotionConfig` and `LazyMotion` through and resolves `animate` at once, so
+behaviour tests never wait for an animation. `AnimatePresence` is Vue's own `TransitionGroup`, like the real one,
+and reports `exit-complete`. A test that needs to see an exit calls `exits.hold()` before it renders: every exit
+then stays open until `exits.release()`. The tokens and the reduced-motion switch are tested in
+`web/src/motion.test.ts`; the real library runs in the browser build and in the one test that must see it,
+`web/src/features/waiting/Waiting.motion.test.ts`, which loads the features late like the browser does.
 
 ## What obliges an update
 

@@ -13,6 +13,7 @@ import PrCell from '@/ui/PrCell.vue';
 import ExtLink from '@/ui/ExtLink.vue';
 import AiButton from '@/ui/AiButton.vue';
 import RowScroll from '@/ui/RowScroll.vue';
+import Swap from '@/ui/Swap.vue';
 const rows = computed(() => {
   void now.value;
   return waitingRows(snapshot.turn).map((row) => ({
@@ -40,10 +41,9 @@ const note = computed(() =>
     <template #head
       ><span v-if="rows.length" class="count">{{ rows.length }}</span></template
     >
-    <!-- docs/mechanisms/motion.md § The empty text waits for the list to leave -->
-    <AnimatePresence mode="wait" :initial="false">
-    <Motion v-if="!rows.length" key="empty" v-bind="fade" as="p" class="empty">Nothing is waiting on someone else.</Motion>
-    <Motion v-else key="list" v-bind="fade" class="island__fade">
+    <Swap v-slot="{ face }" :face="rows.length ? 'list' : 'empty'">
+    <Motion v-if="face === 'empty'" key="empty" v-bind="fade" as="p" class="empty">Nothing is waiting on someone else.</Motion>
+    <Motion v-else-if="face === 'list'" key="list" v-bind="fade" class="island__fade">
     <RowScroll>
       <table class="table waiting__table">
         <thead>
@@ -118,7 +118,7 @@ const note = computed(() =>
       </table>
     </RowScroll>
     </Motion>
-    </AnimatePresence>
+    </Swap>
   </Island>
 </template>
 <style scoped>

@@ -4,26 +4,11 @@ import { nextTick } from 'vue';
 import { render, screen } from '@testing-library/vue';
 import { snapshot } from '@/store.ts';
 import { exits } from '@/test-motion.ts';
-import type { TurnRow } from '@/lib/types.ts';
+import { backlogRow } from '@/test-rows.ts';
 import Waiting from './Waiting.vue';
 
 vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 vi.mock('@/store.ts', async (importOriginal) => ({ ...(await importOriginal<typeof Store>()) }));
-
-const backlogRow: TurnRow = {
-  row_id: 'b-1',
-  key: 'B-1',
-  summary: 'Plan it',
-  ticket_url: 'https://tracker.example/b-1',
-  group: 'others',
-  whose: 'maria',
-  rank: 3,
-  updated: '2026-11-02T10:00:00Z',
-  activity_at: '2026-11-02T10:00:00Z',
-  status: 'Backlog',
-  status_group: 'backlog',
-  next: 'Backlog',
-};
 
 test('backlog rows listed under Waiting on others say "you" and leave Waiting for empty', () => {
   snapshot.turn = [backlogRow];

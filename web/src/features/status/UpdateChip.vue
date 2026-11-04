@@ -1,12 +1,13 @@
 <script setup lang="ts">
 // The self-update chip: the offer, a spinner while the server installs and restarts, and a reload prompt once it runs the new version (RMA-231, RMA-255).
-import { AnimatePresence, M as Motion } from 'motion-v';
+import { M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { computed, onMounted, ref, watch } from 'vue';
 import { refAutoReset, useTimeoutFn } from '@vueuse/core';
 import { snapshot, tellProblem, ui } from '@/store.ts';
 import { post } from '@/lib/api.ts';
 import { rememberUpdated, reloadPage, takeUpdated } from '@/lib/page-reload.ts';
+import Swap from '@/ui/Swap.vue';
 import type { ApiError, UpdateStatus } from '@/lib/types.ts';
 
 const UPDATED_SHOWN_MS = 15000;
@@ -21,6 +22,21 @@ const restarting = computed(
   () => update.value.state === 'restarting' || (Boolean(target.value) && !ui.live),
 );
 const working = computed(() => !ready.value && (update.value.state === 'installing' || restarting.value || Boolean(target.value)));
+const face = computed(() => {
+  if (updatedTo.value) {
+    return 'done';
+  }
+  if (ready.value) {
+    return 'ready';
+  }
+  if (working.value) {
+    return 'busy';
+  }
+  if (update.value.available) {
+    return update.value.state === 'failed' ? 'failed' : 'out';
+  }
+  return '';
+});
 const { start: watchSlow, stop: stopSlow } = useTimeoutFn(() => (slow.value = true), SLOW_RESTART_MS, {
   immediate: false,
 });
@@ -74,9 +90,9 @@ const onReload = () => {
 };
 </script>
 <template>
-  <AnimatePresence mode="wait">
+  <Swap v-slot="{ face: shown }" :face="face">
     <Motion
-      v-if="updatedTo"
+      v-if="shown === 'done'"
       key="done"
       v-bind="fade"
       as="button"
@@ -88,7 +104,7 @@ const onReload = () => {
       Updated to {{ updatedTo }}
     </Motion>
     <Motion
-      v-else-if="ready"
+      v-else-if="shown === 'ready'"
       key="ready"
       v-bind="fade"
       as="button"
@@ -99,7 +115,7 @@ const onReload = () => {
     >
       Updated to {{ ready }} · Reload
     </Motion>
-    <Motion v-else-if="working" key="busy" v-bind="fade" as="span" class="update-chip update-chip--busy" role="status"
+    <Motion v-else-if="shown === 'busy'" key="busy" v-bind="fade" as="span" class="update-chip update-chip--busy" role="status"
       ><span class="update-chip__spinner" aria-hidden="true"></span
       >{{ restarting ? 'Restarting…' : `Installing ${target || update.latest}…` }}<button
         v-if="slow"
@@ -112,7 +128,7 @@ const onReload = () => {
       </button></Motion
     >
     <Motion
-      v-else-if="update.available && update.state === 'failed'"
+      v-else-if="shown === 'failed'"
       key="failed"
       v-bind="fade"
       as="button"
@@ -123,10 +139,10 @@ const onReload = () => {
     >
       Update failed · Retry
     </Motion>
-    <Motion v-else-if="update.available" key="out" v-bind="fade" as="button" type="button" class="update-chip" @click="onUpdate">
+    <Motion v-else-if="shown === 'out'" key="out" v-bind="fade" as="button" type="button" class="update-chip" @click="onUpdate">
       {{ update.latest }} is out · Update
     </Motion>
-  </AnimatePresence>
+  </Swap>
 </template>
 <style scoped>
 .update-chip {

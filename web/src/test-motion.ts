@@ -1,5 +1,5 @@
 // motion-v stand-in for the Vitest tier: plain tags, instant exits. docs/mechanisms/motion.md § The test stand-in
-import { h, Transition, TransitionGroup } from 'vue';
+import { h, TransitionGroup } from 'vue';
 import type { SetupContext } from 'vue';
 
 const SWALLOWED = ['initial', 'animate', 'exit', 'layout', 'transition', 'whileHover', 'whilePress'];
@@ -16,9 +16,8 @@ const passThrough = (_props: Record<string, unknown>, { slots }: SetupContext) =
 passThrough.inheritAttrs = false;
 
 /**
- * Exits finish at once and AnimatePresence is a plain pass-through, until a test calls `exits.hold()`: from then on
- * AnimatePresence is built on Vue's own Transition (mode wait) or TransitionGroup like the real one, and every exit
- * stays open until `exits.release()`.
+ * AnimatePresence is Vue's own TransitionGroup, like the real one, and reports `exit-complete`. Exits finish at once,
+ * until a test calls `exits.hold()`: every exit then stays open until `exits.release()`.
  */
 export const exits = {
   held: false,
@@ -33,24 +32,20 @@ export const exits = {
   reset() {
     this.held = false;
     this.pending.length = 0;
-    this.real = false;
   },
-  real: false,
 };
 
-const onLeave = (_element: Element, done: () => void) => (exits.held ? exits.pending.push(done) : done());
-
-export const AnimatePresence = (props: Record<string, unknown>, { slots, attrs }: SetupContext) => {
-  exits.real ||= exits.held;
-  if (!exits.real) {
-    return slots.default?.();
-  }
-  const shared = { ...attrs, css: false, onLeave };
-  return props.mode === 'wait'
-    ? h(Transition, { ...shared, mode: 'out-in' }, slots.default)
-    : h(TransitionGroup, shared, slots.default);
+const leave = (props: Record<string, unknown>) => (_element: Element, done: () => void) => {
+  const finish = () => {
+    done();
+    (props.onExitComplete as (() => void) | undefined)?.();
+  };
+  return exits.held ? exits.pending.push(finish) : finish();
 };
-AnimatePresence.props = ['mode', 'initial'];
+
+export const AnimatePresence = (props: Record<string, unknown>, { slots, attrs }: SetupContext) =>
+  h(TransitionGroup, { ...attrs, css: false, onLeave: leave(props) }, slots.default);
+AnimatePresence.props = ['mode', 'initial', 'onExitComplete'];
 AnimatePresence.inheritAttrs = false;
 
 export const MotionConfig = passThrough;
