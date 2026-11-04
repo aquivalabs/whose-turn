@@ -29,8 +29,7 @@ const { collapsed, toggle: flip } = useFold(props.id);
 const strip = computed(() => collapsed.value && props.resize === 'width');
 const { size, set } = usePanelSize(() => props.sizeKey);
 const root = useTemplateRef<HTMLElement>('root');
-// A fold glides: the panel's height, or for the width strip the layout's columns, tweens from where it was to where the stylesheet puts it.
-// The observers sleep while it runs and the island is measured once when it ends: the layout moves every frame of a glide.
+// docs/adr/0009-motion-in-the-window.md § Implementation notes
 let gliding = false;
 const toggle = async () => {
   gliding = true;
@@ -53,9 +52,9 @@ const scrolledAbove = (row: HTMLElement, stop: HTMLElement) => {
   }
   return offset;
 };
-// The island's own primary rows: those in its direct row scroller or its to-do list, never a table nested elsewhere in the body.
+// docs/adr/0009-motion-in-the-window.md § Implementation notes
 const OWN_ROWS = ':scope > .row-scroll tbody > tr, :scope > .todos__list > li';
-// Height a child needs, ignoring any room it was stretched into, so a floor never includes the island's own current height.
+// docs/adr/0009-motion-in-the-window.md § Implementation notes
 const naturalHeight = (element: HTMLElement) => {
   const content = element.classList.contains('row-scroll') ? element.firstElementChild : null;
   const own = content instanceof HTMLElement ? content.offsetHeight : element.offsetHeight;
@@ -165,7 +164,7 @@ const bounds = () => {
         </button>
       </p>
     </div>
-    <!-- Not hidden with display:none: a row that mounts under a hidden ancestor never plays its enter motion and stays invisible, so a folded body is not mounted at all (RMA-319). -->
+    <!-- docs/adr/0009-motion-in-the-window.md § Implementation notes, RMA-319 -->
     <div v-if="!collapsed" ref="body" class="island__body"><slot /></div>
     <ResizeHandle
       v-if="!collapsed"

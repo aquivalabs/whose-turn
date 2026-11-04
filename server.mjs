@@ -21,7 +21,7 @@ const http = createHttpClient();
 const first = loadConfig();
 const secrets = createSecrets(first.dataDir);
 const inbox = openInbox(first.dataDir);
-const reports = openReports(first.dataDir, { http, relayUrl: process.env.WHOSE_TURN_FEEDBACK_URL || RELAY_URL, adminToken: () => secrets.get('whose-turn-feedback-admin', 'relay') });
+const reports = openReports(first.dataDir, { http, relayUrl: process.env.WHOSE_TURN_FEEDBACK_URL || RELAY_URL, adminToken: () => secrets.get('whose-turn-feedback-admin', 'relay'), adminHosts: (process.env.WHOSE_TURN_FEEDBACK_ADMIN_HOSTS || '').split(',').map((host) => host.trim()).filter(Boolean) });
 const { version } = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8'));
 let server;
 const notify = notifier(() => process.env.WHOSE_TURN_NOTIFY !== 'off' && registry.notifications.desktop);

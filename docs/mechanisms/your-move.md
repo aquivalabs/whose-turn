@@ -25,6 +25,14 @@ window already has. RMA-258.
   while the note is typed.
 - The counts are of the whole list, not of the view: `open` and `handled`.
 
+## The note window
+
+`NoteModal.vue` shows the full outcome of a pass-on and the note, opened by Handled or by the row's outcome line. Handled on an open row writes nothing until Save or Skip (see How it behaves).
+
+## Parked workspaces
+
+`isDue` in `lib/backoff.mjs` decides whether a workspace is polled in a round: always when shown, never when paused, and every 15 minutes when parked. A parked workspace's first check after a start is due 15 minutes after its stored last check, and at once when there is none or it is older.
+
 ## What obliges an update
 
 Any change to `yourRows` that changes which rows are listed, their order, or the counts.

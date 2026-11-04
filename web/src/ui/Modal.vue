@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// A dialog over the window: a title bar with a Close button, a scrolling body (padded unless `flush`) and an optional footer; a click on the backdrop asks to close. The backdrop fades and the card rises; the owner wraps it in AnimatePresence so it can leave the same way.
+// A dialog over the window: title bar with Close, scrolling body (padded unless `flush`), optional footer.
+// A click on the backdrop asks to close. docs/adr/0009-motion-in-the-window.md § Implementation notes
 import { Motion } from 'motion-v';
 import { fade, rise } from '@/motion.ts';
 defineProps<{ title: string; labelId: string; flush?: boolean; cardClass?: string }>();

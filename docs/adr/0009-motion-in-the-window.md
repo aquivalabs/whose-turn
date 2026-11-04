@@ -31,6 +31,16 @@ The window's motion is `motion-v`, pinned exactly to `2.9.0` in `package.json` (
 - **Owners wrap, components animate.** A component that is shown or hidden with `v-if` or `v-for` is a `Motion` element inside an `AnimatePresence` its owner provides; `ui/Modal.vue` animates the backdrop and card and each sheet wraps its modal. A table row list is `<Motion as="tbody">` so the markup stays valid.
 - **Tests stub the library.** `web/src/test-setup.ts` replaces `motion-v` with `web/src/test-motion.ts` (plain tags, instant exits), so behaviour tests never wait for an animation; the tokens and the reduced-motion switch are tested in `web/src/motion.test.ts`.
 
+## Implementation notes
+
+- **A fold glides** (`glideThrough` in `web/src/motion.ts`, used by `Island`): it runs the change, then tweens the panel's height, or the layout's grid columns for the width strip, from the value it had to the value the stylesheet now gives it, and hands the property back. The island's observers sleep while it runs and the island is measured once when it ends, because the layout moves on every frame of a glide.
+- **The height tween holds the box.** `offsetHeight` counts padding and border, so while the height is tweened the element is set to `box-sizing: border-box` with `flex: none` and no min or max height; a content-box element would be set that much too tall. The held properties are removed when the tween ends.
+- **The old value goes back on at once.** Before the tween's first frame the stylesheet's new value would otherwise show for a frame.
+- **A folded body is not mounted** (`v-if`, not `display: none`): a row that mounts under a hidden ancestor never plays its enter motion and stays invisible after the panel is unfolded. RMA-319.
+- **The test stand-in.** `web/src/test-motion.ts` renders `Motion` as its plain tag, drops the animation props (`initial`, `animate`, `exit`, `layout`, `transition`, `whileHover`, `whilePress`), passes `AnimatePresence` and `MotionConfig` through and resolves `animate` at once, so behaviour tests never wait for an animation. The real library runs in the browser build; the tokens are tested in `web/src/motion.test.ts`.
+- **The island's floor** (`Island.vue`) counts only its own primary rows: those in its direct row scroller or its to-do list, never a table nested elsewhere in the body. A child's natural height ignores any room it was stretched into, so a floor never includes the island's own current height.
+- **The dialog** (`ui/Modal.vue`): the backdrop fades and the card rises; the owner wraps it in `AnimatePresence` so it can leave the same way.
+
 ## Consequences
 
 Easier: exits, list gliding and folds come from one engine and one set of numbers; a new banner or row is one `v-bind="fade"` or `v-bind="listed"` away; reduced motion is a single switch.

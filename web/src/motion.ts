@@ -60,10 +60,9 @@ export const glideThrough = async (
   if (reduced.value || from === to) {
     return;
   }
-  // offsetHeight counts padding and border, so the tweened height must too; a content-box element would be set that much too tall.
+  // docs/adr/0009-motion-in-the-window.md § Implementation notes
   const hold = property === 'height' ? { flex: 'none', minHeight: '0', maxHeight: 'none', boxSizing: 'border-box' } : {};
   Object.assign(element.style, hold);
-  // The old value goes back on at once: until the tween's first frame the stylesheet's new value would show.
   element.style[property] = from;
   try {
     await animate(element, { [property]: [from, to] }, tween(DURATION.base));

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyPlan, parseArgs, planRelease, readReady } from '../scripts/release-linear.mjs';
+import { DEFAULTS, applyPlan, parseArgs, planRelease, readReady } from '../scripts/release-linear.mjs';
 
 const issue = (n, labels = []) => ({ id: `id-${n}`, identifier: `RMA-${n}`, title: `Issue ${n}`, labels: { nodes: labels.map((name) => ({ name })) } });
 
@@ -76,4 +76,15 @@ test('a failed comment leaves the issue where it was', async () => {
 test('dry-run is the default, and --version overrides', () => {
   assert.deepEqual(parseArgs([]), { apply: false, version: undefined });
   assert.deepEqual(parseArgs(['--apply', '--version', '1.2.3']), { apply: true, version: '1.2.3' });
+});
+
+test('team, project and the secret-store entry are flags with today\'s values as defaults', async () => {
+  assert.deepEqual(DEFAULTS, { team: 'RMA', project: 'whose-turn', keychainService: 'linear-api-key-write', keychainAccount: 'roman' });
+  assert.deepEqual(parseArgs(['--team', 'ABC', '--project', 'other', '--keychain-service', 's', '--keychain-account', 'a']), {
+    apply: false, version: undefined, team: 'ABC', project: 'other', keychainService: 's', keychainAccount: 'a',
+  });
+  const { call, sent } = stubLinear([{ pageInfo: { hasNextPage: false }, nodes: [] }]);
+  await readReady(call, { team: 'ABC', project: 'other' });
+  assert.equal(sent[0].variables.team, 'ABC');
+  assert.equal(sent[0].variables.project, 'other');
 });

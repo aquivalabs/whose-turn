@@ -70,7 +70,7 @@ const reviewDecision = (reviews) => {
 
 const REVIEWER_STATE = { APPROVED: 'approved', CHANGES_REQUESTED: 'changes' };
 
-/** Everyone on an open PR's review: the still requested (users and teams) as plain names, then those who reviewed, with their latest state. A comment-only review shows the name without a mark and never replaces an approval or a request for changes, a dismissed review takes that person's state away, and you, the author and bots are left out (RMA-315). */
+/** Everyone on an open PR's review: the requested reviewers, then those who reviewed with their latest state. README.md § Sources and polling, RMA-315. */
 const reviewersOf = (pr, reviews, { me, bots }) => {
   const listed = [...(pr.requested_reviewers || []).map((user) => user.login), ...(pr.requested_teams || []).map((team) => team.slug)];
   const latest = new Map();

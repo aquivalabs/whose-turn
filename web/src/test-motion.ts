@@ -1,4 +1,4 @@
-// motion-v stand-in for the Vitest tier: components render as their plain tags and leave at once, so behaviour tests never wait for an animation. The real library runs in the browser build; the tokens are tested in motion.test.ts.
+// motion-v stand-in for the Vitest tier: plain tags, instant exits. docs/adr/0009-motion-in-the-window.md § Tests stub the library
 import { h } from 'vue';
 import type { SetupContext } from 'vue';
 

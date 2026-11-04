@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// The release step on Linear: every whose-turn issue in "Ready for release" moves to Done, and each user report among them gets "Shipped in <version>."
-// Dry-run by default; `--apply` writes. `--version <x>` overrides the version in package.json. RMA-321.
-import { execFileSync } from 'node:child_process';
+// Moves every whose-turn issue in Ready for release to Done; user reports get "Shipped in <version>." Dry run unless --apply.
+// Flags: --version, --team, --project, --keychain-service, --keychain-account. RMA-321.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { loadConfig } from '../lib/config.mjs';
+import { createSecrets } from '../lib/secrets.mjs';
 
 const LINEAR_URL = 'https://api.linear.app/graphql';
-const TEAM = 'RMA';
-const PROJECT = 'whose-turn';
+export const DEFAULTS = { team: 'RMA', project: 'whose-turn', keychainService: 'linear-api-key-write', keychainAccount: 'roman' };
 const READY = 'Ready for release';
 const DONE = 'Done';
 const REPORT_LABEL = 'User report';
@@ -52,12 +52,12 @@ export const planRelease = ({ issues, doneStateId, version }) => ({
 });
 
 /** Reads the team's Done state and every whose-turn issue in Ready for release, across pages. */
-export const readReady = async (call) => {
+export const readReady = async (call, { team, project } = DEFAULTS) => {
   const issues = [];
   let doneStateId;
   let after = null;
   for (;;) {
-    const data = await call(READ, { team: TEAM, project: PROJECT, ready: READY, after });
+    const data = await call(READ, { team, project, ready: READY, after });
     doneStateId ??= data.teams.nodes[0]?.states.nodes.find((state) => state.type === 'completed' && state.name === DONE)?.id;
     issues.push(...data.issues.nodes);
     if (!data.issues.pageInfo.hasNextPage) {
@@ -66,7 +66,7 @@ export const readReady = async (call) => {
     after = data.issues.pageInfo.endCursor;
   }
   if (!doneStateId) {
-    throw new Error(`Team ${TEAM} has no completed state named ${DONE}`);
+    throw new Error(`Team ${team} has no completed state named ${DONE}`);
   }
   return { issues, doneStateId };
 };
@@ -81,17 +81,28 @@ export const applyPlan = async (call, plan) => {
   }
 };
 
+const VALUE_FLAGS = { '--version': 'version', '--team': 'team', '--project': 'project', '--keychain-service': 'keychainService', '--keychain-account': 'keychainAccount' };
+
 export const parseArgs = (argv) => {
-  const version = argv.includes('--version') ? argv[argv.indexOf('--version') + 1] : undefined;
-  return { apply: argv.includes('--apply'), version };
+  const parsed = { apply: argv.includes('--apply'), version: undefined };
+  for (const [flag, name] of Object.entries(VALUE_FLAGS)) {
+    if (argv.includes(flag)) {
+      parsed[name] = argv[argv.indexOf(flag) + 1];
+    }
+  }
+  return parsed;
 };
 
 const main = async () => {
-  const { apply, version: given } = parseArgs(process.argv.slice(2));
+  const { apply, version: given, ...flags } = parseArgs(process.argv.slice(2));
+  const options = { ...DEFAULTS, ...flags };
   const version = given || JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
-  const key = execFileSync('security', ['find-generic-password', '-s', 'linear-api-key-write', '-w'], { encoding: 'utf8' }).trim();
+  const key = await createSecrets(loadConfig().dataDir).get(options.keychainService, options.keychainAccount);
+  if (!key) {
+    throw new Error(`No Linear key in the secret store (service ${options.keychainService}, account ${options.keychainAccount})`);
+  }
   const call = callWith(fetch, key);
-  const plan = planRelease({ ...(await readReady(call)), version });
+  const plan = planRelease({ ...(await readReady(call, options)), version });
   console.log(`${apply ? 'Applying' : 'Dry run'}: ${plan.moves.length} issue(s) from ${READY} to ${DONE} for ${version}`);
   for (const move of plan.moves) {
     console.log(`  ${move.identifier}  ${move.title}${move.comment ? `  [comment: ${move.comment}]` : ''}`);

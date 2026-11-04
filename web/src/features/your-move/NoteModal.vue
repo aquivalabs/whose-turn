@@ -1,6 +1,5 @@
 <script setup lang="ts">
-// What a handled row carries: the full outcome of a pass-on and the note, opened by Handled or by the row's outcome line.
-// Handled on an open row writes nothing until Save or Skip.
+// What a handled row carries: the outcome of a pass-on and the note. docs/mechanisms/your-move.md § How it behaves
 import { AnimatePresence } from 'motion-v';
 import { computed, nextTick, ref, watch } from 'vue';
 import { snapshot, ui, setMarks, showInFeed, justHandled } from '@/store.ts';
