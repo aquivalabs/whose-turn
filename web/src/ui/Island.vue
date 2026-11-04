@@ -108,11 +108,14 @@ onMounted(schedule);
 watch(collapsed, () => nextTick(schedule));
 // A grip shows only where dragging changes something: not under the last open panel of a column.
 const openBelow = ref(true);
+const siblingsOf = (el: HTMLElement) => {
+  const all = [...(el.parentElement?.children ?? [])].filter((node): node is HTMLElement => node instanceof HTMLElement);
+  return { others: all.filter((node) => node !== el), below: all.slice(all.indexOf(el) + 1) };
+};
 const trace = () => {
   const el = root.value;
-  const siblings = [...(el?.parentElement?.children ?? [])];
   const open = (node: Element) => node.classList.contains('island') && !node.classList.contains('island--collapsed');
-  openBelow.value = !!el && siblings.slice(siblings.indexOf(el) + 1).some(open);
+  openBelow.value = !!el && siblingsOf(el).below.some(open);
 };
 const watching = props.resize === 'height';
 useMutationObserver(() => (watching ? (root.value?.parentElement ?? null) : null), trace, { childList: true });
@@ -120,16 +123,14 @@ if (watching) {
   watch(folded, () => nextTick(trace));
   onMounted(trace);
 }
-const gripOff = computed(() => props.resize === 'height' && !openBelow.value);
+const gripOff = computed(() => !openBelow.value);
 const sized = computed(() => size.value !== null && props.resize === 'height' && hasRows.value);
 const neighbours = (el: HTMLElement) =>
-  [...(el.parentElement?.children ?? [])]
-    .filter((node): node is HTMLElement => node !== el && node instanceof HTMLElement)
-    .map((node) => ({
-      collapsed: node.classList.contains('island--collapsed'),
-      height: node.offsetHeight,
-      floor: pixels(node.style.getPropertyValue('--island-floor')),
-    }));
+  siblingsOf(el).others.map((node) => ({
+    collapsed: node.classList.contains('island--collapsed'),
+    height: node.offsetHeight,
+    floor: pixels(node.style.getPropertyValue('--island-floor')),
+  }));
 const bounds = () => {
   const el = root.value as HTMLElement;
   measure();

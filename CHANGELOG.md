@@ -12,6 +12,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - A new version of Whose Turn no longer installs by itself when a Claude session starts. Claude tells you it is out and installs it only when you say yes; the Update button in the window works as before. RMA-329.
 
 ### Fixed
+- A polling or health number typed into the config file by hand now has to stay within the same range as in the settings. A value outside it is ignored, the default is used instead, and the problem is listed where the window shows config problems. RMA-339.
+- A report with a title or text that is too long, or that contains a stored secret, is now refused whichever way it was sent, including by Claude, and nothing leaves your machine. RMA-339.
 - The last open panel of a column, such as Waiting on others, no longer shows a resize grip on its bottom edge, since dragging it changed nothing. The edge between two panels keeps its grip, and when the panel below is folded the grip above goes, then comes back when it is opened again. RMA-312.
 
 ## [1.0.0-alpha.9] - 2026-11-04

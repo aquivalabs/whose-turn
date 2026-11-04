@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// docs/mechanisms/motion.md § The empty text waits for the list to leave
+// docs/mechanisms/motion.md § The empty text waits for the list
 import { ref, watch } from 'vue';
 import { AnimatePresence } from 'motion-v';
 const props = defineProps<{ face: string }>();

@@ -48,9 +48,10 @@ Nothing that names an employer, an account or a team process lives in this repos
 | key | meaning |
 |---|---|
 | `port`, `poll_seconds`, `history_days` | the port, how often to poll (default 60), how far back the feed reaches (default 14) |
+| `release` | optional object for `scripts/release-linear.mjs`: `team`, `project`, `keychain_service`, `keychain_account` replace the script's defaults (README § Developing, Releasing) |
 | `stale_minutes`, `failing_polls` | health alerts: no data from any source for this many minutes (default 15), or one source failing this many polls in a row (default 3) |
 
-The four numbers `poll_seconds`, `history_days`, `stale_minutes` and `failing_polls` are editable in the monitor settings (the gear at the bottom of the rail) and through `POST /api/config` with `{settings: {...}}`; a change applies at the next poll with no restart. `port` is not editable there.
+The four numbers `poll_seconds`, `history_days`, `stale_minutes` and `failing_polls` are editable in the monitor settings (the gear at the bottom of the rail) and through `POST /api/config` with `{settings: {...}}`; a change applies at the next poll with no restart. A value outside the range the sheet shows, typed into the config file by hand, falls back to its default and is listed in the problems the window and `/api/summary` show. `port` is not editable there.
 
 | key | meaning |
 |---|---|

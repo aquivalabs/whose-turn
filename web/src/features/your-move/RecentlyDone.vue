@@ -37,7 +37,7 @@ const open = useLocalStorage('wt-recent-open', false, {
   serializer: { read: (raw) => raw === '1', write: (value) => (value ? '1' : '0') },
 });
 const root = useTemplateRef<HTMLElement>('root');
-// docs/mechanisms/motion.md § Recently done glides
+// docs/mechanisms/motion.md § A group and Recently done fold on the way out
 const toggle = () => glideThrough(root.value, 'height', () => (open.value = !open.value));
 const rows = computed(() => {
   void now.value;

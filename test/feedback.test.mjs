@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { clientOf, createFeedback, mayReceiveAdminToken, openReports, RELAY_URL } from '../lib/feedback.mjs';
+import { clientOf, createFeedback, MAX_BODY_CHARS, mayReceiveAdminToken, openReports, RELAY_URL } from '../lib/feedback.mjs';
 import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
 import { RateLimited } from '../lib/http-client.mjs';
 
@@ -20,6 +20,7 @@ const stub = ({ issues = [] } = {}) => {
   } };
   return { http, calls };
 };
+const none = async () => false;
 const failing = (error) => ({ fetchJson: async () => { throw error; } });
 const reportsDir = () => mkdtempSync(join(tmpdir(), 'wt-reports-'));
 const relayIssue = (extra = {}) => ({ identifier: 'RMA-500', title: 'Chevron wraps on narrow feed', url: 'u', outcome: 'open', updatedAt: '2026-11-02T12:00:00.000Z', answers: [], ...extra });
@@ -28,7 +29,7 @@ const filed = (dir) => open(dir).add({ id: 'RMA-500', title: 'The chevron wraps'
 
 test('a bug is posted to the relay with its kind, title, body, version and environment, and nothing else; the identifier comes back', async () => {
   const { http, calls } = stub();
-  const issue = await createFeedback({ http, relayUrl: RELAY, version: '1.0.0', sources: ['linear', 'github', 'linear'] }, { kind: 'bug', title: 'The chevron wraps', body: 'On a narrow feed the chevron drops a line.' });
+  const issue = await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, version: '1.0.0', sources: ['linear', 'github', 'linear'] }, { kind: 'bug', title: 'The chevron wraps', body: 'On a narrow feed the chevron drops a line.' });
   assert.equal(issue.identifier, 'RMA-500');
   assert.equal(calls[0].url, RELAY);
   assert.equal(calls[0].method, 'POST');
@@ -68,7 +69,7 @@ test('each client field is kept only when it is exactly the agreed shape, and a 
 
 test('the environment is built on the server, adds the clean client report, and has no user data', async () => {
   const { http, calls } = stub();
-  await createFeedback({ http, relayUrl: RELAY, install: 'npm', sources: ['linear'], client: { theme: 'light', locale: 'x y', ip: '1.2.3.4' } }, { title: 'T' });
+  await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, install: 'npm', sources: ['linear'], client: { theme: 'light', locale: 'x y', ip: '1.2.3.4' } }, { title: 'T' });
   const { environment } = calls[0].body;
   assert.deepEqual(Object.keys(environment), ['os', 'osVersion', 'arch', 'node', 'install', 'sources', 'theme']);
   assert.equal(environment.arch, process.arch);
@@ -78,21 +79,56 @@ test('the environment is built on the server, adds the clean client report, and 
 
 test('an over-long title is cut to the relay limit, and an empty title is refused before any call', async () => {
   const { http, calls } = stub();
-  await createFeedback({ http, relayUrl: RELAY }, { title: 'x'.repeat(300) });
+  await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY }, { title: 'x'.repeat(300) });
   assert.equal(calls[0].body.title.length, 140);
-  await assert.rejects(createFeedback({ http, relayUrl: RELAY }, { title: '  ' }), { reason: 'INVALID_ARGUMENT', metadata: { detail: 'a title is required' }, violations: [{ field: 'title', description: 'A report needs a title.' }] });
+  await assert.rejects(createFeedback({ mentionsSecret: none, http, relayUrl: RELAY }, { title: '  ' }), { reason: 'INVALID_ARGUMENT', metadata: { detail: 'a title is required' }, violations: [{ field: 'title', description: 'A report needs a title.' }] });
   assert.equal(calls.length, 1);
 });
 
+test('text, title and body over the body limit are each refused naming the field, before any call', async () => {
+  const { http, calls } = stub();
+  const long = 'x'.repeat(MAX_BODY_CHARS + 1);
+  for (const field of ['text', 'title', 'body']) {
+    const refused = await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY }, { title: 'T', [field]: long }).catch((error) => error);
+    assert.equal(refused.reason, 'INVALID_ARGUMENT', field);
+    assert.equal(refused.metadata.detail, `${field} is too long`);
+    assert.equal(refused.violations[0].field, field);
+  }
+  await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY }, { title: 'T', body: 'x'.repeat(MAX_BODY_CHARS) });
+  assert.equal(calls.length, 1);
+});
+
+test('a report holding a stored secret is refused before it is composed or sent, whoever the caller is', async () => {
+  const { http, calls } = stub();
+  const composed = [];
+  const context = { http, relayUrl: RELAY, mentionsSecret: async (parts) => parts.some((part) => part.includes('s3cret')), compose: async (text) => { composed.push(text); return { title: 'T', body: text, composed_by: 'test' }; } };
+  for (const report of [{ text: 'my s3cret here' }, { title: 'a s3cret', body: 'b' }, { title: 'T', body: 'has s3cret' }]) {
+    const refused = await createFeedback(context, report).catch((error) => error);
+    assert.equal(refused.metadata.detail, 'the report contains a stored secret');
+    assert.doesNotMatch(JSON.stringify(refused.toEnvelope()), /s3cret/);
+  }
+  assert.equal(calls.length, 0);
+  assert.equal(composed.length, 0);
+});
+
+test('a report with text is shaped by compose and filed; one without is filed as given', async () => {
+  const { http, calls } = stub();
+  const compose = async (text) => ({ kind: 'bug', title: 'Shaped', body: text, composed_by: 'haiku' });
+  const shaped = await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, compose }, { text: 'it breaks', title: 'ignored' });
+  assert.deepEqual([shaped.title, shaped.composed_by, calls[0].body.kind], ['Shaped', 'haiku', 'bug']);
+  const plain = await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, compose }, { title: 'Mine', from: 'claude' });
+  assert.deepEqual([plain.title, plain.composed_by], ['Mine', 'claude']);
+});
+
 test('a relay 400, a rate limit and a failure come back as their own reasons, the raw text only in debug', async () => {
-  const refused = await createFeedback({ relayUrl: RELAY, http: failing(Object.assign(new Error('HTTP 400 from relay.invalid'), { upstreamStatus: 400 })) }, { title: 'x' }).catch((error) => error);
+  const refused = await createFeedback({ mentionsSecret: none, relayUrl: RELAY, http: failing(Object.assign(new Error('HTTP 400 from relay.invalid'), { upstreamStatus: 400 })) }, { title: 'x' }).catch((error) => error);
   assert.equal(refused.reason, 'INVALID_ARGUMENT');
   assert.equal(refused.code, 400);
   assert.match(refused.debug, /relay\.invalid/);
   assert.doesNotMatch(JSON.stringify(refused.toEnvelope()), /relay\.invalid/);
-  const limited = await createFeedback({ relayUrl: RELAY, http: failing(new RateLimited('429 from relay.invalid')) }, { title: 'x' }).catch((error) => error);
+  const limited = await createFeedback({ mentionsSecret: none, relayUrl: RELAY, http: failing(new RateLimited('429 from relay.invalid')) }, { title: 'x' }).catch((error) => error);
   assert.equal(limited.reason, 'RATE_LIMITED');
-  const down = await createFeedback({ relayUrl: RELAY, http: failing(Object.assign(new Error('HTTP 503 from relay.invalid'), { upstreamStatus: 503 })) }, { title: 'x' }).catch((error) => error);
+  const down = await createFeedback({ mentionsSecret: none, relayUrl: RELAY, http: failing(Object.assign(new Error('HTTP 503 from relay.invalid'), { upstreamStatus: 503 })) }, { title: 'x' }).catch((error) => error);
   assert.equal(down.reason, 'UPSTREAM_FAILED');
   assert.equal(down.metadata.upstream_status, 503);
 });
@@ -100,7 +136,7 @@ test('a relay 400, a rate limit and a failure come back as their own reasons, th
 test('a filed report is remembered on disk and survives a reopen', async () => {
   const dir = reportsDir();
   const { http } = stub();
-  await createFeedback({ http, relayUrl: RELAY, reports: open(dir, { http }) }, { kind: 'bug', title: 'The chevron wraps' });
+  await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, reports: open(dir, { http }) }, { kind: 'bug', title: 'The chevron wraps' });
   const [stored] = open(dir).list();
   assert.equal(stored.id, 'RMA-500');
   assert.equal(stored.kind, 'bug');

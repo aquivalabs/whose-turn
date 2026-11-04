@@ -127,3 +127,23 @@ test('settings violations name each bad key and refuse unknown ones', () => {
   assert.deepEqual(found.map((entry) => entry.field), ['settings.poll_seconds', 'settings.history_days', 'settings.stale_minutes', 'settings.port']);
   assert.equal(settingsViolations('x')[0].field, 'settings');
 });
+
+test('a hand-edited file with settings out of range falls back to the defaults and reports each one', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  writeFileSync(join(dir, 'config.json'), JSON.stringify({ workspaces: [{ id: 'home' }], poll_seconds: 5, history_days: 1.5, stale_minutes: 99999, failing_polls: 'x' }));
+  const loaded = loadConfig({ WHOSE_TURN_DATA: dir });
+  assert.deepEqual(loaded.settings, { poll_seconds: 60, history_days: 14, stale_minutes: 15, failing_polls: 3 });
+  assert.equal(loaded.pollSeconds, 60);
+  assert.equal(loaded.historyDays, 14);
+  assert.equal(loaded.problems.filter((line) => /; using /.test(line)).length, 4);
+  assert.match(loaded.problems.join('\n'), /poll_seconds must be a number from 15 to 3600; using 60\./);
+});
+
+test('the file and the API judge a setting by the same rule', () => {
+  for (const [key, value] of [['poll_seconds', 14], ['poll_seconds', 3601], ['history_days', 2.5], ['failing_polls', 0], ['stale_minutes', 1440]]) {
+    const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+    writeFileSync(join(dir, 'config.json'), JSON.stringify({ workspaces: [{ id: 'home' }], [key]: value }));
+    const fromFile = loadConfig({ WHOSE_TURN_DATA: dir }).problems.some((line) => line.startsWith(`${key} must`));
+    assert.equal(fromFile, settingsViolations({ [key]: value }).length > 0, `${key}=${value}`);
+  }
+});

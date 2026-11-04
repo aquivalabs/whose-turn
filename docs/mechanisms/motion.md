@@ -76,7 +76,7 @@ A column's last open panel fills the rest of the column, so a drag on its bottom
 is withdrawn: it fades out (`--motion-fast`), takes no pointer, leaves the tab order and is hidden from assistive
 technology. The island looks for an open island after it among its siblings when the fold list changes and when
 siblings are added or removed, so folding the panel below withdraws the grip above and unfolding brings it back. A
-width grip is never withdrawn. RMA-312.
+width grip is never withdrawn, because only a height island watches its siblings. The same sibling list, split into the islands after this one and all the others, serves this look and the resize bounds. RMA-312, RMA-339.
 
 ### The island's floor
 

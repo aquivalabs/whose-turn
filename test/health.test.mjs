@@ -50,7 +50,7 @@ test('the config takes the thresholds and refuses a non-positive one', () => {
   assert.deepEqual(load({ workspaces: [], stale_minutes: 5, failing_polls: 2 }).health, { stale_minutes: 5, failing_polls: 2 });
   const bad = load({ workspaces: [], stale_minutes: 0 });
   assert.equal(bad.health.stale_minutes, 15);
-  assert.match(bad.problems[0], /stale_minutes must be a positive number/);
+  assert.match(bad.problems[0], /stale_minutes must be a number from 1 to 1440; using 15/);
 });
 
 const flaky = (script) => {
