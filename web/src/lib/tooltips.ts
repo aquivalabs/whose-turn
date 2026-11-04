@@ -55,6 +55,8 @@ export const installTooltips = (): (() => void) => {
       }
     });
   };
+  const focusedWithoutIntent = (reference: Element) =>
+    document.activeElement === reference && !reference.matches(':focus-visible') && !reference.matches(':hover');
   const onPointerDown = (event: Event) => {
     const control = explainControl(event.target);
     pointerIsDown = !control;
@@ -95,7 +97,7 @@ export const installTooltips = (): (() => void) => {
     theme: 'wt',
     appendTo: () => document.body,
     onShow: (instance: TippyInstance) => {
-      if (pointerIsDown) {
+      if (pointerIsDown || focusedWithoutIntent(instance.reference)) {
         return false;
       }
       track(instance);

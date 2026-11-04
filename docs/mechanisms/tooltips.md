@@ -21,6 +21,7 @@ first; `installTooltips` in `web/src/lib/tooltips.ts` wires them. RMA-261, RMA-2
   behind.
 - Explanation controls (`data-tip-click`: the "?" icons and "why" links) also toggle on click, which is what
   opens them on touch. A pinned tooltip stays until a second click, a press elsewhere or Escape.
+- Focus shows a tooltip only when it is keyboard focus (`:focus-visible`) or the pointer is over the control, so the focus a closing dialog hands back to its opener does not leave a tooltip on screen.
 - Without the Tippy script the install does nothing.
 
 ## What obliges an update

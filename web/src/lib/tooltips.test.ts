@@ -75,6 +75,22 @@ describe('installTooltips', () => {
     expect(instance.destroy).toHaveBeenCalled();
   });
 
+  it('does not show a hint for focus that only came back to the control after a dialog closed', () => {
+    const instance = makeInstance(control);
+    control.focus();
+    vi.spyOn(control, 'matches').mockImplementation(() => false);
+
+    expect(options.onShow(instance as never)).toBe(false);
+  });
+
+  it('shows a hint for keyboard focus', () => {
+    const instance = makeInstance(control);
+    control.focus();
+    vi.spyOn(control, 'matches').mockImplementation((selector: string) => selector === ':focus-visible');
+
+    expect(options.onShow(instance as never)).toBeUndefined();
+  });
+
   describe('explanation controls', () => {
     let help: HTMLElement;
 
