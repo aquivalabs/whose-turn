@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { notify } from '../lib/notify.mjs';
+import { muted, notify } from '../lib/notify.mjs';
 
 const capture = (platform, title, body) => {
   const calls = [];
@@ -40,4 +40,16 @@ test('title and body are cut to a sane length; other platforms stay silent', () 
   const [[, args]] = capture('linux', 'x'.repeat(500), 'y'.repeat(500));
   assert.deepEqual(args.map((text) => text.length), [120, 240]);
   assert.deepEqual(capture('freebsd', 'T', 'B'), []);
+});
+
+test('tests and scratch servers stay silent: a test runner or WHOSE_TURN_NOTIFY=off mutes the real notification', () => {
+  assert.equal(muted({ NODE_TEST_CONTEXT: 'child-v8' }), true);
+  assert.equal(muted({ VITEST: 'true' }), true);
+  assert.equal(muted({ WHOSE_TURN_NOTIFY: 'off' }), true);
+  assert.equal(muted({}), false);
+  assert.equal(muted({ WHOSE_TURN_NOTIFY: 'on' }), false);
+});
+
+test('this very test run is muted, so the suite never reaches the desktop', () => {
+  assert.equal(muted(), true);
 });

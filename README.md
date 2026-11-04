@@ -43,7 +43,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | Linux | `$XDG_CONFIG_HOME/whose-turn/config.json`, default `~/.config/whose-turn/config.json` |
 | Windows | `%APPDATA%\whose-turn\config.json` |
 
-`WHOSE_TURN_DATA` overrides the whole directory, `WHOSE_TURN_CONFIG` the config file alone, `WHOSE_TURN_PORT` the port (it wins over `port` in the config file; `install.sh` and the plugin read both the same way). On first run there is no file: the settings sheet (the gear) or Claude through `/api/config` writes it, or copy `config.example.json` there and fill in:
+`WHOSE_TURN_DATA` overrides the whole directory, `WHOSE_TURN_CONFIG` the config file alone, `WHOSE_TURN_PORT` the port (it wins over `port` in the config file; `install.sh` and the plugin read both the same way). `WHOSE_TURN_NOTIFY=off` silences desktop notifications, for a second server you run to try something; under a test runner they are always silent. On first run there is no file: the settings sheet (the gear) or Claude through `/api/config` writes it, or copy `config.example.json` there and fill in:
 
 | key | meaning |
 |---|---|

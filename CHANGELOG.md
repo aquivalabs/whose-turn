@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Fixed
+- You no longer get stray notifications from our test runs, such as one about a "Northwind" workspace you never had. RMA-264.
 - Clicking a "?" icon or a "why" link shows its explanation again, a second click or Escape closes it, and on a touch screen a tap opens it. Hints on buttons and panel edges still show only on hover. RMA-263.
 - A hint no longer stays on screen after you drag a panel edge, fold the header or scroll. It goes away as soon as you press, drag or scroll, and when the thing it described disappears. RMA-261.
 
