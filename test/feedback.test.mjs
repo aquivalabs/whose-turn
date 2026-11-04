@@ -288,6 +288,8 @@ test('the monitor version and the clean client report go to the relay', async ()
   assert.equal(sent.environment.ip, undefined);
 });
 
+const withAdmin = (options) => ({ ...options, adminHosts: ['relay.invalid'] });
+
 const adminStub = ({ issues = [], status = 0 } = {}) => {
   const calls = [];
   const http = { fetchJson: async (url, options = {}) => {
@@ -307,7 +309,7 @@ const everyIssues = [relayIssue({ identifier: 'RMA-502', title: 'Someone else' }
 
 test('without an admin token the list is this machine\'s own reports and carries no mine marker', async () => {
   const { http, calls } = adminStub({ issues: everyIssues });
-  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => '' });
+  const reports = openReports(reportsDir(), withAdmin({ http, relayUrl: RELAY, adminToken: async () => '' }));
   reports.add({ id: 'RMA-500', title: 'The chevron wraps', filed_at: '2026-11-02T10:00:00.000Z' });
   const list = await reports.states();
   assert.deepEqual(list.map((report) => report.id), ['RMA-500']);
@@ -317,7 +319,7 @@ test('without an admin token the list is this machine\'s own reports and carries
 
 test('with an admin token the relay lists every report newest first, each marked mine when this machine filed it, and any id has a page', async () => {
   const { http, calls } = adminStub({ issues: everyIssues });
-  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => TOKEN, adminHosts: ['relay.invalid'] });
+  const reports = openReports(reportsDir(), withAdmin({ http, relayUrl: RELAY, adminToken: async () => TOKEN }));
   reports.add({ id: 'RMA-500', title: 'The chevron wraps', filed_at: '2026-11-02T10:00:00.000Z' });
   const list = await reports.states();
   assert.deepEqual(list.map((report) => [report.id, report.mine]), [['RMA-502', false], ['RMA-500', true], ['RMA-499', false]]);
@@ -331,7 +333,7 @@ test('with an admin token the relay lists every report newest first, each marked
 
 test('a 401 from the relay falls back to this machine\'s own reports without a word', async () => {
   const { http } = adminStub({ issues: everyIssues, status: 401 });
-  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => 'wrong', adminHosts: ['relay.invalid'] });
+  const reports = openReports(reportsDir(), withAdmin({ http, relayUrl: RELAY, adminToken: async () => 'wrong' }));
   reports.add({ id: 'RMA-500', title: 'The chevron wraps', filed_at: '2026-11-02T10:00:00.000Z' });
   const list = await reports.states();
   assert.deepEqual(list.map((report) => report.id), ['RMA-500']);
@@ -341,7 +343,7 @@ test('a 401 from the relay falls back to this machine\'s own reports without a w
 
 test('the admin token never appears in an API response', async () => {
   const { http } = adminStub({ issues: everyIssues });
-  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => TOKEN, adminHosts: ['relay.invalid'] });
+  const reports = openReports(reportsDir(), withAdmin({ http, relayUrl: RELAY, adminToken: async () => TOKEN }));
   reports.add({ id: 'RMA-500', title: 'The chevron wraps', filed_at: '2026-11-02T10:00:00.000Z' });
   const { server, get } = await startTestApi({ registry: emptyRegistry(), reports, http });
   try {
@@ -360,7 +362,7 @@ const newsDesk = ({ issues, admin = false } = {}) => {
   let current = issues;
   const http = { fetchJson: async (url) => { calls.push(url); return { issues: current }; } };
   const dir = reportsDir();
-  const reports = openReports(dir, { http, relayUrl: RELAY, adminHosts: ['relay.invalid'], adminToken: async () => (admin ? 'token' : '') });
+  const reports = openReports(dir, withAdmin({ http, relayUrl: RELAY, adminToken: async () => (admin ? 'token' : '') }));
   return { reports, dir, calls, set: (next) => { current = next; } };
 };
 
@@ -406,7 +408,7 @@ test('news: the maintainer hears of a new user report, and a failed read never f
   desk.set([relayIssue(), relayIssue({ identifier: 'RMA-501' })]);
   desk.reports.add({ id: 'RMA-500', title: 't', kind: 'bug', filed_at: 'x' });
   assert.equal(await desk.reports.checkNews(), true);
-  const broken = openReports(desk.dir, { http: failing(new Error('down')), relayUrl: RELAY, adminHosts: ['relay.invalid'], adminToken: async () => 'token' });
+  const broken = openReports(desk.dir, withAdmin({ http: failing(new Error('down')), relayUrl: RELAY, adminToken: async () => 'token' }));
   await broken.markSeen();
   assert.deepEqual(Object.keys(JSON.parse(readFileSync(join(desk.dir, 'reports-seen.json'), 'utf8'))), ['RMA-500']);
 });
@@ -443,7 +445,7 @@ test('the admin token is looked up once, a miss included, and again after a 401'
     }
     return { issues: url.includes('all=1') ? everyIssues : [] };
   } };
-  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminHosts: ['relay.invalid'], adminToken: async () => { lookups += 1; return 'token'; } });
+  const reports = openReports(reportsDir(), withAdmin({ http, relayUrl: RELAY, adminToken: async () => { lookups += 1; return 'token'; } }));
   const clock = mock.method(Date, 'now', () => realNow + minutes * 60000);
   const later = (by) => { minutes += by; };
   await reports.checkNews();
@@ -458,7 +460,7 @@ test('the admin token is looked up once, a miss included, and again after a 401'
   await reports.markSeen();
   clock.mock.restore();
   assert.equal(lookups, 2, 'a 401 drops the remembered token');
-  const missing = openReports(reportsDir(), { http, relayUrl: RELAY, adminHosts: ['relay.invalid'], adminToken: async () => { lookups += 1; return ''; } });
+  const missing = openReports(reportsDir(), withAdmin({ http, relayUrl: RELAY, adminToken: async () => { lookups += 1; return ''; } }));
   await missing.checkNews();
   mock.method(Date, 'now', () => realNow + 60 * 60000);
   await missing.markSeen();

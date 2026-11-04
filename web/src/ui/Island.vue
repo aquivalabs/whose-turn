@@ -29,7 +29,7 @@ const { collapsed, toggle: flip } = useFold(props.id);
 const strip = computed(() => collapsed.value && props.resize === 'width');
 const { size, set } = usePanelSize(() => props.sizeKey);
 const root = useTemplateRef<HTMLElement>('root');
-// docs/adr/0009-motion-in-the-window.md § Implementation notes
+// docs/adr/0009-motion-in-the-window.md § Implementation notes: a fold glides
 let gliding = false;
 const toggle = async () => {
   gliding = true;
@@ -52,9 +52,9 @@ const scrolledAbove = (row: HTMLElement, stop: HTMLElement) => {
   }
   return offset;
 };
-// docs/adr/0009-motion-in-the-window.md § Implementation notes
+// docs/adr/0009-motion-in-the-window.md § Implementation notes: the island's floor counts only its own rows
 const OWN_ROWS = ':scope > .row-scroll tbody > tr, :scope > .todos__list > li';
-// docs/adr/0009-motion-in-the-window.md § Implementation notes
+// docs/adr/0009-motion-in-the-window.md § Implementation notes: the island's floor counts only its own rows
 const naturalHeight = (element: HTMLElement) => {
   const content = element.classList.contains('row-scroll') ? element.firstElementChild : null;
   const own = content instanceof HTMLElement ? content.offsetHeight : element.offsetHeight;
@@ -164,7 +164,7 @@ const bounds = () => {
         </button>
       </p>
     </div>
-    <!-- docs/adr/0009-motion-in-the-window.md § Implementation notes, RMA-319 -->
+    <!-- docs/adr/0009-motion-in-the-window.md § Implementation notes: a folded body is not mounted, RMA-319 -->
     <div v-if="!collapsed" ref="body" class="island__body"><slot /></div>
     <ResizeHandle
       v-if="!collapsed"

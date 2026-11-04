@@ -2,12 +2,14 @@
 // Moves every whose-turn issue in Ready for release to Done; user reports get "Shipped in <version>." Dry run unless --apply.
 // Flags: --version, --team, --project, --keychain-service, --keychain-account. RMA-321.
 import { readFileSync } from 'node:fs';
+import { userInfo } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { parseArgs as nodeParseArgs } from 'node:util';
 import { loadConfig } from '../lib/config.mjs';
 import { createSecrets } from '../lib/secrets.mjs';
 
 const LINEAR_URL = 'https://api.linear.app/graphql';
-export const DEFAULTS = { team: 'RMA', project: 'whose-turn', keychainService: 'linear-api-key-write', keychainAccount: 'roman' };
+export const DEFAULTS = { team: 'RMA', project: 'whose-turn', keychainService: 'linear-api-key-write', keychainAccount: userInfo().username };
 const READY = 'Ready for release';
 const DONE = 'Done';
 const REPORT_LABEL = 'User report';
@@ -81,21 +83,24 @@ export const applyPlan = async (call, plan) => {
   }
 };
 
-const VALUE_FLAGS = { '--version': 'version', '--team': 'team', '--project': 'project', '--keychain-service': 'keychainService', '--keychain-account': 'keychainAccount' };
+const OPTIONS = {
+  apply: { type: 'boolean' },
+  version: { type: 'string' },
+  team: { type: 'string' },
+  project: { type: 'string' },
+  'keychain-service': { type: 'string' },
+  'keychain-account': { type: 'string' },
+};
 
+/** The flags with the defaults applied; an unknown flag or one without a value throws. */
 export const parseArgs = (argv) => {
-  const parsed = { apply: argv.includes('--apply'), version: undefined };
-  for (const [flag, name] of Object.entries(VALUE_FLAGS)) {
-    if (argv.includes(flag)) {
-      parsed[name] = argv[argv.indexOf(flag) + 1];
-    }
-  }
-  return parsed;
+  const { values } = nodeParseArgs({ args: argv, options: OPTIONS, strict: true });
+  const given = Object.entries(values).map(([flag, value]) => [flag.replace(/-(\w)/g, (_, letter) => letter.toUpperCase()), value]);
+  return { apply: false, ...DEFAULTS, ...Object.fromEntries(given) };
 };
 
 const main = async () => {
-  const { apply, version: given, ...flags } = parseArgs(process.argv.slice(2));
-  const options = { ...DEFAULTS, ...flags };
+  const { apply, version: given, ...options } = parseArgs(process.argv.slice(2));
   const version = given || JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
   const key = await createSecrets(loadConfig().dataDir).get(options.keychainService, options.keychainAccount);
   if (!key) {

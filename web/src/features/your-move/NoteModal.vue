@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// What a handled row carries: the outcome of a pass-on and the note. docs/mechanisms/your-move.md § How it behaves
+// What a handled row carries: the outcome of a pass-on and the note. docs/mechanisms/your-move.md § The note window
 import { AnimatePresence } from 'motion-v';
 import { computed, nextTick, ref, watch } from 'vue';
 import { snapshot, ui, setMarks, showInFeed, justHandled } from '@/store.ts';

@@ -60,9 +60,10 @@ export const glideThrough = async (
   if (reduced.value || from === to) {
     return;
   }
-  // docs/adr/0009-motion-in-the-window.md § Implementation notes
+  // docs/adr/0009-motion-in-the-window.md § Implementation notes: the height tween holds the box (border-box)
   const hold = property === 'height' ? { flex: 'none', minHeight: '0', maxHeight: 'none', boxSizing: 'border-box' } : {};
   Object.assign(element.style, hold);
+  // docs/adr/0009-motion-in-the-window.md § Implementation notes: the old value goes back on at once
   element.style[property] = from;
   try {
     await animate(element, { [property]: [from, to] }, tween(DURATION.base));

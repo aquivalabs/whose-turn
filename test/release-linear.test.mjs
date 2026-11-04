@@ -73,16 +73,21 @@ test('a failed comment leaves the issue where it was', async () => {
   assert.equal(sent.length, 1);
 });
 
-test('dry-run is the default, and --version overrides', () => {
-  assert.deepEqual(parseArgs([]), { apply: false, version: undefined });
-  assert.deepEqual(parseArgs(['--apply', '--version', '1.2.3']), { apply: true, version: '1.2.3' });
+test('flags are parsed over the defaults: dry run, a version, team, project and the secret-store entry', () => {
+  assert.deepEqual(parseArgs([]), { apply: false, ...DEFAULTS });
+  assert.equal(parseArgs(['--apply', '--version', '1.2.3']).apply, true);
+  assert.equal(parseArgs(['--apply', '--version', '1.2.3']).version, '1.2.3');
+  assert.deepEqual(parseArgs(['--team', 'ABC', '--project', 'other', '--keychain-service', 's', '--keychain-account', 'a']), {
+    apply: false, team: 'ABC', project: 'other', keychainService: 's', keychainAccount: 'a',
+  });
 });
 
-test('team, project and the secret-store entry are flags with today\'s values as defaults', async () => {
-  assert.deepEqual(DEFAULTS, { team: 'RMA', project: 'whose-turn', keychainService: 'linear-api-key-write', keychainAccount: 'roman' });
-  assert.deepEqual(parseArgs(['--team', 'ABC', '--project', 'other', '--keychain-service', 's', '--keychain-account', 'a']), {
-    apply: false, version: undefined, team: 'ABC', project: 'other', keychainService: 's', keychainAccount: 'a',
-  });
+test('an unknown flag or a flag with no value is an error', () => {
+  assert.throws(() => parseArgs(['--versoin', '1']));
+  assert.throws(() => parseArgs(['--team']));
+});
+
+test('readReady takes team and project from its options', async () => {
   const { call, sent } = stubLinear([{ pageInfo: { hasNextPage: false }, nodes: [] }]);
   await readReady(call, { team: 'ABC', project: 'other' });
   assert.equal(sent[0].variables.team, 'ABC');
