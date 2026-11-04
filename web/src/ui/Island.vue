@@ -37,14 +37,21 @@ const scrolledAbove = (row: HTMLElement, stop: HTMLElement) => {
   }
   return offset;
 };
+// The island's own primary rows: those in its direct row scroller or its to-do list, never a table nested elsewhere in the body.
+const OWN_ROWS = ':scope > .row-scroll tbody > tr, :scope > .todos__list > li';
+// Height a child needs, ignoring any room it was stretched into, so a floor never includes the island's own current height.
+const naturalHeight = (element: HTMLElement) => {
+  const content = element.classList.contains('row-scroll') ? element.firstElementChild : null;
+  const own = content instanceof HTMLElement ? content.offsetHeight : element.offsetHeight;
+  return Math.max(own, pixels(getComputedStyle(element).minHeight));
+};
 const siblingsBelow = (body: HTMLElement, row: HTMLElement) => {
   const owner = [...body.children].find((child) => child.contains(row));
   const after = owner ? [...body.children].slice([...body.children].indexOf(owner) + 1) : [];
   return after
     .filter((node) => !node.classList.contains('row-scroll__more'))
     .reduce((sum, node) => {
-      const element = node as HTMLElement;
-      return sum + (pixels(getComputedStyle(element).minHeight) || element.offsetHeight);
+      return sum + naturalHeight(node as HTMLElement);
     }, 0);
 };
 const measure = () => {
@@ -53,13 +60,14 @@ const measure = () => {
   if (!el || !body || collapsed.value || props.resize !== 'height') {
     return;
   }
-  const rows = body.querySelectorAll<HTMLElement>('tbody > tr, .todos__list > li');
+  const rows = body.querySelectorAll<HTMLElement>(OWN_ROWS);
   const hadRows = hasRows.value;
   hasRows.value = rows.length > 0;
   const top = el.getBoundingClientRect().top;
   const padding = pixels(getComputedStyle(body).paddingBottom);
   if (!rows.length) {
-    floor.value = hadRows ? 0 : Math.ceil(body.offsetTop + body.scrollHeight);
+    const natural = [...body.children].reduce((sum, node) => sum + naturalHeight(node as HTMLElement), 0);
+    floor.value = hadRows ? 0 : Math.ceil(body.offsetTop + natural + padding);
     return;
   }
   const bottom = rows[0].getBoundingClientRect().bottom - top + scrolledAbove(rows[0], el);
