@@ -88,6 +88,7 @@ watch(
   () => ui.feedback,
   (open) => {
     if (open) {
+      ui.reportNews = false;
       problems.value = [];
       done.value = null;
       load().then(() => nextTick(() => field.value?.focus()));

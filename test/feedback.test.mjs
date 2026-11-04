@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { clientOf, createFeedback, openReports } from '../lib/feedback.mjs';
@@ -343,5 +343,79 @@ test('the admin token never appears in an API response', async () => {
     assert.ok(!list.includes(TOKEN) && !one.includes(TOKEN));
   } finally {
     server.close();
+  }
+});
+
+const newsDesk = ({ issues, admin = false } = {}) => {
+  const calls = [];
+  let current = issues;
+  const http = { fetchJson: async (url) => { calls.push(url); return { issues: current }; } };
+  const dir = reportsDir();
+  const reports = openReports(dir, { http, relayUrl: RELAY, adminToken: async () => (admin ? 'token' : '') });
+  return { reports, dir, calls, set: (next) => { current = next; } };
+};
+
+test('news: the first look records what is there and shows none; a new state or a new answer is news until the sheet is read', async () => {
+  const desk = newsDesk({ issues: [relayIssue()] });
+  desk.reports.add({ id: 'RMA-500', title: 't', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
+  const events = [];
+  desk.reports.subscribe((event) => events.push(event));
+  assert.equal(await desk.reports.checkNews(), false);
+  assert.deepEqual(JSON.parse(readFileSync(join(desk.dir, 'reports-seen.json'), 'utf8')), { 'RMA-500': { state: 'open', answers: 0 } });
+  desk.set([relayIssue({ answers: [{ at: '2026-11-03T10:00:00.000Z', body: 'On it.' }] })]);
+  assert.equal(await desk.reports.checkNews(), false, 'a read younger than ten minutes is reused');
+  assert.equal(desk.calls.length, 1);
+  const later = openReports(desk.dir, { http: { fetchJson: async () => ({ issues: [relayIssue({ outcome: 'done' })] }) }, relayUrl: RELAY });
+  later.add({ id: 'RMA-500', title: 't', kind: 'bug', filed_at: 'x' });
+  assert.equal(await later.checkNews(), true, 'the snapshot survives a restart and the new state is news');
+  assert.equal(later.hasNews(), true);
+  await later.markSeen();
+  assert.equal(later.hasNews(), false);
+  assert.deepEqual(JSON.parse(readFileSync(join(desk.dir, 'reports-seen.json'), 'utf8')), { 'RMA-500': { state: 'done', answers: 0 } });
+  assert.deepEqual(events, []);
+});
+
+test('news: subscribers hear when the news appears and when the sheet calms it', async () => {
+  const dir = reportsDir();
+  writeFileSync(join(dir, 'reports-seen.json'), JSON.stringify({ 'RMA-500': { state: 'open', answers: 0 } }));
+  const reports = openReports(dir, { http: { fetchJson: async () => ({ issues: [relayIssue({ outcome: 'dropped' })] }) }, relayUrl: RELAY });
+  reports.add({ id: 'RMA-500', title: 't', kind: 'bug', filed_at: 'x' });
+  const events = [];
+  reports.subscribe((event) => events.push(event));
+  await reports.checkNews();
+  await reports.checkNews();
+  await reports.markSeen();
+  assert.deepEqual(events, [{ report_news: true }, { report_news: false }]);
+});
+
+test('news: the maintainer hears of a new user report, and a failed read never forgets what was seen', async () => {
+  const desk = newsDesk({ issues: [relayIssue()], admin: true });
+  assert.equal(await desk.reports.checkNews(), false);
+  desk.set([relayIssue(), relayIssue({ identifier: 'RMA-501' })]);
+  desk.reports.add({ id: 'RMA-500', title: 't', kind: 'bug', filed_at: 'x' });
+  assert.equal(await desk.reports.checkNews(), true);
+  const broken = openReports(desk.dir, { http: failing(new Error('down')), relayUrl: RELAY, adminToken: async () => 'token' });
+  await broken.markSeen();
+  assert.deepEqual(Object.keys(JSON.parse(readFileSync(join(desk.dir, 'reports-seen.json'), 'utf8'))), ['RMA-500']);
+});
+
+test('news: the stream opens with the current news and GET /api/feedback marks the reports seen', async () => {
+  let marked = 0;
+  const reports = { list: () => [], add: () => {}, hasNews: () => true, subscribe: () => () => {}, states: async () => [], markSeen: async () => { marked++; } };
+  const { server, get } = await startTestApi({ reports });
+  try {
+    const response = await get('/api/stream');
+    const reader = response.body.getReader();
+    let text = '';
+    while (!text.includes('report_news')) {
+      text += new TextDecoder().decode((await reader.read()).value);
+    }
+    assert.match(text, /"report_news":true/);
+    await reader.cancel();
+    await get('/api/feedback');
+    assert.equal(marked, 1);
+  } finally {
+    server.close();
+    server.closeAllConnections();
   }
 });

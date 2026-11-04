@@ -7,10 +7,12 @@ import { tabUrl } from '@/lib/window-mode.ts';
 import { writeProblem } from '@/lib/problems.ts';
 import { liveStatus } from '@/lib/live-status.ts';
 import { BUG } from '@/lib/icons.ts';
+import { useAttention } from '@/composables/useAttention.ts';
 import AiButton from '@/ui/AiButton.vue';
 import UpdateChip from './UpdateChip.vue';
 import NotificationsToggle from './NotificationsToggle.vue';
 const emit = defineEmits<{ report: [] }>();
+const wiggling = useAttention(computed(() => ui.reportNews));
 const verdict = computed(() => {
   void now.value;
   return liveStatus(
@@ -48,12 +50,13 @@ const openAsApp = () => {
     <button
       type="button"
       class="btn status-bar__btn status-bar__report"
+      :class="{ 'status-bar__report--wiggle': wiggling }"
       title="A bug or a wish about this monitor, straight to its backlog"
       @click="emit('report')"
     >
       <svg class="status-bar__icon" viewBox="0 0 24 24" aria-hidden="true">
         <path :d="BUG" fill="currentColor" /></svg
-      >Report
+      >Report<span v-if="ui.reportNews" class="status-bar__dot" title="A report has news"></span>
     </button>
     <span
       class="status-bar__live"
@@ -114,7 +117,53 @@ const openAsApp = () => {
 }
 
 .status-bar__report {
+  position: relative;
   gap: 6px;
+}
+
+.status-bar__report--wiggle {
+  animation: status-bar-wiggle 0.8s ease-in-out;
+}
+
+.status-bar__dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  box-sizing: border-box;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--md-surface);
+  border-radius: 50%;
+  background: var(--md-primary);
+}
+
+@keyframes status-bar-wiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  20% {
+    transform: rotate(-8deg);
+  }
+
+  40% {
+    transform: rotate(7deg);
+  }
+
+  60% {
+    transform: rotate(-5deg);
+  }
+
+  80% {
+    transform: rotate(3deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-bar__report--wiggle {
+    animation: none;
+  }
 }
 
 .status-bar__icon {

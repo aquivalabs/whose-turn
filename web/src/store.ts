@@ -53,6 +53,7 @@ export const ui = reactive({
   modal: null as FeedItem | null,
   note: '',
   feedback: false,
+  reportNews: false,
   whatsNew: false,
   settings: false,
   settingsDirty: false,
@@ -243,6 +244,10 @@ watch(
     }
     if ('update' in message) {
       snapshot.update = message.update;
+      return;
+    }
+    if ('report_news' in message) {
+      ui.reportNews = message.report_news && !ui.feedback;
       return;
     }
     if (typeof message.open_moves === 'number') {

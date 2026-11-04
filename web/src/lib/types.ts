@@ -158,8 +158,8 @@ export interface Snapshot extends Marked {
   notifications: { desktop: boolean };
 }
 
-/** One message of /api/stream: a workspace's poll, or the update status when it changes. */
-export type StreamEvent = WorkspaceEvent | { update: UpdateStatus };
+/** One message of /api/stream: a workspace's poll, the update status when it changes, or whether a report has news (RMA-311). */
+export type StreamEvent = WorkspaceEvent | { update: UpdateStatus } | { report_news: boolean };
 
 export interface WorkspaceEvent {
   ws: string;

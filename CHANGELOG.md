@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- The Report button shows a dot and gives a short wiggle now and then when one of the reports has news: a new state or a new answer, and for the maintainer also a new user report. It calms down once you open the Report sheet. The monitor looks at most every ten minutes, and the wiggle is off when your system asks for reduced motion. RMA-311.
 - If you maintain Whose Turn, the Report sheet lists every user report, not only yours, and marks the ones you filed. Everyone else still sees only their own. RMA-306.
 - A ticket in code review now shows the names of the reviewers still asked to review its pull request, instead of just "Reviewer". RMA-298.
 

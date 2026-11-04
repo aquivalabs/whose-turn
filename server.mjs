@@ -10,7 +10,7 @@ import { createSecrets } from './lib/secrets.mjs';
 import { createWorkspace } from './lib/workspace.mjs';
 import { createRegistry } from './lib/registry.mjs';
 import { openInbox } from './lib/inbox.mjs';
-import { openReports, RELAY_URL } from './lib/feedback.mjs';
+import { openReports, RELAY_URL, NEWS_EVERY_MS } from './lib/feedback.mjs';
 import { startApi } from './lib/api.mjs';
 import { notifier } from './lib/notify.mjs';
 import { loadChangelog } from './lib/changelog.mjs';
@@ -85,6 +85,9 @@ for (const problem of registry.problems) {
 }
 pollLoop();
 updater.start();
+const checkReports = () => reports.checkNews().catch(() => {});
+checkReports();
+setInterval(checkReports, NEWS_EVERY_MS).unref();
 
 const HEALTH_TICK = 30000;
 let lastTick = Date.now();

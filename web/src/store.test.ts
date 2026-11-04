@@ -145,6 +145,26 @@ test('an update message from the stream replaces the update status and loads not
   vi.doUnmock('@vueuse/core');
 });
 
+test('a report news message from the stream sets the dot and loads nothing, and an open sheet keeps it calm', async () => {
+  const data = ref<unknown>(null);
+  const fetchStub = vi.fn();
+  vi.stubGlobal('fetch', fetchStub);
+  vi.doMock('@vueuse/core', async (original) => ({
+    ...(await original<object>()),
+    useEventSource: () => ({ status: ref('OPEN'), error: ref(null), data, open: vi.fn() }),
+  }));
+  const store = await freshStore();
+  data.value = { report_news: true };
+  expect(store.ui.reportNews).toBe(true);
+  data.value = { report_news: false };
+  expect(store.ui.reportNews).toBe(false);
+  store.ui.feedback = true;
+  data.value = { report_news: true };
+  expect(store.ui.reportNews).toBe(false);
+  expect(fetchStub).not.toHaveBeenCalled();
+  vi.doUnmock('@vueuse/core');
+});
+
 test('start opens the event stream once the first load has answered', async () => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(reply(workspaceReply('w')))));
   const opened = vi.fn();
