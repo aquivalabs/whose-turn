@@ -32,10 +32,10 @@ const toggle = async () => {
     class="btn notifications-toggle"
     :class="{ 'notifications-toggle--off': !on }"
     :aria-checked="on"
-    :title="
+    :data-tip="
       on
-        ? 'Desktop notifications are on. Click to turn them off for the whole monitor.'
-        : 'Desktop notifications are off for the whole monitor. Click to turn them back on.'
+        ? 'Desktop notifications are on for every workspace. Click to turn them all off; the window and Claude\'s session summary keep updating.'
+        : 'Desktop notifications are off for every workspace. The window and Claude\'s session summary still update. Click to turn them back on.'
     "
     @click="toggle"
   >
