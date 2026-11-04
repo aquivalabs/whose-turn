@@ -19,7 +19,7 @@ const load = async (reduce: boolean) => {
 describe('motion tokens', () => {
   it('give every preset a real duration and the shared easing', async () => {
     const motion = await load(false);
-    expect(motion.baseTransition.value).toEqual({ duration: 0.2, ease: motion.EASE });
+    expect(motion.baseTransition.value).toEqual({ duration: motion.DURATION.base, ease: motion.EASE });
     expect(motion.fade.value.transition).toEqual(motion.baseTransition.value);
     expect(motion.rise.value.exit).toEqual({ opacity: 0, y: 12 });
   });

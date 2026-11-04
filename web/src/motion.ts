@@ -3,9 +3,9 @@ import { computed, nextTick } from 'vue';
 import { usePreferredReducedMotion } from '@vueuse/core';
 import { animate } from 'motion-v';
 
-export const DURATION = { fast: 0.15, base: 0.2, slow: 0.25 } as const;
-export const EASE: [number, number, number, number] = [0.2, 0, 0, 1];
-export const SPRING = { type: 'spring', stiffness: 520, damping: 42, mass: 0.9 } as const;
+export const DURATION = { fast: 0.22, base: 0.32, slow: 0.42 } as const;
+export const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+export const SPRING = { type: 'spring', stiffness: 280, damping: 34, mass: 1 } as const;
 
 const preference = usePreferredReducedMotion();
 /** True while the system asks for reduced motion: every change is instant. */
