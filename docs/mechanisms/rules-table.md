@@ -100,7 +100,7 @@ A row with an empty `when` matches every ticket. There are no expressions, scrip
 | `whose` | Row |
 |---|---|
 | `you` | "your move"; shown as `You` |
-| `reviewer` | "waiting on others"; shown as `Reviewer` |
+| `reviewer` | "waiting on others"; shown with the names of the reviewers still requested on the ticket's open PR, else `Reviewer` |
 | `qa` | "waiting on others"; shown as `QA` |
 | `them` | "waiting on others"; shown with the assignee's name |
 | `hidden` | in neither list; `next` is optional |

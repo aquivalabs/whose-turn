@@ -129,7 +129,7 @@ On a 403 or 429 rate limit the poll delay doubles up to 15 minutes, then returns
 
 ## Rules: whose turn
 
-Each ticket is joined with its PR by the ticket key in the PR title. The server computes a set of facts per ticket (`pr.checks`, `ticket.status`, `ticket.assignee`, `unanswered_count` and the rest, listed by `GET /api/config` under `facts`) and walks the workspace's rules table: the first row whose conditions hold decides whose turn it is and the next step. The full contract is in [docs/mechanisms/rules-table.md](docs/mechanisms/rules-table.md).
+Each ticket is joined with its PR by the ticket key in the PR title; the rules keep one PR per ticket key per workspace, so a ticket with PRs in two repositories of one workspace shows one of them. A ticket in code review shows the reviewers still requested on its PR instead of "Reviewer". The server computes a set of facts per ticket (`pr.checks`, `ticket.status`, `ticket.assignee`, `unanswered_count` and the rest, listed by `GET /api/config` under `facts`) and walks the workspace's rules table: the first row whose conditions hold decides whose turn it is and the next step. The full contract is in [docs/mechanisms/rules-table.md](docs/mechanisms/rules-table.md).
 
 The default table, in `lib/default-table.mjs`, takes its status words and next-step texts from the workspace's `rules` (defaults in `lib/config.mjs`). In order:
 

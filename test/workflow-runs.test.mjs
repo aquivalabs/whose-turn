@@ -93,3 +93,30 @@ test('the connector catalogue declares workflow_runs as a boolean that is on by 
   assert.equal(field.boolean, true);
   assert.equal(field.default, true);
 });
+
+test('an open PR row lists the reviewers still requested, users and teams, and a merged PR lists none', async () => {
+  const pull = (number, overrides) => ({
+    number, title: `PROJ-${number} work`, state: 'open', merged_at: null, updated_at: '2026-11-03T09:00:00Z', html_url: `https://github.com/acme/app/pull/${number}`,
+    base: { ref: 'main' }, head: { sha: `sha${number}` }, requested_reviewers: [{ login: 'sam' }], requested_teams: [{ slug: 'core' }], ...overrides,
+  });
+  const pulls = { 7: pull(7), 8: pull(8, { state: 'closed', merged_at: '2026-11-03T08:00:00Z', requested_reviewers: [], requested_teams: [] }) };
+  const http = {
+    fetchJson: async (url) => {
+      const { pathname } = new URL(url);
+      const found = /\/pulls\/(\d+)$/.exec(pathname);
+      if (pathname === '/search/issues') {
+        return { items: [{ number: 7, updated_at: '2026-11-03T09:00:00Z' }, { number: 8, updated_at: '2026-11-03T09:00:00Z' }] };
+      }
+      if (found) {
+        return pulls[found[1]];
+      }
+      if (pathname === '/repos/acme/app') {
+        return { default_branch: 'main' };
+      }
+      return pathname.includes('/check-runs') ? { check_runs: [] } : pathname.includes('/status') ? { state: 'pending', statuses: [] } : [];
+    },
+  };
+  const result = await pollOnce(http, { token: 't', tokenAt: Date.now() }, { workflow_runs: false });
+  assert.deepEqual(result.errors, {});
+  assert.deepEqual(result.prs.map((row) => [row.pr, row.reviewers]), [[7, ['sam', 'core']], [8, []]]);
+});

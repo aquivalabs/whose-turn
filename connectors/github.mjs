@@ -105,6 +105,7 @@ const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
   const row = {
     pr: number, key, title: pr.title, base: pr.base.ref, state, review: reviewDecision(reviews), checks: checks.state, merged_at: pr.merged_at || '',
     updated_at: pr.updated_at, url: pr.html_url,
+    reviewers: state === 'OPEN' ? [...(pr.requested_reviewers || []).map((user) => user.login), ...(pr.requested_teams || []).map((team) => team.slug)] : [],
     last_comment_by: last ? last.who : '', last_comment_at: last ? last.at : '', last_comment_url: last ? last.url : '', last_comment: last ? oneline(last.body, 160) : '',
     unanswered: Boolean(last && state === 'OPEN' && last.state !== 'APPROVED' && last.at > myLast),
   };

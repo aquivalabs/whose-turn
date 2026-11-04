@@ -31,6 +31,14 @@ test('status words come from the rules, so a team can call code review "In Revie
   assert.equal(row.group, 'others');
 });
 
+test('a ticket in code review names the reviewers still requested on its PR, and falls back to Reviewer without any', () => {
+  const named = only(rows({ tickets: [ticket({ status: 'Code Review' })], prs: [pr({ reviewers: ['sam', 'core-team'] })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(named.whose, 'sam, core-team');
+  assert.equal(named.next, 'Code review');
+  const bare = only(rows({ tickets: [ticket({ status: 'Code Review' })], prs: [pr({ reviewers: [] })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(bare.whose, 'Reviewer');
+});
+
 test('a backlog ticket is left out, on me or not, unless it has an open PR', () => {
   assert.equal(only(rows({ tickets: [ticket({ status: 'Backlog', assignee: 'Someone Else' })] }), (candidate) => candidate.row_id === 'PROJ-1').group, 'gone');
   assert.equal(only(rows({ tickets: [ticket({ status: 'Backlog' })] }), (candidate) => candidate.row_id === 'PROJ-1').group, 'gone');
