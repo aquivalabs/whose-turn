@@ -27,6 +27,7 @@ import Waiting from './features/waiting/Waiting.vue';
 import Feed from './features/feed/Feed.vue';
 import FirstRun from './features/first-run/FirstRun.vue';
 import CommentModal from './features/feed/CommentModal.vue';
+import NoteModal from './features/your-move/NoteModal.vue';
 import FeedbackSheet from './features/feedback/FeedbackSheet.vue';
 import SettingsSheet from './features/settings/SettingsSheet.vue';
 import WhatsNewSheet from './features/whats-new/WhatsNewSheet.vue';
@@ -94,6 +95,7 @@ onMounted(() => {
         <SettingsSheet />
         <WhatsNewSheet />
         <CommentModal />
+        <NoteModal />
       </div>
     </div>
   </div>

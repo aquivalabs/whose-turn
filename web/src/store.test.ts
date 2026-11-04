@@ -34,7 +34,7 @@ test('a marks write applies the reply turn and counts', async () => {
   const counts = { mine: 1, others: 2, failing: 0, done: 3 };
   const fetchStub = vi
     .fn()
-    .mockResolvedValue(reply({ marks: { seen: [], base: 4, handled: {} }, turn, counts }));
+    .mockResolvedValue(reply({ marks: { seen: [], base: 4, handled: {}, info: {} }, turn, counts }));
   vi.stubGlobal('fetch', fetchStub);
 
   const problem = await store.setMarks({ base: 4 });

@@ -33,7 +33,7 @@ export const snapshot = shallowReactive<Snapshot>({
   workspace: { id: '', name: '', connectors: [], links: [], key_pattern: '', theme: null },
   turn: [],
   feed: [],
-  marks: { seen: [], base: 0, handled: {} },
+  marks: { seen: [], base: 0, handled: {}, info: {} },
   counts: { mine: 0, others: 0, failing: 0, done: 0 },
   todos: [],
   errors: {},
@@ -50,12 +50,14 @@ export const ui = reactive({
   reconnects: 0,
   status: 'Connecting…',
   modal: null as FeedItem | null,
+  note: '',
   feedback: false,
   whatsNew: false,
   settings: false,
   settingsDirty: false,
   settingsAsk: false,
   settingsAt: '',
+  focusFeed: '',
 });
 
 lastMode.value = ui.mode;
@@ -129,6 +131,7 @@ export const currentLayer = computed(() => topLayer(ui));
 export const closeTopLayer = () => {
   const layer = currentLayer.value;
   if (layer === 'modal') ui.modal = null;
+  if (layer === 'note') ui.note = '';
   if (layer === 'feedback') ui.feedback = false;
   if (layer === 'whatsNew') ui.whatsNew = false;
   if (layer !== 'settings') return;
@@ -151,6 +154,7 @@ const returnFocus = (layer: Layer, isOpen: boolean) => {
 };
 const layerFlags: Record<Layer, () => boolean> = {
   modal: () => Boolean(ui.modal),
+  note: () => Boolean(ui.note),
   settings: () => ui.settings,
   feedback: () => ui.feedback,
   whatsNew: () => ui.whatsNew,
@@ -289,7 +293,13 @@ export const switchWorkspace = (id: string) => {
 const postWs = <T>(url: string, body: object) =>
   post<T & { error?: ApiError }>(url, { ws: snapshot.workspace.id, ...body });
 /** Sends one marks change and takes the marks, rows and counts the server recomputed; resolves with the problem line to show next to its control, empty when the server confirmed it. */
-export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen?: string[]; unseen?: string[] }) =>
+export const setMarks = (
+  body: Partial<Pick<Marks, 'base' | 'handled'>> & {
+    seen?: string[];
+    unseen?: string[];
+    notes?: Record<string, string>;
+  },
+) =>
   postWs<Pick<Snapshot, 'marks' | 'turn' | 'counts'>>('/api/marks', body).then(
     (reply) => {
       const problem = writeProblem(reply);
@@ -305,6 +315,10 @@ export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen
     },
     (failure: Error) => writeProblem(failure),
   );
+/** Asks the feed island to open one item: its group, expanded, scrolled into view. */
+export const showInFeed = (id: string) => {
+  ui.focusFeed = id;
+};
 /** Sends one to-do change; resolves with the problem line to show, empty when the server confirmed it. */
 export const todoAct = (body: { action: string; text?: string; id?: string }) =>
   postWs<Todo[]>('/api/todos', body).then(

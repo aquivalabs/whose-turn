@@ -66,6 +66,17 @@ test('your rows go by the server rank, then oldest first, and the open view list
   assert.deepEqual(waitingRows(turn).map((r) => r.row_id), ['PROJ-5']);
 });
 
+test('the handled view keeps a row whose turn passed on while its automatic mark lives, and the open view never lists it', () => {
+  const turn = [
+    { row_id: 'PROJ-1', group: 'others', rank: 3, updated: '2026-11-02', handled: true },
+    { row_id: 'PROJ-2', group: 'others', rank: 3, updated: '2026-11-02', handled: true },
+  ];
+  const info = { 'PROJ-1': { auto: true, outcome: 'Merged' } };
+  assert.deepEqual(yourRows(turn, 'open', info).rows, []);
+  assert.deepEqual(yourRows(turn, 'handled', info).rows.map((item) => item.row.row_id), ['PROJ-1']);
+  assert.equal(yourRows(turn, 'open', info).handled, 1);
+});
+
 test('a feed group carries the your-move bar while any row of its ticket on you is open, not once all are handled or off you', () => {
   const handled = { row_id: 'PROJ-2', key: 'PROJ-2', group: 'you', handled: true };
   const open = { row_id: 'PROJ-2:c1', key: 'PROJ-2', group: 'you', handled: false };

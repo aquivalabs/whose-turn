@@ -20,7 +20,7 @@ import { useMoveView } from './useMoveView.ts';
 const moveView = useMoveView();
 const view = computed(() => {
   void now.value;
-  const mine = yourRows(snapshot.turn, moveView.value);
+  const mine = yourRows(snapshot.turn, moveView.value, snapshot.marks.info, ui.note);
   return { ...mine, rows: mine.rows.map((item) => ({ ...item, age: age(item.row.activity_at) })) };
 });
 const showPr = computed(() => hasPrColumn(view.value.rows.map((item) => item.row)));
@@ -48,6 +48,13 @@ const emptyText = computed(() => {
 });
 const problems = reactive(new Map<string, string>());
 useClearOnReconnect(() => problems.clear());
+const infoOf = (item: YourRow) => snapshot.marks.info[item.row.row_id];
+const markedAt = (item: YourRow) =>
+  new Date(snapshot.marks.handled[item.row.row_id] || '').toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+const hasLine = (item: YourRow) => Boolean(infoOf(item)?.auto || infoOf(item)?.note);
 const mark = async (item: YourRow) => {
   const id = item.row.row_id;
   const problem = await setMarks({
@@ -58,6 +65,7 @@ const mark = async (item: YourRow) => {
   } else {
     problems.delete(id);
     justHandled.value = item.handled ? '' : id;
+    ui.note = item.handled ? '' : id;
   }
 };
 const justHandled = refAutoReset('', 8000);
@@ -94,78 +102,107 @@ const undoHandled = () => {
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="item in view.rows"
-            :key="item.row.row_id"
-            class="your-move__row"
-            :class="{ 'your-move__row--handled': item.handled }"
-          >
-            <TicketCell :row="item.row" />
-            <td>
-              <span class="hint-row">
-                <span class="your-move__next">{{ item.row.next }}</span>
-                <span
-                  v-if="item.age.text"
-                  class="age"
-                  :class="{ 'age--old': item.age.old }"
-                  :data-tip="'Waiting since ' + when(item.row.activity_at)"
-                  >{{ item.age.text }}</span
+          <template v-for="item in view.rows" :key="item.row.row_id">
+            <tr
+              class="your-move__row"
+              :class="{
+                'your-move__row--handled': item.handled,
+                'your-move__row--lined': hasLine(item),
+              }"
+            >
+              <TicketCell :row="item.row" />
+              <td>
+                <span class="hint-row">
+                  <span class="your-move__next">{{ item.row.next }}</span>
+                  <span
+                    v-if="item.age.text"
+                    class="age"
+                    :class="{ 'age--old': item.age.old }"
+                    :data-tip="'Waiting since ' + when(item.row.activity_at)"
+                    >{{ item.age.text }}</span
+                  >
+                  <button
+                    v-if="item.row.why"
+                    type="button"
+                    class="hint-label"
+                    aria-label="Why this is your move"
+                    :data-tip="item.row.why"
+                    data-tip-click
+                  >
+                    why
+                  </button>
+                  <span
+                    v-if="item.handled && !infoOf(item)?.auto"
+                    class="handled-chip"
+                    :data-tip="
+                      'Marked ' +
+                      ago(snapshot.marks.handled[item.row.row_id] || '') +
+                      '. Comes back in 7 days if it is still open, or sooner when something new happens.'
+                    "
+                    >handled</span
+                  >
+                </span>
+                <p
+                  v-if="problems.get(item.row.row_id)"
+                  class="alert alert--inline your-move__problem"
+                  role="alert"
                 >
+                  {{ problems.get(item.row.row_id) }}
+                </p>
+              </td>
+              <PrCell v-if="showPr" :row="item.row" />
+              <td
+                v-if="showComment"
+                class="hide-narrow"
+                :class="{ 'your-move__quote': item.row.comment }"
+              >
+                <ExtLink
+                  v-if="item.row.comment"
+                  :text="item.row.comment"
+                  :url="item.row.comment_url"
+                />
+              </td>
+              <td class="table__actions">
+                <AiButton
+                  class="table__ai"
+                  :query="{ ws: snapshot.workspace.id, kind: 'row', ref: item.row.row_id }"
+                />
                 <button
-                  v-if="item.row.why"
+                  v-if="!infoOf(item)?.auto"
                   type="button"
-                  class="hint-label"
-                  aria-label="Why this is your move"
-                  :data-tip="item.row.why"
-                  data-tip-click
-                >
-                  why
-                </button>
-                <span
-                  v-if="item.handled"
-                  class="handled-chip"
-                  :data-tip="
-                    'Marked ' +
-                    ago(snapshot.marks.handled[item.row.row_id] || '') +
-                    '. Comes back in 7 days if it is still open, or sooner when something new happens.'
+                  class="your-move__mark"
+                  :class="{ 'your-move__mark--undo': item.handled }"
+                  :aria-label="
+                    (item.handled ? 'Move back to open: ' : 'Mark as handled: ') + item.row.key
                   "
-                  >handled</span
+                  @click.stop="mark(item)"
                 >
-              </span>
-              <p
-                v-if="problems.get(item.row.row_id)"
-                class="alert alert--inline your-move__problem"
-                role="alert"
-              >
-                {{ problems.get(item.row.row_id) }}
-              </p>
-            </td>
-            <PrCell v-if="showPr" :row="item.row" />
-            <td v-if="showComment" class="hide-narrow" :class="{ 'your-move__quote': item.row.comment }">
-              <ExtLink
-                v-if="item.row.comment"
-                :text="item.row.comment"
-                :url="item.row.comment_url"
-              />
-            </td>
-            <td class="table__actions">
-              <AiButton
-                class="table__ai"
-                :query="{ ws: snapshot.workspace.id, kind: 'row', ref: item.row.row_id }"
-              />
-              <button
-                type="button"
-                class="your-move__mark"
-                :class="{ 'your-move__mark--undo': item.handled }"
-                :aria-label="
-                  (item.handled ? 'Move back to open: ' : 'Mark as handled: ') + item.row.key
-                "
-                @click.stop="mark(item)"
-              >
-                {{ item.handled ? 'Undo' : 'Handled' }}
-              </button>
-            </td>
-          </tr>
+                  {{ item.handled ? 'Undo' : 'Handled' }}
+                </button>
+              </td>
+            </tr>
+            <tr
+              v-if="hasLine(item)"
+              data-row-tail
+              class="your-move__line-row"
+              :class="{ 'your-move__line-row--handled': item.handled }"
+            >
+              <td colspan="99" class="your-move__line-cell">
+                <button
+                  type="button"
+                  class="your-move__line"
+                  data-tip="Open the full text and edit the note"
+                  @click="ui.note = item.row.row_id"
+                >
+                  <span class="your-move__arrow" aria-hidden="true">&rarr;</span>
+                  <span class="your-move__outcome">{{
+                    infoOf(item)?.auto ? infoOf(item)?.outcome : infoOf(item)?.note
+                  }}</span>
+                  <time class="your-move__time">{{ markedAt(item) }}</time>
+                </button>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </RowScroll>
@@ -195,6 +232,57 @@ const undoHandled = () => {
 
 .your-move__next {
   font-weight: 500;
+}
+
+.your-move__line-cell {
+  max-width: 0;
+  padding-top: 0;
+}
+
+.your-move__line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border-left: 2px solid var(--md-outline);
+  border-radius: 0 6px 6px 0;
+  background: var(--md-s-high);
+  color: var(--md-on-surface-variant);
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.your-move__line:hover {
+  background: var(--md-s-highest);
+}
+
+.your-move__line:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.your-move__arrow {
+  flex: none;
+}
+
+.your-move__outcome {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.your-move__time {
+  flex: none;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .your-move__quote {
@@ -252,7 +340,13 @@ const undoHandled = () => {
   outline-offset: 2px;
 }
 
-.your-move__row--handled td {
+.your-move__row--lined td {
+  border-bottom: 0;
+  padding-bottom: 8px;
+}
+
+.your-move__row--handled td,
+.your-move__line-row--handled td {
   opacity: 0.55;
 }
 

@@ -1,16 +1,20 @@
 import type * as Store from '@/store.ts';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { setMarks, snapshot, ui } from '@/store.ts';
+import { setMarks, showInFeed, snapshot, ui } from '@/store.ts';
 import type { TurnRow } from '@/lib/types.ts';
 import YourMove from './YourMove.vue';
+import NoteModal from './NoteModal.vue';
 import { useMoveView } from './useMoveView.ts';
 
 vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 vi.mock('@/store.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof Store>()),
   setMarks: vi.fn(),
+  showInFeed: vi.fn(),
 }));
+
+const LONG = 'Looks done, please test the export. '.repeat(20).trim();
 
 const row = (id: string, handled: boolean): TurnRow => ({
   row_id: id,
@@ -28,11 +32,13 @@ const row = (id: string, handled: boolean): TurnRow => ({
 
 beforeEach(() => {
   snapshot.turn = [row('nw-1', false), row('nw-2', true)];
+  snapshot.marks = { seen: [], base: 0, handled: {}, info: {} };
   useMoveView().value = 'open';
+  ui.note = '';
 });
 
 test('the PR and Last comment columns are left out while every row is empty in them', async () => {
-  render(YourMove);
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
   await screen.findByText('Review nw-1');
 
   expect(screen.queryByRole('columnheader', { name: 'PR' })).toBeNull();
@@ -41,9 +47,15 @@ test('the PR and Last comment columns are left out while every row is empty in t
 
 test('a PR row without a ticket links the PR from the ticket column and leaves the PR column out', async () => {
   snapshot.turn = [
-    { ...row('nw-3', false), key: 'repo#7', ticket_url: '', pr: 'repo#7', pr_url: 'https://host.example/pull/7' },
+    {
+      ...row('nw-3', false),
+      key: 'repo#7',
+      ticket_url: '',
+      pr: 'repo#7',
+      pr_url: 'https://host.example/pull/7',
+    },
   ];
-  render(YourMove);
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
 
   const link = await screen.findByRole('link', { name: 'repo#7' });
 
@@ -54,15 +66,109 @@ test('a PR row without a ticket links the PR from the ticket column and leaves t
 
 test('Handled sends the id of its row to setMarks', async () => {
   vi.mocked(setMarks).mockResolvedValue('');
-  render(YourMove);
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
 
   await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
 
   expect(setMarks).toHaveBeenCalledWith({ handled: { 'nw-1': expect.any(String) } });
 });
 
+test('no note input shows before Handled', async () => {
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+  await screen.findByText('Review nw-1');
+
+  expect(screen.queryByLabelText('Note for NW-1')).toBeNull();
+});
+
+test('Handled opens the note modal with the field focused', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+
+  const field = await screen.findByLabelText(/Note/);
+  expect(screen.getByRole('dialog')).toBeTruthy();
+  await vi.waitFor(() => expect(document.activeElement).toBe(field));
+});
+
+test('Save stores the note and closes the modal', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+  await fireEvent.update(await screen.findByLabelText(/Note/), 'PDCR Required = No');
+  await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+  expect(setMarks).toHaveBeenLastCalledWith({ notes: { 'nw-1': 'PDCR Required = No' } });
+  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+});
+
+test('Skip closes the modal and leaves the row handled with no note', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
+
+  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(setMarks).toHaveBeenCalledTimes(1);
+  expect(setMarks).toHaveBeenCalledWith({ handled: { 'nw-1': expect.any(String) } });
+});
+
+test('a manual mark with a note shows the note on its own line with the time', async () => {
+  snapshot.marks = {
+    seen: [],
+    base: 0,
+    handled: { 'nw-2': '2026-11-02T10:05:00Z' },
+    info: { 'nw-2': { note: 'PDCR Required = No' } },
+  };
+  useMoveView().value = 'handled';
+  const { container } = render({
+    components: { YourMove, NoteModal },
+    template: '<YourMove /><NoteModal />',
+  });
+
+  const line = await screen.findByRole('button', { name: /PDCR Required = No/ });
+  await fireEvent.click(line);
+
+  expect(((await screen.findByLabelText(/Note/)) as HTMLTextAreaElement).value).toBe(
+    'PDCR Required = No',
+  );
+  expect(container.querySelector('.your-move__time')?.textContent).toMatch(/^\d\d:\d\d$/);
+});
+
+test('a pass-on line shows the outcome; a click opens the modal with the full event and the comment', async () => {
+  snapshot.turn = [{ ...row('nw-4', true), group: 'others', next: 'Not yours now' }];
+  snapshot.marks.info = {
+    'nw-4': {
+      auto: true,
+      outcome: 'Passed to Sam · Ready for QA · Looks done',
+      event: 'event:NW-4:t:reassigned',
+      detail: {
+        assignee: 'you → Sam',
+        status: 'In Progress → Ready for QA',
+        comment: { author: 'Sam', text: LONG },
+      },
+    },
+  };
+  useMoveView().value = 'handled';
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+
+  await fireEvent.click(
+    await screen.findByRole('button', { name: /Passed to Sam · Ready for QA/ }),
+  );
+
+  expect(await screen.findByText('you → Sam')).toBeTruthy();
+  expect(screen.getByText('In Progress → Ready for QA')).toBeTruthy();
+  expect(screen.getByText(new RegExp(LONG.slice(-20)))).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /Move back to open/ })).toBeNull();
+  expect(screen.queryByText('passed on')).toBeNull();
+  await fireEvent.click(screen.getByRole('button', { name: 'Open in feed' }));
+  expect(showInFeed).toHaveBeenCalledWith('event:NW-4:t:reassigned');
+});
+
 test('the Handled view lists the handled rows and not the open ones', async () => {
-  render(YourMove);
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
   expect(await screen.findByText('Review nw-1')).toBeTruthy();
   expect(screen.queryByText('Review nw-2')).toBeNull();
 
@@ -74,7 +180,7 @@ test('the Handled view lists the handled rows and not the open ones', async () =
 
 test('a stream reconnect clears the problem lines of refused rows', async () => {
   vi.mocked(setMarks).mockResolvedValue('The local server is not answering.');
-  render(YourMove);
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
   await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
   await screen.findByRole('alert');
 
@@ -85,7 +191,7 @@ test('a stream reconnect clears the problem lines of refused rows', async () => 
 
 test('Handled offers Undo for a moment, and Undo moves the row back', async () => {
   vi.mocked(setMarks).mockResolvedValue('');
-  render(YourMove);
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
 
   await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
   await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));

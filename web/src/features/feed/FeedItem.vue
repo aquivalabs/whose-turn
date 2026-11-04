@@ -13,6 +13,7 @@ const props = defineProps<{
   item: FeedItem;
   source: ConnectorSummary;
   fresh: boolean;
+  flash?: boolean;
   expanded: boolean;
 }>();
 const emit = defineEmits<{ open: [item: FeedItem]; toggle: [id: string]; seen: [id: string] }>();
@@ -39,8 +40,9 @@ const toggle = () => {
 </script>
 <template>
   <li
+    :id="'feed-' + item.id"
     class="feed-item"
-    :class="{ 'feed-item--new': fresh, 'feed-item--open': open }"
+    :class="{ 'feed-item--new': fresh, 'feed-item--open': open, 'feed-item--flash': flash }"
     @click="seen"
   >
     <span class="feed-item__icon" :class="modifier('feed-item__icon', iconTone)">{{ badge }}</span>
@@ -100,6 +102,10 @@ const toggle = () => {
   box-shadow:
     inset 4px 0 0 var(--new),
     inset 0 0 0 1px var(--new-edge);
+}
+
+.feed-item.feed-item--flash {
+  box-shadow: inset 0 0 0 2px var(--md-primary);
 }
 
 .feed-item__icon {

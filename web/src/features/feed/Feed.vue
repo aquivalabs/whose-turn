@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { snapshot, ui, now, setMarks, tellProblem } from '@/store.ts';
 import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
 import type { FeedGroup } from '@/lib/feed.ts';
@@ -43,6 +43,27 @@ watch(
   () => snapshot.workspace.id,
   () => {
     feedState.query = '';
+  },
+);
+const FOCUS_MS = 2500;
+const flashed = ref('');
+watch(
+  () => ui.focusFeed,
+  async (id) => {
+    const item = snapshot.feed.find((candidate) => candidate.id === id);
+    ui.focusFeed = '';
+    if (!item) {
+      return;
+    }
+    feedState.source = 'all';
+    feedState.query = '';
+    feedState.openGroups.add(item.key || item.ref || item.id);
+    flashed.value = id;
+    await nextTick();
+    document.getElementById(`feed-${id}`)?.scrollIntoView({ block: 'center' });
+    setTimeout(() => {
+      flashed.value = '';
+    }, FOCUS_MS);
   },
 );
 const marks = computed(() => ({ base: snapshot.marks.base, seen: new Set(snapshot.marks.seen) }));
@@ -192,6 +213,7 @@ const restoreMarks = async () => {
               :item="item"
               :source="sourceOf(item.source)"
               :fresh="fresh(item)"
+              :flash="flashed === item.id"
               :expanded="ui.open.has(item.id)"
               @open="emit('open', $event)"
               @toggle="toggleItem"
@@ -207,6 +229,7 @@ const restoreMarks = async () => {
           :item="item"
           :source="sourceOf(item.source)"
           :fresh="fresh(item)"
+          :flash="flashed === item.id"
           :expanded="ui.open.has(item.id)"
           @open="emit('open', $event)"
           @toggle="toggleItem"

@@ -11,21 +11,24 @@ const { y } = useScroll(scroller);
 const { height } = useElementSize(scroller);
 const { height: contentHeight } = useElementSize(content);
 const rows = () => [...(content.value?.querySelector('table')?.tBodies[0]?.rows || [])];
+const leads = () => rows().filter((row) => !('rowTail' in row.dataset));
+const bottoms = () =>
+  leads().map((row) =>
+    (row.nextElementSibling as HTMLElement | null)?.dataset.rowTail !== undefined
+      ? (row.nextElementSibling as HTMLElement).getBoundingClientRect().bottom
+      : row.getBoundingClientRect().bottom,
+  );
 const viewBottom = () => {
   const el = scroller.value;
   return el ? el.getBoundingClientRect().top + el.clientTop + el.clientHeight : 0;
 };
 const hidden = computed(() => {
   void [y.value, height.value, contentHeight.value];
-  return hiddenBelow(
-    rows().map((row) => row.getBoundingClientRect().bottom),
-    viewBottom(),
-    cellSlack,
-  );
+  return hiddenBelow(bottoms(), viewBottom(), cellSlack);
 });
 const reveal = () => {
   const el = scroller.value;
-  const list = rows();
+  const list = leads();
   const first = list[list.length - hidden.value];
   if (!el || !first) {
     return;
@@ -54,6 +57,7 @@ const reveal = () => {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
+    scroll-padding-top: 40px;
   }
 
   .dashboard--fit .row-scroll::-webkit-scrollbar {

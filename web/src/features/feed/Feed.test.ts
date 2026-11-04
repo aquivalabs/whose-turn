@@ -26,7 +26,7 @@ test('a stream reconnect clears the line of a refused Mark all read', async () =
 
 test('Mark all read offers Undo, which takes back the ids it marked and the old base', async () => {
   vi.mocked(setMarks).mockResolvedValue('');
-  snapshot.marks = { seen: ['old'], base: 123, handled: {} };
+  snapshot.marks = { seen: ['old'], base: 123, handled: {}, info: {} };
   snapshot.feed = [
     { id: 'old', source: 's', at: '2026-11-02T10:00:00Z' },
     { id: 'fresh', source: 's', at: '2026-11-02T11:00:00Z' },

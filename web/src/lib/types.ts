@@ -80,6 +80,23 @@ export interface Marks {
   seen: string[] | Set<string>;
   base: number;
   handled: Record<string, string | null>;
+  /** What a handled mark carries beyond its time: a note, or the outcome and feed event of an automatic one. */
+  info: Record<string, HandledInfo>;
+}
+
+export interface HandledInfo {
+  note?: string;
+  auto?: boolean;
+  outcome?: string;
+  /** The id of the feed item that moved the row. */
+  event?: string;
+  /** What the event carried: who it went to, the status change and the latest comment. */
+  detail?: {
+    summary?: string;
+    assignee?: string;
+    status?: string;
+    comment?: { author: string; text: string };
+  };
 }
 
 export interface Todo {

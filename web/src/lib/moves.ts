@@ -1,5 +1,5 @@
 // Your move and Waiting on others: which rows, in which order. Rendering lives in the islands.
-import type { TurnRow } from './types.ts';
+import type { HandledInfo, TurnRow } from './types.ts';
 
 /** The workspace list with one workspace's badge set; the same list when nothing changes. */
 export const withOpenMoves = <T extends { id: string; open_moves?: number }>(
@@ -16,11 +16,11 @@ export interface YourRow {
   handled: boolean;
 }
 
-/** Rows on you, each with the handled flag the server set: by the server's rank (lowest first), then oldest first; the open view lists only open rows and the handled view only handled ones. */
-export const yourRows = (turn: TurnRow[], view: string) => {
+/** Rows on you, each with the handled flag the server set: by the server's rank (lowest first), then oldest first; the open view lists only open rows and the handled view only handled ones, except the row `keep` names, which stays where it is while its note is typed. A row whose turn passed on stays in the handled view while its automatic mark lives. */
+export const yourRows = (turn: TurnRow[], view: string, info: Record<string, HandledInfo> = {}, keep = '') => {
   const you: YourRow[] = turn
-    .filter((row) => row.group === 'you')
-    .map((row) => ({ row, handled: Boolean(row.handled) }))
+    .filter((row) => row.group === 'you' || (row.handled && info[row.row_id]?.auto))
+    .map((row) => ({ row, handled: row.group !== 'you' || Boolean(row.handled) }))
     .sort(
       (first, second) =>
         first.row.rank - second.row.rank ||
@@ -28,7 +28,7 @@ export const yourRows = (turn: TurnRow[], view: string) => {
     );
   const open = you.filter((item) => !item.handled).length;
   const wantHandled = view === 'handled';
-  const rows = you.filter((item) => item.handled === wantHandled);
+  const rows = you.filter((item) => item.handled === wantHandled || item.row.row_id === keep);
   return { rows, open, handled: you.length - open };
 };
 
