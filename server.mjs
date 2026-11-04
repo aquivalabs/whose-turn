@@ -14,7 +14,7 @@ import { openReports, RELAY_URL, NEWS_EVERY_MS } from './lib/feedback.mjs';
 import { startApi } from './lib/api.mjs';
 import { notifier } from './lib/notify.mjs';
 import { loadChangelog } from './lib/changelog.mjs';
-import { createUpdater, restartServer, runsInstalled } from './lib/update.mjs';
+import { createUpdater, pinnedVersion, restartServer, runsInstalled } from './lib/update.mjs';
 import { listOf } from './lib/text.mjs';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
@@ -31,6 +31,7 @@ const updater = createUpdater({
   dataDir: first.dataDir,
   version,
   installed: runsInstalled(appDir, first.dataDir),
+  pinned: pinnedVersion(first.dataDir),
   notify,
   registry: process.env.WHOSE_TURN_REGISTRY,
   npm: process.env.WHOSE_TURN_NPM,

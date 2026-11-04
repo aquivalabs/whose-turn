@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdirSync, mkdtempSync, symlinkSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CHANNEL, createUpdater, installedRoot, probeAgent, restartServer, runsInstalled } from '../lib/update.mjs';
+import { CHANNEL, createUpdater, installedRoot, pinnedVersion, probeAgent, restartServer, runsInstalled } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 
 const scratch = () => mkdtempSync(join(tmpdir(), 'wt-update-'));
@@ -231,4 +231,51 @@ test('the agent probe recognises its own launchd job or systemd unit, and nothin
   assert.equal(probeAgent({ platform: 'linux', cgroup: () => '0::/user.slice/session-2.scope\n' }), null);
   assert.equal(probeAgent({ platform: 'linux', cgroup: () => { throw new Error('no proc'); } }), null);
   assert.equal(probeAgent({ platform: 'win32' }), null);
+});
+
+test('a pinned install offers no update and says which version it is pinned to', async () => {
+  // Setup
+  const { updater, notes } = updaterWith({ latest: '1.0.0-alpha.3' }, { pinned: '1.0.0-alpha.2' });
+  // Exercise
+  const status = await updater.check();
+  // Verify
+  assert.deepEqual(status, { current: '1.0.0-alpha.2', latest: '1.0.0-alpha.3', available: false, state: 'idle', pinned: '1.0.0-alpha.2' });
+  assert.deepEqual(notes, []);
+});
+
+test('POST /api/update on a pinned install is refused with PINNED and installs nothing', async () => {
+  // Setup
+  const installer = deferredRun();
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: installer.run, pinned: '1.0.0-alpha.2' });
+  await updater.check();
+  const { server, post } = await startTestApi({ updater });
+  try {
+    // Exercise
+    const response = await post('/api/update', {});
+    // Verify
+    const error = (await response.json()).error;
+    assert.equal(response.status, 412);
+    assert.equal(error.details[0].reason, 'PINNED');
+    assert.deepEqual(installer.calls, []);
+  } finally {
+    server.close();
+  }
+});
+
+test('the pin is an exact version recorded by the install, else the one in the environment', () => {
+  // Setup
+  const withRecord = (spec) => {
+    const dataDir = scratch();
+    mkdirSync(join(dataDir, 'app'));
+    writeFileSync(join(dataDir, 'app', 'package.json'), JSON.stringify({ dependencies: { 'whose-turn': spec } }));
+    return dataDir;
+  };
+  // Exercise and verify
+  assert.equal(pinnedVersion(withRecord('1.0.0-alpha.2'), {}), '1.0.0-alpha.2');
+  assert.equal(pinnedVersion(withRecord('^1.0.0-alpha.2'), {}), '');
+  assert.equal(pinnedVersion(withRecord('latest'), {}), '');
+  assert.equal(pinnedVersion(scratch(), { WHOSE_TURN_APP_VERSION: '1.0.0-alpha.1' }), '1.0.0-alpha.1');
+  assert.equal(pinnedVersion(withRecord('^1.0.0-alpha.2'), { WHOSE_TURN_APP_VERSION: '1.0.0-alpha.1' }), '1.0.0-alpha.1');
+  assert.equal(pinnedVersion(scratch(), { WHOSE_TURN_APP_VERSION: 'latest' }), '');
+  assert.equal(pinnedVersion(scratch(), {}), '');
 });
