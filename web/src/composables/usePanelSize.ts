@@ -4,10 +4,10 @@ import { useLocalStorage } from '@vueuse/core';
 
 type Sizes = Record<string, number>;
 
-/** The line under the rows that says how many are hidden; the floor leaves room for it. */
+/** The line under the rows that says how many are hidden. */
 export const MORE_LINE = 30;
 
-/** Keeps a dragged size between the floor and the room there is; a floor above the room wins. */
+/** Keeps a dragged size between the floor and the room there is. */
 export const clampSize = (value: number, min: number, max: number) =>
   Math.round(Math.max(min, Math.min(max, value)));
 

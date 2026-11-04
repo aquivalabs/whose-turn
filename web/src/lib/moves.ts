@@ -32,8 +32,8 @@ export const yourRows = (turn: TurnRow[], view: string) => {
   return { rows, open, handled: you.length - open };
 };
 
-/** Tickets that recently left your move: done ones, most recently done first, at most 15. */
 const doneAt = (row: TurnRow) => String(row.status_since || row.updated);
+/** Done tickets, most recently done first, at most 15. */
 export const recentlyDone = (turn: TurnRow[]) =>
   turn
     .filter((row) => row.group === 'done')
@@ -45,7 +45,7 @@ export const waitingRows = (turn: TurnRow[]) =>
     .filter((row) => row.group === 'others')
     .sort((first, second) => String(second.updated).localeCompare(String(first.updated)));
 
-/** A row of a PR that has no ticket: the PR's own key stands in for the ticket, so the PR column would repeat it. */
+/** Whether a row is a PR with no ticket. */
 export const isPrOnly = (row: TurnRow) => !row.ticket_url && Boolean(row.pr) && row.pr === row.key;
 
 /** Whether any row has a PR of its own to show, so an empty PR column can be left out. */
@@ -53,13 +53,12 @@ export const hasPrColumn = (rows: TurnRow[]) => rows.some((row) => row.pr && !is
 
 export const checksTone = (checks: string | undefined) =>
   checks === 'failing' ? 'bad' : checks === 'running' ? 'warn' : checks === 'passing' ? 'ok' : '';
-/** The pill tone of each status group the server sends as status_group; other groups have none. */
 const STATUS_TONES: Record<string, string> = { code_review: 'info', qa: 'info', on_hold: 'hold' };
 export const statusTone = (group: string | undefined) => STATUS_TONES[group || ''] || '';
 export const outcomeTone = (outcome: string | undefined) =>
   (({ open: 'info', done: 'ok', dropped: 'warn' }) as Record<string, string>)[outcome || ''] ||
   'info';
 
-/** How many rows end below the visible bottom of a scroll area by more than the slack, given each row's bottom edge in the same coordinates. */
+/** How many rows end below the visible bottom of a scroll area by more than the slack. */
 export const hiddenBelow = (bottoms: number[], viewBottom: number, slack = 1) =>
   bottoms.filter((bottom) => bottom > viewBottom + slack).length;

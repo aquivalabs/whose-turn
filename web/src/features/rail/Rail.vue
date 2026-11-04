@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// The rail: one icon per workspace, the open-moves badge, drag to reorder, the gear.
 // docs/adr/0002-vueuse-in-the-window.md, docs/adr/0006-window-layers.md
 import { computed, nextTick, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
@@ -50,7 +49,6 @@ const onSettings = (event: MouseEvent) => {
   blurAfterMouse(event);
 };
 
-/** Alt+Arrow on a focused workspace icon moves it one place, the keyboard path of the drag. */
 const onKeyMove = async (event: KeyboardEvent, workspace: Workspace) => {
   const step = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
   const ids = snapshot.workspaces.map((entry) => entry.id);

@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 /**
- * The docs domain's deterministic pre-push check. node: modules only, no network.
- * Reads .claude/docs.config.json and .claude/docs.config.schema.json, resolves the diff base
- * against git and runs six independent jobs, each (config, repoRoot, changedPaths) => findings.
+ * The docs domain's deterministic pre-push check: six jobs over docs.config.json and git.
  * Prints one line per finding and exits 1 if any exists.
  */
 import { execFileSync, spawnSync } from 'node:child_process';

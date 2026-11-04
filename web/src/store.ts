@@ -98,7 +98,7 @@ export const themeVariables = computed(() => {
   return theme && theme.light && theme.dark ? theme[dark.value ? 'dark' : 'light'] : {};
 });
 export const counts = computed(() => snapshot.counts);
-/** The banner lines: a source failing past the threshold gets one line with its reason and streak, not one from health and one from its errors. */
+/** The banner lines: one per source failing past the threshold. */
 export const alerts = computed(() => {
   const name = snapshot.workspace.name;
   const prefix = name ? name + ': ' : '';

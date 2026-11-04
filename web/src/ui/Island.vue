@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// One panel of the dashboard: a head with the title, a note and a hint, a body, a chevron before the title that folds it, and a drag handle that sizes it (height, or width for `resize="width"`); fold and size are remembered in the browser. The glass surface is the global island primitive; a caller's class falls through to the section.
 import { onMounted, ref, useTemplateRef } from 'vue';
 import { useMutationObserver, useResizeObserver } from '@vueuse/core';
 import { useFold } from '@/composables/useFold.ts';

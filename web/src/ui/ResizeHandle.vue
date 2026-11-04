@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// A drag handle on the edge of a panel: pointer drag and arrow keys report a size; the caller owns the bounds and the storage. Double click gives the size back to the layout.
 import { clampSize } from '@/composables/usePanelSize.ts';
 const props = defineProps<{
   label: string;

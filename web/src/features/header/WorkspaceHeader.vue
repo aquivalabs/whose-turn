@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// The workspace header: the name, the copy-workspace sparkle, the quick links, and four tiles; it folds to one line with the counts, like every island.
 import { snapshot, counts } from '@/store.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
