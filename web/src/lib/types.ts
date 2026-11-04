@@ -52,6 +52,8 @@ export interface TurnRow {
   next: string;
   why?: string;
   whose?: string;
+  /** Everyone on the PR's review when the row waits on reviewers: still requested, approved or asking for changes. */
+  reviewers?: { name: string; state: '' | 'approved' | 'changes' }[];
   hold_url?: string;
   hold_full?: string;
   pr?: string;

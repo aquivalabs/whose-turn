@@ -118,5 +118,39 @@ test('an open PR row lists the reviewers still requested, users and teams, and a
   };
   const result = await pollOnce(http, { token: 't', tokenAt: Date.now() }, { workflow_runs: false });
   assert.deepEqual(result.errors, {});
-  assert.deepEqual(result.prs.map((row) => [row.pr, row.reviewers]), [[7, ['sam', 'core']], [8, []]]);
+  assert.deepEqual(result.prs.map((row) => [row.pr, row.reviewers]), [[7, [{ name: 'sam', state: '' }, { name: 'core', state: '' }]], [8, []]]);
+});
+
+test('an open PR lists the requested reviewers, then those who reviewed with their latest state, and costs no request beyond the reviews it already reads', async () => {
+  const review = (login, state, at) => ({ user: { login }, state, submitted_at: at, body: '', html_url: `https://github.com/acme/app/pull/7#${login}${at}` });
+  const reviews = [
+    review('ann', 'CHANGES_REQUESTED', '2026-11-03T08:00:00Z'), review('ann', 'APPROVED', '2026-11-03T09:00:00Z'),
+    review('bob', 'APPROVED', '2026-11-03T08:10:00Z'), review('bob', 'CHANGES_REQUESTED', '2026-11-03T09:10:00Z'),
+    review('cy', 'APPROVED', '2026-11-03T08:20:00Z'), review('cy', 'COMMENTED', '2026-11-03T09:20:00Z'),
+    review('di', 'COMMENTED', '2026-11-03T08:30:00Z'), review('ed', 'APPROVED', '2026-11-03T08:40:00Z'), review('ed', 'DISMISSED', '2026-11-03T09:40:00Z'),
+    review('sam', 'APPROVED', '2026-11-03T08:50:00Z'), review('pat', 'APPROVED', '2026-11-03T08:55:00Z'), review('author', 'COMMENTED', '2026-11-03T08:56:00Z'),
+    review('dependabot[bot]', 'APPROVED', '2026-11-03T08:57:00Z'),
+  ];
+  const paths = [];
+  const http = {
+    fetchJson: async (url) => {
+      const { pathname } = new URL(url);
+      paths.push(pathname);
+      if (pathname === '/search/issues') {
+        return { items: [{ number: 7, updated_at: '2026-11-03T09:00:00Z' }] };
+      }
+      if (/\/pulls\/7$/.test(pathname)) {
+        return { number: 7, title: 'PROJ-7 work', state: 'open', merged_at: null, updated_at: '2026-11-03T09:00:00Z', html_url: 'https://github.com/acme/app/pull/7', base: { ref: 'main' }, head: { sha: 's' }, user: { login: 'author' }, requested_reviewers: [{ login: 'sam' }], requested_teams: [{ slug: 'core' }] };
+      }
+      if (pathname.endsWith('/pulls/7/reviews')) {
+        return reviews;
+      }
+      return pathname.includes('/check-runs') ? { check_runs: [] } : [];
+    },
+  };
+  const result = await pollOnce(http, { token: 't', tokenAt: Date.now() }, { workflow_runs: false });
+  assert.deepEqual(result.prs[0].reviewers, [
+    { name: 'sam', state: '' }, { name: 'core', state: '' }, { name: 'ann', state: 'approved' }, { name: 'bob', state: 'changes' }, { name: 'cy', state: 'approved' }, { name: 'di', state: '' },
+  ]);
+  assert.equal(paths.filter((path) => path.endsWith('/reviews')).length, 1);
 });

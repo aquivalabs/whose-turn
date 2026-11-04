@@ -15,6 +15,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ### Changed
 - Motion in the window is slower and softer, so panels, rows and dialogs glide instead of snapping. RMA-316.
+- A ticket in code review now lists every reviewer of its pull request, none hidden: the ones still asked to review by name, and the ones who already did with a check for approved or a cross for changes requested. The list wraps onto more lines when it is long, and your own review is left out. RMA-315.
 - The window moves smoothly: panels fold, rows slide in and out, dialogs fade. Turning on Reduce motion in your system settings switches it off. RMA-313.
 - The grip mark on a panel's resize edge is a little larger and darker while you are not pointing at it, so it is easier to find; it is still quiet next to the content. RMA-310.
 - On the folded What changed strip, the number of unread changes now reads from top to bottom, one upright character under another, and the hint about the arrow opens to its left instead of floating over the cards. RMA-309.

@@ -65,7 +65,22 @@ const note = computed(() =>
               }}</span>
             </td>
             <td>
-              {{ own ? 'you' : row.whose }}
+              <template v-if="!own && row.reviewers?.length">
+                <span
+                  v-for="reviewer in row.reviewers"
+                  :key="reviewer.name"
+                  class="waiting__reviewer"
+                  ><template v-if="reviewer.state"
+                    ><span class="waiting__mark" aria-hidden="true">{{
+                      reviewer.state === 'approved' ? '✓' : '✗'
+                    }}</span
+                    ><span class="visually-hidden">{{
+                      reviewer.state === 'approved' ? ' approved by ' : ' changes requested by '
+                    }}</span> </template
+                  >{{ reviewer.name }}{{ ' ' }}</span
+                >
+              </template>
+              <template v-else>{{ own ? 'you' : row.whose }}</template>
               <span
                 v-if="since"
                 class="age"
@@ -121,6 +136,15 @@ const note = computed(() =>
 
 .waiting__col--actions {
   width: 2rem;
+}
+
+.waiting__reviewer {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.waiting__mark {
+  margin-right: 0.2em;
 }
 
 .waiting__reason {

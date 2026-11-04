@@ -31,3 +31,39 @@ test('backlog rows listed under Waiting on others say "you" and leave Waiting fo
   expect(screen.getByText('you')).toBeTruthy();
   expect(screen.queryByText('maria')).toBeNull();
 });
+
+test('a row waiting on reviewers lists every one, marks who approved and who asked for changes, and lets the list wrap', () => {
+  snapshot.turn = [
+    {
+      ...backlogRow,
+      row_id: 'r-1',
+      key: 'R-1',
+      status: 'Code Review',
+      status_group: 'code_review',
+      whose: 'sam, ✓ ann, ✗ bob, core, cy, di, ed',
+      reviewers: [
+        { name: 'sam', state: '' },
+        { name: 'ann', state: 'approved' },
+        { name: 'bob', state: 'changes' },
+        { name: 'core', state: '' },
+        { name: 'cy', state: '' },
+        { name: 'di', state: '' },
+        { name: 'ed', state: '' },
+      ],
+    },
+  ];
+  const { container } = render(Waiting);
+
+  const listed = [...container.querySelectorAll('.waiting__reviewer')];
+  expect(listed.map((item) => item.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+    'sam',
+    '✓ approved by ann',
+    '✗ changes requested by bob',
+    'core',
+    'cy',
+    'di',
+    'ed',
+  ]);
+  expect(container.textContent).not.toContain('+');
+  expect([...container.querySelectorAll('.waiting__mark')].map((mark) => mark.textContent)).toEqual(['✓', '✗']);
+});

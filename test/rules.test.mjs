@@ -32,11 +32,26 @@ test('status words come from the rules, so a team can call code review "In Revie
 });
 
 test('a ticket in code review names the reviewers still requested on its PR, and falls back to Reviewer without any', () => {
-  const named = only(rows({ tickets: [ticket({ status: 'Code Review' })], prs: [pr({ reviewers: ['sam', 'core-team'] })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  const named = only(rows({ tickets: [ticket({ status: 'Code Review' })], prs: [pr({ reviewers: [{ name: 'sam', state: '' }, { name: 'core-team', state: '' }] })] }), (candidate) => candidate.row_id === 'PROJ-1');
   assert.equal(named.whose, 'sam, core-team');
   assert.equal(named.next, 'Code review');
   const bare = only(rows({ tickets: [ticket({ status: 'Code Review' })], prs: [pr({ reviewers: [] })] }), (candidate) => candidate.row_id === 'PROJ-1');
   assert.equal(bare.whose, 'Reviewer');
+});
+
+test('every reviewer is listed with a check for approved and a cross for changes requested, structured on the row and spelled out in whose', () => {
+  const reviewers = [{ name: 'sam', state: '' }, { name: 'ann', state: 'approved' }, { name: 'bob', state: 'changes' }, { name: 'cy', state: '' }, { name: 'di', state: 'approved' }, { name: 'ed', state: '' }, { name: 'flo', state: '' }];
+  const row = only(rows({ tickets: [ticket({ status: 'Code Review' })], prs: [pr({ reviewers })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(row.whose, 'sam, ✓ ann, ✗ bob, cy, ✓ di, ed, flo');
+  assert.deepEqual(row.reviewers, reviewers);
+});
+
+test('your own GitHub login among the reviewers reads you, and a row not waiting on reviewers carries none', () => {
+  const mine = only(rows({ tickets: [ticket({ status: 'Code Review' })], prs: [pr({ reviewers: [{ name: 'alex', state: 'approved' }, { name: 'sam', state: '' }] })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(mine.whose, '✓ you, sam');
+  assert.deepEqual(mine.reviewers.map((reviewer) => reviewer.name), ['you', 'sam']);
+  const failing = only(rows({ tickets: [ticket({ status: 'Code Review' })], prs: [pr({ checks: 'failing', reviewers: [{ name: 'sam', state: '' }] })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.deepEqual(failing.reviewers, []);
 });
 
 test('a backlog ticket is left out, on me or not, unless it has an open PR', () => {

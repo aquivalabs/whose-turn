@@ -68,6 +68,29 @@ const reviewDecision = (reviews) => {
   return values.has('APPROVED') ? 'APPROVED' : '';
 };
 
+const REVIEWER_STATE = { APPROVED: 'approved', CHANGES_REQUESTED: 'changes' };
+
+/** Everyone on an open PR's review: the still requested (users and teams) as plain names, then those who reviewed, with their latest state. A comment-only review shows the name without a mark and never replaces an approval or a request for changes, a dismissed review takes that person's state away, and you, the author and bots are left out (RMA-315). */
+const reviewersOf = (pr, reviews, { me, bots }) => {
+  const listed = [...(pr.requested_reviewers || []).map((user) => user.login), ...(pr.requested_teams || []).map((team) => team.slug)];
+  const latest = new Map();
+  for (const review of reviews) {
+    const login = review.user?.login;
+    if (!login || login === me || login === pr.user?.login || bots.test(login) || listed.includes(login)) {
+      continue;
+    }
+    if (review.state === 'DISMISSED') {
+      latest.delete(login);
+      continue;
+    }
+    const state = REVIEWER_STATE[review.state] || '';
+    if (state || !latest.has(login)) {
+      latest.set(login, state);
+    }
+  }
+  return [...listed.map((name) => ({ name, state: '' })), ...[...latest].map(([name, state]) => ({ name, state }))];
+};
+
 /** A PR's reference in the feed: the repository name and the number, so a PR without a ticket still says where it lives (RMA-167). */
 const prRef = (repo, number) => `${repo.split('/').pop()}#${number}`;
 
@@ -105,7 +128,7 @@ const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
   const row = {
     pr: number, key, title: pr.title, base: pr.base.ref, state, review: reviewDecision(reviews), checks: checks.state, merged_at: pr.merged_at || '',
     updated_at: pr.updated_at, url: pr.html_url,
-    reviewers: state === 'OPEN' ? [...(pr.requested_reviewers || []).map((user) => user.login), ...(pr.requested_teams || []).map((team) => team.slug)] : [],
+    reviewers: state === 'OPEN' ? reviewersOf(pr, reviews, { me, bots }) : [],
     last_comment_by: last ? last.who : '', last_comment_at: last ? last.at : '', last_comment_url: last ? last.url : '', last_comment: last ? oneline(last.body, 160) : '',
     unanswered: Boolean(last && state === 'OPEN' && last.state !== 'APPROVED' && last.at > myLast),
   };
