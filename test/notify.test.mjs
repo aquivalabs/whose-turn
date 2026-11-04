@@ -68,9 +68,11 @@ test('the notifications.desktop setting stops notify from firing, and turning it
 test('notifier reads the setting at each call, so a flip between two calls applies to the second', () => {
   let desktop = true;
   const reads = [];
-  const send = notifier(() => { reads.push(desktop); return desktop; });
+  const calls = [];
+  const send = notifier(() => { reads.push(desktop); return desktop; }, { platform: 'linux', run: (...call) => calls.push(call) });
   send('T', 'B');
   desktop = false;
   send('T', 'B');
   assert.deepEqual(reads, [true, false]);
+  assert.deepEqual(calls, [['notify-send', ['T', 'B']]]);
 });

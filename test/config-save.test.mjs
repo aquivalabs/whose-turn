@@ -77,3 +77,15 @@ test('saveNotifications writes the setting and keeps the other keys; loadConfig 
   saveWorkspaces(file, [{ id: 'w' }]);
   assert.deepEqual(loadConfig({ WHOSE_TURN_DATA: dir }).notifications, { desktop: false });
 });
+
+test('saveNotifications starts from an empty config when the file is missing or unparseable', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const missing = join(dir, 'missing', 'config.json');
+  saveNotifications(missing, { desktop: true });
+  assert.deepEqual(JSON.parse(readFileSync(missing, 'utf8')), { notifications: { desktop: true } });
+  const broken = join(dir, 'config.json');
+  writeFileSync(broken, '{ not json');
+  saveNotifications(broken, { desktop: false });
+  assert.deepEqual(JSON.parse(readFileSync(broken, 'utf8')), { notifications: { desktop: false } });
+  assert.equal(readFileSync(`${broken}.bak`, 'utf8'), '{ not json');
+});
