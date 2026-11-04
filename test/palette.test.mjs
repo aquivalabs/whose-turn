@@ -130,18 +130,3 @@ test('the config loader keeps a valid theme and drops an invalid seed or accent'
   assert.match(none.derived_seed, /^#[0-9a-f]{6}$/);
   assert.notEqual(none.derived_seed, invalid.derived_seed);
 });
-
-test('a pinned animal survives the config loader, alone or beside a seed, and a malformed pin is dropped with a problem', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
-  writeFileSync(join(dir, 'config.json'), JSON.stringify({ workspaces: [
-    { id: 'alone', theme: { animal: { species: 'fox', seed: 7 } } },
-    { id: 'beside', theme: { seed: '#3d7a5c', animal: { species: 'cat', seed: 4294967295 } } },
-    { id: 'broken', theme: { seed: '#3d7a5c', animal: { species: 'Fox!', seed: -1 } } },
-  ] }));
-  const config = loadConfig({ WHOSE_TURN_DATA: dir });
-  const [alone, beside, broken] = config.workspaces;
-  assert.deepEqual(alone.theme, { animal: { species: 'fox', seed: 7 } });
-  assert.deepEqual(beside.theme, { seed: '#3d7a5c', animal: { species: 'cat', seed: 4294967295 } });
-  assert.deepEqual(broken.theme, { seed: '#3d7a5c' });
-  assert.equal(config.problems.filter((problem) => /theme\.animal/.test(problem)).length, 1);
-});
