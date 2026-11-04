@@ -33,7 +33,7 @@ test('folding What changed narrows its column to a strip that keeps the unread c
   await fireEvent.click(screen.getByRole('button', { name: 'Fold What changed' }));
 
   await waitFor(() => expect(layout.classList.contains('dashboard__layout--feed-folded')).toBe(true));
-  expect(screen.getByRole('button', { name: 'Fold What changed' }).getAttribute('aria-expanded')).toBe('false');
+  expect(screen.getByRole('button', { name: 'Open What changed' }).getAttribute('aria-expanded')).toBe('false');
   expect(container.querySelector('.feed.island--strip')).not.toBeNull();
 
   await fireEvent.click(container.querySelector('.feed .island__head') as HTMLElement);

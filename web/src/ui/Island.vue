@@ -137,8 +137,8 @@ const bounds = () => {
     <div class="island__head" @click="strip && toggle()">
       <Chevron
         :open="!collapsed"
-        :aria-label="'Fold ' + title"
-        data-tip="Fold this panel; it stays folded until you open it again"
+        :aria-label="(collapsed ? 'Open ' : 'Fold ') + title"
+        :data-tip="collapsed ? 'Open this panel' : 'Fold this panel; it stays folded until you open it again'"
         :data-tippy-placement="strip ? 'left' : undefined"
         @click.stop="toggle"
       />
@@ -229,6 +229,10 @@ const bounds = () => {
 @media (width >= 901px) {
   .island--strip {
     cursor: pointer;
+  }
+
+  .island--strip .chevron::before {
+    transform: translateX(1px) rotate(135deg);
   }
 
   .island--strip .island__head {

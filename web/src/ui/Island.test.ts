@@ -23,7 +23,8 @@ test('the fold hint of a folded width strip is anchored to the arrow and opens t
   await fireEvent.click(arrow);
 
   expect(arrow.closest('.island--strip')).not.toBeNull();
-  expect(arrow.getAttribute('data-tip')).toContain('Fold this panel');
+  expect(arrow.getAttribute('data-tip')).toBe('Open this panel');
+  expect(arrow.getAttribute('aria-label')).toBe('Open Strip');
   expect(arrow.getAttribute('data-tippy-placement')).toBe('left');
 });
 
