@@ -30,6 +30,7 @@ const note = computed(() =>
 <template>
   <Island
     id="waiting"
+    :size-key="`${snapshot.workspace.id}:waiting`"
     title="Waiting on others"
     :note="note"
     tip="Tickets you touched in the last 30 days where someone else holds the next step: a reviewer, QA, or a new owner."

@@ -1,8 +1,8 @@
-import { computed } from 'vue';
+import { computed, toValue } from 'vue';
+import type { MaybeRefOrGetter } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
-import { snapshot } from '@/store.ts';
 
-type Sizes = Record<string, Record<string, number>>;
+type Sizes = Record<string, number>;
 
 /** The line under the rows that says how many are hidden; the floor leaves room for it. */
 export const MORE_LINE = 30;
@@ -27,18 +27,18 @@ export const ceilingHeight = (column: number, gap: number, neighbours: Neighbour
   gap * neighbours.length -
   neighbours.reduce((sum, item) => sum + (item.collapsed ? item.height : item.floor), 0);
 
-/** The remembered size of one panel in the open workspace, in `wt-panel-sizes`; the same key is the same size in every component. ADR 0002. */
-export const usePanelSize = (id: string) => {
+/** The remembered size under one key, in `wt-panel-sizes`; an empty key reads null and saves nothing. ADR 0002. */
+export const usePanelSize = (key: MaybeRefOrGetter<string>) => {
   const sizes = useLocalStorage<Sizes>('wt-panel-sizes', {}, { writeDefaults: false });
-  const size = computed(() => sizes.value[snapshot.workspace.id]?.[id] ?? null);
+  const size = computed(() => sizes.value[toValue(key)] ?? null);
   const set = (value: number | null) => {
-    const workspace = snapshot.workspace.id;
-    const { [id]: dropped, ...rest } = sizes.value[workspace] ?? {};
+    const name = toValue(key);
+    if (!name) {
+      return;
+    }
+    const { [name]: dropped, ...rest } = sizes.value;
     void dropped;
-    sizes.value = {
-      ...sizes.value,
-      [workspace]: value === null ? rest : { ...rest, [id]: value },
-    };
+    sizes.value = value === null ? rest : { ...rest, [name]: value };
   };
   return { size, set };
 };

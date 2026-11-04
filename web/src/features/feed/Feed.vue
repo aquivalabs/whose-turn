@@ -99,6 +99,7 @@ const restoreMarks = async () => {
 <template>
   <Island
     id="feed"
+    :size-key="`${snapshot.workspace.id}:feed`"
     title="What changed"
     note="Newest first, every source"
     tip="Newest first: comments, reviews, merges and failed checks on your PRs, and ticket changes. Each item opens where it happened."

@@ -32,7 +32,7 @@ import SettingsSheet from './features/settings/SettingsSheet.vue';
 const firstRun = computed(
   () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
 );
-const { size: feedWidth } = usePanelSize('feed');
+const { size: feedWidth } = usePanelSize(() => `${snapshot.workspace.id}:feed`);
 const layoutStyle = computed(() =>
   feedWidth.value === null ? undefined : { '--feed-width': feedWidth.value + 'px' },
 );

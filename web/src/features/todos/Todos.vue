@@ -113,6 +113,7 @@ const options = computed(() => [
 <template>
   <Island
     id="todo"
+    :size-key="`${snapshot.workspace.id}:todo`"
     title="To do"
     note="Your own notes"
     tip='Your personal to-dos, kept on this machine. Add here, or ask Claude: "add to my to-do: …". A ticket key like PROJ-123 in the text becomes a link.'

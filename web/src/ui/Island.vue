@@ -9,6 +9,7 @@ import ResizeHandle from './ResizeHandle.vue';
 const props = withDefaults(
   defineProps<{
     id: string;
+    sizeKey?: string;
     title: string;
     note?: string;
     tip?: string;
@@ -16,6 +17,7 @@ const props = withDefaults(
     resize?: 'height' | 'width';
   }>(),
   {
+    sizeKey: '',
     note: '',
     tip: '',
     resize: 'height',
@@ -24,7 +26,7 @@ const props = withDefaults(
 const MIN_WIDTH = 280;
 const MAIN_MIN_WIDTH = 360;
 const { collapsed, toggle } = useFold(props.id);
-const { size, set } = usePanelSize(props.id);
+const { size, set } = usePanelSize(() => props.sizeKey);
 const root = useTemplateRef<HTMLElement>('root');
 const floor = ref(0);
 const pixels = (value: string) => parseFloat(value) || 0;

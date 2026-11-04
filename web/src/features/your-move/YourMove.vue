@@ -70,6 +70,7 @@ const undoHandled = () => {
 <template>
   <Island
     id="your-move"
+    :size-key="`${snapshot.workspace.id}:your-move`"
     title="Your move"
     note="Next step is yours"
     tip="Each row is something where the next step is yours. Ticket, PR and comment open in a new tab."

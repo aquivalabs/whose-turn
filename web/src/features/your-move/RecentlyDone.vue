@@ -12,7 +12,7 @@ import Chevron from '@/ui/Chevron.vue';
 import ResizeHandle from '@/ui/ResizeHandle.vue';
 import { usePanelSize } from '@/composables/usePanelSize.ts';
 const LIST_MAX = 480;
-const { size: listHeight, set: setListHeight } = usePanelSize('recently-done');
+const { size: listHeight, set: setListHeight } = usePanelSize(() => `${snapshot.workspace.id}:recently-done`);
 const list = useTemplateRef<HTMLElement>('list');
 const scrollerRoom = (element: HTMLElement) => {
   const scroller = element.closest('.island__body')?.querySelector<HTMLElement>('.row-scroll');
