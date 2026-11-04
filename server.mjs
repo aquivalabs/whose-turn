@@ -52,7 +52,7 @@ const registry = createRegistry({
   saveNotifications: (notifications) => saveNotifications(first.configFile, notifications),
   saveSettings: (settings) => saveSettings(first.configFile, settings),
   normalise: (rawWorkspaces) => normaliseWorkspaces(rawWorkspaces).workspaces,
-  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify, unpark: (id) => registry.setHidden(id, '') }),
+  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify, hidden: () => registry.hiddenOf(definition.id), unpark: (id) => registry.setHidden(id, '') }),
 });
 
 let wake = null;
@@ -88,8 +88,9 @@ for (const problem of registry.problems) {
 }
 pollLoop();
 updater.start();
+const FIRST_NEWS_MS = 30000;
 const checkReports = () => reports.checkNews().catch(() => {});
-checkReports();
+setTimeout(checkReports, FIRST_NEWS_MS).unref();
 setInterval(checkReports, NEWS_EVERY_MS).unref();
 
 const HEALTH_TICK = 30000;

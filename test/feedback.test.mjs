@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -430,4 +430,54 @@ test('news: the stream opens with the current news and GET /api/feedback marks t
     server.close();
     server.closeAllConnections();
   }
+});
+
+test('the admin token is looked up once, a miss included, and again after a 401', async () => {
+  let lookups = 0;
+  let status = 0;
+  let minutes = 0;
+  const realNow = Date.now();
+  const http = { fetchJson: async (url) => {
+    if (status) {
+      throw Object.assign(new Error(`HTTP ${status}`), { upstreamStatus: status });
+    }
+    return { issues: url.includes('all=1') ? everyIssues : [] };
+  } };
+  const reports = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => { lookups += 1; return 'token'; } });
+  const clock = mock.method(Date, 'now', () => realNow + minutes * 60000);
+  const later = (by) => { minutes += by; };
+  await reports.checkNews();
+  later(11);
+  await reports.markSeen();
+  assert.equal(lookups, 1, 'one lookup serves every read');
+  status = 401;
+  later(11);
+  await reports.checkNews();
+  status = 0;
+  later(11);
+  await reports.markSeen();
+  clock.mock.restore();
+  assert.equal(lookups, 2, 'a 401 drops the remembered token');
+  const missing = openReports(reportsDir(), { http, relayUrl: RELAY, adminToken: async () => { lookups += 1; return ''; } });
+  await missing.checkNews();
+  mock.method(Date, 'now', () => realNow + 60 * 60000);
+  await missing.markSeen();
+  mock.restoreAll();
+  assert.equal(lookups, 3, 'a miss is remembered too');
+});
+
+test('markSeen writes the seen file only when something changed', async () => {
+  const desk = newsDesk({ issues: [relayIssue()] });
+  desk.reports.add({ id: 'RMA-500', title: 't', kind: 'bug', filed_at: 'x' });
+  await desk.reports.markSeen();
+  const file = join(desk.dir, 'reports-seen.json');
+  writeFileSync(file, readFileSync(file, 'utf8').replace('"open"', '"open" '));
+  await desk.reports.markSeen();
+  assert.match(readFileSync(file, 'utf8'), /"open" /, 'an unchanged state leaves the file alone');
+  desk.set([relayIssue({ outcome: 'done' })]);
+  const realNow = Date.now();
+  mock.method(Date, 'now', () => realNow + 11 * 60000);
+  await desk.reports.markSeen();
+  mock.restoreAll();
+  assert.doesNotMatch(readFileSync(file, 'utf8'), /"open" /);
 });
