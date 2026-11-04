@@ -2,9 +2,11 @@
 // Report: one field in the user's words; the server's composer shapes the issue and files it with the maintainer's tracker; the list below shows what this machine filed with the state the tracker reports.
 import { ref, watch, nextTick } from 'vue';
 import { snapshot, ui } from '@/store.ts';
+import { dark } from '@/scheme.ts';
 import { getJson, post, problemsOf } from '@/lib/api.ts';
 import { SERVER_DOWN, TEXT_KEPT, writeProblem } from '@/lib/problems.ts';
 import type { ApiError, FiledReport } from '@/lib/types.ts';
+import { browserOf } from '@/lib/browser.ts';
 import { ago } from '@/lib/time.ts';
 import { outcomeTone } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
@@ -21,6 +23,21 @@ interface FeedbackReply {
   issue?: { identifier: string; title: string };
   reports?: ReportLine[];
 }
+
+/** What only the browser knows about itself, for a bug that depends on the screen, the language or the theme; no address, no raw user agent. */
+const describeClient = () => ({
+  browser: browserOf(navigator),
+  display: {
+    width: screen.width,
+    height: screen.height,
+    scale: devicePixelRatio,
+    viewport: [innerWidth, innerHeight],
+  },
+  locale: navigator.language,
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  theme: dark.value ? 'dark' : 'light',
+  mode: ui.mode,
+});
 
 const text = ref('');
 const field = ref<HTMLTextAreaElement | null>(null);
@@ -55,7 +72,7 @@ const send = () => {
     text: remark,
     from: 'the window',
     ws: snapshot.workspace.id,
-    kind_ref: { kind: 'workspace', ref: snapshot.workspace.id },
+    client: describeClient(),
   })
     .then((reply) => {
       sending.value = false;
@@ -118,8 +135,7 @@ watch(
           @keydown.ctrl.enter.prevent="send"
         ></textarea>
         <p class="feedback-sheet__note">
-          A report goes to the maintainer's tracker, so it leaves this machine, with a summary of
-          this workspace.
+          Only what you write, the monitor version and a description of your system (OS, browser, screen, language, time zone) are sent.
         </p>
         <p v-if="done" class="empty">
           Filed as

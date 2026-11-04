@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { muted, notify } from '../lib/notify.mjs';
+import { muted, notifier, notify } from '../lib/notify.mjs';
 
 const capture = (platform, title, body) => {
   const calls = [];
@@ -63,4 +63,14 @@ test('the notifications.desktop setting stops notify from firing, and turning it
   desktop = true;
   send();
   assert.equal(calls.length, 1);
+});
+
+test('notifier reads the setting at each call, so a flip between two calls applies to the second', () => {
+  let desktop = true;
+  const reads = [];
+  const send = notifier(() => { reads.push(desktop); return desktop; });
+  send('T', 'B');
+  desktop = false;
+  send('T', 'B');
+  assert.deepEqual(reads, [true, false]);
 });

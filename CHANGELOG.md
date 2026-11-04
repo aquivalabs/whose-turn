@@ -6,7 +6,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ### Added
 - A bell in the status bar, "Notifications on", turns desktop notifications off for the whole monitor and back on. When they are off the button turns red and says "Notifications off", and the choice is kept after a restart. RMA-283.
-- Anyone can now send a report from the Report sheet and see its answer, without connecting anything. A report goes to the maintainer's tracker, so it leaves your machine, and the sheet says so. RMA-280.
+- Anyone can now send a report from the Report sheet and see its answer, without connecting anything. A report goes to the maintainer, and the sheet says so. RMA-280.
+- A report now carries only the title and text you write, the monitor version and a short description of your system (OS, Node version, how the monitor was installed, browser, screen and window size, language, time zone, light or dark, app window or tab, and which kinds of source you use, such as github or linear); nothing from your workspaces, tickets, names or links is sent with it. RMA-291.
 
 ### Changed
 - The `feedback` settings for a Linear workspace, team, project and key are gone: reports no longer need them, and old values in your config are dropped the next time it is saved. RMA-280.

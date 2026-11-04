@@ -6,6 +6,7 @@ import { checksTone, outcomeTone, isPrOnly, hasPrColumn } from '../web/src/lib/m
 import { workspaceIconParts, workspaceIconSvg } from '../web/src/lib/icons.ts';
 import { mulberry32 } from '../web/src/lib/random.ts';
 import { hasBody } from '../web/src/lib/feed.ts';
+import { browserOf } from '../web/src/lib/browser.ts';
 
 const NOW = Date.parse('2026-11-03T12:00:00Z');
 const MINUTE = 60000;
@@ -121,4 +122,18 @@ test('the workspace icon is a standalone SVG in the given colours with the glyph
   assert.match(svg, /^<svg xmlns="http:\/\/www.w3.org\/2000\/svg" viewBox="0 0 36 36">/);
   assert.ok(svg.includes('fill="#111111"') && svg.includes('fill="#222222"') && svg.includes('fill="#333333"'));
   assert.ok(svg.includes('>MG</text>'));
+});
+
+test('browserOf picks the real brand over Chromium and "Not A Brand", falls back to the user agent, and never returns the raw string', () => {
+  const brands = (list) => ({ userAgent: 'x', userAgentData: { brands: list } });
+  assert.deepEqual(browserOf(brands([{ brand: 'Not/A)Brand', version: '99' }, { brand: 'Chromium', version: '130' }, { brand: 'Google Chrome', version: '130' }])), { name: 'Chrome', version: '130' });
+  assert.deepEqual(browserOf(brands([{ brand: 'Chromium', version: '130.0.1' }, { brand: 'Microsoft Edge', version: '130' }])), { name: 'Edge', version: '130' });
+  assert.deepEqual(browserOf(brands([{ brand: 'Not A;Brand', version: '8' }, { brand: 'Chromium', version: '131' }])), { name: 'Chromium', version: '131' });
+  assert.deepEqual(browserOf(brands([{ brand: 'Vivaldi', version: '7' }])), { name: 'Other', version: '7' });
+  const agent = (userAgent) => browserOf({ userAgent });
+  assert.deepEqual(agent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15'), { name: 'Safari', version: '18' });
+  assert.deepEqual(agent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0'), { name: 'Firefox', version: '132' });
+  assert.deepEqual(agent('Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.2849.5'), { name: 'Edge', version: '130' });
+  assert.deepEqual(agent('Mozilla/5.0 AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36'), { name: 'Chrome', version: '130' });
+  assert.equal(agent('curl/8.0'), null);
 });

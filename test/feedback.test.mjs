@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createFeedback, openReports } from '../lib/feedback.mjs';
+import { clientOf, createFeedback, openReports } from '../lib/feedback.mjs';
 import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
 import { RateLimited } from '../lib/http-client.mjs';
 
@@ -26,9 +26,9 @@ const relayIssue = (extra = {}) => ({ identifier: 'RMA-500', title: 'Chevron wra
 const open = (dir, { http = stub().http } = {}) => openReports(dir, { http, relayUrl: RELAY });
 const filed = (dir) => open(dir).add({ id: 'RMA-500', title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
 
-test('a bug is posted to the relay with its kind, title, body, version and context, and the identifier comes back', async () => {
+test('a bug is posted to the relay with its kind, title, body, version and environment, and nothing else; the identifier comes back', async () => {
   const { http, calls } = stub();
-  const issue = await createFeedback({ http, relayUrl: RELAY, version: '1.0.0' }, { kind: 'bug', title: 'The chevron wraps', body: 'On a narrow feed the chevron drops a line.', context: '## PROJ-1 · a row', from: 'the window' });
+  const issue = await createFeedback({ http, relayUrl: RELAY, version: '1.0.0', sources: ['linear', 'github', 'linear'] }, { kind: 'bug', title: 'The chevron wraps', body: 'On a narrow feed the chevron drops a line.' });
   assert.equal(issue.identifier, 'RMA-500');
   assert.equal(calls[0].url, RELAY);
   assert.equal(calls[0].method, 'POST');
@@ -37,8 +37,43 @@ test('a bug is posted to the relay with its kind, title, body, version and conte
   assert.equal(calls[0].body.title, 'The chevron wraps');
   assert.match(calls[0].body.body, /drops a line/);
   assert.equal(calls[0].body.version, '1.0.0');
-  assert.equal(calls[0].body.context.from, 'the window');
-  assert.match(calls[0].body.context.about, /PROJ-1/);
+  assert.deepEqual(Object.keys(calls[0].body).sort(), ['body', 'environment', 'kind', 'product', 'title', 'version']);
+  assert.deepEqual(Object.keys(calls[0].body.environment), ['os', 'osVersion', 'arch', 'node', 'install', 'sources']);
+  assert.equal(calls[0].body.environment.node, process.version);
+  assert.deepEqual(calls[0].body.environment.sources, ['github', 'linear']);
+});
+
+test('each client field is kept only when it is exactly the agreed shape, and a bad one is dropped without an error', () => {
+  const good = { browser: { name: 'Edge', version: '130' }, display: { width: 1512, height: 982, scale: 2.00001, viewport: [1200, 800] }, locale: 'en-GB', timezone: 'Europe/Berlin', theme: 'dark', mode: 'app' };
+  const clean = { ...good, display: { width: 1512, height: 982, scale: 2, viewport: [1200, 800] } };
+  assert.deepEqual(clientOf(good), clean);
+  const bad = {
+    browser: [null, 'Chrome', { name: 'Chrome' }, { name: 'Netscape', version: '4' }, { name: 'Chrome', version: '130.0.1' }, { name: 'Chrome', version: '1234567' }, { name: 'Chrome', version: 130 }, { name: 'Chrome', version: '130', ua: 'Mozilla/5.0' }],
+    display: [null, 'wide', { ...good.display, extra: 'x' }, { ...good.display, width: 0 }, { ...good.display, height: 20001 }, { ...good.display, width: 1.5 }, { ...good.display, scale: 9 }, { ...good.display, scale: 0.4 }, { ...good.display, scale: '2' }, { ...good.display, viewport: [1200] }, { ...good.display, viewport: [1200, -1] }, { width: 1, height: 1, scale: 1 }],
+    locale: [5, '', 'en_GB', 'en-GB ', 'x'.repeat(36), 'https://host.invalid'],
+    timezone: [5, '', 'Europe Berlin', 'Europe/Berlin\n', 'x'.repeat(65), 'http://host.invalid/a'],
+    theme: ['blue', 1, null],
+    mode: ['window', 1, null],
+  };
+  for (const [field, values] of Object.entries(bad)) {
+    const { [field]: dropped, ...rest } = clean;
+    for (const value of values) {
+      assert.deepEqual(clientOf({ ...good, [field]: value }), rest, field + ' ' + JSON.stringify(value));
+    }
+  }
+  assert.deepEqual(clientOf(undefined), {});
+  assert.deepEqual(clientOf('x'), {});
+  assert.deepEqual(clientOf({ ip: '1.2.3.4', userAgent: 'Mozilla/5.0' }), {});
+});
+
+test('the environment is built on the server, adds the clean client report, and has no user data', async () => {
+  const { http, calls } = stub();
+  await createFeedback({ http, relayUrl: RELAY, install: 'npm', sources: ['linear'], client: { theme: 'light', locale: 'x y', ip: '1.2.3.4' } }, { title: 'T' });
+  const { environment } = calls[0].body;
+  assert.deepEqual(Object.keys(environment), ['os', 'osVersion', 'arch', 'node', 'install', 'sources', 'theme']);
+  assert.equal(environment.arch, process.arch);
+  assert.equal(environment.install, 'npm');
+  assert.equal(environment.theme, 'light');
 });
 
 test('an over-long title is cut to the relay limit, and an empty title is refused before any call', async () => {
@@ -122,6 +157,22 @@ test('an empty remark without a title is INVALID_ARGUMENT with a field violation
     assert.equal(response.status, 400);
     assert.equal(error.details[0].reason, 'INVALID_ARGUMENT');
     assert.deepEqual(error.details[1].field_violations.map((violation) => violation.field), ['text']);
+    assert.equal(calls.length, 0);
+  } finally {
+    server.close();
+  }
+});
+
+test('a request that still carries context is refused with INVALID_ARGUMENT and nothing is filed', async () => {
+  const { http, calls } = stub();
+  const { server, post } = await startTestApi({ registry: emptyRegistry(), http, reports: { list: () => [], add: () => {}, states: async () => [] } });
+  try {
+    const response = await post('/api/feedback', { kind: 'bug', title: 'T', context: '## PROJ-1' });
+    const error = (await response.json()).error;
+    assert.equal(response.status, 400);
+    assert.equal(error.details[0].reason, 'INVALID_ARGUMENT');
+    assert.match(error.details[0].metadata.detail, /context is no longer accepted/);
+    assert.deepEqual(error.details[1].field_violations.map((violation) => violation.field), ['context']);
     assert.equal(calls.length, 0);
   } finally {
     server.close();
