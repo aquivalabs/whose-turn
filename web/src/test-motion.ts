@@ -1,4 +1,4 @@
-// motion-v stand-in for the Vitest tier: plain tags, instant exits. docs/adr/0009-motion-in-the-window.md § Tests stub the library
+// motion-v stand-in for the Vitest tier: plain tags, instant exits. docs/mechanisms/motion.md § The test stand-in
 import { h } from 'vue';
 import type { SetupContext } from 'vue';
 

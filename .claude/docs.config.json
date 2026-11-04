@@ -51,6 +51,17 @@
         "web/src/lib/tooltips.ts"
       ],
       "doc": "docs/mechanisms/tooltips.md"
+    },
+    {
+      "id": "motion",
+      "paths": [
+        "web/src/motion.ts",
+        "web/src/ui/Island.vue",
+        "web/src/ui/Modal.vue",
+        "web/src/test-motion.ts",
+        "web/src/styles/tokens.css"
+      ],
+      "doc": "docs/mechanisms/motion.md"
     }
   ],
   "surfaceRules": {

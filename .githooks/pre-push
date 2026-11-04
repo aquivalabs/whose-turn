@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -e
 refs=$(cat)
-# Window gate: types, lint, style lint and the test suite in one command (frontend-vue:tooling).
-npm run check
-# Docs gate — blocks a push that leaves a declared mechanism's doc behind.
-# Ignores the ref pairs git passes on stdin: a per-push range would fail a rule the PR satisfies.
-node scripts/docs-check.mjs
 # A push to the release branch waits for the BladeForge skill to cover the version (RMA-328); git passes the pushed refs on stdin.
 if printf '%s\n' "$refs" | awk '$3 == "refs/heads/release" { found = 1 } END { exit !found }'; then
   node scripts/skill-knows-release.mjs
 fi
+# Window gate: types, lint, style lint and the test suite in one command (frontend-vue:tooling).
+npm run check
+# Docs gate — blocks a push that leaves a declared mechanism's doc behind.
+# It is not given the pushed refs: a per-push range would fail a rule the PR satisfies.
+node scripts/docs-check.mjs
 # Secret scan on every push. The full review gate (a fresh /review attestation) is off during the alpha
 # and runs once at the end of a working day instead; AGENTS.md "Gates", RMA-206. RMA-207 turns it back on per PR.
 printf '%s\n' "$refs" | npx -y -p bladeforge-review-harness@0.3.1 review-gate --secrets-only

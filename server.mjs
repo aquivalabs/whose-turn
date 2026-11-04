@@ -15,13 +15,14 @@ import { startApi } from './lib/api.mjs';
 import { notifier } from './lib/notify.mjs';
 import { loadChangelog } from './lib/changelog.mjs';
 import { createUpdater, restartServer, runsInstalled } from './lib/update.mjs';
+import { listOf } from './lib/text.mjs';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 const http = createHttpClient();
 const first = loadConfig();
 const secrets = createSecrets(first.dataDir);
 const inbox = openInbox(first.dataDir);
-const reports = openReports(first.dataDir, { http, relayUrl: process.env.WHOSE_TURN_FEEDBACK_URL || RELAY_URL, adminToken: () => secrets.get('whose-turn-feedback-admin', 'relay'), adminHosts: (process.env.WHOSE_TURN_FEEDBACK_ADMIN_HOSTS || '').split(',').map((host) => host.trim()).filter(Boolean) });
+const reports = openReports(first.dataDir, { http, relayUrl: process.env.WHOSE_TURN_FEEDBACK_URL || RELAY_URL, adminToken: () => secrets.get('whose-turn-feedback-admin', 'relay'), adminHosts: listOf(process.env.WHOSE_TURN_FEEDBACK_ADMIN_HOSTS) });
 const { version } = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8'));
 let server;
 const notify = notifier(() => process.env.WHOSE_TURN_NOTIFY !== 'off' && registry.notifications.desktop);

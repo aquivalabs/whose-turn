@@ -95,8 +95,8 @@ const OPTIONS = {
 /** The flags with the defaults applied; an unknown flag or one without a value throws. */
 export const parseArgs = (argv) => {
   const { values } = nodeParseArgs({ args: argv, options: OPTIONS, strict: true });
-  const given = Object.entries(values).map(([flag, value]) => [flag.replace(/-(\w)/g, (_, letter) => letter.toUpperCase()), value]);
-  return { apply: false, ...DEFAULTS, ...Object.fromEntries(given) };
+  const given = { apply: values.apply, version: values.version, team: values.team, project: values.project, keychainService: values['keychain-service'], keychainAccount: values['keychain-account'] };
+  return { apply: false, ...DEFAULTS, ...Object.fromEntries(Object.entries(given).filter(([, value]) => value !== undefined)) };
 };
 
 const main = async () => {
