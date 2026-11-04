@@ -2,6 +2,14 @@
 
 What changed for you in each version of Whose Turn. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/). The window shows this list under What's new; the ids at the end of an entry are ours and the window leaves them out.
 
+## [Unreleased]
+
+### Added
+- Anyone can now send a report from the Report sheet and see its answer, without connecting anything. A report goes to the maintainer's tracker, so it leaves your machine, and the sheet says so. RMA-280.
+
+### Changed
+- The `feedback` settings for a Linear workspace, team, project and key are gone: reports no longer need them, and old values in your config are dropped the next time it is saved. RMA-280.
+
 ## [1.0.0-alpha.7] - 2026-11-04
 
 ### Fixed

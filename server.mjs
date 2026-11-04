@@ -72,7 +72,7 @@ const saveConfig = async (rawWorkspaces) => {
 };
 
 try {
-  server = await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir, updater, changelog: loadChangelog(appDir, version) });
+  server = await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir, updater, changelog: loadChangelog(appDir, version), version });
 } catch (error) {
   console.error(error.message);
   process.exit(1);

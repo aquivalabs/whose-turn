@@ -1,7 +1,6 @@
 <script setup lang="ts">
-// Report: one field in the user's words; the server's composer shapes the issue; the list below shows what this machine filed with the state Linear reports.
+// Report: one field in the user's words; the server's composer shapes the issue and files it with the maintainer's tracker; the list below shows what this machine filed with the state the tracker reports.
 import { ref, watch, nextTick } from 'vue';
-import { refAutoReset } from '@vueuse/core';
 import { snapshot, ui } from '@/store.ts';
 import { getJson, post, problemsOf } from '@/lib/api.ts';
 import { SERVER_DOWN, TEXT_KEPT, writeProblem } from '@/lib/problems.ts';
@@ -15,8 +14,6 @@ type ReportLine = Pick<
   'id' | 'title' | 'state' | 'outcome' | 'filed_at' | 'changed_at'
 >;
 interface FeedbackList {
-  configured: boolean;
-  project?: string;
   reports?: ReportLine[];
 }
 interface FeedbackReply {
@@ -30,16 +27,11 @@ const field = ref<HTMLTextAreaElement | null>(null);
 const sending = ref(false);
 const problems = ref<string[]>([]);
 const done = ref<{ identifier: string; title: string } | null>(null);
-const project = ref('');
-const configured = ref(true);
-const copied = refAutoReset<'' | 'sent' | 'failed'>('', 1600);
 const reports = ref<ReportLine[]>([]);
 const reportPage = (id: string) => '/report?id=' + encodeURIComponent(id);
 const load = () =>
   getJson<FeedbackList>('/api/feedback').then(
     (list) => {
-      configured.value = list.configured;
-      project.value = list.configured ? 'Linear · ' + list.project : 'not connected';
       reports.value = list.reports || [];
     },
     () => {
@@ -49,24 +41,8 @@ const load = () =>
 const close = () => {
   ui.feedback = false;
 };
-const copy = () => {
-  const remark = text.value.trim();
-  if (!remark) {
-    problems.value = ['Write at least one line.'];
-    return;
-  }
-  problems.value = [];
-  navigator.clipboard.writeText(remark).then(
-    () => {
-      copied.value = 'sent';
-    },
-    () => {
-      copied.value = 'failed';
-    },
-  );
-};
 const send = () => {
-  if (!configured.value || sending.value) {
+  if (sending.value) {
     return;
   }
   const remark = text.value.trim();
@@ -119,11 +95,10 @@ watch(
     <div class="modal__card feedback-sheet__card">
       <div class="modal__head">
         <h3 id="feedback-title" class="modal__title">Report a problem or a wish</h3>
-        <span class="modal__meta">{{ project }}</span>
         <button
           type="button"
           class="btn btn--tonal"
-          :aria-disabled="!configured || sending"
+          :aria-disabled="sending"
           @click="send"
         >
           {{ sending ? 'Composing…' : 'Send' }}
@@ -137,26 +112,14 @@ watch(
           v-model="text"
           class="input feedback-sheet__text"
           rows="5"
-          :placeholder="
-            'Describe the problem or the wish in your own words.' +
-            (configured ? ' Cmd+Enter sends.' : '')
-          "
+          placeholder="Describe the problem or the wish in your own words. Cmd+Enter sends."
           autocomplete="off"
           @keydown.meta.enter.prevent="send"
           @keydown.ctrl.enter.prevent="send"
         ></textarea>
-        <p v-if="!configured" class="feedback-sheet__note">
-          The maintainer's tracker is not connected on this machine, so nothing can be sent from
-          here. Copy your remark and pass it on yourself.
-          <button type="button" class="btn" @click="copy">
-            {{
-              copied === 'sent' ? 'Copied' : copied === 'failed' ? 'Could not copy' : 'Copy remark'
-            }}
-          </button>
-        </p>
-        <p v-else class="feedback-sheet__note">
-          An assistant turns it into a proper issue (title, kind, description) and files it in the
-          Whose Turn backlog with this workspace's summary attached.
+        <p class="feedback-sheet__note">
+          A report goes to the maintainer's tracker, so it leaves this machine, with a summary of
+          this workspace.
         </p>
         <p v-if="done" class="empty">
           Filed as

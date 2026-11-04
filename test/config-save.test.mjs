@@ -43,3 +43,17 @@ test('validation reports duplicate ids and a bad theme without writing anything'
   assert.match(problems[0], /theme.seed/);
   assert.match(problems[1], /share the id/);
 });
+
+test('the retired feedback tracker keys are dropped on load and on save, the composer stays', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const file = join(dir, 'config.json');
+  const composer = { command: 'codex', args: ['exec'] };
+  writeFileSync(file, JSON.stringify({ workspaces: [{ id: 'home' }], feedback: { workspace: 'x', team: 'T', project: 'p', token_service: 's', assign: false, composer } }));
+  assert.deepEqual(loadConfig({ WHOSE_TURN_CONFIG: file, WHOSE_TURN_DATA: dir }).feedback, { composer });
+  saveWorkspaces(file, [{ id: 'home' }]);
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')).feedback, { composer });
+  writeFileSync(file, JSON.stringify({ workspaces: [], feedback: { workspace: 'x', team: 'T' } }));
+  saveWorkspaces(file, [{ id: 'home' }]);
+  assert.equal('feedback' in JSON.parse(readFileSync(file, 'utf8')), false);
+  assert.equal(loadConfig({ WHOSE_TURN_CONFIG: file, WHOSE_TURN_DATA: dir }).feedback, null);
+});
