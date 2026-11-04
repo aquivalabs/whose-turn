@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // A comment opened formatted over the dashboard.
+import { AnimatePresence } from 'motion-v';
 import { computed } from 'vue';
 import { snapshot, ui } from '@/store.ts';
 import { safeUrl } from '@/lib/api.ts';
@@ -21,10 +22,12 @@ const close = () => {
 };
 </script>
 <template>
-  <Modal v-if="item" :title="title" label-id="modal-title" flush @close="close">
-    <template #head>
-      <a v-if="href" class="btn" :href="href" target="_blank" rel="noopener">{{ label }}</a>
-    </template>
-    <MarkdownView :source="item.body || item.text || ''" />
-  </Modal>
+  <AnimatePresence>
+    <Modal v-if="item" :title="title" label-id="modal-title" flush @close="close">
+      <template #head>
+        <a v-if="href" class="btn" :href="href" target="_blank" rel="noopener">{{ label }}</a>
+      </template>
+      <MarkdownView :source="item.body || item.text || ''" />
+    </Modal>
+  </AnimatePresence>
 </template>

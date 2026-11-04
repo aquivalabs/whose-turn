@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed, reactive } from 'vue';
+import { AnimatePresence, Motion } from 'motion-v';
 import { snapshot, ui, now, setMarks, justHandled } from '@/store.ts';
 import { yourRows, hasPrColumn } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
@@ -16,6 +17,7 @@ import AiButton from '@/ui/AiButton.vue';
 import RecentlyDone from './RecentlyDone.vue';
 import RowScroll from '@/ui/RowScroll.vue';
 import { useMoveView } from './useMoveView.ts';
+import { fade, listed } from '@/motion.ts';
 const moveView = useMoveView();
 const view = computed(() => {
   void now.value;
@@ -94,10 +96,12 @@ const undoHandled = () => {
     <template #head
       ><Segmented v-model="moveView" :options="options" label="Show" class="your-move__view"
     /></template>
-    <p v-if="justHandled" class="your-move__undo" role="status">
-      Marked handled.
-      <button type="button" class="your-move__undo-btn" @click="undoHandled">Undo</button>
-    </p>
+    <AnimatePresence>
+      <Motion v-if="justHandled" v-bind="fade" as="p" class="your-move__undo" role="status">
+        Marked handled.
+        <button type="button" class="your-move__undo-btn" @click="undoHandled">Undo</button>
+      </Motion>
+    </AnimatePresence>
     <RowScroll floor>
       <table class="table">
         <thead>
@@ -109,7 +113,8 @@ const undoHandled = () => {
             <th class="table__actions-col"><span class="visually-hidden">Mark</span></th>
           </tr>
         </thead>
-        <tbody v-for="item in view.rows" :key="item.row.row_id">
+        <AnimatePresence>
+        <Motion v-for="item in view.rows" :key="item.row.row_id" v-bind="listed" as="tbody">
           <tr
             class="your-move__row"
             :class="{
@@ -149,13 +154,17 @@ const undoHandled = () => {
                   >handled</span
                 >
               </span>
-              <p
-                v-if="problems.get(item.row.row_id)"
-                class="alert alert--inline your-move__problem"
-                role="alert"
-              >
-                {{ problems.get(item.row.row_id) }}
-              </p>
+              <AnimatePresence>
+                <Motion
+                  v-if="problems.get(item.row.row_id)"
+                  v-bind="fade"
+                  as="p"
+                  class="alert alert--inline your-move__problem"
+                  role="alert"
+                >
+                  {{ problems.get(item.row.row_id) }}
+                </Motion>
+              </AnimatePresence>
             </td>
             <PrCell v-if="showPr" :row="item.row" />
             <td
@@ -188,8 +197,11 @@ const undoHandled = () => {
               </button>
             </td>
           </tr>
-          <tr
+          <AnimatePresence>
+          <Motion
             v-if="item.lined"
+            v-bind="fade"
+            as="tr"
             class="your-move__line-row"
             :class="{ 'your-move__line-row--handled': item.handled }"
           >
@@ -205,8 +217,10 @@ const undoHandled = () => {
                 <time class="your-move__time">{{ markedAt(item) }}</time>
               </button>
             </td>
-          </tr>
-        </tbody>
+          </Motion>
+          </AnimatePresence>
+        </Motion>
+        </AnimatePresence>
       </table>
     </RowScroll>
     <p v-if="!view.rows.length" class="empty">
@@ -346,6 +360,11 @@ const undoHandled = () => {
 .your-move__row--lined td {
   border-bottom: 0;
   padding-bottom: 8px;
+}
+
+.your-move__row td,
+.your-move__line-row td {
+  transition: opacity var(--motion-base) var(--motion-ease);
 }
 
 .your-move__row--handled td,

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { useMutationObserver, useResizeObserver } from '@vueuse/core';
 import { useFold } from '@/composables/useFold.ts';
+import { glideThrough } from '@/motion.ts';
 import { ceilingHeight, floorHeight, usePanelSize } from '@/composables/usePanelSize.ts';
 import Chevron from './Chevron.vue';
 import ResizeHandle from './ResizeHandle.vue';
@@ -24,10 +25,15 @@ const props = withDefaults(
 );
 const MIN_WIDTH = 280;
 const MAIN_MIN_WIDTH = 360;
-const { collapsed, toggle } = useFold(props.id);
+const { collapsed, toggle: flip } = useFold(props.id);
 const strip = computed(() => collapsed.value && props.resize === 'width');
 const { size, set } = usePanelSize(() => props.sizeKey);
 const root = useTemplateRef<HTMLElement>('root');
+// A fold glides: the panel's height, or for the width strip the layout's columns, tweens from where it was to where the stylesheet puts it.
+const toggle = () =>
+  props.resize === 'width'
+    ? glideThrough(root.value?.parentElement, 'gridTemplateColumns', flip)
+    : glideThrough(root.value, 'height', flip);
 const floor = ref(0);
 const hasRows = ref(true);
 const pixels = (value: string) => parseFloat(value) || 0;

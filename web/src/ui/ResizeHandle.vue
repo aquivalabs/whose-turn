@@ -66,8 +66,8 @@ const key = (event: KeyboardEvent) => {
   margin: auto;
   border-radius: 2px;
   transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease;
+    opacity var(--motion-fast) var(--motion-ease),
+    background-color var(--motion-fast) var(--motion-ease);
 }
 
 .resize-handle::before {

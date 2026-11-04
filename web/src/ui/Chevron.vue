@@ -31,7 +31,7 @@ withDefaults(defineProps<{ open: boolean; tag?: 'button' | 'span' }>(), { tag: '
   border-right: 2px solid currentcolor;
   border-bottom: 2px solid currentcolor;
   transform: translateX(-1px) rotate(-45deg);
-  transition: transform 0.15s ease;
+  transition: transform var(--motion-fast) var(--motion-ease);
 }
 
 .chevron--open::before {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // What's new: CHANGELOG.md by version, newest first, the running version marked and the versions since the last visit flagged; opening it marks them seen.
+import { AnimatePresence } from 'motion-v';
 import { ref, watch } from 'vue';
 import { ui } from '@/store.ts';
 import { useWhatsNew } from '@/composables/useWhatsNew.ts';
@@ -29,28 +30,30 @@ watch(
 );
 </script>
 <template>
-  <Modal v-if="ui.whatsNew" title="What's new" label-id="whats-new-title" flush @close="close">
-    <template v-if="changelog" #head>
-      <span class="modal__meta">Running {{ changelog.current }}</span>
-    </template>
-    <div v-if="problem" class="alert" role="alert">{{ problem }}</div>
-    <article v-for="entry in changelog?.versions" :key="entry.version" class="whats-new__version">
-      <header class="whats-new__head">
-        <h4 class="whats-new__name">
-          {{ entry.version }}
-        </h4>
-        <span v-if="entry.date" class="whats-new__date">{{ entry.date }}</span>
-        <span
-          v-if="entry.version === changelog?.current"
-          class="whats-new__tag whats-new__tag--running"
-          >Running</span
-        >
-        <span v-if="fresh.includes(entry.version)" class="whats-new__tag">New</span>
-      </header>
-      <MarkdownView v-if="entry.sections.length" :source="versionMarkdown(entry)" />
-      <p v-else class="whats-new__empty">No notes for this version.</p>
-    </article>
-  </Modal>
+  <AnimatePresence>
+    <Modal v-if="ui.whatsNew" title="What's new" label-id="whats-new-title" flush @close="close">
+      <template v-if="changelog" #head>
+        <span class="modal__meta">Running {{ changelog.current }}</span>
+      </template>
+      <div v-if="problem" class="alert" role="alert">{{ problem }}</div>
+      <article v-for="entry in changelog?.versions" :key="entry.version" class="whats-new__version">
+        <header class="whats-new__head">
+          <h4 class="whats-new__name">
+            {{ entry.version }}
+          </h4>
+          <span v-if="entry.date" class="whats-new__date">{{ entry.date }}</span>
+          <span
+            v-if="entry.version === changelog?.current"
+            class="whats-new__tag whats-new__tag--running"
+            >Running</span
+          >
+          <span v-if="fresh.includes(entry.version)" class="whats-new__tag">New</span>
+        </header>
+        <MarkdownView v-if="entry.sections.length" :source="versionMarkdown(entry)" />
+        <p v-else class="whats-new__empty">No notes for this version.</p>
+      </article>
+    </Modal>
+  </AnimatePresence>
 </template>
 <style scoped>
 .whats-new__version {

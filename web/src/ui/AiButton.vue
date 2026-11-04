@@ -61,8 +61,8 @@ const copy = () =>
   background: rgb(var(--md-state), 0.06);
   vertical-align: middle;
   transition:
-    background 0.12s ease,
-    transform 0.12s ease;
+    background var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
 }
 
 .ai-button__icon {

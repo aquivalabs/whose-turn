@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // One feed item: the source badge, the reference, the kind, who, when, and the comment expanded in place with its actions. Expanding and reading are events; the feed applies them.
 import { computed } from 'vue';
+import { Motion } from 'motion-v';
+import { listed } from '@/motion.ts';
 import { snapshot, now } from '@/store.ts';
 import { toneOf, hasBody, badgeOf, subjectOf, itemLine } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
@@ -39,8 +41,10 @@ const toggle = () => {
 };
 </script>
 <template>
-  <li
+  <Motion
+    v-bind="listed"
     :id="'feed-' + item.id"
+    as="li"
     class="feed-item"
     :class="{ 'feed-item--new': fresh, 'feed-item--open': open, 'feed-item--flash': flash }"
     @click="seen"
@@ -77,7 +81,7 @@ const toggle = () => {
       </template>
       <span v-else-if="line" class="feed-item__text">{{ line }}</span>
     </div>
-  </li>
+  </Motion>
 </template>
 <style scoped>
 .feed-item {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // To do: the user's own notes, kept by the server per workspace; a ticket key in the text becomes a link.
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { AnimatePresence, Motion } from 'motion-v';
+import { fade, listed } from '@/motion.ts';
 import { snapshot, now, todoAct } from '@/store.ts';
 import type { Todo } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
@@ -133,15 +135,24 @@ const options = computed(() => [
       />
       <button type="button" class="btn btn--tonal" @click="add">Add</button>
     </div>
-    <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
-    <p v-if="removed" class="todos__undo" role="status">
-      To-do deleted.
-      <button type="button" class="todos__undo-btn" @click="restore">Undo</button>
-    </p>
+    <AnimatePresence>
+      <Motion v-if="problem" v-bind="fade" as="p" class="alert alert--inline" role="alert">{{
+        problem
+      }}</Motion>
+    </AnimatePresence>
+    <AnimatePresence>
+      <Motion v-if="removed" v-bind="fade" as="p" class="todos__undo" role="status">
+        To-do deleted.
+        <button type="button" class="todos__undo-btn" @click="restore">Undo</button>
+      </Motion>
+    </AnimatePresence>
     <ul class="todos__list">
-      <li
+      <AnimatePresence>
+      <Motion
         v-for="{ todo, parts: pieces, meta } in rows"
         :key="todo.id"
+        v-bind="listed"
+        as="li"
         class="todos__item"
         :class="{ 'todos__item--done': todo.done }"
       >
@@ -182,7 +193,8 @@ const options = computed(() => [
         <button type="button" class="todos__delete" aria-label="Delete to-do" @click="remove(todo)">
           ×
         </button>
-      </li>
+      </Motion>
+      </AnimatePresence>
       <span v-if="!rows.length" class="empty todos__empty">{{
         showDone ? 'Nothing here yet.' : 'Nothing to do. Add one above, or ask Claude.'
       }}</span>

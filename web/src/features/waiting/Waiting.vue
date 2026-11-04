@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // Waiting on others: tickets you touched where someone else holds the next step.
 import { computed } from 'vue';
+import { AnimatePresence, Motion } from 'motion-v';
+import { listed } from '@/motion.ts';
 import { snapshot, now } from '@/store.ts';
 import { waitingRows, statusTone, hasPrColumn } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
@@ -53,7 +55,8 @@ const note = computed(() =>
             </th>
           </tr>
         </thead>
-        <tbody v-for="{ row, since, own } in rows" :key="row.row_id">
+        <AnimatePresence>
+        <Motion v-for="{ row, since, own } in rows" :key="row.row_id" v-bind="listed" as="tbody">
           <tr>
             <TicketCell :row="row" />
             <td>
@@ -92,7 +95,8 @@ const note = computed(() =>
               />
             </td>
           </tr>
-        </tbody>
+        </Motion>
+        </AnimatePresence>
       </table>
     </RowScroll>
   </Island>

@@ -52,6 +52,7 @@ Example shape: `0001-choose-the-message-queue.md`.
 | 0006 | [The window's components sit in layers: ui primitives, one folder per feature, shared composables](0006-window-layers.md) | accepted |
 | 0007 | [A tag publishes the package with the built window inside; the marketplace entry installs that package](0007-release-pipeline.md) | accepted |
 | 0008 | [Every source is an adapter under one versioned, capability-declared contract; a user adapter is a module named by path](0008-integration-contract.md) | proposed |
+| 0009 | [Motion in the window is motion-v, pinned, through shared tokens, and off under reduced motion](0009-motion-in-the-window.md) | accepted |
 
 ## Referencing an ADR from code
 

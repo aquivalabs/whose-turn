@@ -1,5 +1,7 @@
 <script setup lang="ts">
 // The self-update chip: the offer, a spinner while the server installs and restarts, and a reload prompt once it runs the new version (RMA-231, RMA-255).
+import { AnimatePresence, Motion } from 'motion-v';
+import { fade } from '@/motion.ts';
 import { computed, onMounted, ref, watch } from 'vue';
 import { refAutoReset, useTimeoutFn } from '@vueuse/core';
 import { snapshot, tellProblem, ui } from '@/store.ts';
@@ -72,48 +74,59 @@ const onReload = () => {
 };
 </script>
 <template>
-  <button
-    v-if="updatedTo"
-    type="button"
-    class="update-chip update-chip--done"
-    title="See what changed"
-    @click="ui.whatsNew = true"
-  >
-    Updated to {{ updatedTo }}
-  </button>
-  <button
-    v-else-if="ready"
-    type="button"
-    class="update-chip update-chip--ready"
-    title="Reload the window to apply the changes"
-    @click="onReload"
-  >
-    Updated to {{ ready }} · Reload
-  </button>
-  <span v-else-if="working" class="update-chip update-chip--busy" role="status"
-    ><span class="update-chip__spinner" aria-hidden="true"></span
-    >{{ restarting ? 'Restarting…' : `Installing ${target || update.latest}…` }}<button
-      v-if="slow"
+  <AnimatePresence mode="wait">
+    <Motion
+      v-if="updatedTo"
+      key="done"
+      v-bind="fade"
+      as="button"
       type="button"
-      class="update-chip__link"
-      title="The restart is taking longer than usual"
+      class="update-chip update-chip--done"
+      title="See what changed"
+      @click="ui.whatsNew = true"
+    >
+      Updated to {{ updatedTo }}
+    </Motion>
+    <Motion
+      v-else-if="ready"
+      key="ready"
+      v-bind="fade"
+      as="button"
+      type="button"
+      class="update-chip update-chip--ready"
+      title="Reload the window to apply the changes"
       @click="onReload"
     >
-      Reload
-    </button></span
-  >
-  <button
-    v-else-if="update.available && update.state === 'failed'"
-    type="button"
-    class="update-chip update-chip--failed"
-    :title="update.reason"
-    @click="onUpdate"
-  >
-    Update failed · Retry
-  </button>
-  <button v-else-if="update.available" type="button" class="update-chip" @click="onUpdate">
-    {{ update.latest }} is out · Update
-  </button>
+      Updated to {{ ready }} · Reload
+    </Motion>
+    <Motion v-else-if="working" key="busy" v-bind="fade" as="span" class="update-chip update-chip--busy" role="status"
+      ><span class="update-chip__spinner" aria-hidden="true"></span
+      >{{ restarting ? 'Restarting…' : `Installing ${target || update.latest}…` }}<button
+        v-if="slow"
+        type="button"
+        class="update-chip__link"
+        title="The restart is taking longer than usual"
+        @click="onReload"
+      >
+        Reload
+      </button></Motion
+    >
+    <Motion
+      v-else-if="update.available && update.state === 'failed'"
+      key="failed"
+      v-bind="fade"
+      as="button"
+      type="button"
+      class="update-chip update-chip--failed"
+      :title="update.reason"
+      @click="onUpdate"
+    >
+      Update failed · Retry
+    </Motion>
+    <Motion v-else-if="update.available" key="out" v-bind="fade" as="button" type="button" class="update-chip" @click="onUpdate">
+      {{ update.latest }} is out · Update
+    </Motion>
+  </AnimatePresence>
 </template>
 <style scoped>
 .update-chip {

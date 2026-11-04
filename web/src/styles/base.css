@@ -258,7 +258,7 @@
   color: var(--md-on-surface-variant);
   font-size: 18px;
   line-height: 1;
-  transition: transform 0.15s ease;
+  transition: transform var(--motion-fast) var(--motion-ease);
 }
 
 .fold-toggle:hover {

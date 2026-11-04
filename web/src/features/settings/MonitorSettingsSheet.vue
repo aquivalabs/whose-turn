@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // Monitor settings: what belongs to the whole monitor and not to one workspace; notifications save at once like the bell, the four numbers save with Save, and the server validates them.
+import { AnimatePresence } from 'motion-v';
 import { computed, ref, watch } from 'vue';
 import { snapshot, ui, reload, toggleNotifications } from '@/store.ts';
 import { getJson, post, problemsOf, violationsOf } from '@/lib/api.ts';
@@ -81,42 +82,44 @@ watch(
 );
 </script>
 <template>
-  <SettingsFrame
-    v-if="ui.monitor"
-    title="Monitor settings"
-    label-id="monitor-title"
-    :dirty="dirty"
-    :ask="ask"
-    :unloaded="unloaded"
-    :problems="problems"
-    @close="requestClose"
-    @save="save"
-    @answer="answer"
-  >
-    <div class="sheet-form">
-      <h4 class="sheet-form__heading">Notifications</h4>
-      <label class="monitor-settings__switch">
-        <input
-          type="checkbox"
-          role="switch"
-          :checked="snapshot.notifications.desktop"
-          @change="toggleNotifications"
+  <AnimatePresence>
+    <SettingsFrame
+      v-if="ui.monitor"
+      title="Monitor settings"
+      label-id="monitor-title"
+      :dirty="dirty"
+      :ask="ask"
+      :unloaded="unloaded"
+      :problems="problems"
+      @close="requestClose"
+      @save="save"
+      @answer="answer"
+    >
+      <div class="sheet-form">
+        <h4 class="sheet-form__heading">Notifications</h4>
+        <label class="monitor-settings__switch">
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="snapshot.notifications.desktop"
+            @change="toggleNotifications"
+          />
+          Desktop notifications for every workspace; saved as you click, like the bell in the status
+          bar
+        </label>
+        <h4 class="sheet-form__heading">Polling and health</h4>
+        <FieldRow
+          v-for="spec in specs"
+          :key="spec.key"
+          v-model="draft[spec.key]"
+          :spec="spec"
+          :error="fieldErrors['settings.' + spec.key]"
         />
-        Desktop notifications for every workspace; saved as you click, like the bell in the status
-        bar
-      </label>
-      <h4 class="sheet-form__heading">Polling and health</h4>
-      <FieldRow
-        v-for="spec in specs"
-        :key="spec.key"
-        v-model="draft[spec.key]"
-        :spec="spec"
-        :error="fieldErrors['settings.' + spec.key]"
-      />
-      <h4 class="sheet-form__heading">Config file</h4>
-      <p class="monitor-settings__file">{{ configFile }}</p>
-    </div>
-  </SettingsFrame>
+        <h4 class="sheet-form__heading">Config file</h4>
+        <p class="monitor-settings__file">{{ configFile }}</p>
+      </div>
+    </SettingsFrame>
+  </AnimatePresence>
 </template>
 <style scoped>
 .monitor-settings__switch {

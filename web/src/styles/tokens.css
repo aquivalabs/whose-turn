@@ -5,6 +5,21 @@
   --tip-ink: #e8ecf5;
   --tip-edge: rgb(255 255 255 / 12%);
   --tip-shadow: rgb(0 0 0 / 45%);
+
+  /* Motion: the durations and easing every transition uses; web/src/motion.ts mirrors them for the JavaScript side. */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 250ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Reduced motion zeroes the durations, so a change is instant. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

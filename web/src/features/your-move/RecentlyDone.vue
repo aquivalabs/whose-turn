@@ -143,4 +143,15 @@ const rows = computed(() => {
   padding-bottom: 8px;
   overflow: auto;
 }
+
+.recently-done[open] > .recently-done__list {
+  animation: recently-done-open var(--motion-base) var(--motion-ease);
+}
+
+@keyframes recently-done-open {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
 </style>

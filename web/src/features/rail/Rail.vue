@@ -218,8 +218,8 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   font-family: var(--md-font);
   color: var(--md-on-surface);
   transition:
-    width 0.18s ease,
-    box-shadow 0.18s ease;
+    width var(--motion-base) var(--motion-ease),
+    box-shadow var(--motion-base) var(--motion-ease);
 }
 
 .rail:hover,
@@ -298,7 +298,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   font-size: 14px;
   font-weight: 500;
   opacity: 0;
-  transition: opacity 0.12s ease;
+  transition: opacity var(--motion-fast) var(--motion-ease);
 }
 
 .rail:hover .rail__label,

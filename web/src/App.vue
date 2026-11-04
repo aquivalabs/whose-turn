@@ -2,6 +2,8 @@
 // The window: the rail, the status line, and the dashboard that fills the rest; sheets open over it. State and data flow live in store.ts.
 import { computed, onMounted, watch } from 'vue';
 import { onKeyStroke, useFavicon } from '@vueuse/core';
+import { AnimatePresence, Motion, MotionConfig } from 'motion-v';
+import { fade, reduced } from './motion.ts';
 import {
   ui,
   snapshot,
@@ -76,6 +78,7 @@ onMounted(() => {
 });
 </script>
 <template>
+  <MotionConfig reduced-motion="user" :skip-animations="reduced">
   <div class="app" :style="themeVariables">
     <Rail
       :inert="covered"
@@ -85,12 +88,14 @@ onMounted(() => {
     />
     <div class="app__shell">
       <StatusBar :inert="covered" @report="ui.feedback = true" />
-      <div v-if="alerts.length" class="alert" :inert="covered">
-        {{ alerts.join('  ·  ') }}
-        <button type="button" class="alert__action" @click="openSettings()">
-          Open workspace settings
-        </button>
-      </div>
+      <AnimatePresence>
+        <Motion v-if="alerts.length" v-bind="fade" class="alert" :inert="covered">
+          {{ alerts.join('  ·  ') }}
+          <button type="button" class="alert__action" @click="openSettings()">
+            Open workspace settings
+          </button>
+        </Motion>
+      </AnimatePresence>
       <div id="wt" class="dashboard dashboard--fit">
         <canvas v-if="snapshot.workspace.backdrop !== false" id="backdrop" class="dashboard__backdrop" aria-hidden="true"></canvas>
         <WorkspaceHeader :inert="covered" />
@@ -118,6 +123,7 @@ onMounted(() => {
       </div>
     </div>
   </div>
+  </MotionConfig>
 </template>
 <style scoped>
 .app__shell {

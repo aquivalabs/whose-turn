@@ -1,17 +1,20 @@
 <script setup lang="ts">
-// A dialog over the window: a title bar with a Close button, a scrolling body (padded unless `flush`) and an optional footer; a click on the backdrop asks to close.
+// A dialog over the window: a title bar with a Close button, a scrolling body (padded unless `flush`) and an optional footer; a click on the backdrop asks to close. The backdrop fades and the card rises; the owner wraps it in AnimatePresence so it can leave the same way.
+import { Motion } from 'motion-v';
+import { fade, rise } from '@/motion.ts';
 defineProps<{ title: string; labelId: string; flush?: boolean; cardClass?: string }>();
 const emit = defineEmits<{ close: [] }>();
 </script>
 <template>
-  <div
+  <Motion
+    v-bind="fade"
     class="modal"
     role="dialog"
     aria-modal="true"
     :aria-labelledby="labelId"
     @click.self="emit('close')"
   >
-    <div class="modal__card" :class="cardClass">
+    <Motion v-bind="rise" class="modal__card" :class="cardClass">
       <div class="modal__head">
         <h3 :id="labelId" class="modal__title">{{ title }}</h3>
         <slot name="head" />
@@ -19,8 +22,8 @@ const emit = defineEmits<{ close: [] }>();
       </div>
       <div class="modal__body" :class="{ 'modal__body--flush': flush }"><slot /></div>
       <div v-if="$slots.footer" class="modal__foot"><slot name="footer" /></div>
-    </div>
-  </div>
+    </Motion>
+  </Motion>
 </template>
 <style scoped>
 .modal__body {

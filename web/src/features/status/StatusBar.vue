@@ -1,5 +1,7 @@
 <script setup lang="ts">
 // The line above the dashboard: Report, the live dot and the last check, the update chip, the notifications switch, Refresh, the app/tab switch, and the copy-everything sparkle.
+import { AnimatePresence, Motion } from 'motion-v';
+import { fade } from '@/motion.ts';
 import { computed, ref } from 'vue';
 import { snapshot, ui, now, notice, refresh, tellProblem } from '@/store.ts';
 import { post } from '@/lib/api.ts';
@@ -56,7 +58,14 @@ const openAsApp = () => {
     >
       <svg class="status-bar__icon" viewBox="0 0 24 24" aria-hidden="true">
         <path :d="BUG" fill="currentColor" /></svg
-      >Report<span v-if="ui.reportNews" class="status-bar__dot" title="A report has news"></span>
+      >Report<AnimatePresence
+        ><Motion
+          v-if="ui.reportNews"
+          v-bind="fade"
+          as="span"
+          class="status-bar__dot"
+          title="A report has news"
+      /></AnimatePresence>
     </button>
     <span
       class="status-bar__live"
@@ -66,7 +75,11 @@ const openAsApp = () => {
       }"
     ></span>
     <span>{{ status }}</span>
-    <span v-if="notice" class="status-bar__notice" role="alert">{{ notice }}</span>
+    <AnimatePresence>
+      <Motion v-if="notice" v-bind="fade" as="span" class="status-bar__notice" role="alert">{{
+        notice
+      }}</Motion>
+    </AnimatePresence>
     <UpdateChip />
     <NotificationsToggle />
     <button type="button" class="btn status-bar__btn" @click="refresh">Refresh now</button>

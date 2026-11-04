@@ -1,14 +1,19 @@
 <script setup lang="ts">
+import { useTemplateRef } from 'vue';
 import { snapshot, counts, openSettings } from '@/store.ts';
+import { glideThrough } from '@/motion.ts';
 import { GEAR } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
 import ExtLink from '@/ui/ExtLink.vue';
-const { collapsed, toggle } = useFold('header');
+const { collapsed, toggle: flip } = useFold('header');
+const header = useTemplateRef<HTMLElement>('header');
+const toggle = () => glideThrough(header.value, 'height', flip);
 </script>
 <template>
   <header
     id="summary"
+    ref="header"
     class="island workspace-header"
     :class="{ 'workspace-header--collapsed': collapsed }"
   >

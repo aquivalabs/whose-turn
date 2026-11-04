@@ -6,6 +6,8 @@ import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed
 import type { FeedGroup } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
+import { AnimatePresence, Motion } from 'motion-v';
+import { fade, listed } from '@/motion.ts';
 import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
@@ -129,7 +131,9 @@ const restoreMarks = async () => {
     resize="width"
   >
     <template #head
-      ><span v-if="newCount" class="feed__new-count">{{ newCount }} new</span></template
+      ><AnimatePresence
+        ><Motion v-if="newCount" v-bind="fade" as="span" class="feed__new-count">{{ newCount }} new</Motion></AnimatePresence
+      ></template
     >
     <div class="feed__bar">
       <Segmented
@@ -140,11 +144,17 @@ const restoreMarks = async () => {
       />
       <Segmented v-model="feedState.view" :options="VIEWS" label="Feed view" />
     </div>
-    <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
-    <p v-if="cleared" class="feed__undo" role="status">
-      Marked all read.
-      <button type="button" class="feed__undo-btn" @click="restoreMarks">Undo</button>
-    </p>
+    <AnimatePresence>
+      <Motion v-if="problem" v-bind="fade" as="p" class="alert alert--inline" role="alert">{{
+        problem
+      }}</Motion>
+    </AnimatePresence>
+    <AnimatePresence>
+      <Motion v-if="cleared" v-bind="fade" as="p" class="feed__undo" role="status">
+        Marked all read.
+        <button type="button" class="feed__undo-btn" @click="restoreMarks">Undo</button>
+      </Motion>
+    </AnimatePresence>
     <div class="feed__search">
       <input
         v-model.trim="feedState.query"
@@ -164,9 +174,12 @@ const restoreMarks = async () => {
     </p>
     <ol v-else class="feed__list">
       <template v-if="feedState.view === 'ticket'">
-        <li
+        <AnimatePresence>
+        <Motion
           v-for="group in groups"
           :key="group.id"
+          v-bind="listed"
+          as="li"
           class="feed__group"
           :class="{
             'feed__group--new': group.unread,
@@ -207,6 +220,7 @@ const restoreMarks = async () => {
             />
           </div>
           <ul v-if="group.open" class="feed__children">
+            <AnimatePresence>
             <FeedItemRow
               v-for="item in group.items"
               :key="item.id"
@@ -219,10 +233,13 @@ const restoreMarks = async () => {
               @toggle="toggleItem"
               @seen="markSeen"
             />
+            </AnimatePresence>
           </ul>
-        </li>
+        </Motion>
+        </AnimatePresence>
       </template>
       <template v-else>
+        <AnimatePresence>
         <FeedItemRow
           v-for="item in rows"
           :key="item.id"
@@ -235,6 +252,7 @@ const restoreMarks = async () => {
           @toggle="toggleItem"
           @seen="markSeen"
         />
+        </AnimatePresence>
       </template>
     </ol>
   </Island>
