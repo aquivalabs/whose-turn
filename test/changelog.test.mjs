@@ -53,7 +53,7 @@ test('versions come in file order with date, kinds and one markdown string per i
 test('Unreleased has no date and keeps its sections', () => {
   const [unreleased] = parseChangelog(SAMPLE);
   assert.equal(unreleased.date, '');
-  assert.deepEqual(unreleased.sections, [{ kind: 'Added', items: ['A thing not yet released. RMA-1.'] }]);
+  assert.deepEqual(unreleased.sections, [{ kind: 'Added', items: ['A thing not yet released.'] }]);
 });
 
 test('a version without sections is kept with an empty list', () => {
@@ -111,4 +111,14 @@ test('GET /api/changelog without a readable file is a CHANGELOG_UNAVAILABLE enve
   } finally {
     server.close();
   }
+});
+
+test('an entry drops the tracker ids at its end or in brackets, and keeps ids inside a sentence and words like UTF-8', async () => {
+  const { withoutIds } = await import('../lib/changelog.mjs');
+  assert.equal(withoutIds('The launch agent finds node at every start. RMA-215.'), 'The launch agent finds node at every start.');
+  assert.equal(withoutIds('Two header fixes. RMA-249, RMA-250.'), 'Two header fixes.');
+  assert.equal(withoutIds('A test fixture (RMA-208) replaces the demo.'), 'A test fixture replaces the demo.');
+  assert.equal(withoutIds('Since RMA-197 the store waited too long.'), 'Since RMA-197 the store waited too long.');
+  assert.equal(withoutIds('Reads files in UTF-8.'), 'Reads files in UTF-8.');
+  assert.equal(withoutIds('No ids here.'), 'No ids here.');
 });

@@ -33,6 +33,13 @@ Every change starts from an issue and lives on a branch named `rma-<number>-<slu
 - **The user's own notes** (Russian copies, session handoffs) live in the gitignored `.users-files/`, never in the tree.
 - **House skills** come from the `bladeforge` marketplace, enabled in `.claude/settings.json`: `cicero` (the voice), `git:commit`, `review`, `docs`, `tests`, `meta` (ockham, solid, reuse-first, model-routing), `error`, `frontend-js`, `frontend-vue` (the window: SFC conventions, component architecture, BEM styles, VueUse composables, testing, tooling), `no-code-prose`, `critique`, `cerberus`. The review lenses in `.claude/review.config.json` judge window code with the same skills. Follow them; do not duplicate their rules here.
 
+## Changelog
+CHANGELOG.md is read by the people who use the monitor: the window shows it under What's new (RMA-253). It is not a developer log; commits and the Linear issues are.
+- **Every change a user can notice gets one entry** under `## [Unreleased]`, in Added, Changed, Fixed or Removed, in the same commit as the change. A change nobody using the monitor can notice (tests, CI, refactors, docs for contributors, the release pipeline) gets none.
+- **Write it for the user, in plain words:** what they now see or can do, or what stopped going wrong, in one or two short sentences. No file names, functions, endpoints, HTTP codes, store or component names, and no "we refactored". A name the user types or reads on screen (a button label, a config key, a command) is fine.
+- **End the entry with its issue id or ids** (`RMA-123.`). They are for us; the window drops them, so the sentence must read complete without them.
+- **A release moves `[Unreleased]` to the new version** with its date (RMA-240). Never edit a released version's entries except to fix wording.
+
 ## Hard rules
 - **English only** in code, docs and commit messages. Conversation language is the author's choice. The PostToolUse hook `.claude/hooks/language-guard.sh` refuses any written file with Cyrillic in it; `.users-files/` is the only place it leaves alone. Linear issues of the project are English too.
 - **No `Co-Authored-By: Claude` / Anthropic attribution** trailers in commits or PR bodies.
