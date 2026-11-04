@@ -11,7 +11,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ### Added
 - When a ticket you worked on moves on in the tracker, for example reassigned and set to Ready for QA, or its PR merged, Your move now keeps a one-line note about it under Handled, such as "→ Passed to Sam · Ready for QA" with the time, and adds the latest comment when there is one. Click the line to see the full event, who it went to, the status and the comment, and to add your own note; "Open in feed" jumps to the change. The line disappears if the ticket comes back to you or after 7 days. RMA-258.
-- After you click Handled, a small window offers a note for what the tracker does not record, for example "PDCR Required = No". Save keeps it, Skip leaves the row handled without one. The note shows on a line under the row and in What changed as your own entry on that ticket, and a click on the line lets you edit or clear it. RMA-258.
+- After you click Handled, a small window offers a note for what the tracker does not record, for example "Checked with the customer, nothing to change". Save keeps it, Skip leaves the row handled without one. The note shows on a line under the row and in What changed as your own entry on that ticket, and a click on the line lets you edit or clear it. RMA-258.
 - A "What's new" button above the gear lists what changed in each version, newest first. A dot on it means there are versions you have not read yet, and the "Updated to" chip opens the same list. RMA-253, RMA-260.
 
 ## [1.0.0-alpha.6] - 2026-11-04

@@ -71,7 +71,7 @@ test('a marks write with a wrong shape is refused naming the field, a valid one 
       [{ base: 4102444800000 }, 'base'],
       [{ handled: { 'NW-1': 'soon' } }, 'handled.NW-1'],
       [{ handled: 'yes' }, 'handled'],
-      [{ notes: 'PDCR' }, 'notes'],
+      [{ notes: 'Checked' }, 'notes'],
       [{ notes: { 'NW-1': 5 } }, 'notes.NW-1'],
       [{ notes: { 'NW-1': 'x'.repeat(201) } }, 'notes.NW-1'],
     ];
@@ -86,7 +86,7 @@ test('a marks write with a wrong shape is refused naming the field, a valid one 
     }
     assert.deepEqual(marks, { seen: [], base: 0, handled: {} });
     // Exercise
-    const ok = await post('/api/marks', { ws: 'w', seen: ['a'], base: Date.now(), handled: { 'NW-1': new Date().toISOString(), 'NW-2': null }, notes: { 'NW-1': 'PDCR Required = No' } });
+    const ok = await post('/api/marks', { ws: 'w', seen: ['a'], base: Date.now(), handled: { 'NW-1': new Date().toISOString(), 'NW-2': null }, notes: { 'NW-1': 'Checked with the customer, nothing to change' } });
     // Verify
     assert.equal(ok.status, 200);
     assert.deepEqual(marks.seen, ['a']);

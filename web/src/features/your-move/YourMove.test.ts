@@ -96,10 +96,10 @@ test('Save stores the note and closes the modal', async () => {
   render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
 
   await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
-  await fireEvent.update(await screen.findByLabelText(/Note/), 'PDCR Required = No');
+  await fireEvent.update(await screen.findByLabelText(/Note/), 'Checked with the customer, nothing to change');
   await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-  expect(setMarks).toHaveBeenLastCalledWith({ notes: { 'nw-1': 'PDCR Required = No' } });
+  expect(setMarks).toHaveBeenLastCalledWith({ notes: { 'nw-1': 'Checked with the customer, nothing to change' } });
   await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 });
 
@@ -120,7 +120,7 @@ test('a manual mark with a note shows the note on its own line with the time', a
     seen: [],
     base: 0,
     handled: { 'nw-2': '2026-11-02T10:05:00Z' },
-    info: { 'nw-2': { note: 'PDCR Required = No' } },
+    info: { 'nw-2': { note: 'Checked with the customer, nothing to change' } },
   };
   useMoveView().value = 'handled';
   const { container } = render({
@@ -128,11 +128,11 @@ test('a manual mark with a note shows the note on its own line with the time', a
     template: '<YourMove /><NoteModal />',
   });
 
-  const line = await screen.findByRole('button', { name: /PDCR Required = No/ });
+  const line = await screen.findByRole('button', { name: /Checked with the customer, nothing to change/ });
   await fireEvent.click(line);
 
   expect(((await screen.findByLabelText(/Note/)) as HTMLTextAreaElement).value).toBe(
-    'PDCR Required = No',
+    'Checked with the customer, nothing to change',
   );
   expect(container.querySelector('.your-move__time')?.textContent).toMatch(/^\d\d:\d\d$/);
 });

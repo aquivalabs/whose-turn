@@ -67,13 +67,13 @@ test('the turn coming back removes the auto mark', async () => {
 
 test('a note rides with a Handled mark, shows in the feed as your own event, and goes with Undo', async () => {
   const workspace = await open();
-  workspace.updateMarks({ handled: { 'PROJ-1': new Date().toISOString() }, notes: { 'PROJ-1': '  PDCR Required = No\n' } });
+  workspace.updateMarks({ handled: { 'PROJ-1': new Date().toISOString() }, notes: { 'PROJ-1': '  Checked with the customer, nothing to change\n' } });
   const noted = workspace.snapshot(false);
-  assert.equal(noted.marks.info['PROJ-1'].note, 'PDCR Required = No');
+  assert.equal(noted.marks.info['PROJ-1'].note, 'Checked with the customer, nothing to change');
   const event = noted.feed.find((item) => item.kind === 'note');
   assert.equal(event.who, 'you');
   assert.equal(event.key, 'PROJ-1');
-  assert.equal(event.text, 'PDCR Required = No');
+  assert.equal(event.text, 'Checked with the customer, nothing to change');
   workspace.updateMarks({ handled: { 'PROJ-1': null } });
   const undone = workspace.snapshot(false);
   assert.equal(undone.marks.info['PROJ-1'], undefined);
