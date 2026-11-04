@@ -29,6 +29,11 @@ jobs:
           else
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: The BladeForge skill covers this version
+        if: steps.version.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/skill-knows-release.mjs
       - if: steps.version.outputs.new == 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
