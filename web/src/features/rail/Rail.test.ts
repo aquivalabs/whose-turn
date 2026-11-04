@@ -20,7 +20,7 @@ afterEach(() => {
   snapshot.workspaces = [];
 });
 
-test('parked and paused workspaces leave the rail and the bottom line counts them', () => {
+test('parked and paused workspaces leave the rail and the bottom line counts them as hidden, with the split in its hint', () => {
   snapshot.workspaces = [
     workspace('a'),
     workspace('b', { hidden: 'parked' }),
@@ -33,10 +33,10 @@ test('parked and paused workspaces leave the rail and the bottom line counts the
   expect(screen.getByRole('link', { name: 'A' })).toBeTruthy();
   expect(screen.queryByRole('link', { name: 'B' })).toBeNull();
   expect(screen.queryByRole('link', { name: 'D' })).toBeNull();
-  expect(screen.getByRole('link', { name: '2 parked · 1 paused' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: '3 hidden' }).getAttribute('title')).toBe('2 parked · 1 paused');
 });
 
-test('the line is absent when nothing is hidden, and a parked-only rail reads "1 parked"', () => {
+test('the line is absent when nothing is hidden, and a parked-only rail reads "1 hidden"', () => {
   snapshot.workspaces = [workspace('a')];
   const first = render(Rail);
   expect(screen.queryByRole('link', { name: /parked|paused/ })).toBeNull();
@@ -44,7 +44,7 @@ test('the line is absent when nothing is hidden, and a parked-only rail reads "1
 
   snapshot.workspaces = [workspace('a'), workspace('b', { hidden: 'parked' })];
   render(Rail);
-  expect(screen.getByRole('link', { name: '1 parked' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: '1 hidden' })).toBeTruthy();
 });
 
 test('the line opens the monitor settings, and a workspace that came back wears the unseen dot', async () => {
@@ -52,7 +52,7 @@ test('the line opens the monitor settings, and a workspace that came back wears 
   const view = render(Rail);
 
   expect(screen.getByTitle('Back in the rail: something needs you')).toBeTruthy();
-  await fireEvent.click(screen.getByRole('link', { name: '1 paused' }));
+  await fireEvent.click(screen.getByRole('link', { name: '1 hidden' }));
 
   expect(view.emitted().settings).toHaveLength(1);
 });

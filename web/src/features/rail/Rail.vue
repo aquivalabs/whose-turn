@@ -202,11 +202,12 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
         as="a"
         class="rail__item rail__hidden"
         href="#hidden-workspaces"
-        :aria-label="hiddenLine"
+        :aria-label="hiddenCount + ' hidden'"
+        :title="hiddenLine"
         @click.prevent="onSettings"
       >
         <span class="rail__hidden-count" aria-hidden="true">{{ hiddenCount }}</span>
-        <span class="rail__label">{{ hiddenLine }}</span>
+        <span class="rail__label">{{ hiddenCount }} hidden</span>
       </Motion>
     </AnimatePresence>
     <a class="rail__item" href="#whats-new" aria-label="What's new" @click.prevent="onWhatsNew">
