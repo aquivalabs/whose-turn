@@ -345,6 +345,7 @@ const postWs = <T>(url: string, body: object) =>
 /** Sends one marks change and takes the marks, rows and counts the server recomputed; resolves with the problem line to show next to its control, empty when the server confirmed it. */
 export const setMarks = (
   body: Partial<Pick<Marks, 'base' | 'handled'>> & {
+    all?: true;
     seen?: string[];
     unseen?: string[];
     notes?: Record<string, string>;

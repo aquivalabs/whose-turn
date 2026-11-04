@@ -114,7 +114,7 @@ const cleared = ref<{ base: number; added: string[] } | null>(null);
 const markAll = async () => {
   const already = new Set(snapshot.marks.seen);
   const before = { base: snapshot.marks.base, added: snapshot.feed.map((item) => item.id).filter((id) => !already.has(id)) };
-  problem.value = await setMarks({ seen: snapshot.feed.map((item) => item.id), base: Date.now() });
+  problem.value = await setMarks({ all: true });
   cleared.value = problem.value ? null : before;
 };
 const restoreMarks = async () => {

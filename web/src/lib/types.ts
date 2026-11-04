@@ -226,6 +226,8 @@ export interface FieldSpec {
   boolean?: boolean;
   default?: boolean;
   choices?: string[];
+  min?: number;
+  max?: number;
   hint?: string;
 }
 

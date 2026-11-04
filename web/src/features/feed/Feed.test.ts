@@ -34,6 +34,7 @@ test('Mark all read offers Undo, which takes back the ids it marked and the old 
   render(Feed);
 
   await fireEvent.click(await screen.findByRole('button', { name: 'Mark all read' }));
+  expect(setMarks).toHaveBeenLastCalledWith({ all: true });
   await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
 
   expect(setMarks).toHaveBeenLastCalledWith({ unseen: ['fresh'], base: 123 });

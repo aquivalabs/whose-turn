@@ -89,7 +89,9 @@ const setList = (typedText: string) =>
     <input
       v-else
       class="input"
-      type="text"
+      :type="spec.min === undefined ? 'text' : 'number'"
+      :min="spec.min"
+      :max="spec.max"
       :aria-invalid="Boolean(error)"
       :placeholder="placeholder"
       :value="text()"

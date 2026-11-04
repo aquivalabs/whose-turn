@@ -25,6 +25,9 @@ export const secretsRequired = (currentEntries, entry) => {
   return secretBindings(entry).filter((binding) => !known.has(`${binding.service}\n${binding.account}\n${binding.endpoint}`)).map((binding) => binding.key);
 };
 
+/** The distinct service and account pairs under which the entries' secrets are stored. */
+export const secretStores = (entries) => [...new Map(entries.flatMap(secretBindings).map(({ service, account }) => [`${service}\n${account}`, { service, account }])).values()];
+
 /** Resolves where a secret field of one connector entry is stored: the service and the account to file it under. */
 export const secretTarget = (entry, key) => {
   const field = (CONNECTORS[entry.type]?.fields || []).find((candidate) => candidate.key === key && candidate.secret);

@@ -11,7 +11,7 @@ import { useConfigSheet } from './useConfigSheet.ts';
 
 interface ConfigReply {
   settings?: Record<string, number>;
-  settings_fields?: Record<string, { label: string; hint: string }>;
+  settings_fields?: Record<string, { label: string; hint: string; min?: number; max?: number }>;
   config_file?: string;
   problems?: string[];
 }
@@ -33,6 +33,8 @@ const { ask, requestClose, answer, problems, fieldErrors, unloaded, dirty, save:
       key,
       label: spec.label,
       hint: spec.hint,
+      min: spec.min,
+      max: spec.max,
     }));
     draft.value = Object.fromEntries(
       Object.keys(fieldsOf).map((key) => [key, String(reply.settings?.[key] ?? '')]),

@@ -8,7 +8,7 @@ vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn
 const reply = {
   settings: { poll_seconds: 60, history_days: 14, stale_minutes: 15, failing_polls: 3 },
   settings_fields: {
-    poll_seconds: { label: 'Poll every (seconds)', hint: 'how often' },
+    poll_seconds: { label: 'Poll every (seconds)', hint: 'how often', min: 15, max: 3600 },
     history_days: { label: 'History (days)', hint: 'how far back' },
     stale_minutes: { label: 'Stale after (minutes)', hint: 'alert after' },
     failing_polls: { label: 'Failing polls in a row', hint: 'alert after' },
@@ -58,6 +58,15 @@ test('the gear at the bottom of the rail opens the monitor settings with the num
   expect(screen.getByText('/data/whose-turn/config.json')).toBeTruthy();
 });
 
+test('a number field carries the limits the server sends', async () => {
+  stubServer();
+
+  await openFromRail();
+
+  const field = screen.getByDisplayValue('60');
+  expect([field.getAttribute('type'), field.getAttribute('min'), field.getAttribute('max')]).toEqual(['number', '15', '3600']);
+});
+
 test('editing a number marks the sheet unsaved; Save posts the four numbers and closes it', async () => {
   stubServer();
   await openFromRail();
@@ -84,7 +93,7 @@ test('a refused number stays open and shows the server\'s words under its field'
       details: [
         {
           '@type': 'BadRequest',
-          field_violations: [{ field: 'settings.poll_seconds', description: 'poll_seconds must be a positive number.' }],
+          field_violations: [{ field: 'settings.poll_seconds', description: 'poll_seconds must be a number from 15 to 3600.' }],
         },
       ],
     },
@@ -94,7 +103,7 @@ test('a refused number stays open and shows the server\'s words under its field'
   await fireEvent.update(screen.getByDisplayValue('60'), '0');
   await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-  expect(await screen.findByText('poll_seconds must be a positive number.')).toBeTruthy();
+  expect(await screen.findByText('poll_seconds must be a number from 15 to 3600.')).toBeTruthy();
   expect(screen.getByRole('dialog', { name: 'Monitor settings' })).toBeTruthy();
 });
 
