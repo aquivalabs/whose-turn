@@ -92,6 +92,8 @@ export interface HandledInfo {
   event?: string;
   /** What the event carried: who it went to, the status change and the latest comment. */
   detail?: {
+    /** The head phrase of the outcome, before the status and comment parts. */
+    what?: string;
     summary?: string;
     assignee?: string;
     status?: string;

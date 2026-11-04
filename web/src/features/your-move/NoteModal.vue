@@ -43,10 +43,7 @@ const openInFeed = () => {
   showInFeed(event);
 };
 const detail = computed(() => info.value?.detail);
-const happened = computed(() => {
-  const comment = detail.value?.comment?.text;
-  return (info.value?.outcome || '').replace(comment ? ' · ' + comment : '', '');
-});
+const happened = computed(() => detail.value?.what || info.value?.outcome || '');
 </script>
 <template>
   <Modal

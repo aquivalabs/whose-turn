@@ -16,6 +16,25 @@ export const installTooltips = (): (() => void) => {
   let pointerIsDown = false;
   const pinned = new Set<TippyInstance>();
 
+  const observer = new MutationObserver(() => sweep());
+  let watching = false;
+  const syncObserver = () => {
+    if (shown.size && !watching) {
+      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
+    } else if (!shown.size && watching) {
+      observer.disconnect();
+    }
+    watching = shown.size > 0;
+  };
+  const track = (instance: TippyInstance) => {
+    shown.add(instance);
+    syncObserver();
+  };
+  const untrack = (instance: TippyInstance) => {
+    shown.delete(instance);
+    syncObserver();
+  };
+
   const dismiss = (instance: TippyInstance) => {
     pinned.delete(instance);
     instance.hide();
@@ -30,7 +49,7 @@ export const installTooltips = (): (() => void) => {
   const sweep = () => {
     shown.forEach((instance) => {
       if (!instance.reference.isConnected) {
-        shown.delete(instance);
+        untrack(instance);
         instance.destroy();
       } else if (!isLaidOut(instance.reference)) {
         dismiss(instance);
@@ -80,41 +99,35 @@ export const installTooltips = (): (() => void) => {
       if (pointerIsDown) {
         return false;
       }
-      shown.add(instance);
+      track(instance);
       return undefined;
     },
     onHide: (instance: TippyInstance) => (pinned.has(instance) ? false : undefined),
-    onHidden: (instance: TippyInstance) => shown.delete(instance),
+    onHidden: untrack,
     onDestroy: (instance: TippyInstance) => {
-      shown.delete(instance);
+      untrack(instance);
       pinned.delete(instance);
     },
   });
 
-  const observer = new MutationObserver(sweep);
-  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
-  const resizeObserver = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(hideAll);
-  resizeObserver?.observe(document.body);
+  const resizeObserver = new ResizeObserver(hideAll);
+  resizeObserver.observe(document.body);
 
-  document.addEventListener('pointerdown', onPointerDown, true);
-  document.addEventListener('pointerup', onPointerUp, true);
-  document.addEventListener('click', onClick, true);
-  document.addEventListener('keydown', onKeyDown, true);
-  document.addEventListener('pointercancel', onPointerUp, true);
-  document.addEventListener('dragstart', hideAll, true);
-  document.addEventListener('scroll', hideAll, true);
-  window.addEventListener('resize', hideAll);
+  const listeners: [Document | Window, string, EventListener, boolean][] = [
+    [document, 'pointerdown', onPointerDown, true],
+    [document, 'pointerup', onPointerUp, true],
+    [document, 'click', onClick, true],
+    [document, 'keydown', onKeyDown as EventListener, true],
+    [document, 'pointercancel', onPointerUp, true],
+    [document, 'dragstart', hideAll, true],
+    [document, 'scroll', hideAll, true],
+    [window, 'resize', hideAll, false],
+  ];
+  listeners.forEach(([target, type, handler, capture]) => target.addEventListener(type, handler, capture));
 
   return () => {
     observer.disconnect();
-    resizeObserver?.disconnect();
-    document.removeEventListener('pointerdown', onPointerDown, true);
-    document.removeEventListener('pointerup', onPointerUp, true);
-    document.removeEventListener('click', onClick, true);
-    document.removeEventListener('keydown', onKeyDown, true);
-    document.removeEventListener('pointercancel', onPointerUp, true);
-    document.removeEventListener('dragstart', hideAll, true);
-    document.removeEventListener('scroll', hideAll, true);
-    window.removeEventListener('resize', hideAll);
+    resizeObserver.disconnect();
+    listeners.forEach(([target, type, handler, capture]) => target.removeEventListener(type, handler, capture));
   };
 };

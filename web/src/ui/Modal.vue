@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// A dialog over the window: a title bar with a Close button, a scrolling body and an optional footer; a click on the backdrop asks to close.
-defineProps<{ title: string; labelId: string }>();
+// A dialog over the window: a title bar with a Close button, a scrolling body (padded unless `flush`) and an optional footer; a click on the backdrop asks to close.
+defineProps<{ title: string; labelId: string; flush?: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 </script>
 <template>
@@ -17,7 +17,7 @@ const emit = defineEmits<{ close: [] }>();
         <slot name="head" />
         <button type="button" class="btn" @click="emit('close')">Close</button>
       </div>
-      <div class="modal__body"><slot /></div>
+      <div class="modal__body" :class="{ 'modal__body--flush': flush }"><slot /></div>
       <div v-if="$slots.footer" class="modal__foot"><slot name="footer" /></div>
     </div>
   </div>
@@ -29,6 +29,11 @@ const emit = defineEmits<{ close: [] }>();
   gap: 12px;
   padding: 16px 20px;
   overflow: auto;
+}
+
+.modal__body--flush {
+  gap: 0;
+  padding: 0;
 }
 
 .modal__foot {

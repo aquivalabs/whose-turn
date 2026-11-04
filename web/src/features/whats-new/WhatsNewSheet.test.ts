@@ -47,6 +47,8 @@ test('the sheet lists every version newest first, marks the running one and rend
   const names = [...container.querySelectorAll('.whats-new__name')].map((node) => node.textContent?.trim());
   expect(names).toEqual(['1.2.0', '1.1.0', '1.0.0']);
   expect(screen.getByText('Running')).toBeTruthy();
+  expect(screen.getByText('Running 1.2.0').className).toContain('modal__meta');
+  expect(screen.getByRole('dialog').getAttribute('aria-labelledby')).toBe('whats-new-title');
   expect(screen.getByText('No notes for this version.')).toBeTruthy();
   expect(container.querySelector('strong')?.textContent).toBe('bold');
   expect(container.querySelector('img')).toBeNull();

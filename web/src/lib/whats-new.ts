@@ -1,8 +1,8 @@
-export interface ChangelogSection {
+interface ChangelogSection {
   kind: string;
   items: string[];
 }
-export interface ChangelogVersion {
+interface ChangelogVersion {
   version: string;
   date: string;
   sections: ChangelogSection[];
@@ -12,7 +12,7 @@ export interface Changelog {
   versions: ChangelogVersion[];
 }
 
-export const UNRELEASED = 'Unreleased';
+const UNRELEASED = 'Unreleased';
 
 /** The released versions after the last one the user opened, up to the running one, newest first; an unknown last-seen version counts only the running one. */
 export const unseenVersions = (

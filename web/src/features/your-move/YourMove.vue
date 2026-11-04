@@ -21,7 +21,18 @@ const moveView = useMoveView();
 const view = computed(() => {
   void now.value;
   const mine = yourRows(snapshot.turn, moveView.value, snapshot.marks.info, ui.note);
-  return { ...mine, rows: mine.rows.map((item) => ({ ...item, age: age(item.row.activity_at) })) };
+  const rows = mine.rows.map((item) => {
+    const info = snapshot.marks.info[item.row.row_id];
+    const auto = Boolean(info?.auto);
+    return {
+      ...item,
+      age: age(item.row.activity_at),
+      auto,
+      lined: auto || Boolean(info?.note),
+      line: (auto ? info?.outcome : info?.note) || '',
+    };
+  });
+  return { ...mine, rows };
 });
 const showPr = computed(() => hasPrColumn(view.value.rows.map((item) => item.row)));
 const showComment = computed(() => view.value.rows.some((item) => item.row.comment));
@@ -48,24 +59,23 @@ const emptyText = computed(() => {
 });
 const problems = reactive(new Map<string, string>());
 useClearOnReconnect(() => problems.clear());
-const infoOf = (item: YourRow) => snapshot.marks.info[item.row.row_id];
 const markedAt = (item: YourRow) =>
   new Date(snapshot.marks.handled[item.row.row_id] || '').toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
   });
-const hasLine = (item: YourRow) => Boolean(infoOf(item)?.auto || infoOf(item)?.note);
 const mark = async (item: YourRow) => {
   const id = item.row.row_id;
+  const nowHandled = !item.handled;
   const problem = await setMarks({
-    handled: { [id]: item.handled ? null : new Date().toISOString() },
+    handled: { [id]: nowHandled ? new Date().toISOString() : null },
   });
   if (problem) {
     problems.set(id, problem);
   } else {
     problems.delete(id);
-    justHandled.value = item.handled ? '' : id;
-    ui.note = item.handled ? '' : id;
+    justHandled.value = nowHandled ? id : '';
+    ui.note = nowHandled ? id : '';
   }
 };
 const justHandled = refAutoReset('', 8000);
@@ -107,7 +117,7 @@ const undoHandled = () => {
               class="your-move__row"
               :class="{
                 'your-move__row--handled': item.handled,
-                'your-move__row--lined': hasLine(item),
+                'your-move__row--lined': item.lined,
               }"
             >
               <TicketCell :row="item.row" />
@@ -132,7 +142,7 @@ const undoHandled = () => {
                     why
                   </button>
                   <span
-                    v-if="item.handled && !infoOf(item)?.auto"
+                    v-if="item.handled && !item.auto"
                     class="handled-chip"
                     :data-tip="
                       'Marked ' +
@@ -168,7 +178,7 @@ const undoHandled = () => {
                   :query="{ ws: snapshot.workspace.id, kind: 'row', ref: item.row.row_id }"
                 />
                 <button
-                  v-if="!infoOf(item)?.auto"
+                  v-if="!item.auto"
                   type="button"
                   class="your-move__mark"
                   :class="{ 'your-move__mark--undo': item.handled }"
@@ -182,7 +192,7 @@ const undoHandled = () => {
               </td>
             </tr>
             <tr
-              v-if="hasLine(item)"
+              v-if="item.lined"
               data-row-tail
               class="your-move__line-row"
               :class="{ 'your-move__line-row--handled': item.handled }"
@@ -195,9 +205,7 @@ const undoHandled = () => {
                   @click="ui.note = item.row.row_id"
                 >
                   <span class="your-move__arrow" aria-hidden="true">&rarr;</span>
-                  <span class="your-move__outcome">{{
-                    infoOf(item)?.auto ? infoOf(item)?.outcome : infoOf(item)?.note
-                  }}</span>
+                  <span class="your-move__outcome">{{ item.line }}</span>
                   <time class="your-move__time">{{ markedAt(item) }}</time>
                 </button>
               </td>

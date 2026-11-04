@@ -9,18 +9,16 @@ import type { ApiError, UpdateStatus } from '@/lib/types.ts';
 
 const UPDATED_SHOWN_MS = 15000;
 const SLOW_RESTART_MS = 90000;
-const sending = ref(false);
 const target = ref('');
-const pageVersion = ref('');
+let pageVersion = '';
 const ready = ref('');
 const slow = ref(false);
 const updatedTo = refAutoReset('', UPDATED_SHOWN_MS);
 const update = computed(() => snapshot.update);
-const installing = computed(() => sending.value || update.value.state === 'installing');
 const restarting = computed(
   () => update.value.state === 'restarting' || (Boolean(target.value) && !ui.live),
 );
-const working = computed(() => !ready.value && (installing.value || restarting.value || Boolean(target.value)));
+const working = computed(() => !ready.value && (update.value.state === 'installing' || restarting.value || Boolean(target.value)));
 const { start: watchSlow, stop: stopSlow } = useTimeoutFn(() => (slow.value = true), SLOW_RESTART_MS, {
   immediate: false,
 });
@@ -35,11 +33,11 @@ watch(
     if (!current) {
       return;
     }
-    if (!pageVersion.value) {
-      pageVersion.value = current;
+    if (!pageVersion) {
+      pageVersion = current;
       return;
     }
-    if (current !== pageVersion.value) {
+    if (current !== pageVersion) {
       ready.value = current;
       target.value = '';
       stopSlow();
@@ -52,12 +50,10 @@ const onUpdate = () => {
   if (working.value) {
     return;
   }
-  sending.value = true;
   slow.value = false;
   target.value = update.value.latest;
   watchSlow();
   const settle = (outcome: unknown) => {
-    sending.value = false;
     if (!tellProblem(outcome, { refused: 'The update did not start' })) {
       target.value = '';
       stopSlow();

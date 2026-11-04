@@ -145,6 +145,7 @@ test('a pass-on line shows the outcome; a click opens the modal with the full ev
       outcome: 'Passed to Sam · Ready for QA · Looks done',
       event: 'event:NW-4:t:reassigned',
       detail: {
+        what: 'Passed to Sam · Ready for QA',
         assignee: 'you → Sam',
         status: 'In Progress → Ready for QA',
         comment: { author: 'Sam', text: LONG },
@@ -159,12 +160,26 @@ test('a pass-on line shows the outcome; a click opens the modal with the full ev
   );
 
   expect(await screen.findByText('you → Sam')).toBeTruthy();
+  expect(screen.getByText('What happened').nextElementSibling?.textContent).toBe('Passed to Sam · Ready for QA');
   expect(screen.getByText('In Progress → Ready for QA')).toBeTruthy();
   expect(screen.getByText(new RegExp(LONG.slice(-20)))).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Move back to open/ })).toBeNull();
   expect(screen.queryByText('passed on')).toBeNull();
   await fireEvent.click(screen.getByRole('button', { name: 'Open in feed' }));
   expect(showInFeed).toHaveBeenCalledWith('event:NW-4:t:reassigned');
+});
+
+test('a trace saved before the head phrase had its own field still shows its outcome in the modal', async () => {
+  snapshot.turn = [{ ...row('nw-4', true), group: 'others', next: 'Not yours now' }];
+  snapshot.marks.info = {
+    'nw-4': { auto: true, outcome: 'Passed to Sam', event: 'event:NW-4:t:reassigned', detail: { assignee: 'you → Sam' } },
+  };
+  useMoveView().value = 'handled';
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+
+  await fireEvent.click(await screen.findByRole('button', { name: /Passed to Sam/ }));
+
+  expect((await screen.findByText('What happened')).nextElementSibling?.textContent).toBe('Passed to Sam');
 });
 
 test('the Handled view lists the handled rows and not the open ones', async () => {

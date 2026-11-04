@@ -12,19 +12,17 @@ const { height } = useElementSize(scroller);
 const { height: contentHeight } = useElementSize(content);
 const rows = () => [...(content.value?.querySelector('table')?.tBodies[0]?.rows || [])];
 const leads = () => rows().filter((row) => !('rowTail' in row.dataset));
-const bottoms = () =>
-  leads().map((row) =>
-    (row.nextElementSibling as HTMLElement | null)?.dataset.rowTail !== undefined
-      ? (row.nextElementSibling as HTMLElement).getBoundingClientRect().bottom
-      : row.getBoundingClientRect().bottom,
-  );
+const bottomOf = (row: HTMLElement) => {
+  const tail = row.nextElementSibling as HTMLElement | null;
+  return (tail?.dataset.rowTail !== undefined ? tail : row).getBoundingClientRect().bottom;
+};
 const viewBottom = () => {
   const el = scroller.value;
   return el ? el.getBoundingClientRect().top + el.clientTop + el.clientHeight : 0;
 };
 const hidden = computed(() => {
   void [y.value, height.value, contentHeight.value];
-  return hiddenBelow(bottoms(), viewBottom(), cellSlack);
+  return hiddenBelow(leads().map(bottomOf), viewBottom(), cellSlack);
 });
 const reveal = () => {
   const el = scroller.value;

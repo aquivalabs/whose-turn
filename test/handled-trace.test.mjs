@@ -101,7 +101,7 @@ test('a status move on its own reads "Moved to <status>" and a reassignment on i
   const status = { key: 'K-1', source: 's', at: 't1', kind: 'status', text: 'Code Review → Ready for QA' };
   const reassigned = { key: 'K-1', source: 's', at: 't2', kind: 'reassigned', text: 'Alex Doe → Sam Tester' };
   assert.deepEqual(traceOf(pair(), [status], []), { outcome: 'Moved to Ready for QA', event: 'event:K-1:t1:status', detail: { status: 'Code Review → Ready for QA' } });
-  assert.deepEqual(traceOf(pair(), [reassigned], []), { outcome: 'Passed to Sam Tester', event: 'event:K-1:t2:reassigned', detail: { assignee: 'Alex Doe → Sam Tester' } });
+  assert.deepEqual(traceOf(pair(), [reassigned], []), { outcome: 'Passed to Sam Tester', event: 'event:K-1:t2:reassigned', detail: { what: 'Passed to Sam Tester', assignee: 'Alex Doe → Sam Tester' } });
 });
 
 test('without a cause among the events there is no trace', () => {
@@ -131,6 +131,7 @@ test('a comment from the day before the move joins the outcome and the detail', 
   const stale = { kind: 'comment', key: 'K-1', at: new Date(now - 3 * 86400000).toISOString(), who: 'Alex Doe', body: 'Old news' };
   const trace = traceOf(pair(), [reassigned, status], [fresh]);
   assert.equal(trace.outcome, 'Passed to Sam Tester · Ready for QA · Ready, please test the export');
+  assert.equal(trace.detail.what, 'Passed to Sam Tester · Ready for QA');
   assert.deepEqual(trace.detail.comment, { author: 'Alex Doe', text: 'Ready, please test the export' });
   assert.equal(traceOf(pair(), [reassigned, status], [stale]).outcome, 'Passed to Sam Tester · Ready for QA');
 });
