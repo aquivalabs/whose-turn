@@ -10,23 +10,27 @@ const content = ref<HTMLElement | null>(null);
 const { y } = useScroll(scroller);
 const { height } = useElementSize(scroller);
 const { height: contentHeight } = useElementSize(content);
-const rows = () => [...(content.value?.querySelector('table')?.tBodies[0]?.rows || [])];
-const leads = () => rows().filter((row) => !('rowTail' in row.dataset));
-const bottomOf = (row: HTMLElement) => {
-  const tail = row.nextElementSibling as HTMLElement | null;
-  return (tail?.dataset.rowTail !== undefined ? tail : row).getBoundingClientRect().bottom;
-};
+const head = computed(() => {
+  void contentHeight.value;
+  return content.value?.querySelector('thead') ?? null;
+});
+const { height: headHeight } = useElementSize(head);
+const rows = () => [...(content.value?.querySelector('table')?.tBodies || [])];
 const viewBottom = () => {
   const el = scroller.value;
   return el ? el.getBoundingClientRect().top + el.clientTop + el.clientHeight : 0;
 };
 const hidden = computed(() => {
   void [y.value, height.value, contentHeight.value];
-  return hiddenBelow(leads().map(bottomOf), viewBottom(), cellSlack);
+  return hiddenBelow(
+    rows().map((row) => row.getBoundingClientRect().bottom),
+    viewBottom(),
+    cellSlack,
+  );
 });
 const reveal = () => {
   const el = scroller.value;
-  const list = leads();
+  const list = rows();
   const first = list[list.length - hidden.value];
   if (!el || !first) {
     return;
@@ -37,7 +41,12 @@ const reveal = () => {
 };
 </script>
 <template>
-  <div ref="scroller" class="row-scroll" :class="{ 'row-scroll--floor': floor }">
+  <div
+    ref="scroller"
+    class="row-scroll"
+    :class="{ 'row-scroll--floor': floor }"
+    :style="{ scrollPaddingTop: headHeight + 'px' }"
+  >
     <div ref="content"><slot /></div>
   </div>
   <button v-if="hidden" type="button" class="row-scroll__more" @click="reveal">
@@ -55,7 +64,6 @@ const reveal = () => {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
-    scroll-padding-top: 40px;
   }
 
   .dashboard--fit .row-scroll::-webkit-scrollbar {

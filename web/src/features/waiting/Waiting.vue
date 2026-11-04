@@ -53,8 +53,8 @@ const note = computed(() =>
             </th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="{ row, since, own } in rows" :key="row.row_id">
+        <tbody v-for="{ row, since, own } in rows" :key="row.row_id">
+          <tr>
             <TicketCell :row="row" />
             <td>
               <span class="pill" :class="modifier('pill', statusTone(row.status_group))">{{

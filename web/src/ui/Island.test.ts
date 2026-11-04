@@ -40,3 +40,20 @@ describe('a remembered height', () => {
     expect(JSON.parse(localStorage.getItem('wt-panel-sizes') ?? '{}')).toEqual({ move: 400 });
   });
 });
+
+test('the floor is measured from the first row when every row has its own tbody', async () => {
+  const { container } = render(Island, {
+    props: { id: 'split-panel', title: 'Panel' },
+    slots: {
+      default: () =>
+        h(
+          'table',
+          [1, 2].map(() => h('tbody', [h('tr', [h('td', 'row')]), h('tr', [h('td', 'tail')])])),
+        ),
+    },
+  });
+  const panel = container.querySelector('.island') as HTMLElement;
+
+  await vi.waitFor(() => expect(panel.style.getPropertyValue('--island-floor')).toMatch(/px$/));
+  expect(container.querySelectorAll('tbody > tr')).toHaveLength(4);
+});

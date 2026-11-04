@@ -312,12 +312,12 @@
   padding-right: 20px;
 }
 
-.table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
 .table tbody tr:hover td {
   background: var(--state-hover);
+}
+
+.table tbody:last-of-type tr:last-child td {
+  border-bottom: 0;
 }
 
 .table__actions-col {

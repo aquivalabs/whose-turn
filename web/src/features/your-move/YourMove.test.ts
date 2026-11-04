@@ -121,6 +121,9 @@ test('a manual mark with a note shows the note on its own line with the time', a
     'Checked with the customer, nothing to change',
   );
   expect(container.querySelector('.your-move__time')?.textContent).toMatch(/^\d\d:\d\d$/);
+  const body = container.querySelector('.your-move__line-row')?.parentElement;
+  expect(body?.tagName).toBe('TBODY');
+  expect(body?.querySelectorAll('tr')).toHaveLength(2);
 });
 
 test('a pass-on line shows the outcome; a click opens the modal with the full event and the comment', async () => {
