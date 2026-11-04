@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { useMutationObserver, useResizeObserver } from '@vueuse/core';
 import { useFold } from '@/composables/useFold.ts';
 import { ceilingHeight, floorHeight, usePanelSize } from '@/composables/usePanelSize.ts';
@@ -28,6 +28,7 @@ const { collapsed, toggle } = useFold(props.id);
 const { size, set } = usePanelSize(() => props.sizeKey);
 const root = useTemplateRef<HTMLElement>('root');
 const floor = ref(0);
+const hasRows = ref(true);
 const pixels = (value: string) => parseFloat(value) || 0;
 const scrolledAbove = (row: HTMLElement, stop: HTMLElement) => {
   let offset = 0;
@@ -53,10 +54,12 @@ const measure = () => {
     return;
   }
   const rows = body.querySelectorAll<HTMLElement>('tbody > tr, .todos__list > li');
+  const hadRows = hasRows.value;
+  hasRows.value = rows.length > 0;
   const top = el.getBoundingClientRect().top;
   const padding = pixels(getComputedStyle(body).paddingBottom);
   if (!rows.length) {
-    floor.value = Math.ceil(body.offsetTop + body.scrollHeight);
+    floor.value = hadRows ? 0 : Math.ceil(body.offsetTop + body.scrollHeight);
     return;
   }
   const bottom = rows[0].getBoundingClientRect().bottom - top + scrolledAbove(rows[0], el);
@@ -75,6 +78,7 @@ onMounted(() => {
   }
   schedule();
 });
+const sized = computed(() => size.value !== null && props.resize === 'height' && hasRows.value);
 const neighbours = (el: HTMLElement) =>
   [...(el.parentElement?.children ?? [])]
     .filter((node): node is HTMLElement => node !== el && node instanceof HTMLElement)
@@ -112,11 +116,11 @@ const bounds = () => {
     :class="{
       'island--collapsed': collapsed,
       'island--column': column,
-      'island--sized': size !== null && resize === 'height',
+      'island--sized': sized,
     }"
     :style="
       resize === 'height'
-        ? { '--island-floor': floor + 'px', '--island-height': (size ?? 0) + 'px' }
+        ? { '--island-floor': floor + 'px', '--island-height': (sized ? size : 0) + 'px' }
         : undefined
     "
   >

@@ -12,6 +12,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ### Changed
 - The `feedback` settings for a Linear workspace, team, project and key are gone: reports no longer need them, and old values in your config are dropped the next time it is saved. RMA-280.
 
+### Fixed
+- An empty panel, such as Your move with nothing in it, now shrinks to its message instead of keeping the height you once dragged it to. The height comes back when rows appear. RMA-294.
+
 ## [1.0.0-alpha.7] - 2026-11-04
 
 ### Fixed
