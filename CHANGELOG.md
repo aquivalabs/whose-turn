@@ -2,10 +2,20 @@
 
 All notable changes to whose-turn are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-alpha.5] - 2026-11-04
 
 ### Fixed
+- The workspace header keeps its copy label and quick links on whole lines, and a connector no longer adds a second link to a site the workspace already links. RMA-249, RMA-250.
+- In a feed group with unread items only the unread rows are lit. RMA-201.
+- `install.sh` writes WHOSE_TURN_DATA and WHOSE_TURN_PORT into the launch agent when they are set. RMA-219.
 - The launch agent and the systemd unit start `launch.sh`, which resolves node at every start (login shell, PATH, then the install-time path), so removing a version-manager Node no longer breaks them. RMA-215.
+
+### Changed
+- The rules in Settings read in plain words, and the next-step fields are named after the situation they cover. RMA-173.
+- The user reads as "you" everywhere, never as their full name. RMA-174.
+- A rules table that hides every ticket, or a catch-all row before other rows, now shows a warning. RMA-171.
+- Many small fixes to the window from the two heuristic reviews. RMA-148, RMA-175.
+- The docs check is Node (`scripts/docs-check.mjs`). RMA-209.
 
 ### Added
 - Panels are resizable: Your move, To do and Waiting on others by their bottom edge, What changed by its left edge, Recently done by its top edge. The size is remembered per workspace, never goes below the header and one full row (the column scrolls when the minimums do not fit), double click gives it back to the layout, and `scripts/panel-matrix.mjs` checks the layout matrix with Playwright. RMA-246.
