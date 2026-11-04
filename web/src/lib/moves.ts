@@ -18,7 +18,7 @@ export interface YourRow {
 
 /** The rows of Your move with their handled flag, ordered by rank then age.
  * Rules: docs/mechanisms/your-move.md. */
-export const yourRows = (turn: TurnRow[], view: string, info: Record<string, HandledInfo> = {}, keep = '') => {
+export const yourRows = (turn: TurnRow[], view: string, info: Record<string, HandledInfo> = {}) => {
   const you: YourRow[] = turn
     .filter((row) => row.group === 'you' || (row.handled && info[row.row_id]?.auto))
     .map((row) => ({ row, handled: row.group !== 'you' || Boolean(row.handled) }))
@@ -29,7 +29,7 @@ export const yourRows = (turn: TurnRow[], view: string, info: Record<string, Han
     );
   const open = you.filter((item) => !item.handled).length;
   const wantHandled = view === 'handled';
-  const rows = you.filter((item) => item.handled === wantHandled || item.row.row_id === keep);
+  const rows = you.filter((item) => item.handled === wantHandled);
   return { rows, open, handled: you.length - open };
 };
 

@@ -19,9 +19,10 @@ window already has. RMA-258.
   row whose turn passed on stays under Handled while that mark lives.
 - A row is handled when its group is not `you`, or when the server set the handled flag on it.
 - Rows are ordered by the server's rank, lowest first, then oldest first.
-- The open view lists only open rows and the handled view only handled ones. The one exception is the row
-  the note window points at: it stays where it is while its note is typed, so the row does not jump away
-  under the note.
+- The open view lists only open rows and the handled view only handled ones. Handled on an open row
+  opens the note window first and writes nothing; Save sends the handled flag and the note in one marks
+  write, Skip sends the flag alone, and closing the window sends nothing, so the row never changes view
+  while the note is typed.
 - The counts are of the whole list, not of the view: `open` and `handled`.
 
 ## What obliges an update

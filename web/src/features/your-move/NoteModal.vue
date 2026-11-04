@@ -1,11 +1,13 @@
 <script setup lang="ts">
 // What a handled row carries: the full outcome of a pass-on and the note, opened by Handled or by the row's outcome line.
+// Handled on an open row writes nothing until Save or Skip.
 import { computed, nextTick, ref, watch } from 'vue';
-import { snapshot, ui, setMarks, showInFeed } from '@/store.ts';
+import { snapshot, ui, setMarks, showInFeed, justHandled } from '@/store.ts';
 import { when } from '@/lib/time.ts';
 import Modal from '@/ui/Modal.vue';
 const row = computed(() => snapshot.turn.find((item) => item.row_id === ui.note));
 const info = computed(() => snapshot.marks.info[ui.note]);
+const pending = computed(() => row.value?.group === 'you' && !row.value.handled);
 const kept = computed(() => info.value?.note || '');
 const text = ref('');
 const problem = ref('');
@@ -26,17 +28,31 @@ watch(
 const close = () => {
   ui.note = '';
 };
-const save = async () => {
+const commit = async (note: string) => {
+  const id = ui.note;
+  const marking = pending.value;
+  problem.value = await setMarks(
+    marking
+      ? { handled: { [id]: new Date().toISOString() }, ...(note && { notes: { [id]: note } }) }
+      : { notes: { [id]: note } },
+  );
+  if (problem.value) {
+    return;
+  }
+  if (marking) {
+    justHandled.value = id;
+  }
+  close();
+};
+const save = () => {
   const note = text.value.replace(/\s+/g, ' ').trim();
-  if (note === kept.value) {
+  if (!pending.value && note === kept.value) {
     close();
     return;
   }
-  problem.value = await setMarks({ notes: { [ui.note]: note } });
-  if (!problem.value) {
-    close();
-  }
+  return commit(note);
 };
+const skip = () => (pending.value ? commit('') : close());
 const openInFeed = () => {
   const event = info.value?.event || '';
   close();
@@ -104,7 +120,7 @@ const happened = computed(() => detail.value?.what || info.value?.outcome || '')
     />
     <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
     <template #footer>
-      <button type="button" class="btn" @click="close">{{ kept ? 'Cancel' : 'Skip' }}</button>
+      <button type="button" class="btn" @click="skip">{{ kept && !pending ? 'Cancel' : 'Skip' }}</button>
       <button type="button" class="btn btn--tonal" @click="save">Save</button>
     </template>
   </Modal>

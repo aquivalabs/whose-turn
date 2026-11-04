@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Handled now asks for the note first: Save or Skip marks the row handled, and closing the window with Escape leaves the row open. RMA-271.
+
 ### Fixed
 - A reassignment in the feed now shows your own name as "you", the same as the Handled trace does. RMA-270.
 - The comment shown with a passed-on row is now read from the feed when you open it, so it is always the full text. Once the comment has dropped out of the feed, only the short line remains. RMA-269.

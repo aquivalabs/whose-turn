@@ -65,6 +65,8 @@ lastMode.value = ui.mode;
 
 /** A refused write's message: shown beside the live text for a few seconds, then gone. */
 export const notice = refAutoReset('', 6000);
+/** The row just marked handled, for the Undo banner. */
+export const justHandled = refAutoReset('', 8000);
 /** Puts the problem of a write that has no control of its own into the notice; resolves with whether the write went through. */
 export const tellProblem = (outcome: unknown, options?: Parameters<typeof writeProblem>[1]) => {
   const problem = writeProblem(outcome, options);

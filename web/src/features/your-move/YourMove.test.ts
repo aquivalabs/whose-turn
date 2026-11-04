@@ -50,13 +50,24 @@ test('a PR row without a ticket links the PR from the ticket column and leaves t
   expect(screen.queryByRole('columnheader', { name: 'PR' })).toBeNull();
 });
 
-test('Handled sends the id of its row to setMarks', async () => {
-  vi.mocked(setMarks).mockResolvedValue('');
+test('Handled writes nothing until the note window is answered', async () => {
   render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
 
   await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
 
-  expect(setMarks).toHaveBeenCalledWith({ handled: { 'nw-1': expect.any(String) } });
+  await screen.findByRole('dialog');
+  expect(setMarks).not.toHaveBeenCalled();
+});
+
+test('closing the note window of an open row writes nothing', async () => {
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+  await screen.findByRole('dialog');
+
+  ui.note = '';
+
+  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(setMarks).not.toHaveBeenCalled();
 });
 
 test('no note input shows before Handled', async () => {
@@ -85,7 +96,11 @@ test('Save stores the note and closes the modal', async () => {
   await fireEvent.update(await screen.findByLabelText(/Note/), 'Checked with the customer, nothing to change');
   await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-  expect(setMarks).toHaveBeenLastCalledWith({ notes: { 'nw-1': 'Checked with the customer, nothing to change' } });
+  expect(setMarks).toHaveBeenCalledTimes(1);
+  expect(setMarks).toHaveBeenCalledWith({
+    handled: { 'nw-1': expect.any(String) },
+    notes: { 'nw-1': 'Checked with the customer, nothing to change' },
+  });
   await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 });
 
@@ -211,10 +226,21 @@ test('the Handled view lists the handled rows and not the open ones', async () =
   expect(screen.queryByText('Review nw-1')).toBeNull();
 });
 
-test('a stream reconnect clears the problem lines of refused rows', async () => {
+test('a refused Handled keeps the note window open with the problem', async () => {
   vi.mocked(setMarks).mockResolvedValue('The local server is not answering.');
   render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
   await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
+
+  expect((await screen.findByRole('alert')).textContent).toContain('not answering');
+  expect(screen.getByRole('dialog')).toBeTruthy();
+});
+
+test('a stream reconnect clears the problem lines of refused rows', async () => {
+  vi.mocked(setMarks).mockResolvedValue('The local server is not answering.');
+  useMoveView().value = 'handled';
+  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+  await fireEvent.click(await screen.findByRole('button', { name: 'Move back to open: NW-2' }));
   await screen.findByRole('alert');
 
   ui.reconnects++;
@@ -227,6 +253,7 @@ test('Handled offers Undo for a moment, and Undo moves the row back', async () =
   render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
 
   await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
   await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
 
   expect(setMarks).toHaveBeenLastCalledWith({ handled: { 'nw-1': null } });

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed, reactive } from 'vue';
-import { refAutoReset } from '@vueuse/core';
-import { snapshot, ui, now, setMarks } from '@/store.ts';
+import { snapshot, ui, now, setMarks, justHandled } from '@/store.ts';
 import { yourRows, hasPrColumn } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
 import { age, ago, when } from '@/lib/time.ts';
@@ -20,7 +19,7 @@ import { useMoveView } from './useMoveView.ts';
 const moveView = useMoveView();
 const view = computed(() => {
   void now.value;
-  const mine = yourRows(snapshot.turn, moveView.value, snapshot.marks.info, ui.note);
+  const mine = yourRows(snapshot.turn, moveView.value, snapshot.marks.info);
   const rows = mine.rows.map((item) => {
     const info = snapshot.marks.info[item.row.row_id];
     const auto = Boolean(info?.auto);
@@ -66,19 +65,18 @@ const markedAt = (item: YourRow) =>
   });
 const mark = async (item: YourRow) => {
   const id = item.row.row_id;
-  const nowHandled = !item.handled;
-  const problem = await setMarks({
-    handled: { [id]: nowHandled ? new Date().toISOString() : null },
-  });
+  if (!item.handled) {
+    ui.note = id;
+    return;
+  }
+  const problem = await setMarks({ handled: { [id]: null } });
   if (problem) {
     problems.set(id, problem);
   } else {
     problems.delete(id);
-    justHandled.value = nowHandled ? id : '';
-    ui.note = nowHandled ? id : '';
+    justHandled.value = '';
   }
 };
-const justHandled = refAutoReset('', 8000);
 const undoHandled = () => {
   const id = justHandled.value;
   justHandled.value = '';
