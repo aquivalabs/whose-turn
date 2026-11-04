@@ -231,19 +231,22 @@ test('a secret with a line break in the value, service or account is refused nam
   }
 });
 
-test('POST /api/config with notifications alone saves the setting and reports it; a bad value is refused', async () => {
+test('POST /api/notifications saves the setting and reports it; a missing or non-boolean value is refused', async () => {
   // Setup
   const saved = [];
   const registry = emptyRegistry({ notifications: { desktop: true }, saveNotifications: async (value) => saved.push(value) });
   const { server, post, get } = await startTestApi({ registry });
   try {
     // Exercise
-    const ok = await post('/api/config', { notifications: { desktop: false } });
-    const refused = await post('/api/config', { notifications: { desktop: 'off' } });
+    const ok = await post('/api/notifications', { desktop: false });
+    const refused = await post('/api/notifications', { desktop: 'off' });
+    const missing = await post('/api/notifications', {});
     // Verify
     assert.equal(ok.status, 200);
+    assert.deepEqual(await ok.json(), { notifications: { desktop: true } });
     assert.deepEqual(saved, [{ desktop: false }]);
     assert.equal(refused.status, 400);
+    assert.equal(missing.status, 400);
     assert.deepEqual((await (await get('/api/config')).json()).notifications, { desktop: true });
   } finally {
     server.close();

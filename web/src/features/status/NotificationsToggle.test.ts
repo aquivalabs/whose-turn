@@ -24,7 +24,7 @@ test('a click turns notifications off, shows the off state and saves the setting
   expect(toggle.getAttribute('aria-checked')).toBe('true');
   await fireEvent.click(toggle);
 
-  expect(post).toHaveBeenCalledWith('/api/config', { notifications: { desktop: false } });
+  expect(post).toHaveBeenCalledWith('/api/notifications', { desktop: false });
   const off = await screen.findByRole('switch', { name: 'Notifications off' });
   expect(off.getAttribute('aria-checked')).toBe('false');
   expect(off.className).toContain('notifications-toggle--off');
@@ -36,7 +36,7 @@ test('a second click turns them back on', async () => {
 
   await fireEvent.click(screen.getByRole('switch', { name: 'Notifications off' }));
 
-  expect(post).toHaveBeenCalledWith('/api/config', { notifications: { desktop: true } });
+  expect(post).toHaveBeenCalledWith('/api/notifications', { desktop: true });
   expect(await screen.findByRole('switch', { name: 'Notifications on' })).toBeTruthy();
 });
 

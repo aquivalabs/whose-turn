@@ -8,7 +8,6 @@ import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
 import { RateLimited } from '../lib/http-client.mjs';
 
 const RELAY = 'https://relay.invalid/';
-process.env.WHOSE_TURN_FEEDBACK_URL = RELAY;
 
 const stub = ({ issues = [] } = {}) => {
   const calls = [];
@@ -24,11 +23,12 @@ const stub = ({ issues = [] } = {}) => {
 const failing = (error) => ({ fetchJson: async () => { throw error; } });
 const reportsDir = () => mkdtempSync(join(tmpdir(), 'wt-reports-'));
 const relayIssue = (extra = {}) => ({ identifier: 'RMA-500', title: 'Chevron wraps on narrow feed', url: 'u', outcome: 'open', updatedAt: '2026-11-02T12:00:00.000Z', answers: [], ...extra });
-const filed = (dir) => openReports(dir).add({ id: 'RMA-500', title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
+const open = (dir, { http = stub().http } = {}) => openReports(dir, { http, relayUrl: RELAY });
+const filed = (dir) => open(dir).add({ id: 'RMA-500', title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });
 
 test('a bug is posted to the relay with its kind, title, body, version and context, and the identifier comes back', async () => {
   const { http, calls } = stub();
-  const issue = await createFeedback({ http, version: '1.0.0' }, { kind: 'bug', title: 'The chevron wraps', body: 'On a narrow feed the chevron drops a line.', context: '## PROJ-1 · a row', from: 'the window' });
+  const issue = await createFeedback({ http, relayUrl: RELAY, version: '1.0.0' }, { kind: 'bug', title: 'The chevron wraps', body: 'On a narrow feed the chevron drops a line.', context: '## PROJ-1 · a row', from: 'the window' });
   assert.equal(issue.identifier, 'RMA-500');
   assert.equal(calls[0].url, RELAY);
   assert.equal(calls[0].method, 'POST');
@@ -43,21 +43,21 @@ test('a bug is posted to the relay with its kind, title, body, version and conte
 
 test('an over-long title is cut to the relay limit, and an empty title is refused before any call', async () => {
   const { http, calls } = stub();
-  await createFeedback({ http }, { title: 'x'.repeat(300) });
+  await createFeedback({ http, relayUrl: RELAY }, { title: 'x'.repeat(300) });
   assert.equal(calls[0].body.title.length, 140);
-  await assert.rejects(createFeedback({ http }, { title: '  ' }), { reason: 'INVALID_ARGUMENT', metadata: { detail: 'a title is required' }, violations: [{ field: 'title', description: 'A report needs a title.' }] });
+  await assert.rejects(createFeedback({ http, relayUrl: RELAY }, { title: '  ' }), { reason: 'INVALID_ARGUMENT', metadata: { detail: 'a title is required' }, violations: [{ field: 'title', description: 'A report needs a title.' }] });
   assert.equal(calls.length, 1);
 });
 
 test('a relay 400, a rate limit and a failure come back as their own reasons, the raw text only in debug', async () => {
-  const refused = await createFeedback({ http: failing(Object.assign(new Error('HTTP 400 from relay.invalid'), { upstreamStatus: 400 })) }, { title: 'x' }).catch((error) => error);
+  const refused = await createFeedback({ relayUrl: RELAY, http: failing(Object.assign(new Error('HTTP 400 from relay.invalid'), { upstreamStatus: 400 })) }, { title: 'x' }).catch((error) => error);
   assert.equal(refused.reason, 'INVALID_ARGUMENT');
   assert.equal(refused.code, 400);
   assert.match(refused.debug, /relay\.invalid/);
   assert.doesNotMatch(JSON.stringify(refused.toEnvelope()), /relay\.invalid/);
-  const limited = await createFeedback({ http: failing(new RateLimited('429 from relay.invalid')) }, { title: 'x' }).catch((error) => error);
+  const limited = await createFeedback({ relayUrl: RELAY, http: failing(new RateLimited('429 from relay.invalid')) }, { title: 'x' }).catch((error) => error);
   assert.equal(limited.reason, 'RATE_LIMITED');
-  const down = await createFeedback({ http: failing(Object.assign(new Error('HTTP 503 from relay.invalid'), { upstreamStatus: 503 })) }, { title: 'x' }).catch((error) => error);
+  const down = await createFeedback({ relayUrl: RELAY, http: failing(Object.assign(new Error('HTTP 503 from relay.invalid'), { upstreamStatus: 503 })) }, { title: 'x' }).catch((error) => error);
   assert.equal(down.reason, 'UPSTREAM_FAILED');
   assert.equal(down.metadata.upstream_status, 503);
 });
@@ -65,8 +65,8 @@ test('a relay 400, a rate limit and a failure come back as their own reasons, th
 test('a filed report is remembered on disk and survives a reopen', async () => {
   const dir = reportsDir();
   const { http } = stub();
-  await createFeedback({ http, reports: openReports(dir) }, { kind: 'bug', title: 'The chevron wraps' });
-  const [stored] = openReports(dir).list();
+  await createFeedback({ http, relayUrl: RELAY, reports: open(dir, { http }) }, { kind: 'bug', title: 'The chevron wraps' });
+  const [stored] = open(dir).list();
   assert.equal(stored.id, 'RMA-500');
   assert.equal(stored.kind, 'bug');
   assert.match(stored.filed_at, /^\d{4}-/);
@@ -75,12 +75,12 @@ test('a filed report is remembered on disk and survives a reopen', async () => {
 test('the list carries the state and outcome the relay gives, or the entry as filed when the relay cannot be asked', async () => {
   const dir = reportsDir();
   filed(dir);
-  const [report] = await openReports(dir).states(stub({ issues: [relayIssue({ outcome: 'done' })] }));
+  const [report] = await open(dir, stub({ issues: [relayIssue({ outcome: 'done' })] })).states();
   assert.equal(report.state, 'Done');
   assert.equal(report.outcome, 'done');
   assert.equal(report.title, 'Chevron wraps on narrow feed');
   assert.equal(report.changed_at, '2026-11-02T12:00:00.000Z');
-  const [plain] = await openReports(dir).states({ http: failing(new Error('offline')) });
+  const [plain] = await open(dir, { http: failing(new Error('offline')) }).states();
   assert.equal(plain.outcome, undefined);
   assert.equal(plain.title, 'The chevron wraps');
 });
@@ -88,27 +88,27 @@ test('the list carries the state and outcome the relay gives, or the entry as fi
 test('the detail of one report carries the relay answers, and flags a closed report without one', async () => {
   const dir = reportsDir();
   filed(dir);
-  const answered = await openReports(dir).detail(stub({ issues: [relayIssue({ outcome: 'done', answers: [{ author: 'Maintainer', body: 'Fixed in 1.2.', at: '2026-11-02T12:00:00.000Z' }] })] }), 'RMA-500');
+  const answered = await open(dir, stub({ issues: [relayIssue({ outcome: 'done', answers: [{ author: 'Maintainer', body: 'Fixed in 1.2.', at: '2026-11-02T12:00:00.000Z' }] })] })).detail('RMA-500');
   assert.deepEqual(answered.answers, [{ at: '2026-11-02T12:00:00.000Z', by: 'Maintainer', text: 'Fixed in 1.2.' }]);
   assert.equal(answered.unanswered, false);
-  const silent = await openReports(dir).detail(stub({ issues: [relayIssue({ outcome: 'dropped' })] }), 'RMA-500');
+  const silent = await open(dir, stub({ issues: [relayIssue({ outcome: 'dropped' })] })).detail('RMA-500');
   assert.equal(silent.outcome, 'dropped');
   assert.equal(silent.unanswered, true);
-  assert.equal(await openReports(dir).detail(stub(), 'RMA-999'), null);
+  assert.equal(await open(dir, stub()).detail('RMA-999'), null);
 });
 
 test('one relay read serves the list and every detail for a minute, and a new report clears it', async () => {
   const dir = reportsDir();
   filed(dir);
-  const reopened = openReports(dir);
   const { http, calls } = stub({ issues: [relayIssue()] });
-  await reopened.states({ http });
-  await reopened.states({ http });
-  await reopened.detail({ http }, 'RMA-500');
+  const reopened = open(dir, { http });
+  await reopened.states();
+  await reopened.states();
+  await reopened.detail('RMA-500');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, `${RELAY}?product=whose-turn&ids=RMA-500`);
   reopened.add({ id: 'RMA-501', title: 'Second', kind: 'idea', filed_at: '2026-11-02T11:00:00.000Z' });
-  await reopened.states({ http });
+  await reopened.states();
   assert.equal(calls.length, 2);
   assert.equal(calls[1].url, `${RELAY}?product=whose-turn&ids=RMA-501%2CRMA-500`);
 });
@@ -175,7 +175,7 @@ test('GET /api/feedback lists the reports with their states and /api/feedback?id
   const dir = reportsDir();
   filed(dir);
   const { http } = stub({ issues: [relayIssue({ outcome: 'done', answers: [{ author: 'Maintainer', body: 'Fixed.', at: '2026-11-02T12:00:00.000Z' }] })] });
-  const { server, get } = await startTestApi({ registry: emptyRegistry(), http, reports: openReports(dir) });
+  const { server, get } = await startTestApi({ registry: emptyRegistry(), http, reports: open(dir, { http }) });
   try {
     const list = await (await get('/api/feedback')).json();
     assert.deepEqual(Object.keys(list), ['reports']);

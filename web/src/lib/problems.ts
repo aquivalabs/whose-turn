@@ -11,8 +11,6 @@ export const TEXT_KEPT = SERVER_DOWN + '; your text is kept.';
 /** What each reason of the server's error registry says to the user; any other reason shows the envelope's own message. */
 const REASON_COPY: Record<string, string> = {
   NO_WORKSPACE: NO_WORKSPACE_MESSAGE,
-  NOT_CONFIGURED:
-    "The maintainer's tracker is not connected on this machine, so nothing can be sent from here.",
   UPSTREAM_FAILED: 'The tracker did not answer; try again in a minute.',
   RATE_LIMITED: 'The source is rate-limited; the monitor backs off.',
   OPEN_TOO_SOON: 'The app window is already opening; give it a few seconds.',

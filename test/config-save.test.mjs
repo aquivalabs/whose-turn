@@ -55,7 +55,16 @@ test('the retired feedback tracker keys are dropped on load and on save, the com
   writeFileSync(file, JSON.stringify({ workspaces: [], feedback: { workspace: 'x', team: 'T' } }));
   saveWorkspaces(file, [{ id: 'home' }]);
   assert.equal('feedback' in JSON.parse(readFileSync(file, 'utf8')), false);
-  assert.equal(loadConfig({ WHOSE_TURN_CONFIG: file, WHOSE_TURN_DATA: dir }).feedback, null);
+  assert.deepEqual(loadConfig({ WHOSE_TURN_CONFIG: file, WHOSE_TURN_DATA: dir }).feedback, {});
+});
+
+test('an unknown feedback key survives load and save', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const file = join(dir, 'config.json');
+  writeFileSync(file, JSON.stringify({ workspaces: [{ id: 'home' }], feedback: { team: 'T', future_key: 1 } }));
+  assert.deepEqual(loadConfig({ WHOSE_TURN_CONFIG: file, WHOSE_TURN_DATA: dir }).feedback, { future_key: 1 });
+  saveWorkspaces(file, [{ id: 'home' }]);
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')).feedback, { future_key: 1 });
 });
 
 test('saveNotifications writes the setting and keeps the other keys; loadConfig reads it back', () => {

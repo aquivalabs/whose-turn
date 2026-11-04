@@ -20,7 +20,7 @@ const toggle = async () => {
       snapshot.notifications = before;
     }
   };
-  await post('/api/config', { notifications: snapshot.notifications }).then(settle, settle);
+  await post('/api/notifications', { desktop: snapshot.notifications.desktop }).then(settle, settle);
   saving.value = false;
 };
 </script>
