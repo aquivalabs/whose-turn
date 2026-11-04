@@ -75,3 +75,18 @@ test('a table warning shows above the rows of its workspace', async () => {
 
   expect(screen.getByText(warning)).toBeTruthy();
 });
+
+test('the rule sentences use the words the server sends with each fact', async () => {
+  const body = {
+    ...reply,
+    facts: { 'deploy.region': { name: 'the deploy region' } },
+    tables: { alpha: [{ when: { 'deploy.region': { present: true } }, then: { whose: 'you', next: 'Check {deploy.region}' } }] },
+  };
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve(body) }));
+  render(SettingsSheet);
+  ui.settings = true;
+  await screen.findByText('Alpha');
+
+  expect(screen.getByText('When the deploy region is given:')).toBeTruthy();
+  expect(screen.getByText('your move, "Check {the deploy region}"')).toBeTruthy();
+});

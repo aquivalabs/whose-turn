@@ -196,6 +196,9 @@ export interface FieldSpec {
   hint?: string;
 }
 
+/** The plain words the server sends with each fact, by fact name: the noun, and a boolean's true and false sentence. */
+export type FactWords = Record<string, { name?: string; says?: [string, string] }>;
+
 /** One row of a workspace's rules table. */
 export interface RuleRow {
   when: Record<string, unknown>;

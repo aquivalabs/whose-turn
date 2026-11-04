@@ -27,13 +27,13 @@ with the text `now <status>, with <who>`.
 
 | File | Role |
 |---|---|
-| `lib/facts.mjs` | `FACTS`, the closed fact dictionary; `ticketFacts`, which computes one flat facts object per ticket (plus the whole hold reason for the row's link); `runFacts`, the facts of one failing workflow run; `statusGroupOrder` and `statusGroups`; `chainGroup`, the row's `status_group` the window tones status pills by; `holdReason` |
+| `lib/facts.mjs` | `FACTS`, the closed fact dictionary, each fact with its plain words (`name`, and `says` for a boolean); `ticketFacts`, which computes one flat facts object per ticket (plus the whole hold reason for the row's link); `runFacts`, the facts of one failing workflow run; `statusGroupOrder` and `statusGroups`; `chainGroup`, the row's `status_group` the window tones status pills by; `holdReason` |
 | `lib/table.mjs` | Validation (`tableProblems`), the `"default"` marker (`expandTable`), matching (`firstMatch`), placeholders (`fillText`) |
 | `lib/default-table.mjs` | `defaultTable(rules)`, the plugin's default rows |
 | `lib/rules.mjs` | `compileRules` expands the workspace table and the status-group order once per workspace; `ticketRow` and `runRow` match the table and apply `then` |
 | `lib/config.mjs` | `normaliseRules` validates `rules.table` on load and on `POST /api/config` |
 | `lib/api.mjs` | `GET /api/config` returns `facts` (the dictionary) and `tables` (the effective rows per workspace) |
-| `web/src/features/settings/SettingsSheet.vue` | Shows the effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into a sentence ("When the ticket is in review and the PR is open and the PR is approved: your move, \"Merge it\"") |
+| `web/src/features/settings/SettingsSheet.vue` | Shows the effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into a sentence, reading fact names and flag sentences from the `facts` the server sends ("When the ticket is in review and the PR is open and the PR is approved: your move, \"Merge it\"") |
 
 ## How it behaves
 
@@ -199,3 +199,5 @@ the `"default"` marker or the validation messages, or moves ticket rows or workf
 ### Words in the window
 
 The `qa` group is called Testing everywhere a person reads it: the Testing statuses field, the settings rows ("the ticket is in testing") and the default next step. The `rules` fields are labelled by the situation they answer ("Next step when the PR is approved"). The ids (`qa`, `approved_next`) stay as they are in the config and the API.
+
+The plain words of a fact live in `FACTS` (`name`, and `says` for a boolean), so a fact added on the server reads in words in the window without a window change; a fact without them falls back to its dotted name with the dots turned into spaces. Status groups and the `pr.review` values keep their phrases in the window.

@@ -14,7 +14,14 @@ import {
   uidOf,
 } from '@/lib/settings.ts';
 import type { StoredWorkspace } from '@/lib/settings.ts';
-import type { ApiError, ConnectorEntry, FieldSpec, RawWorkspace, RuleRow } from '@/lib/types.ts';
+import type {
+  ApiError,
+  ConnectorEntry,
+  FactWords,
+  FieldSpec,
+  RawWorkspace,
+  RuleRow,
+} from '@/lib/types.ts';
 import FieldRow from '@/ui/FieldRow.vue';
 
 interface ConnectorSpec {
@@ -40,6 +47,7 @@ interface ConfigReply {
   fields: FormFields;
   config_file?: string;
   problems?: string[];
+  facts?: FactWords;
   tables?: Record<string, RuleRow[]>;
   table_warnings?: Record<string, string[]>;
 }
@@ -52,6 +60,7 @@ const configFile = ref('');
 const problems = ref<string[]>([]);
 const fieldErrors = ref<Record<string, string>>({});
 const loadedIds = new Map<number, string>();
+const facts = ref<FactWords>({});
 const tables = ref<Record<string, RuleRow[]>>({});
 const tableWarnings = ref<Record<string, string[]>>({});
 const connectorsHead = useTemplateRef<HTMLElement>('connectors-head');
@@ -78,7 +87,9 @@ const ID_SPEC: FieldSpec = { key: 'id', label: 'Source id' };
 const LABEL_SPEC: FieldSpec = { key: 'label', label: 'Label' };
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
 const ruleRows = computed(() =>
-  ((current.value && tables.value[current.value.id]) || []).map(ruleText),
+  ((current.value && tables.value[current.value.id]) || []).map((row) =>
+    ruleText(row, facts.value),
+  ),
 );
 const ruleWarnings = computed(() => (current.value && tableWarnings.value[current.value.id]) || []);
 const specOf = (entry: ConnectorEntry): ConnectorSpec =>
@@ -178,6 +189,7 @@ const open = () =>
       fieldErrors.value = {};
       loadedIds.clear();
       list.value.forEach((workspace) => loadedIds.set(uidOf(workspace), workspace.id));
+      facts.value = reply.facts || {};
       tables.value = reply.tables || {};
       tableWarnings.value = reply.table_warnings || {};
       loadedKey.value = settingsKey(list.value);

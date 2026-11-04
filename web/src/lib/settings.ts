@@ -1,6 +1,6 @@
 // The settings form's shaping: what the server's raw workspace becomes in the form, and what goes back.
 import { toRaw } from 'vue';
-import type { ConnectorEntry, RawWorkspace, RuleRow } from './types.ts';
+import type { ConnectorEntry, FactWords, RawWorkspace, RuleRow } from './types.ts';
 
 /** A raw workspace as config.json may hold it: connectors as a list or keyed by type, rules and theme optional. */
 export interface StoredWorkspace {
@@ -136,18 +136,8 @@ const WHOSE_PHRASES: Record<string, string> = {
   them: 'waiting on others',
 };
 
-const FACT_NAMES: Record<string, string> = {
-  'ticket.hold_reason': 'the hold reason',
-  'ticket.status_name': 'the status',
-  'ticket.key': 'the ticket key',
-  'pr.number': 'the PR number',
-  'pr.base': 'the target branch',
-  'pr.commenter': 'the commenter',
-  'run.workflow': 'the workflow',
-  'run.branch': 'the branch',
-  'comment.author': 'the author',
-};
-const factName = (fact: string) => FACT_NAMES[fact] || fact.replace(/[._]/g, ' ');
+const factName = (facts: FactWords, fact: string) =>
+  facts[fact]?.name || fact.replace(/[._]/g, ' ');
 
 const flag = (operand: unknown, whenTrue: string, whenFalse: string) =>
   operand ? whenTrue : whenFalse;
@@ -158,7 +148,7 @@ const REVIEW_PHRASES: Record<string, string> = {
   none: 'the PR has no review',
 };
 
-const valuePhrase = (fact: string, value: unknown): string => {
+const valuePhrase = (facts: FactWords, fact: string, value: unknown): string => {
   switch (fact) {
     case 'ticket.status':
       return `the ticket is ${statusPhrase(String(value))}`;
@@ -171,30 +161,18 @@ const valuePhrase = (fact: string, value: unknown): string => {
     case 'pr.base':
       return `the PR goes into ${value}`;
     default:
-      return `${factName(fact)} is ${value}`;
+      return `${factName(facts, fact)} is ${value}`;
   }
 };
 
-const FLAG_PHRASES: Record<string, [string, string]> = {
-  'ticket.done': ['the ticket is done', 'the ticket is not done'],
-  'ticket.started': ['the ticket is started', 'the ticket is not started'],
-  'pr.open': ['the PR is open', 'no PR is open'],
-  'pr.merged': ['the PR is merged', 'the PR is not merged'],
-  'pr.unanswered': ['a comment on the PR waits for your answer', 'no comment on the PR waits for your answer'],
-  'comment.mentions_me': ['you are mentioned and have not answered', 'no mention of you waits for an answer'],
-  'comment.is_question': ['the mention is a question', 'the mention is not a question'],
-  'run.failed': ['a workflow run failed', 'no workflow run failed'],
-  'run.mine': ['the run is yours', 'the run is not yours'],
-};
-
-const operatorPhrase = (fact: string, operator: string, operand: unknown) => {
+const operatorPhrase = (facts: FactWords, fact: string, operator: string, operand: unknown) => {
   if (operator === 'present') {
-    return flag(operand, `${factName(fact)} is given`, `${factName(fact)} is missing`);
+    return flag(operand, `${factName(facts, fact)} is given`, `${factName(facts, fact)} is missing`);
   }
   if (operator === 'prefix') {
     return fact === 'pr.base'
       ? `the PR goes into a branch starting with ${operand}`
-      : `${factName(fact)} starts with ${operand}`;
+      : `${factName(facts, fact)} starts with ${operand}`;
   }
   if (fact === 'unanswered_count') {
     const count = Number(operand);
@@ -207,37 +185,39 @@ const operatorPhrase = (fact: string, operator: string, operand: unknown) => {
     return `${bounds[operator]} mentions of you wait for an answer`;
   }
   const signs: Record<string, string> = { gt: 'more than', gte: 'at least', lt: 'less than', lte: 'at most' };
-  return `${factName(fact)} is ${signs[operator]} ${operand}`;
+  return `${factName(facts, fact)} is ${signs[operator]} ${operand}`;
 };
 
-const conditionText = (fact: string, condition: unknown): string => {
+const conditionText = (facts: FactWords, fact: string, condition: unknown): string => {
   if (Array.isArray(condition)) {
     return fact === 'ticket.status'
       ? `the ticket is ${condition.map((group) => statusPhrase(String(group))).join(' or ')}`
-      : `${factName(fact)} is ${condition.join(' or ')}`;
+      : `${factName(facts, fact)} is ${condition.join(' or ')}`;
   }
   if (condition && typeof condition === 'object') {
     return Object.entries(condition)
-      .map(([operator, operand]) => operatorPhrase(fact, operator, operand))
+      .map(([operator, operand]) => operatorPhrase(facts, fact, operator, operand))
       .join(' and ');
   }
-  if (typeof condition === 'boolean' && FLAG_PHRASES[fact]) {
-    return FLAG_PHRASES[fact][condition ? 0 : 1];
+  const says = facts[fact]?.says;
+  if (typeof condition === 'boolean' && says) {
+    return says[condition ? 0 : 1];
   }
-  return valuePhrase(fact, condition);
+  return valuePhrase(facts, fact, condition);
 };
 
-const nextText = (next: string) => next.replace(/\{([\w.]+)\}/g, (match, fact: string) => `{${factName(fact)}}`);
+const nextText = (facts: FactWords, next: string) =>
+  next.replace(/\{([\w.]+)\}/g, (match, fact: string) => `{${factName(facts, fact)}}`);
 
 /** One rules-table row as a sentence pair for the read-only list in the settings sheet. */
-export const ruleText = (row: RuleRow) => {
+export const ruleText = (row: RuleRow, facts: FactWords = {}) => {
   const conditions = Object.entries(row.when).map(([fact, condition]) =>
-    conditionText(fact, condition),
+    conditionText(facts, fact, condition),
   );
   const outcome =
     row.then.whose === 'hidden'
       ? 'not shown'
-      : `${WHOSE_PHRASES[row.then.whose] || row.then.whose}, "${nextText(row.then.next || '')}"`;
+      : `${WHOSE_PHRASES[row.then.whose] || row.then.whose}, "${nextText(facts, row.then.next || '')}"`;
   return {
     when: conditions.length ? `When ${conditions.join(' and ')}:` : 'In every other case:',
     then: outcome,
