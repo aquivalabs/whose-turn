@@ -10,5 +10,5 @@ export const useFold = (id: string) => {
       ? folded.value.filter((item) => item !== id)
       : [...folded.value, id];
   };
-  return { collapsed, toggle };
+  return { collapsed, toggle, folded };
 };

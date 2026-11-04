@@ -189,3 +189,39 @@ describe('a panel folded when the page loads', () => {
     expect(container.querySelector('.island__body')?.textContent).toBe('the rows');
   });
 });
+
+describe('the resize grip of a column', () => {
+  const column = () =>
+    render({
+      components: { Island },
+      template: `<div>
+        <Island id="first" title="First" />
+        <Island id="second" title="Second" />
+      </div>`,
+    });
+  const grip = (title: string) => screen.queryByRole('separator', { name: 'Resize ' + title });
+
+  test('is absent under the last open panel and present on the edge between two panels', async () => {
+    column();
+
+    await vi.waitFor(() => expect(grip('Second')).toBeNull());
+    expect(grip('First')).not.toBeNull();
+  });
+
+  test('comes back under the panel above when the panel below unfolds, and goes when it folds', async () => {
+    column();
+    await fireEvent.click(screen.getByRole('button', { name: 'Fold Second' }));
+    await vi.waitFor(() => expect(grip('First')).toBeNull());
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Open Second' }));
+
+    await vi.waitFor(() => expect(grip('First')).not.toBeNull());
+    expect(grip('Second')).toBeNull();
+  });
+
+  test('a width grip is never withdrawn', async () => {
+    render(Island, { props: { id: 'side', title: 'Side', resize: 'width' } });
+
+    await vi.waitFor(() => expect(grip('Side')).not.toBeNull());
+  });
+});

@@ -70,6 +70,14 @@ value is set back immediately and the tween starts from it.
 A folded panel's body is `v-if`, not `display: none`: a row that mounts under a hidden ancestor never plays
 its enter motion and stays invisible after the panel is unfolded. RMA-319.
 
+### The grip fades where dragging does nothing
+
+A column's last open panel fills the rest of the column, so a drag on its bottom edge changes nothing and its grip
+is withdrawn: it fades out (`--motion-fast`), takes no pointer, leaves the tab order and is hidden from assistive
+technology. The island looks for an open island after it among its siblings when the fold list changes and when
+siblings are added or removed, so folding the panel below withdraws the grip above and unfolding brings it back. A
+width grip is never withdrawn. RMA-312.
+
 ### The island's floor
 
 A panel never shrinks below its own primary rows: those in its direct row scroller (or the `island__fade` wrapper

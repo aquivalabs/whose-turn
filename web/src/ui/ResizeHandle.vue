@@ -6,6 +6,7 @@ const props = defineProps<{
   bounds: () => { current: number; min: number; max: number };
   grow?: 1 | -1;
   top?: boolean;
+  off?: boolean;
 }>();
 const emit = defineEmits<{ resize: [value: number]; reset: [] }>();
 const KEY_STEP = 16;
@@ -39,9 +40,10 @@ const key = (event: KeyboardEvent) => {
 <template>
   <div
     class="resize-handle"
-    :class="['resize-handle--' + axis, { 'resize-handle--top': top }]"
+    :class="['resize-handle--' + axis, { 'resize-handle--top': top, 'resize-handle--off': off }]"
     role="separator"
-    tabindex="0"
+    :tabindex="off ? -1 : 0"
+    :aria-hidden="off || undefined"
     :aria-orientation="axis === 'y' ? 'horizontal' : 'vertical'"
     :aria-label="label"
     data-tip="Drag to resize; double click to reset"
@@ -89,6 +91,15 @@ const key = (event: KeyboardEvent) => {
 .resize-handle:focus-visible::after {
   background: var(--md-outline);
   opacity: 1;
+}
+
+.resize-handle--off {
+  pointer-events: none;
+}
+
+.resize-handle--off::before,
+.resize-handle--off::after {
+  opacity: 0;
 }
 
 .resize-handle:focus-visible {

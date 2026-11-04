@@ -25,7 +25,7 @@ const props = withDefaults(
 );
 const MIN_WIDTH = 280;
 const MAIN_MIN_WIDTH = 360;
-const { collapsed, toggle: flip } = useFold(props.id);
+const { collapsed, toggle: flip, folded } = useFold(props.id);
 const strip = computed(() => collapsed.value && props.resize === 'width');
 const { size, set } = usePanelSize(() => props.sizeKey);
 const root = useTemplateRef<HTMLElement>('root');
@@ -106,6 +106,21 @@ useMutationObserver(body, schedule, { childList: true, subtree: true, attributes
 useResizeObserver(body, schedule);
 onMounted(schedule);
 watch(collapsed, () => nextTick(schedule));
+// A grip shows only where dragging changes something: not under the last open panel of a column.
+const openBelow = ref(true);
+const trace = () => {
+  const el = root.value;
+  const siblings = [...(el?.parentElement?.children ?? [])];
+  const open = (node: Element) => node.classList.contains('island') && !node.classList.contains('island--collapsed');
+  openBelow.value = !!el && siblings.slice(siblings.indexOf(el) + 1).some(open);
+};
+const watching = props.resize === 'height';
+useMutationObserver(() => (watching ? (root.value?.parentElement ?? null) : null), trace, { childList: true });
+if (watching) {
+  watch(folded, () => nextTick(trace));
+  onMounted(trace);
+}
+const gripOff = computed(() => props.resize === 'height' && !openBelow.value);
 const sized = computed(() => size.value !== null && props.resize === 'height' && hasRows.value);
 const neighbours = (el: HTMLElement) =>
   [...(el.parentElement?.children ?? [])]
@@ -177,6 +192,7 @@ const bounds = () => {
       :axis="resize === 'width' ? 'x' : 'y'"
       :grow="resize === 'width' ? -1 : 1"
       :bounds="bounds"
+      :off="gripOff"
       @resize="set"
       @reset="set(null)"
     />

@@ -11,6 +11,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - Monitor settings now keep each number within a sensible range: polling from 15 seconds to an hour, history from 1 to 365 days, stale after 1 minute to a day, failing polls 1 to 100. The fields show the limits, and a value outside them is refused, so a typo can no longer switch polling or the health alerts off. RMA-332.
 - A new version of Whose Turn no longer installs by itself when a Claude session starts. Claude tells you it is out and installs it only when you say yes; the Update button in the window works as before. RMA-329.
 
+### Fixed
+- The last open panel of a column, such as Waiting on others, no longer shows a resize grip on its bottom edge, since dragging it changed nothing. The edge between two panels keeps its grip, and when the panel below is folded the grip above goes, then comes back when it is opened again. RMA-312.
+
 ## [1.0.0-alpha.9] - 2026-11-04
 
 ### Added
