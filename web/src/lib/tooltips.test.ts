@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { TippyDelegateOptions } from '../env.d.ts';
 import { installTooltips } from './tooltips.ts';
+
+type Hooks = Required<Pick<TippyDelegateOptions, 'onShow' | 'onHide'>>;
+const hooksOf = ({ onShow, onHide }: TippyDelegateOptions): Hooks => {
+  if (!onShow || !onHide) {
+    throw new Error('installTooltips registered no onShow or onHide');
+  }
+  return { onShow, onHide };
+};
 
 const makeInstance = (reference: Element, isVisible = false) => {
   const instance = { reference, state: { isVisible }, show: vi.fn(), hide: vi.fn(), destroy: vi.fn() };
@@ -8,14 +17,14 @@ const makeInstance = (reference: Element, isVisible = false) => {
 };
 
 describe('installTooltips', () => {
-  let options: Record<string, (...args: never[]) => unknown>;
+  let options: Hooks;
   let teardown: () => void;
   let control: HTMLElement;
 
   beforeEach(() => {
     window.tippy = {
-      delegate: vi.fn((_root, given) => {
-        options = given as unknown as typeof options;
+      delegate: vi.fn((_root: Element, given: TippyDelegateOptions) => {
+        options = hooksOf(given);
       }),
     };
     teardown = installTooltips();
@@ -33,7 +42,7 @@ describe('installTooltips', () => {
   it('hides a shown tooltip on pointerdown', () => {
     // Setup
     const instance = makeInstance(control);
-    options.onShow(instance as never);
+    options.onShow(instance);
     // Exercise
     control.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     // Verify
@@ -42,14 +51,14 @@ describe('installTooltips', () => {
 
   it('refuses to show while the pointer is down', () => {
     document.dispatchEvent(new Event('pointerdown'));
-    expect(options.onShow(makeInstance(control) as never)).toBe(false);
+    expect(options.onShow(makeInstance(control))).toBe(false);
     document.dispatchEvent(new Event('pointerup'));
-    expect(options.onShow(makeInstance(control) as never)).toBeUndefined();
+    expect(options.onShow(makeInstance(control))).toBeUndefined();
   });
 
   it('hides on drag start and on scroll', () => {
     const instance = makeInstance(control);
-    options.onShow(instance as never);
+    options.onShow(instance);
     document.dispatchEvent(new Event('dragstart'));
     document.dispatchEvent(new Event('scroll'));
     expect(instance.hide).toHaveBeenCalledTimes(2);
@@ -58,7 +67,7 @@ describe('installTooltips', () => {
   it('destroys the tooltip when its control unmounts', async () => {
     // Setup
     const instance = makeInstance(control);
-    options.onShow(instance as never);
+    options.onShow(instance);
     // Exercise
     control.remove();
     await new Promise((resolve) => setTimeout(resolve));
@@ -87,26 +96,26 @@ describe('installTooltips', () => {
 
     it('keeps a hover-opened tooltip open on the first click and closes it on the second', () => {
       const instance = makeInstance(help, true);
-      options.onShow(instance as never);
+      options.onShow(instance);
       const click = () => {
         help.dispatchEvent(new Event('pointerdown', { bubbles: true }));
         help.dispatchEvent(new Event('click', { bubbles: true }));
       };
       click();
-      expect(options.onHide(instance as never)).toBe(false);
+      expect(options.onHide(instance)).toBe(false);
       click();
       expect(instance.hide).toHaveBeenCalledTimes(1);
-      expect(options.onHide(instance as never)).toBeUndefined();
+      expect(options.onHide(instance)).toBeUndefined();
     });
 
     it('is allowed to show while its own pointer is down', () => {
       help.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-      expect(options.onShow(makeInstance(help) as never)).toBeUndefined();
+      expect(options.onShow(makeInstance(help))).toBeUndefined();
     });
 
     it('closes on a click elsewhere and on Escape', () => {
       const instance = makeInstance(help, true);
-      options.onShow(instance as never);
+      options.onShow(instance);
       control.dispatchEvent(new Event('pointerdown', { bubbles: true }));
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
       expect(instance.hide).toHaveBeenCalledTimes(2);

@@ -16,7 +16,8 @@ export interface YourRow {
   handled: boolean;
 }
 
-/** Rows on you, each with the handled flag the server set: by the server's rank (lowest first), then oldest first; the open view lists only open rows and the handled view only handled ones, except the row `keep` names, which stays where it is while its note is typed. A row whose turn passed on stays in the handled view while its automatic mark lives. */
+/** The rows of Your move with their handled flag, ordered by rank then age.
+ * Rules: docs/mechanisms/your-move.md. */
 export const yourRows = (turn: TurnRow[], view: string, info: Record<string, HandledInfo> = {}, keep = '') => {
   const you: YourRow[] = turn
     .filter((row) => row.group === 'you' || (row.handled && info[row.row_id]?.auto))

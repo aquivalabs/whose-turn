@@ -9,7 +9,7 @@ export const rememberUpdated = (version: string): void => {
   try {
     sessionStorage.setItem(UPDATED_KEY, version);
   } catch {
-    // Storage blocked: the reload still happens.
+    return;
   }
 };
 

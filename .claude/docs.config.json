@@ -37,6 +37,20 @@
         "lib/default-table.mjs"
       ],
       "doc": "docs/mechanisms/rules-table.md"
+    },
+    {
+      "id": "your-move",
+      "paths": [
+        "web/src/lib/moves.ts"
+      ],
+      "doc": "docs/mechanisms/your-move.md"
+    },
+    {
+      "id": "tooltips",
+      "paths": [
+        "web/src/lib/tooltips.ts"
+      ],
+      "doc": "docs/mechanisms/tooltips.md"
     }
   ],
   "surfaceRules": {

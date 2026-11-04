@@ -9,7 +9,7 @@ export interface TippyInstance {
   destroy: () => void;
 }
 
-interface TippyDelegateOptions {
+export interface TippyDelegateOptions {
   target: string;
   content: (element: HTMLElement) => string;
   onShow?: (instance: TippyInstance) => boolean | undefined;

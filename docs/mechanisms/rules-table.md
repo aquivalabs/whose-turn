@@ -44,6 +44,9 @@ tickets, PRs and comments; they never compute facts. When a source cannot supply
 `null`, and a condition on a `null` fact does not match. The list is closed: a new fact is added in
 `FACTS` and in `ticketFacts`, never in the config.
 
+Each `FACTS` entry holds the fact's type, its closed values when it has any, where it comes from, and the plain
+words the window reads it with: `name` for the noun, `says` for a boolean's true and false sentence.
+
 | Fact | Type | Comes from |
 |---|---|---|
 | `connector` | text | the connector entry id the ticket came from |

@@ -1,6 +1,3 @@
-// Tooltips: instant on hover or keyboard focus; one delegate covers rows drawn later. Tippy and Popper are the vendored scripts the page loads first.
-// Every shown tooltip is tracked and dismissed on pointerdown, drag, scroll, resize, Escape, and when its control leaves the page or the layout.
-// Explanation controls ([data-tip-click]: the "?" icons and "why") also toggle on click, which is what opens them on touch.
 import type { TippyInstance } from '../env.d.ts';
 
 const EXPLAIN = '[data-tip-click]';
@@ -8,6 +5,8 @@ const explainControl = (target: EventTarget | null): Element | null => (target i
 
 const isLaidOut = (element: Element): boolean => element.isConnected && element.getClientRects().length > 0;
 
+/** Installs the delegated tooltips and returns the function that removes them.
+ * Rules: docs/mechanisms/tooltips.md. */
 export const installTooltips = (): (() => void) => {
   if (!window.tippy) {
     return () => {};

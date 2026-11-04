@@ -25,6 +25,7 @@ The window hand-rolled every piece of browser behaviour it needed: storage reads
 | Copy button reset | replace: `refAutoReset` (1600 ms) | Same reset time; the timer no longer outlives a second click. |
 | Clipboard write | keep `navigator.clipboard.writeText` | Platform rung: one call; `useClipboard` adds state the button does not use. |
 | Rail reorder | keep the HTML drag events | Platform rung, about 25 lines with the before/after drop marker, and the order logic (`movedIds`) is pure and under test. `useDraggable` moves an element by pointer position, not a list order. `useSortable` (SortableJS, about 45 kB) would reorder the DOM itself while the order comes back from the server after the config write, so Vue and SortableJS would both own the same nodes. |
+| Reload announcement, `wt-updated-to` in `web/src/lib/page-reload.ts` | keep hand-written `sessionStorage` helpers | VueUse 15 `useSessionStorage` does not guard a browser that blocks storage: its read or write throws. The helpers catch it, so a blocked storage only loses the announcement and the reload still happens. |
 
 ## Consequences
 
