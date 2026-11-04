@@ -97,7 +97,7 @@ it leaves the same way.
 
 ### The test stand-in
 
-`web/src/test-setup.ts` replaces `motion-v` with `web/src/test-motion.ts`. It renders `Motion` (and `M`) as its
+`web/src/test-setup.ts` replaces `motion-v` with `web/src/test-motion.ts`. It also keeps Vue's own `Transition` and `TransitionGroup` un-stubbed, because the stand-in `AnimatePresence` is built on them. It renders `Motion` (and `M`) as its
 plain tag, drops the animation props (`initial`, `animate`, `exit`, `layout`, `transition`, `whileHover`,
 `whilePress`), passes `MotionConfig` and `LazyMotion` through and resolves `animate` at once, so
 behaviour tests never wait for an animation. `AnimatePresence` is Vue's own `TransitionGroup`, like the real one,

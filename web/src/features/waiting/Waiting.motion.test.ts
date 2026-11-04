@@ -8,7 +8,7 @@ import { backlogRow } from '@/test-rows.ts';
 import { loadFeatures } from '@/motion.ts';
 import Waiting from './Waiting.vue';
 
-// The real motion-v, not the stand-in: its exits finish at once while the lazy feature chunk is still loading, which broke Vue's out-in transition (RMA-337).
+// docs/mechanisms/motion.md § The empty text waits for the list
 vi.mock('motion-v', () => vi.importActual('motion-v'));
 vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 vi.mock('@/store.ts', async (importOriginal) => ({ ...(await importOriginal<typeof Store>()) }));

@@ -106,7 +106,7 @@ useMutationObserver(body, schedule, { childList: true, subtree: true, attributes
 useResizeObserver(body, schedule);
 onMounted(schedule);
 watch(collapsed, () => nextTick(schedule));
-// A grip shows only where dragging changes something: not under the last open panel of a column.
+// docs/mechanisms/motion.md § The grip fades where dragging does nothing
 const openBelow = ref(true);
 const siblingsOf = (el: HTMLElement) => {
   const all = [...(el.parentElement?.children ?? [])].filter((node): node is HTMLElement => node instanceof HTMLElement);
