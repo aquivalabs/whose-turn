@@ -88,3 +88,9 @@ test('double click asks the caller to reset', async () => {
 
   expect(emitted().reset).toHaveLength(1);
 });
+
+test('the handle keeps its drag hint for the tooltip', () => {
+  handle();
+
+  expect(separator().getAttribute('data-tip')).toBe('Drag to resize; double click to reset');
+});

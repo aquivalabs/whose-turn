@@ -59,19 +59,35 @@ const key = (event: KeyboardEvent) => {
   border-radius: 4px;
 }
 
+.resize-handle::before,
 .resize-handle::after {
   content: '';
   position: absolute;
-  inset: 0;
   margin: auto;
   border-radius: 2px;
-  background: var(--md-outline-variant);
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.resize-handle::before {
+  background: var(--md-primary);
   opacity: 0;
-  transition: opacity 0.15s ease;
+}
+
+.resize-handle::after {
+  background: var(--md-outline-variant);
+  opacity: 0.45;
+}
+
+.resize-handle:hover::before,
+.resize-handle:focus-visible::before {
+  opacity: 0.6;
 }
 
 .resize-handle:hover::after,
 .resize-handle:focus-visible::after {
+  background: var(--md-outline);
   opacity: 1;
 }
 
@@ -92,8 +108,18 @@ const key = (event: KeyboardEvent) => {
   bottom: auto;
 }
 
+.resize-handle--y::before {
+  inset: 4px 0 auto;
+  height: 2px;
+}
+
+.resize-handle--y.resize-handle--top::before {
+  inset: auto 0 4px;
+}
+
 .resize-handle--y::after {
-  width: 40px;
+  inset: 0;
+  width: 32px;
   height: 4px;
 }
 
@@ -105,9 +131,15 @@ const key = (event: KeyboardEvent) => {
   cursor: col-resize;
 }
 
+.resize-handle--x::before {
+  inset: 0 auto 0 4px;
+  width: 2px;
+}
+
 .resize-handle--x::after {
+  inset: 0;
   width: 4px;
-  height: 40px;
+  height: 32px;
 }
 
 @media (width <= 900px) {
