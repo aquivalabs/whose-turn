@@ -68,7 +68,7 @@ Nothing that names an employer, an account or a team process lives in this repos
 | `…jira.email` | the account the API token belongs to |
 | `…jira.token_service` | the secret-store entry holding the token, default `whose-turn-jira` |
 | `…jira.jql` | which tickets to watch |
-| `workspaces[].links` | quick links shown in the header, as `"Label https://…"` strings or `{label, url}`; the repository, the Jira site and the Linear team come from the connectors by themselves |
+| `workspaces[].links` | quick links shown in the header, as `"Label https://…"` strings or `{label, url}`; the repository, the Jira site and the Linear team come from the connectors by themselves, unless one of these links already points at the same site |
 | `workspaces[].rules` | the team's process, see Rules below; `statuses` groups, `automation_authors` and `question_words` must be lists of strings (statuses non-empty) or the save is refused |
 | `…connectors.linear.workspace`, `team`, `project` | the Linear workspace slug (the part after linear.app/), and optionally one team key or one project name; the personal API key goes to the secret store under the workspace slug |
 | `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark Material 3 scheme from it (`lib/palette.mjs`); without it the stylesheet's blue stays |
