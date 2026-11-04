@@ -5,6 +5,7 @@ import { mkdtempSync, writeFileSync, chmodSync, readFileSync, rmSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request as httpRequest } from 'node:http';
+import { createServer } from 'node:net';
 import { appDir, startTestApi } from './fixtures/api.mjs';
 import { resolveMode, tabUrl } from '../web/src/lib/window-mode.ts';
 
@@ -47,6 +48,13 @@ test('the mode comes from the address first, then the window session, and a tab 
   assert.equal(tabUrl(''), '/?mode=tab');
 });
 
+const freePort = await new Promise((resolve) => {
+  const probe = createServer().listen(0, '127.0.0.1', () => {
+    const { port } = probe.address();
+    probe.close(() => resolve(port));
+  });
+});
+
 const stubDir = mkdtempSync(join(tmpdir(), 'wt-stubs-'));
 const stub = (name, body) => {
   writeFileSync(join(stubDir, name), `#!/bin/bash\n${body}\n`);
@@ -67,25 +75,25 @@ const run = ({ system, chrome = true, remembered = '', args = [], linuxBrowser =
     stub(linuxBrowser, logArgs(linuxBrowser));
   }
   writeFileSync(argLog, '');
-  execFileSync('/bin/bash', [join(appDir, 'open.sh'), ...args], { env: { PATH: stubDir, WHOSE_TURN_PORT: '8771' } });
+  execFileSync('/bin/bash', [join(appDir, 'open.sh'), ...args], { env: { PATH: stubDir, WHOSE_TURN_PORT: String(freePort) } });
   return readFileSync(argLog, 'utf8').trim();
 };
 
 test('open.sh opens the app window on macOS at the remembered size, a tab with --browser or without Chrome', () => {
-  assert.equal(run({ system: 'Darwin' }), 'open -na Google Chrome --args --app=http://127.0.0.1:8771/?mode=app --window-size=1500,950');
-  assert.equal(run({ system: 'Darwin', remembered: '{"width":1200,"height":800}' }), 'open -na Google Chrome --args --app=http://127.0.0.1:8771/?mode=app --window-size=1200,800');
-  assert.equal(run({ system: 'Darwin', args: ['--browser'] }), 'open http://127.0.0.1:8771/');
-  assert.equal(run({ system: 'Darwin', chrome: false }), 'open http://127.0.0.1:8771/');
+  assert.equal(run({ system: 'Darwin' }), `open -na Google Chrome --args --app=http://127.0.0.1:${freePort}/?mode=app --window-size=1500,950`);
+  assert.equal(run({ system: 'Darwin', remembered: '{"width":1200,"height":800}' }), `open -na Google Chrome --args --app=http://127.0.0.1:${freePort}/?mode=app --window-size=1200,800`);
+  assert.equal(run({ system: 'Darwin', args: ['--browser'] }), `open http://127.0.0.1:${freePort}/`);
+  assert.equal(run({ system: 'Darwin', chrome: false }), `open http://127.0.0.1:${freePort}/`);
 });
 
 test('open.sh on Linux uses the first Chrome or Edge on PATH, else xdg-open', async () => {
-  assert.equal(run({ system: 'Linux', args: ['--browser'] }), 'xdg-open http://127.0.0.1:8771/');
-  assert.equal(run({ system: 'Linux' }), 'xdg-open http://127.0.0.1:8771/');
+  assert.equal(run({ system: 'Linux', args: ['--browser'] }), `xdg-open http://127.0.0.1:${freePort}/`);
+  assert.equal(run({ system: 'Linux' }), `xdg-open http://127.0.0.1:${freePort}/`);
   run({ system: 'Linux', linuxBrowser: 'chromium' });
-  for (let tries = 0; tries < 40 && !readFileSync(argLog, 'utf8'); tries += 1) {
+  for (let tries = 0; tries < 200 && !readFileSync(argLog, 'utf8'); tries += 1) {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
-  assert.equal(readFileSync(argLog, 'utf8').trim(), 'chromium --app=http://127.0.0.1:8771/?mode=app --window-size=1500,950');
+  assert.equal(readFileSync(argLog, 'utf8').trim(), `chromium --app=http://127.0.0.1:${freePort}/?mode=app --window-size=1500,950`);
 });
 
 test('a second /api/open of the same mode within five seconds is refused and opens one window', async () => {
