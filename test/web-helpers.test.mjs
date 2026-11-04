@@ -94,6 +94,7 @@ test('checksTone maps the check states to tones', () => {
 
 test('outcomeTone maps outcomes to tones and defaults to info', () => {
   assert.equal(outcomeTone('open'), 'info');
+  assert.equal(outcomeTone('ready'), 'ready');
   assert.equal(outcomeTone('done'), 'ok');
   assert.equal(outcomeTone('dropped'), 'warn');
   assert.equal(outcomeTone('other'), 'info');

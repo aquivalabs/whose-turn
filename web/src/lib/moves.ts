@@ -57,7 +57,7 @@ export const checksTone = (checks: string | undefined) =>
 const STATUS_TONES: Record<string, string> = { code_review: 'info', qa: 'info', on_hold: 'hold' };
 export const statusTone = (group: string | undefined) => STATUS_TONES[group || ''] || '';
 export const outcomeTone = (outcome: string | undefined) =>
-  (({ open: 'info', done: 'ok', dropped: 'warn' }) as Record<string, string>)[outcome || ''] ||
+  (({ open: 'info', ready: 'ready', done: 'ok', dropped: 'warn' }) as Record<string, string>)[outcome || ''] ||
   'info';
 
 /** How many rows end below the visible bottom of a scroll area by more than the slack. */

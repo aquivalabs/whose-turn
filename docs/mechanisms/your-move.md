@@ -10,7 +10,7 @@ window already has. RMA-258.
 
 | File | Role |
 |---|---|
-| `web/src/lib/moves.ts` | `yourRows`, the open and handled lists and their counts; the other row filters of the dashboard |
+| `web/src/lib/moves.ts` | `yourRows`, the open and handled lists and their counts; the other row filters of the dashboard; `outcomeTone`, the pill tone of a report outcome (`open`, `ready`, `done`, `dropped`) |
 | `web/src/features/your-move/YourMove.vue` | Renders the list and sends the Handled mark |
 
 ## How it behaves

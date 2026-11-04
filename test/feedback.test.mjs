@@ -120,6 +120,15 @@ test('the list carries the state and outcome the relay gives, or the entry as fi
   assert.equal(plain.title, 'The chevron wraps');
 });
 
+test('a report whose issue is ready for release reads as fixed in the next release, and needs no answer yet', async () => {
+  const dir = reportsDir();
+  filed(dir);
+  const ready = await open(dir, stub({ issues: [relayIssue({ outcome: 'ready' })] })).detail('RMA-500');
+  assert.equal(ready.state, 'Fixed, coming in the next release');
+  assert.equal(ready.outcome, 'ready');
+  assert.equal(ready.unanswered, false);
+});
+
 test('the detail of one report carries the relay answers, and flags a closed report without one', async () => {
   const dir = reportsDir();
   filed(dir);
@@ -369,6 +378,9 @@ test('news: the first look records what is there and shows none; a new state or 
   later.add({ id: 'RMA-500', title: 't', kind: 'bug', filed_at: 'x' });
   assert.equal(await later.checkNews(), true, 'the snapshot survives a restart and the new state is news');
   assert.equal(later.hasNews(), true);
+  const shipped = openReports(desk.dir, { http: { fetchJson: async () => ({ issues: [relayIssue({ outcome: 'ready' })] }) }, relayUrl: RELAY });
+  shipped.add({ id: 'RMA-500', title: 't', kind: 'bug', filed_at: 'x' });
+  assert.equal(await shipped.checkNews(), true, 'a change to ready is news like any other state');
   await later.markSeen();
   assert.equal(later.hasNews(), false);
   assert.deepEqual(JSON.parse(readFileSync(join(desk.dir, 'reports-seen.json'), 'utf8')), { 'RMA-500': { state: 'done', answers: 0 } });

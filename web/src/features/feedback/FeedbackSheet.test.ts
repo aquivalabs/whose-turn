@@ -46,6 +46,26 @@ test('a sent report shows its identifier as a link and joins the list with its s
   expect(screen.getAllByRole('link', { name: 'RMA-9' }).length).toBeGreaterThan(0);
 });
 
+test('a report fixed for the next release shows its own pill', async () => {
+  const fetch = vi.fn().mockResolvedValue(
+    answer({
+      reports: [
+        {
+          id: 'RMA-9',
+          title: 'Chevron wraps',
+          state: 'Fixed, coming in the next release',
+          outcome: 'ready',
+          filed_at: '2026-11-04T10:00:00.000Z',
+        },
+      ],
+    }),
+  );
+  await openSheet(fetch);
+
+  const pill = await screen.findByText('Fixed, coming in the next release');
+  expect(pill.className).toContain('pill--ready');
+});
+
 test('the sheet sends the remark, who sent it and the workspace id, and no context', async () => {
   const fetch = vi.fn().mockResolvedValue(answer({ reports: [] }));
   await openSheet(fetch);

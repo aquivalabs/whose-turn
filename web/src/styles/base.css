@@ -379,6 +379,9 @@
   white-space: nowrap;
   background: var(--md-s-high);
   color: var(--md-on-surface-variant);
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease);
 }
 
 .pill--bad {
@@ -400,6 +403,11 @@
 .pill--ok {
   background: var(--md-tertiary-container);
   color: var(--md-on-tertiary-container);
+}
+
+.pill--ready {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
 }
 
 .pill--info {

@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- A report that is fixed but not yet released now reads "Fixed, coming in the next release" on its report page and in the Report sheet, with its own colour, and the change counts as news on the Report button. RMA-321.
 - Each workspace now has its own settings, opened with the gear at the top right of its header: name, links, look, sources, rules and Delete workspace, for that workspace only. RMA-304.
 - The gear at the bottom of the rail now opens Monitor settings: desktop notifications on or off, how often to poll, how many days of history to keep, and when to warn about stale or failing sources, with the path of the config file. RMA-304.
 - A + at the end of the workspace list adds a workspace: it opens the same form, empty, and switches to the new workspace when you save. RMA-304.
