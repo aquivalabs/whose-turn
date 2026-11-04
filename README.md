@@ -2,8 +2,6 @@
 
 A local monitor that answers "what is waiting on me right now" across the places your work arrives: GitHub pull requests, Jira and Linear tickets, and your own to-dos. It polls each source about once a minute, decides once, on the server, whose turn every ticket is, shows the result in a window that updates live, sends a desktop notification when something becomes your move, and hands any item to an AI assistant as Markdown with its context. Its Claude Code plugin, `whose-turn@bladeforge`, makes a session start with "N your move · M unread · K to-do" already in context.
 
-[![Whose Turn in 80 seconds: the noise of many trackers, then one queue of your moves](docs/media/whose-turn-film.png)](docs/media/whose-turn-film.mp4)
-
 The film, 80 seconds with sound: [docs/media/whose-turn-film.mp4](docs/media/whose-turn-film.mp4). Its first act is staged; the window in the second act shows the maintainer's real workspaces on 3 November 2026.
 
 ![The window with invented data: Your move, To do, Waiting on others, and the feed](docs/window.png)
