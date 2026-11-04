@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+const animate = vi.hoisted(() => vi.fn());
+vi.mock('motion-v', () => ({ animate }));
+
 const asking = (reduce: boolean) =>
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: reduce && query.includes('prefers-reduced-motion'),
@@ -45,5 +48,22 @@ describe('motion tokens', () => {
     await motion.glideThrough(element, 'height', () => (changed += 1));
     expect(changed).toBe(1);
     expect(element.getAttribute('style')).toBeNull();
+  });
+
+  it('tweens a height as border-box, so padding and border are not added on top of the target', async () => {
+    const motion = await load(false);
+    const element = document.createElement('section');
+    let held = '';
+    let start = '';
+    animate.mockImplementation(async () => {
+      held = element.style.boxSizing;
+      start = element.style.height;
+    });
+    Object.defineProperty(element, 'offsetHeight', { configurable: true, value: 122 });
+    await motion.glide(element, 'height', '46px');
+    expect(animate).toHaveBeenCalledWith(element, { height: ['46px', '122px'] }, motion.baseTransition.value);
+    expect(held).toBe('border-box');
+    expect(start).toBe('46px');
+    expect(element.style.cssText).toBe('');
   });
 });

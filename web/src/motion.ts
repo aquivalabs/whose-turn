@@ -50,8 +50,11 @@ export const glide = async (element: HTMLElement, property: 'height' | 'gridTemp
   if (reduced.value || from === to) {
     return;
   }
-  const hold = property === 'height' ? { flex: 'none', minHeight: '0', maxHeight: 'none' } : {};
+  // offsetHeight counts padding and border, so the tweened height must too; a content-box element would be set that much too tall.
+  const hold = property === 'height' ? { flex: 'none', minHeight: '0', maxHeight: 'none', boxSizing: 'border-box' } : {};
   Object.assign(element.style, hold);
+  // The old value goes back on at once: until the tween's first frame the stylesheet's new value would show.
+  element.style[property] = from;
   try {
     await animate(element, { [property]: [from, to] }, baseTransition.value);
   } finally {
