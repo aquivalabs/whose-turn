@@ -51,6 +51,7 @@ export const ui = reactive({
   status: 'Connecting…',
   modal: null as FeedItem | null,
   feedback: false,
+  whatsNew: false,
   settings: false,
   settingsDirty: false,
   settingsAsk: false,
@@ -129,6 +130,7 @@ export const closeTopLayer = () => {
   const layer = currentLayer.value;
   if (layer === 'modal') ui.modal = null;
   if (layer === 'feedback') ui.feedback = false;
+  if (layer === 'whatsNew') ui.whatsNew = false;
   if (layer !== 'settings') return;
   if (ui.settingsDirty) {
     ui.settingsAsk = true;
@@ -151,6 +153,7 @@ const layerFlags: Record<Layer, () => boolean> = {
   modal: () => Boolean(ui.modal),
   settings: () => ui.settings,
   feedback: () => ui.feedback,
+  whatsNew: () => ui.whatsNew,
 };
 Object.entries(layerFlags).forEach(([layer, isOpen]) => {
   watch(isOpen, (open) => rememberOpener(layer as Layer, open), { flush: 'sync' });

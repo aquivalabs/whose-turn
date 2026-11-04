@@ -28,6 +28,7 @@ beforeEach(() => {
   vi.mocked(rememberUpdated).mockReset();
   vi.mocked(takeUpdated).mockReturnValue('');
   ui.live = true;
+  ui.whatsNew = false;
   snapshot.update = offer({ latest: '1.0.0-alpha.2', available: false });
 });
 
@@ -85,7 +86,11 @@ test('after the reload the chip announces the new version once', async () => {
   snapshot.update = offer({ current: '1.0.0-alpha.3', latest: '1.0.0-alpha.3', available: false });
   render(UpdateChip);
 
-  expect(await screen.findByText('Updated to 1.0.0-alpha.3')).toBeTruthy();
+  const chip = await screen.findByRole('button', { name: 'Updated to 1.0.0-alpha.3' });
+
+  await fireEvent.click(chip);
+
+  expect(ui.whatsNew).toBe(true);
 });
 
 test('a failed install offers a retry with npm message as the tooltip', async () => {

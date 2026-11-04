@@ -13,6 +13,7 @@ import { openInbox } from './lib/inbox.mjs';
 import { openReports } from './lib/feedback.mjs';
 import { startApi } from './lib/api.mjs';
 import { notify } from './lib/notify.mjs';
+import { loadChangelog } from './lib/changelog.mjs';
 import { createUpdater, restartServer, runsInstalled } from './lib/update.mjs';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
@@ -71,7 +72,7 @@ const saveConfig = async (rawWorkspaces) => {
 };
 
 try {
-  server = await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir, updater });
+  server = await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir, updater, changelog: loadChangelog(appDir, version) });
 } catch (error) {
   console.error(error.message);
   process.exit(1);

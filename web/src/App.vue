@@ -29,6 +29,8 @@ import FirstRun from './features/first-run/FirstRun.vue';
 import CommentModal from './features/feed/CommentModal.vue';
 import FeedbackSheet from './features/feedback/FeedbackSheet.vue';
 import SettingsSheet from './features/settings/SettingsSheet.vue';
+import WhatsNewSheet from './features/whats-new/WhatsNewSheet.vue';
+import { useWhatsNew } from './composables/useWhatsNew.ts';
 const firstRun = computed(
   () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
 );
@@ -36,6 +38,7 @@ const { size: feedWidth } = usePanelSize(() => `${snapshot.workspace.id}:feed`);
 const layoutStyle = computed(() =>
   feedWidth.value === null ? undefined : { '--feed-width': feedWidth.value + 'px' },
 );
+const whatsNew = useWhatsNew();
 const covered = computed(() => currentLayer.value !== null);
 useDialogFocus(covered);
 useShortcuts(covered);
@@ -63,11 +66,12 @@ useFavicon(icon);
 onKeyStroke('Escape', closeTopLayer, { target: document });
 onMounted(() => {
   reportWindowSize();
+  void whatsNew.load();
 });
 </script>
 <template>
   <div class="app" :style="themeVariables">
-    <Rail :inert="covered" @settings="ui.settings = true" />
+    <Rail :inert="covered" @settings="ui.settings = true" @whats-new="ui.whatsNew = true" />
     <div class="app__shell">
       <StatusBar :inert="covered" @report="ui.feedback = true" />
       <div v-if="alerts.length" class="alert" :inert="covered">
@@ -88,6 +92,7 @@ onMounted(() => {
         </div>
         <FeedbackSheet />
         <SettingsSheet />
+        <WhatsNewSheet />
         <CommentModal />
       </div>
     </div>

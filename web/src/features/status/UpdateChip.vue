@@ -76,9 +76,15 @@ const onReload = () => {
 };
 </script>
 <template>
-  <span v-if="updatedTo" class="update-chip update-chip--done" role="status"
-    >Updated to {{ updatedTo }}</span
+  <button
+    v-if="updatedTo"
+    type="button"
+    class="update-chip update-chip--done"
+    title="See what changed"
+    @click="ui.whatsNew = true"
   >
+    Updated to {{ updatedTo }}
+  </button>
   <button
     v-else-if="ready"
     type="button"
@@ -129,8 +135,7 @@ const onReload = () => {
   border-radius: var(--md-r-chip);
 }
 
-.update-chip--busy,
-.update-chip--done {
+.update-chip--busy {
   cursor: default;
 }
 

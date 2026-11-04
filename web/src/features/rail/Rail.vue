@@ -3,11 +3,13 @@
 import { computed, nextTick, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
-import { GEAR, workspaceIconParts } from '@/lib/icons.ts';
+import { GEAR, NEW_RELEASES, workspaceIconParts } from '@/lib/icons.ts';
 import { movedIds } from '@/lib/settings.ts';
 import type { Workspace } from '@/lib/types.ts';
 import { mulberry32 } from '@/lib/random.ts';
-const emit = defineEmits<{ settings: [] }>();
+import { useWhatsNew } from '@/composables/useWhatsNew.ts';
+const emit = defineEmits<{ settings: []; whatsNew: [] }>();
+const { unseen } = useWhatsNew();
 
 const parts = computed(() =>
   Object.fromEntries(
@@ -46,6 +48,10 @@ const onSwitch = (event: MouseEvent, id: string) => {
 };
 const onSettings = (event: MouseEvent) => {
   emit('settings');
+  blurAfterMouse(event);
+};
+const onWhatsNew = (event: MouseEvent) => {
+  emit('whatsNew');
   blurAfterMouse(event);
 };
 
@@ -158,6 +164,13 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       <span v-if="workspace.open_moves" class="rail__badge">{{ workspace.open_moves }}</span>
     </a>
     <span class="rail__spacer"></span>
+    <a class="rail__item" href="#whats-new" aria-label="What's new" @click.prevent="onWhatsNew">
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
+        <path :d="NEW_RELEASES" fill="currentColor" />
+      </svg>
+      <span class="rail__label">What's new</span>
+      <span v-if="unseen.length" class="rail__dot" title="Unseen changes"></span>
+    </a>
     <a class="rail__item" href="#settings" aria-label="Settings" @click.prevent="onSettings">
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
         <path :d="GEAR" fill="currentColor" />
@@ -310,6 +323,18 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   font-size: 10px;
   font-weight: 800;
   line-height: 1;
+}
+
+.rail__dot {
+  position: absolute;
+  top: 6px;
+  left: 28px;
+  box-sizing: border-box;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--md-surface);
+  border-radius: 50%;
+  background: var(--md-primary);
 }
 
 .rail__spacer {

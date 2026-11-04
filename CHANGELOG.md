@@ -2,6 +2,11 @@
 
 All notable changes to whose-turn are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- A "What's new" button above the gear in the rail opens the changelog by version, newest first, with the running version marked and a dot while versions since your last visit are unread; the "Updated to <version>" chip opens it too, and `GET /api/changelog` serves it parsed. RMA-253.
+
 ## [1.0.0-alpha.6] - 2026-11-04
 
 ### Fixed
