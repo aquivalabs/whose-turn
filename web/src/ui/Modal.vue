@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // A dialog over the window: a title bar with a Close button, a scrolling body (padded unless `flush`) and an optional footer; a click on the backdrop asks to close.
-defineProps<{ title: string; labelId: string; flush?: boolean }>();
+defineProps<{ title: string; labelId: string; flush?: boolean; cardClass?: string }>();
 const emit = defineEmits<{ close: [] }>();
 </script>
 <template>
@@ -11,7 +11,7 @@ const emit = defineEmits<{ close: [] }>();
     :aria-labelledby="labelId"
     @click.self="emit('close')"
   >
-    <div class="modal__card">
+    <div class="modal__card" :class="cardClass">
       <div class="modal__head">
         <h3 :id="labelId" class="modal__title">{{ title }}</h3>
         <slot name="head" />
@@ -26,7 +26,9 @@ const emit = defineEmits<{ close: [] }>();
 .modal__body {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 12px;
+  min-height: 0;
   padding: 16px 20px;
   overflow: auto;
 }

@@ -3,6 +3,7 @@
 import { computed } from 'vue';
 import { snapshot, ui } from '@/store.ts';
 import { safeUrl } from '@/lib/api.ts';
+import Modal from '@/ui/Modal.vue';
 import MarkdownView from '@/ui/MarkdownView.vue';
 const item = computed(() => ui.modal);
 const title = computed(() =>
@@ -20,21 +21,10 @@ const close = () => {
 };
 </script>
 <template>
-  <div
-    v-if="item"
-    class="modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="modal-title"
-    @click.self="close"
-  >
-    <div class="modal__card">
-      <div class="modal__head">
-        <h3 id="modal-title" class="modal__title">{{ title }}</h3>
-        <a v-if="href" class="btn" :href="href" target="_blank" rel="noopener">{{ label }}</a>
-        <button type="button" class="btn" @click="close">Close</button>
-      </div>
-      <MarkdownView :source="item.body || item.text || ''" />
-    </div>
-  </div>
+  <Modal v-if="item" :title="title" label-id="modal-title" flush @close="close">
+    <template #head>
+      <a v-if="href" class="btn" :href="href" target="_blank" rel="noopener">{{ label }}</a>
+    </template>
+    <MarkdownView :source="item.body || item.text || ''" />
+  </Modal>
 </template>

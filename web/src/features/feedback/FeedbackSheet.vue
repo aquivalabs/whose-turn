@@ -10,6 +10,7 @@ import { describeClient } from '@/lib/client-report.ts';
 import { ago } from '@/lib/time.ts';
 import { outcomeTone } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
+import Modal from '@/ui/Modal.vue';
 
 type ReportLine = Pick<
   FiledReport,
@@ -94,66 +95,57 @@ watch(
 );
 </script>
 <template>
-  <div
+  <Modal
     v-if="ui.feedback"
-    class="modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="feedback-title"
-    @click.self="close"
+    title="Report a problem or a wish"
+    label-id="feedback-title"
+    flush
+    card-class="feedback-sheet__card"
+    @close="close"
   >
-    <div class="modal__card feedback-sheet__card">
-      <div class="modal__head">
-        <h3 id="feedback-title" class="modal__title">Report a problem or a wish</h3>
-        <button
-          type="button"
-          class="btn btn--tonal"
-          :aria-disabled="sending"
-          @click="send"
-        >
-          {{ sending ? 'Composing…' : 'Send' }}
-        </button>
-        <button type="button" class="btn" @click="close">Close</button>
-      </div>
-      <div v-if="problems.length" class="alert">{{ problems.join('  ·  ') }}</div>
-      <div class="sheet-form">
-        <textarea
-          ref="field"
-          v-model="text"
-          class="input feedback-sheet__text"
-          rows="5"
-          placeholder="Describe the problem or the wish in your own words. Cmd+Enter sends."
-          autocomplete="off"
-          @keydown.meta.enter.prevent="send"
-          @keydown.ctrl.enter.prevent="send"
-        ></textarea>
-        <p class="feedback-sheet__note">
-          Only what you write, the monitor version and a description of your system are sent: OS and processor type, Node version, how the monitor was installed, browser, screen and window size, language, time zone, light or dark, app or tab, and which kinds of source you use.
-        </p>
-        <p v-if="done" class="empty">
-          Filed as
-          <a :href="reportPage(done.identifier)" target="_blank" rel="noopener">{{
-            done.identifier
-          }}</a>
-          · {{ done.title }}
-        </p>
-        <div v-if="reports.length" class="feedback-sheet__reports">
-          <h4 class="sheet-form__heading">Your reports</h4>
-          <div v-for="report in reports" :key="report.id" class="feedback-sheet__report">
-            <a :href="reportPage(report.id)" target="_blank" rel="noopener">{{ report.id }}</a>
-            <span class="feedback-sheet__report-title">{{ report.title }}</span>
-            <span class="pill" :class="modifier('pill', outcomeTone(report.outcome))">{{
-              report.state || 'filed'
-            }}</span>
-            <span class="timestamp">{{ ago(report.changed_at || report.filed_at) }}</span>
-          </div>
+    <template #head>
+      <button type="button" class="btn btn--tonal" :aria-disabled="sending" @click="send">
+        {{ sending ? 'Composing…' : 'Send' }}
+      </button>
+    </template>
+    <div v-if="problems.length" class="alert">{{ problems.join('  ·  ') }}</div>
+    <div class="sheet-form">
+      <textarea
+        ref="field"
+        v-model="text"
+        class="input feedback-sheet__text"
+        rows="5"
+        placeholder="Describe the problem or the wish in your own words. Cmd+Enter sends."
+        autocomplete="off"
+        @keydown.meta.enter.prevent="send"
+        @keydown.ctrl.enter.prevent="send"
+      ></textarea>
+      <p class="feedback-sheet__note">
+        Only what you write, the monitor version and a description of your system are sent: OS and processor type, Node version, how the monitor was installed, browser, screen and window size, language, time zone, light or dark, app or tab, and which kinds of source you use.
+      </p>
+      <p v-if="done" class="empty">
+        Filed as
+        <a :href="reportPage(done.identifier)" target="_blank" rel="noopener">{{
+          done.identifier
+        }}</a>
+        · {{ done.title }}
+      </p>
+      <div v-if="reports.length" class="feedback-sheet__reports">
+        <h4 class="sheet-form__heading">Your reports</h4>
+        <div v-for="report in reports" :key="report.id" class="feedback-sheet__report">
+          <a :href="reportPage(report.id)" target="_blank" rel="noopener">{{ report.id }}</a>
+          <span class="feedback-sheet__report-title">{{ report.title }}</span>
+          <span class="pill" :class="modifier('pill', outcomeTone(report.outcome))">{{
+            report.state || 'filed'
+          }}</span>
+          <span class="timestamp">{{ ago(report.changed_at || report.filed_at) }}</span>
         </div>
       </div>
     </div>
-  </div>
+  </Modal>
 </template>
 <style scoped>
-.feedback-sheet__card {
+:deep(.feedback-sheet__card) {
   width: min(640px, 100%);
 }
 

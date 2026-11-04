@@ -23,6 +23,7 @@ import type {
   RuleRow,
 } from '@/lib/types.ts';
 import FieldRow from '@/ui/FieldRow.vue';
+import Modal from '@/ui/Modal.vue';
 
 interface ConnectorSpec {
   type: string;
@@ -271,166 +272,162 @@ watch(
 );
 </script>
 <template>
-  <div
+  <Modal
     v-if="ui.settings"
-    class="modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="settings-title"
-    @click.self="requestClose"
+    title="Settings"
+    label-id="settings-title"
+    flush
+    card-class="settings-sheet__card"
+    @close="requestClose"
   >
-    <div class="modal__card settings-sheet__card">
-      <div class="modal__head">
-        <h3 id="settings-title" class="modal__title">Settings</h3>
-        <span class="modal__meta">{{ configFile }}</span>
-        <span v-if="dirty" class="settings-sheet__dirty">Unsaved changes</span>
-        <button v-if="!unloaded" type="button" class="btn btn--tonal" @click="save">Save</button>
-        <button type="button" class="btn" @click="requestClose">Close</button>
-      </div>
-      <div v-if="ask" class="settings-sheet__confirm" role="alertdialog">
-        <span class="settings-sheet__confirm-text">{{ ask.text }}</span>
-        <button type="button" class="btn btn--danger" @click="answer(true)">{{ ask.yes }}</button>
-        <button type="button" class="btn" @click="answer(false)">{{ ask.no }}</button>
-      </div>
-      <div v-if="unloaded" class="alert settings-sheet__alert" role="alert">{{ unloaded }}</div>
-      <div v-else-if="problems.length" class="alert settings-sheet__alert">
-        {{ problems.join('  ·  ') }}
-      </div>
-      <div v-if="!unloaded" class="settings-sheet__body">
-        <ul class="settings-sheet__list">
-          <li v-for="(tab, index) in workspaceTabs" :key="tab.uid">
-            <button
-              type="button"
-              class="settings-sheet__workspace"
-              :aria-current="index === selected"
-              @click="selected = index"
-            >
-              {{ tab.label }}
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              class="settings-sheet__workspace settings-sheet__workspace--add"
-              @click="addWorkspace"
-            >
-              + Add workspace
-            </button>
-          </li>
-        </ul>
-        <div class="sheet-form">
-          <p v-if="!current" class="empty">No workspaces yet. Add one on the left.</p>
-          <template v-else>
-            <h4 class="sheet-form__heading">Workspace</h4>
-            <FieldRow
-              v-for="spec in fields.workspace"
-              :key="spec.key"
-              :spec="spec"
-              :hint="spec.key === 'id' ? idHint : ''"
-              :error="errorAt(spec.key)"
-              :model-value="fieldValue(current, spec.key)"
-              @update:model-value="setWorkspaceField(current, spec.key, $event)"
-            />
-            <h4 class="sheet-form__heading">Theme</h4>
-            <FieldRow
-              v-for="spec in fields.theme"
-              :key="spec.key"
-              :spec="spec"
-              :hint="spec.key === 'seed' && !current.theme?.seed ? derivedSeedHint(current.id) : ''"
-              :model-value="fieldValue(current.theme, spec.key)"
-              @update:model-value="setOrDrop(current.theme, spec.key, $event)"
-            />
-            <h4 ref="connectors-head" class="sheet-form__heading">Sources</h4>
-            <div
-              v-for="({ entry, spec: entrySpec, uid }, index) in connectorCards"
-              :key="uid"
-              class="settings-sheet__connector"
-            >
-              <div class="settings-sheet__connector-head">
-                <strong class="settings-sheet__connector-name">{{ entrySpec.label }}</strong
-                ><button type="button" class="btn btn--danger" @click="askRemoveConnector(index)">
-                  Remove
-                </button>
-              </div>
-              <FieldRow
-                :spec="ID_SPEC"
-                :placeholder="entrySpec.type"
-                hint="only needed when one type appears twice"
-                :model-value="fieldValue(entry, 'id')"
-                @update:model-value="setOrDrop(entry, 'id', $event)"
-              />
-              <FieldRow
-                :spec="LABEL_SPEC"
-                :placeholder="entrySpec.label"
-                hint="its name in the feed"
-                :model-value="fieldValue(entry, 'label')"
-                @update:model-value="setOrDrop(entry, 'label', $event)"
-              />
-              <FieldRow
-                v-for="spec in entrySpec.fields"
-                :key="spec.key"
-                :spec="spec"
-                :error="errorAt('connectors[' + index + '].' + spec.key)"
-                :model-value="fieldValue(entry, spec.key)"
-                @update:model-value="setOrDrop(entry, spec.key, $event)"
-                @secret="(key, value) => setSecret(entry, key, value)"
-              />
-            </div>
-            <div class="settings-sheet__actions">
-              <button
-                v-for="spec in catalogue"
-                :key="spec.type"
-                type="button"
-                class="btn"
-                @click="addConnector(spec)"
-              >
-                + Add {{ spec.label }} source
+    <template #head>
+      <span class="modal__meta">{{ configFile }}</span>
+      <span v-if="dirty" class="settings-sheet__dirty">Unsaved changes</span>
+      <button v-if="!unloaded" type="button" class="btn btn--tonal" @click="save">Save</button>
+    </template>
+    <div v-if="ask" class="settings-sheet__confirm" role="alertdialog">
+      <span class="settings-sheet__confirm-text">{{ ask.text }}</span>
+      <button type="button" class="btn btn--danger" @click="answer(true)">{{ ask.yes }}</button>
+      <button type="button" class="btn" @click="answer(false)">{{ ask.no }}</button>
+    </div>
+    <div v-if="unloaded" class="alert settings-sheet__alert" role="alert">{{ unloaded }}</div>
+    <div v-else-if="problems.length" class="alert settings-sheet__alert">
+      {{ problems.join('  ·  ') }}
+    </div>
+    <div v-if="!unloaded" class="settings-sheet__body">
+      <ul class="settings-sheet__list">
+        <li v-for="(tab, index) in workspaceTabs" :key="tab.uid">
+          <button
+            type="button"
+            class="settings-sheet__workspace"
+            :aria-current="index === selected"
+            @click="selected = index"
+          >
+            {{ tab.label }}
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            class="settings-sheet__workspace settings-sheet__workspace--add"
+            @click="addWorkspace"
+          >
+            + Add workspace
+          </button>
+        </li>
+      </ul>
+      <div class="sheet-form">
+        <p v-if="!current" class="empty">No workspaces yet. Add one on the left.</p>
+        <template v-else>
+          <h4 class="sheet-form__heading">Workspace</h4>
+          <FieldRow
+            v-for="spec in fields.workspace"
+            :key="spec.key"
+            :spec="spec"
+            :hint="spec.key === 'id' ? idHint : ''"
+            :error="errorAt(spec.key)"
+            :model-value="fieldValue(current, spec.key)"
+            @update:model-value="setWorkspaceField(current, spec.key, $event)"
+          />
+          <h4 class="sheet-form__heading">Theme</h4>
+          <FieldRow
+            v-for="spec in fields.theme"
+            :key="spec.key"
+            :spec="spec"
+            :hint="spec.key === 'seed' && !current.theme?.seed ? derivedSeedHint(current.id) : ''"
+            :model-value="fieldValue(current.theme, spec.key)"
+            @update:model-value="setOrDrop(current.theme, spec.key, $event)"
+          />
+          <h4 ref="connectors-head" class="sheet-form__heading">Sources</h4>
+          <div
+            v-for="({ entry, spec: entrySpec, uid }, index) in connectorCards"
+            :key="uid"
+            class="settings-sheet__connector"
+          >
+            <div class="settings-sheet__connector-head">
+              <strong class="settings-sheet__connector-name">{{ entrySpec.label }}</strong
+              ><button type="button" class="btn btn--danger" @click="askRemoveConnector(index)">
+                Remove
               </button>
             </div>
-            <h4 class="sheet-form__heading">Rules</h4>
             <FieldRow
-              v-for="spec in fields.rules"
-              :key="spec.key"
-              :spec="spec"
-              :error="errorAt('rules.' + spec.key)"
-              :model-value="fieldValue(current.rules, spec.key)"
-              @update:model-value="setOrDrop(current.rules, spec.key, $event)"
+              :spec="ID_SPEC"
+              :placeholder="entrySpec.type"
+              hint="only needed when one type appears twice"
+              :model-value="fieldValue(entry, 'id')"
+              @update:model-value="setOrDrop(entry, 'id', $event)"
             />
             <FieldRow
-              v-for="spec in fields.statuses"
+              :spec="LABEL_SPEC"
+              :placeholder="entrySpec.label"
+              hint="its name in the feed"
+              :model-value="fieldValue(entry, 'label')"
+              @update:model-value="setOrDrop(entry, 'label', $event)"
+            />
+            <FieldRow
+              v-for="spec in entrySpec.fields"
               :key="spec.key"
               :spec="spec"
-              :model-value="fieldValue(current.rules.statuses, spec.key)"
-              @update:model-value="setOrDrop(current.rules.statuses, spec.key, $event)"
+              :error="errorAt('connectors[' + index + '].' + spec.key)"
+              :model-value="fieldValue(entry, spec.key)"
+              @update:model-value="setOrDrop(entry, spec.key, $event)"
+              @secret="(key, value) => setSecret(entry, key, value)"
             />
-            <h4 class="sheet-form__heading">Whose turn table</h4>
-            <p class="settings-sheet__rules-note">
-              The rows in force, top to bottom: the first one that fits decides. Read-only here: ask
-              Claude to change them.
-            </p>
-            <p v-for="warning in ruleWarnings" :key="warning" class="settings-sheet__rules-warning">
-              {{ warning }}
-            </p>
-            <ol v-if="ruleRows.length" class="settings-sheet__rules">
-              <li v-for="(rule, index) in ruleRows" :key="index" class="settings-sheet__rule">
-                <span class="settings-sheet__rule-when">{{ rule.when }}</span>
-                <span class="settings-sheet__rule-then">{{ rule.then }}</span>
-              </li>
-            </ol>
-            <p v-else class="empty">Save the workspace to see its rows.</p>
-            <div class="settings-sheet__actions">
-              <button type="button" class="btn btn--danger" @click="askRemoveWorkspace">
-                Delete workspace
-              </button>
-            </div>
-          </template>
-        </div>
+          </div>
+          <div class="settings-sheet__actions">
+            <button
+              v-for="spec in catalogue"
+              :key="spec.type"
+              type="button"
+              class="btn"
+              @click="addConnector(spec)"
+            >
+              + Add {{ spec.label }} source
+            </button>
+          </div>
+          <h4 class="sheet-form__heading">Rules</h4>
+          <FieldRow
+            v-for="spec in fields.rules"
+            :key="spec.key"
+            :spec="spec"
+            :error="errorAt('rules.' + spec.key)"
+            :model-value="fieldValue(current.rules, spec.key)"
+            @update:model-value="setOrDrop(current.rules, spec.key, $event)"
+          />
+          <FieldRow
+            v-for="spec in fields.statuses"
+            :key="spec.key"
+            :spec="spec"
+            :model-value="fieldValue(current.rules.statuses, spec.key)"
+            @update:model-value="setOrDrop(current.rules.statuses, spec.key, $event)"
+          />
+          <h4 class="sheet-form__heading">Whose turn table</h4>
+          <p class="settings-sheet__rules-note">
+            The rows in force, top to bottom: the first one that fits decides. Read-only here: ask
+            Claude to change them.
+          </p>
+          <p v-for="warning in ruleWarnings" :key="warning" class="settings-sheet__rules-warning">
+            {{ warning }}
+          </p>
+          <ol v-if="ruleRows.length" class="settings-sheet__rules">
+            <li v-for="(rule, index) in ruleRows" :key="index" class="settings-sheet__rule">
+              <span class="settings-sheet__rule-when">{{ rule.when }}</span>
+              <span class="settings-sheet__rule-then">{{ rule.then }}</span>
+            </li>
+          </ol>
+          <p v-else class="empty">Save the workspace to see its rows.</p>
+          <div class="settings-sheet__actions">
+            <button type="button" class="btn btn--danger" @click="askRemoveWorkspace">
+              Delete workspace
+            </button>
+          </div>
+        </template>
       </div>
     </div>
-  </div>
+  </Modal>
 </template>
 <style scoped>
-.settings-sheet__card {
+:deep(.settings-sheet__card) {
   width: min(1040px, 100%);
   height: min(760px, 100%);
 }
