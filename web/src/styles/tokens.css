@@ -7,10 +7,10 @@
   --tip-shadow: rgb(0 0 0 / 45%);
 
   /* Motion: the durations and easing every transition uses; web/src/motion.ts mirrors them for the JavaScript side. */
-  --motion-fast: 220ms;
-  --motion-base: 320ms;
-  --motion-slow: 420ms;
-  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-fast: 320ms;
+  --motion-base: 480ms;
+  --motion-slow: 640ms;
+  --motion-ease: cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 /* Reduced motion zeroes the durations, so a change is instant. */
