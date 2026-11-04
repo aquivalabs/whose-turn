@@ -52,3 +52,15 @@ test('the feed search clears when the open workspace changes', async () => {
 
   expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('');
 });
+
+test('the unread count of the folded strip sits in the strip, where it is written top to bottom', async () => {
+  localStorage.setItem('wt-collapsed', JSON.stringify(['feed']));
+  snapshot.marks = { seen: [], base: 0, handled: {}, info: {} };
+  snapshot.feed = [{ id: 'fresh', source: 's', at: '2999-01-01T00:00:00Z' }] as FeedItem[];
+  const { container } = render(Feed);
+
+  await screen.findAllByText('1 new');
+
+  expect(container.querySelector('.island--strip .feed__new-count')?.textContent).toBe('1 new');
+  localStorage.clear();
+});

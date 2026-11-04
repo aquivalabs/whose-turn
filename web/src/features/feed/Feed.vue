@@ -282,10 +282,15 @@ const restoreMarks = async () => {
 }
 
 .feed.island--strip .feed__new-count {
-  height: 20px;
-  padding: 0 6px;
+  justify-content: center;
+  width: 20px;
+  height: auto;
+  padding: 7px 0;
   font-size: 11px;
-  writing-mode: horizontal-tb;
+  line-height: 1;
+  word-spacing: -0.4em;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
 }
 
 .feed__mark-read {

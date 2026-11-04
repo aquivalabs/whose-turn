@@ -15,6 +15,18 @@ test('the fold toggle is a native button, so Space and Enter fold the panel like
   expect(container.querySelector('.island--collapsed')).not.toBeNull();
 });
 
+test('the fold hint of a folded width strip is anchored to the arrow and opens to its left', async () => {
+  render(Island, { props: { id: 'strip-panel', title: 'Strip', resize: 'width' } });
+  const arrow = screen.getByRole('button', { name: 'Fold Strip' });
+
+  expect(arrow.getAttribute('data-tippy-placement')).toBeNull();
+  await fireEvent.click(arrow);
+
+  expect(arrow.closest('.island--strip')).not.toBeNull();
+  expect(arrow.getAttribute('data-tip')).toContain('Fold this panel');
+  expect(arrow.getAttribute('data-tippy-placement')).toBe('left');
+});
+
 describe('a remembered height', () => {
   const rowCount = ref(0);
   const Rows = () =>

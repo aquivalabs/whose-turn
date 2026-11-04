@@ -9,6 +9,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - A ticket in code review now shows the names of the reviewers still asked to review its pull request, instead of just "Reviewer". RMA-298.
 
 ### Changed
+- On the folded What changed strip, the number of unread changes now reads from top to bottom, one upright character under another, and the hint about the arrow opens to its left instead of floating over the cards. RMA-309.
 - The edges you can drag to resize a panel now show a small grip mark, and a line and the resize cursor appear when you point at them. The mark stays faint while you are not using it. RMA-303.
 - Folding What changed now shrinks it to a thin strip at the right edge that still shows its title and the number of unread changes, and the other panels take the freed width. Click the strip or its arrow to open it again at the width you had. RMA-301.
 - Handled now asks for the note first: Save or Skip marks the row handled, and closing the window with Escape leaves the row open. RMA-271.

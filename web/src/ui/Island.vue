@@ -25,6 +25,7 @@ const props = withDefaults(
 const MIN_WIDTH = 280;
 const MAIN_MIN_WIDTH = 360;
 const { collapsed, toggle } = useFold(props.id);
+const strip = computed(() => collapsed.value && props.resize === 'width');
 const { size, set } = usePanelSize(() => props.sizeKey);
 const root = useTemplateRef<HTMLElement>('root');
 const floor = ref(0);
@@ -124,7 +125,7 @@ const bounds = () => {
     :class="{
       'island--collapsed': collapsed,
       'island--column': column,
-      'island--strip': collapsed && resize === 'width',
+      'island--strip': strip,
       'island--sized': sized,
     }"
     :style="
@@ -133,11 +134,12 @@ const bounds = () => {
         : undefined
     "
   >
-    <div class="island__head" @click="collapsed && resize === 'width' && toggle()">
+    <div class="island__head" @click="strip && toggle()">
       <Chevron
         :open="!collapsed"
         :aria-label="'Fold ' + title"
         data-tip="Fold this panel; it stays folded until you open it again"
+        :data-tippy-placement="strip ? 'left' : undefined"
         @click.stop="toggle"
       />
       <h2 class="island__title">{{ title }} <slot name="head" /></h2>
