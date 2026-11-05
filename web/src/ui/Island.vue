@@ -294,6 +294,13 @@ const bounds = () => {
     padding-bottom: 0;
   }
 
+  .dashboard--fit .dashboard__main .island__fade {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
   .dashboard--fit .dashboard__main .island.island--collapsed .island__body {
     display: none;
   }
