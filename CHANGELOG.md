@@ -2,7 +2,7 @@
 
 What changed for you in each version of Whose Turn. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/). The window shows this list under What's new; the ids at the end of an entry are ours and the window leaves them out.
 
-## [Unreleased]
+## [1.0.0-alpha.10] - 2026-11-05
 
 ### Changed
 - The window opens faster: the code that runs the animations now loads after the window's own code instead of before it, so the first screen no longer waits for it. RMA-314.
