@@ -2,6 +2,11 @@
 
 What changed for you in each version of Whose Turn. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/). The window shows this list under What's new; the ids at the end of an entry are ours and the window leaves them out.
 
+## [Unreleased]
+
+### Changed
+- The status bar is arranged in three groups: the connection state and Refresh now on the left, the update chip in the middle, and Copy for AI, Open as app, notifications and Report on the right. RMA-343.
+
 ## [1.0.0-alpha.11] - 2026-11-05
 
 ### Added

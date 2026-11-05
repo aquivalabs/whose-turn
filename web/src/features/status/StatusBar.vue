@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The line above the dashboard: Report, the live dot and the last check, the update chip, the notifications switch, Refresh, the app/tab switch, and the copy-everything sparkle.
+// The line above the dashboard in three groups: the live dot, the last check and Refresh on the left; the update chip in the centre; Copy for AI, the app/tab switch, notifications and Report on the right (RMA-343).
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { computed, ref } from 'vue';
@@ -49,72 +49,96 @@ const openAsApp = () => {
 </script>
 <template>
   <div class="status-bar">
-    <button
-      type="button"
-      class="btn status-bar__btn status-bar__report"
-      :class="{ 'status-bar__report--wiggle': wiggling }"
-      title="A bug or a wish about this monitor, straight to its backlog"
-      @click="emit('report')"
-    >
-      <svg class="status-bar__icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path :d="BUG" fill="currentColor" /></svg
-      >Report<AnimatePresence
-        ><Motion
-          v-if="ui.reportNews"
-          v-bind="fade"
-          as="span"
-          class="status-bar__dot"
-          title="A report has news"
-      /></AnimatePresence>
-    </button>
-    <span
-      class="status-bar__live"
-      :class="{
-        'status-bar__live--off': verdict.dot === 'off',
-        'status-bar__live--warn': verdict.dot === 'warn',
-      }"
-    ></span>
-    <span>{{ status }}</span>
-    <AnimatePresence>
-      <Motion v-if="notice" v-bind="fade" as="span" class="status-bar__notice" role="alert">{{
-        notice
-      }}</Motion>
-    </AnimatePresence>
-    <UpdateChip />
-    <NotificationsToggle />
-    <button type="button" class="btn status-bar__btn" @click="refresh">Refresh now</button>
-    <a
-      v-if="ui.mode === 'app'"
-      class="btn status-bar__btn"
-      :href="tabUrl(ui.ws)"
-      target="_blank"
-      rel="noopener"
-      >Open in browser</a
-    >
-    <button
-      v-else
-      type="button"
-      class="btn status-bar__btn"
-      :class="{ 'status-bar__btn--busy': opening }"
-      :aria-disabled="opening"
-      @click="openAsApp"
-    >
-      {{ opening ? 'Opening…' : 'Open as app' }}
-    </button>
-    <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint"
-      >Copy for AI: everything</span
-    >
+    <div class="status-bar__group status-bar__state">
+      <span
+        class="status-bar__live"
+        :class="{
+          'status-bar__live--off': verdict.dot === 'off',
+          'status-bar__live--warn': verdict.dot === 'warn',
+        }"
+      ></span>
+      <span class="status-bar__text">{{ status }}</span>
+      <AnimatePresence>
+        <Motion v-if="notice" v-bind="fade" as="span" class="status-bar__notice" role="alert">{{
+          notice
+        }}</Motion>
+      </AnimatePresence>
+      <button type="button" class="btn status-bar__btn" @click="refresh">Refresh now</button>
+    </div>
+    <div class="status-bar__center">
+      <UpdateChip />
+    </div>
+    <div class="status-bar__group status-bar__actions">
+      <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint"
+        >Copy for AI: everything</span
+      >
+      <a
+        v-if="ui.mode === 'app'"
+        class="btn status-bar__btn"
+        :href="tabUrl(ui.ws)"
+        target="_blank"
+        rel="noopener"
+        >Open in browser</a
+      >
+      <button
+        v-else
+        type="button"
+        class="btn status-bar__btn"
+        :class="{ 'status-bar__btn--busy': opening }"
+        :aria-disabled="opening"
+        @click="openAsApp"
+      >
+        {{ opening ? 'Opening…' : 'Open as app' }}
+      </button>
+      <NotificationsToggle />
+      <button
+        type="button"
+        class="btn status-bar__btn status-bar__report"
+        :class="{ 'status-bar__report--wiggle': wiggling }"
+        title="A bug or a wish about this monitor, straight to its backlog"
+        @click="emit('report')"
+      >
+        <svg class="status-bar__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path :d="BUG" fill="currentColor" /></svg
+        >Report<AnimatePresence
+          ><Motion
+            v-if="ui.reportNews"
+            v-bind="fade"
+            as="span"
+            class="status-bar__dot"
+            title="A report has news"
+        /></AnimatePresence>
+      </button>
+    </div>
   </div>
 </template>
 <style scoped>
 .status-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
+  gap: 1rem;
   margin: 0 4px 8px;
   font-family: var(--md-font);
   font-size: 12px;
   color: var(--md-on-surface-variant);
+}
+
+.status-bar__group {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.status-bar__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-bar__actions {
+  justify-content: flex-end;
 }
 
 .status-bar__btn {
