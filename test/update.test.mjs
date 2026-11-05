@@ -4,17 +4,20 @@ import { createServer } from 'node:http';
 import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CHANNEL, createUpdater, installedRoot, pinnedVersion, probeAgent, restartServer, runsInstalled } from '../lib/update.mjs';
+import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, restartServer, runsInstalled, updatePlugin } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 
 const scratch = () => mkdtempSync(join(tmpdir(), 'wt-update-'));
+
+/** A plugin step that touches nothing, so no test can reach the real Claude CLI. */
+const idlePlugin = async () => 'manual';
 
 /** An updater on a scratch data dir whose registry answers `tags`, or fails when `tags` is an Error. */
 const updaterWith = (tags, extra = {}) => {
   const notes = [];
   const asked = [];
   const http = { fetchJson: async (url) => { asked.push(url); if (tags instanceof Error) throw tags; return tags; } };
-  const updater = createUpdater({ http, dataDir: scratch(), version: '1.0.0-alpha.2', installed: true, notify: (title, body) => notes.push([title, body]), registry: 'http://registry.test', restart: async () => {}, ...extra });
+  const updater = createUpdater({ http, dataDir: scratch(), version: '1.0.0-alpha.2', installed: true, notify: (title, body) => notes.push([title, body]), registry: 'http://registry.test', restart: async () => {}, plugin: idlePlugin, ...extra });
   return { updater, notes, asked };
 };
 
@@ -34,7 +37,7 @@ test('the announcement is remembered across a restart of the server', async () =
   // Setup
   const dataDir = scratch();
   const notes = [];
-  const make = () => createUpdater({ http: { fetchJson: async () => ({ latest: '1.0.0-alpha.3' }) }, dataDir, version: '1.0.0-alpha.2', installed: true, notify: (title) => notes.push(title), restart: async () => {} });
+  const make = () => createUpdater({ http: { fetchJson: async () => ({ latest: '1.0.0-alpha.3' }) }, dataDir, version: '1.0.0-alpha.2', installed: true, notify: (title) => notes.push(title), restart: async () => {}, plugin: idlePlugin });
   // Exercise
   await make().check();
   await make().check();
@@ -100,7 +103,11 @@ const deferredRun = () => {
   return { run, calls, finish: (outcome) => finish(outcome) };
 };
 
-const settle = () => new Promise((resolve) => setImmediate(resolve));
+/** Lets the install, the plugin step and the restart that follow a POST run to their end. */
+const settle = async () => {
+  await new Promise((resolve) => setImmediate(resolve));
+  await new Promise((resolve) => setImmediate(resolve));
+};
 
 test('POST /api/update installs the channel version into the package location, refuses a second run, then restarts', async () => {
   // Setup
@@ -278,4 +285,90 @@ test('the pin is an exact version recorded by the install, else the one in the e
   assert.equal(pinnedVersion(withRecord('^1.0.0-alpha.2'), { WHOSE_TURN_APP_VERSION: '1.0.0-alpha.1' }), '1.0.0-alpha.1');
   assert.equal(pinnedVersion(scratch(), { WHOSE_TURN_APP_VERSION: 'latest' }), '');
   assert.equal(pinnedVersion(scratch(), {}), '');
+});
+
+test('the Claude CLI is found on PATH first, then in the usual install places, else not at all', () => {
+  // Setup
+  const present = new Set(['/opt/bin/claude', '/home/me/.local/bin/claude', '/usr/local/bin/claude']);
+  const executable = (path) => present.has(path);
+  // Exercise + Verify
+  assert.equal(findClaude({ env: { PATH: '/bin:/opt/bin' }, home: '/home/me', platform: 'linux', executable }), '/opt/bin/claude');
+  assert.equal(findClaude({ env: { PATH: '/bin' }, home: '/home/me', platform: 'linux', executable }), '/home/me/.local/bin/claude');
+  assert.equal(findClaude({ env: {}, home: '/nobody', platform: 'linux', executable }), '/usr/local/bin/claude');
+  assert.equal(findClaude({ env: {}, home: '/nobody', platform: 'linux', executable: () => false }), '');
+  assert.equal(findClaude({ env: { PATH: '/opt/bin' }, home: '/home/me', platform: 'win32', executable: (path) => path === '/opt/bin/claude.exe' }), '/opt/bin/claude.exe');
+});
+
+test('the plugin step runs the one fixed command and reports updated, manual or failed', async () => {
+  // Setup
+  const ran = [];
+  const ok = (claude) => { ran.push(claude); return Promise.resolve(''); };
+  // Exercise + Verify
+  assert.equal(await updatePlugin({ find: () => '/x/claude', run: ok }), 'updated');
+  assert.deepEqual(ran, ['/x/claude']);
+  assert.equal(await updatePlugin({ find: () => '', run: ok }), 'manual');
+  assert.equal(await updatePlugin({ find: () => '/x/claude', run: async () => 'exit 1' }), 'failed');
+});
+
+test('after the install the plugin result rides in the status of the restarted server, and a failed monitor install never touches the plugin', async () => {
+  // Setup
+  const dataDir = scratch();
+  const calls = [];
+  const make = (version, extra = {}) => createUpdater({ http: { fetchJson: async () => ({ latest: '1.0.0-alpha.3' }) }, dataDir, version, installed: true, notify: () => {}, restart: async () => {}, run: async () => '', plugin: async () => { calls.push('plugin'); return 'updated'; }, ...extra });
+  const failing = make('1.0.0-alpha.2', { run: async () => 'npm broke' });
+  await failing.check();
+  // Exercise
+  failing.apply();
+  await settle();
+  // Verify
+  assert.deepEqual(calls, []);
+  assert.equal(failing.status().plugin, undefined);
+  // Exercise
+  const updating = make('1.0.0-alpha.2');
+  await updating.check();
+  updating.apply();
+  await settle();
+  // Verify
+  assert.deepEqual(calls, ['plugin']);
+  assert.equal(updating.status().plugin, undefined);
+  assert.deepEqual(make('1.0.0-alpha.3').status().plugin, { state: 'updated', copy: RELOAD_PLUGINS });
+  assert.equal(make('1.0.0-alpha.4').status().plugin, undefined);
+});
+
+test('/api/state offers the command to copy, and POST /api/update/plugin-copied retires the chip for every window', async () => {
+  // Setup
+  const dataDir = scratch();
+  writeFileSync(join(dataDir, 'update.json'), JSON.stringify({ plugin: { for: '1.0.0-alpha.2', state: 'failed' } }));
+  const make = () => createUpdater({ http: null, dataDir, version: '1.0.0-alpha.2', installed: true, notify: () => {}, restart: async () => {}, plugin: idlePlugin });
+  const updater = make();
+  const announced = [];
+  updater.subscribe((event) => announced.push(event.update));
+  const { server, get, post } = await startTestApi({ updater });
+  try {
+    // Exercise
+    const { update } = await (await get('/api/state')).json();
+    const copied = await (await post('/api/update/plugin-copied', {})).json();
+    // Verify
+    assert.deepEqual(update.plugin, { state: 'failed', copy: 'claude plugin update whose-turn@bladeforge' });
+    assert.equal(copied.update.plugin, undefined);
+    assert.equal(announced.at(-1).plugin, undefined);
+    assert.equal(make().status().plugin, undefined);
+  } finally {
+    server.close();
+  }
+});
+
+test('a plugin step that fails or throws never fails the monitor update', async () => {
+  for (const plugin of [async () => 'failed', async () => { throw new Error('boom'); }]) {
+    // Setup
+    let restarts = 0;
+    const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: async () => '', plugin, restart: async () => { restarts += 1; } });
+    await updater.check();
+    // Exercise
+    updater.apply();
+    await settle();
+    // Verify
+    assert.equal(restarts, 1);
+    assert.equal(updater.status().state, 'restarting');
+  }
 });
