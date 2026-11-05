@@ -153,6 +153,7 @@ export interface UpdateStatus {
   available: boolean;
   state: 'idle' | 'installing' | 'restarting' | 'failed';
   reason?: string;
+  plugin?: { state: 'updated' | 'manual' | 'failed'; copy: string };
 }
 
 export interface Snapshot extends Marked {

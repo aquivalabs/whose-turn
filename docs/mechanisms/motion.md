@@ -39,7 +39,7 @@ It is not `AnimatePresence mode="wait"`. That mode is Vue's out-in `Transition`,
 when the leave ends, and `motion-v` ends an exit at once, inside the patch, while the element has no registered
 motion state, which is the case until the lazy feature chunk is in. The re-render then runs on a half-patched
 instance and throws `Cannot read properties of null (reading 'parentNode')`. RMA-337. The update chip swaps its faces
-through `Swap` too, and nothing uses mode `wait`.
+through `Swap` too, and nothing uses mode `wait`. Its faces include the Claude plugin's copy chip and the short "Copied" that follows a copy (RMA-341).
 
 ### A group and Recently done fold on the way out
 

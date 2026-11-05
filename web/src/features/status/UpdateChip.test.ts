@@ -122,3 +122,58 @@ test('a refused update returns to the offer', async () => {
     await screen.findByRole('button', { name: '1.0.0-alpha.3 is out · Update' }),
   ).toBeTruthy();
 });
+
+const clipboard = () => {
+  const writeText = vi.fn(() => Promise.resolve());
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+  return writeText;
+};
+
+const withPlugin = (state: 'updated' | 'manual' | 'failed', copy: string) => {
+  snapshot.update = offer({ available: false, latest: '1.0.0-alpha.2', plugin: { state, copy } });
+};
+
+test('after a plugin update the chip copies the text the server chose, says Copied, and tells the server', async () => {
+  const writeText = clipboard();
+  withPlugin('updated', '/reload-plugins --force');
+  vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });
+  render(UpdateChip);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
+
+  expect(writeText).toHaveBeenCalledWith('/reload-plugins --force');
+  expect(await screen.findByText('Copied')).toBeTruthy();
+  expect(post).toHaveBeenCalledWith('/api/update/plugin-copied');
+  expect(snapshot.update.plugin).toBeUndefined();
+});
+
+test.each(['manual', 'failed'] as const)('a %s plugin update shows the Update Claude skill chip, which copies the command', async (state) => {
+  const writeText = clipboard();
+  withPlugin(state, 'claude plugin update whose-turn@bladeforge');
+  vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });
+  render(UpdateChip);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Update Claude skill · Copy' }));
+
+  expect(writeText).toHaveBeenCalledWith('claude plugin update whose-turn@bladeforge');
+});
+
+test('a refused copy says so and leaves the chip for the server to keep', async () => {
+  clipboard().mockRejectedValue(new Error('denied'));
+  withPlugin('updated', '/reload-plugins --force');
+  render(UpdateChip);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
+  await nextTick();
+
+  expect(post).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Reload Claude skill · Copy' })).toBeTruthy();
+});
+
+test('a newer monitor version wins over the plugin chip, and no plugin result shows nothing', async () => {
+  snapshot.update = offer({ plugin: { state: 'manual', copy: 'claude plugin update whose-turn@bladeforge' } });
+  const { container } = render(UpdateChip);
+
+  expect(await screen.findByRole('button', { name: '1.0.0-alpha.3 is out · Update' })).toBeTruthy();
+  expect(container.textContent).not.toContain('Claude skill');
+});

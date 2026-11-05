@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The self-update chip: the offer, a spinner while the server installs and restarts, and a reload prompt once it runs the new version (RMA-231, RMA-255).
+// The self-update chip: the offer, a spinner while the server installs and restarts, and a reload prompt once it runs the new version (RMA-231, RMA-255), and the Claude plugin's copy chip (RMA-341).
 import { M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -12,15 +12,18 @@ import type { ApiError, UpdateStatus } from '@/lib/types.ts';
 
 const UPDATED_SHOWN_MS = 15000;
 const SLOW_RESTART_MS = 90000;
+const COPIED_SHOWN_MS = 2500;
 const target = ref('');
 let pageVersion = '';
 const ready = ref('');
 const slow = ref(false);
 const updatedTo = refAutoReset('', UPDATED_SHOWN_MS);
+const copied = refAutoReset(false, COPIED_SHOWN_MS);
 const update = computed(() => snapshot.update);
 const restarting = computed(
   () => update.value.state === 'restarting' || (Boolean(target.value) && !ui.live),
 );
+const pluginReloads = computed(() => update.value.plugin?.state === 'updated');
 const working = computed(() => !ready.value && (update.value.state === 'installing' || restarting.value || Boolean(target.value)));
 const face = computed(() => {
   if (updatedTo.value) {
@@ -34,6 +37,12 @@ const face = computed(() => {
   }
   if (update.value.available) {
     return update.value.state === 'failed' ? 'failed' : 'out';
+  }
+  if (copied.value) {
+    return 'copied';
+  }
+  if (update.value.plugin) {
+    return 'plugin';
   }
   return '';
 });
@@ -80,6 +89,20 @@ const onUpdate = () => {
     snapshot.update = (outcome as { update: UpdateStatus }).update;
   };
   void post<{ update: UpdateStatus; error?: ApiError }>('/api/update').then(settle, settle);
+};
+
+const onCopyPlugin = async () => {
+  try {
+    await navigator.clipboard.writeText(update.value.plugin?.copy ?? '');
+  } catch (error) {
+    tellProblem(error, { refused: 'Could not copy' });
+    return;
+  }
+  copied.value = true;
+  const outcome = await post<{ update: UpdateStatus; error?: ApiError }>('/api/update/plugin-copied').catch((error: unknown) => error);
+  if (tellProblem(outcome, { refused: 'The copy was not recorded' })) {
+    snapshot.update = (outcome as { update: UpdateStatus }).update;
+  }
 };
 
 const onReload = () => {
@@ -138,6 +161,25 @@ const onReload = () => {
       @click="onUpdate"
     >
       Update failed · Retry
+    </Motion>
+    <Motion
+      v-else-if="shown === 'plugin'"
+      key="plugin"
+      v-bind="fade"
+      as="button"
+      type="button"
+      :class="['update-chip', { 'update-chip--failed': !pluginReloads }]"
+      :title="
+        pluginReloads
+          ? `Copies ${update.plugin?.copy}: paste it in your Claude session to load the updated skill`
+          : `Copies ${update.plugin?.copy}: run it in a terminal, then reload plugins in your Claude session`
+      "
+      @click="onCopyPlugin"
+    >
+      {{ pluginReloads ? 'Reload Claude skill · Copy' : 'Update Claude skill · Copy' }}
+    </Motion>
+    <Motion v-else-if="shown === 'copied'" key="copied" v-bind="fade" as="span" class="update-chip" role="status">
+      Copied
     </Motion>
     <Motion v-else-if="shown === 'out'" key="out" v-bind="fade" as="button" type="button" class="update-chip" @click="onUpdate">
       {{ update.latest }} is out · Update
