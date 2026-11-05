@@ -33,7 +33,7 @@ the chunk is in; until then they sit in their start state for a moment. RMA-314.
 
 Waiting on others puts its list and its empty text in `Swap`, one `AnimatePresence` whose children are keyed `list`
 and `empty`. When the face changes, `Swap` renders nothing at once (a swap from nothing shows the new face at once), so the old face leaves (the list fades through
-its wrapper's `island__fade` class), and puts the new face in when the presence reports `exit-complete`. In a fitted dashboard that wrapper is a flex column with `min-height: 0`, so the panel's height reaches the row scroller and the list scrolls; a plain block wrapper grew to the whole table (RMA-354).
+its wrapper's `island__fade` class), and puts the new face in when the presence reports `exit-complete`. In a fitted dashboard that wrapper is a flex column with `min-height: 0`, so the panel's height reaches the row scroller and the list scrolls; a plain block wrapper grew to the whole table (RMA-354). The rule sits in `Waiting.vue`'s scoped style, because Waiting renders the wrapper and a scoped rule in `Island.vue` never matches it.
 
 It is not `AnimatePresence mode="wait"`. That mode is Vue's out-in `Transition`, which re-renders its own instance
 when the leave ends, and `motion-v` ends an exit at once, inside the patch, while the element has no registered
