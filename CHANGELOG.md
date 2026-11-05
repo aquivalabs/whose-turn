@@ -2,7 +2,7 @@
 
 What changed for you in each version of Whose Turn. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/). The window shows this list under What's new; the ids at the end of an entry are ours and the window leaves them out.
 
-## [Unreleased]
+## [1.0.0-alpha.13] - 2026-11-05
 
 ### Fixed
 - Waiting on others scrolls again when it has more rows than fit; since 1.0.0-alpha.10 the list ran past the panel and could not be scrolled. RMA-354.
