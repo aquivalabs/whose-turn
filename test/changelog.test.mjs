@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadChangelog, parseChangelog } from '../lib/changelog.mjs';
 import { appDir, startTestApi } from './fixtures/api.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const SAMPLE = `# Changelog
 
@@ -85,11 +85,11 @@ test('the shipped CHANGELOG.md parses and the first released version has section
 });
 
 test('loadChangelog answers null when the file is missing', () => {
-  assert.equal(loadChangelog(mkdtempSync(join(tmpdir(), 'wt-changelog-')), '1.0.0'), null);
+  assert.equal(loadChangelog(scratchDir('wt-changelog-'), '1.0.0'), null);
 });
 
 test('GET /api/changelog returns the current version and the released versions', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'wt-changelog-'));
+  const dir = scratchDir('wt-changelog-');
   writeFileSync(join(dir, 'CHANGELOG.md'), SAMPLE);
   const { server, get } = await startTestApi({ changelog: loadChangelog(dir, '1.2.0') });
   try {
@@ -124,7 +124,7 @@ test('an entry drops the tracker ids at its end or in brackets, and keeps ids in
 });
 
 test('the API reply leaves out Unreleased: a user only reads versions that shipped', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'wt-changelog-'));
+  const dir = scratchDir('wt-changelog-');
   writeFileSync(join(dir, 'CHANGELOG.md'), SAMPLE);
   assert.deepEqual(loadChangelog(dir, '1.2.0').versions.map((entry) => entry.version), ['1.2.0', '1.1.0', '1.0.0']);
 });

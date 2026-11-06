@@ -1,14 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { openInbox, MARKER } from '../lib/inbox.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const give = (inbox, ref, snapshot = {}) => inbox.add({ ws: 'w', ws_name: 'W', kind: 'row', ref, snapshot });
 
 test('each consumer sees an item once; the same item given twice is kept once; the marker file follows the queue', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const inbox = openInbox(dir);
   give(inbox, 'PROJ-1', { next: 'old' });
   give(inbox, 'PROJ-1', { next: 'new' });

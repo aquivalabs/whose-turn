@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, statSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, statSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { createSecrets } from '../lib/secrets.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const recorder = (reply) => {
   const calls = [];
@@ -15,7 +15,7 @@ const recorder = (reply) => {
 };
 
 const scratch = (t) => {
-  const dir = mkdtempSync(join(tmpdir(), 'wt-secrets-'));
+  const dir = scratchDir('wt-secrets-');
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 };

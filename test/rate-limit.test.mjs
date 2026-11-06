@@ -1,13 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { RateLimited } from '../lib/http-client.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { nextDelay } from '../lib/backoff.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 import * as github from '../connectors/github.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const limited = () => {
   throw new RateLimited('429 from api.example');
@@ -22,7 +20,7 @@ test('a workspace whose source answers 429 reports rateLimited', async () => {
   process.env.GH_TOKEN = 'stub';
   const built = createWorkspace(
     { id: 'w', name: 'Work', key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'github', id: 'gh', repo: 'acme/app', me: 'pat' }] },
-    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: { fetchJson: limited }, notify: () => {} },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, http: { fetchJson: limited }, notify: () => {} },
   );
   const outcome = await built.poll();
   assert.equal(outcome.rateLimited, true);

@@ -1,12 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadConfig, saveWorkspaces, saveNotifications, saveSettings, settingsViolations, normaliseWorkspaces } from '../lib/config.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 test('saving the workspace list keeps the other top-level keys and drops the flat legacy keys', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   writeFileSync(file, JSON.stringify({ port: 9100, github: { repo: 'you/old' }, rules: { approved_next: 'Old' } }));
   saveWorkspaces(file, [{ id: 'home', name: 'Home', connectors: [{ type: 'github', repo: 'you/app' }] }]);
@@ -20,7 +20,7 @@ test('saving the workspace list keeps the other top-level keys and drops the fla
 });
 
 test('saving into a missing file creates it', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'nested', 'config.json');
   saveWorkspaces(file, [{ id: 'home' }]);
   assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { workspaces: [{ id: 'home' }] });
@@ -28,7 +28,7 @@ test('saving into a missing file creates it', () => {
 });
 
 test('saving keeps the previous file as config.json.bak', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   const before = JSON.stringify({ port: 9100, workspaces: [{ id: 'old' }] });
   writeFileSync(file, before);
@@ -45,7 +45,7 @@ test('validation reports duplicate ids and a bad theme without writing anything'
 });
 
 test('the retired feedback tracker keys are dropped on load and on save, the composer stays', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   const composer = { command: 'codex', args: ['exec'] };
   writeFileSync(file, JSON.stringify({ workspaces: [{ id: 'home' }], feedback: { workspace: 'x', team: 'T', project: 'p', token_service: 's', assign: false, composer } }));
@@ -59,7 +59,7 @@ test('the retired feedback tracker keys are dropped on load and on save, the com
 });
 
 test('an unknown feedback key survives load and save', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   writeFileSync(file, JSON.stringify({ workspaces: [{ id: 'home' }], feedback: { team: 'T', future_key: 1 } }));
   assert.deepEqual(loadConfig({ WHOSE_TURN_CONFIG: file, WHOSE_TURN_DATA: dir }).feedback, { future_key: 1 });
@@ -68,7 +68,7 @@ test('an unknown feedback key survives load and save', () => {
 });
 
 test('saveNotifications writes the setting and keeps the other keys; loadConfig reads it back', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   saveWorkspaces(file, [{ id: 'w' }]);
   saveNotifications(file, { desktop: false });
@@ -79,7 +79,7 @@ test('saveNotifications writes the setting and keeps the other keys; loadConfig 
 });
 
 test('saveNotifications starts from an empty config when the file is missing or unparseable', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const missing = join(dir, 'missing', 'config.json');
   saveNotifications(missing, { desktop: true });
   assert.deepEqual(JSON.parse(readFileSync(missing, 'utf8')), { notifications: { desktop: true } });
@@ -104,7 +104,7 @@ test('theme.backdrop that is not a boolean is reported and the backdrop stays on
 });
 
 test('saving settings writes the four global keys and keeps everything else', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   writeFileSync(file, JSON.stringify({ port: 9100, workspaces: [{ id: 'home' }] }));
   saveSettings(file, { poll_seconds: 30, history_days: 7, stale_minutes: 20, failing_polls: 5 });
@@ -117,7 +117,7 @@ test('saving settings writes the four global keys and keeps everything else', ()
 });
 
 test('loading a config without the global keys reports their defaults', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   assert.deepEqual(loadConfig({ WHOSE_TURN_DATA: dir }).settings, { poll_seconds: 60, history_days: 14, stale_minutes: 15, failing_polls: 3 });
 });
 
@@ -129,7 +129,7 @@ test('settings violations name each bad key and refuse unknown ones', () => {
 });
 
 test('a hand-edited file with settings out of range falls back to the defaults and reports each one', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   writeFileSync(join(dir, 'config.json'), JSON.stringify({ workspaces: [{ id: 'home' }], poll_seconds: 5, history_days: 1.5, stale_minutes: 99999, failing_polls: 'x' }));
   const loaded = loadConfig({ WHOSE_TURN_DATA: dir });
   assert.deepEqual(loaded.settings, { poll_seconds: 60, history_days: 14, stale_minutes: 15, failing_polls: 3 });
@@ -141,7 +141,7 @@ test('a hand-edited file with settings out of range falls back to the defaults a
 
 test('the file and the API judge a setting by the same rule', () => {
   for (const [key, value] of [['poll_seconds', 14], ['poll_seconds', 3601], ['history_days', 2.5], ['failing_polls', 0], ['stale_minutes', 1440]]) {
-    const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+    const dir = scratchDir('whose-turn-');
     writeFileSync(join(dir, 'config.json'), JSON.stringify({ workspaces: [{ id: 'home' }], [key]: value }));
     const fromFile = loadConfig({ WHOSE_TURN_DATA: dir }).problems.some((line) => line.startsWith(`${key} must`));
     assert.equal(fromFile, settingsViolations({ [key]: value }).length > 0, `${key}=${value}`);

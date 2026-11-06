@@ -1,12 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { paletteFrom, contrastRatio, derivedSeed, derivedSeeds } from '../lib/palette.mjs';
 import { loadConfig, DEFAULT_RULES } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import './fixtures/demo-connector.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const STYLESHEET = readFileSync(new URL('../web/src/styles/tokens.css', import.meta.url), 'utf8');
 const KEPT_FROM_STYLESHEET = /warn|font|-r-|^--glass-/;
@@ -100,7 +100,7 @@ test('derived seeds of one list keep clear of each other and of the configured s
 test('a workspace built without a theme still carries a scheme and names its seed; a configured seed wins', () => {
   const build = (definition) => createWorkspace(
     { key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'demo', scenario: 'northwind' }], ...definition },
-    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: {}, notify: () => {} },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, http: {}, notify: () => {} },
   ).describe();
   const bare = build({ id: 'bare', name: 'Bare' });
   assert.equal(bare.theme_seed, derivedSeed('bare'));
@@ -116,7 +116,7 @@ test('the same seed gives the same scheme, another seed another one', () => {
 });
 
 test('the config loader keeps a valid theme and drops an invalid seed or accent', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   writeFileSync(join(dir, 'config.json'), JSON.stringify({ workspaces: [
     { id: 'valid', theme: { seed: '#3D7A5C', accent: 'orange' } },
     { id: 'invalid', theme: { seed: 'blue', accent: '#c27a2c' } },

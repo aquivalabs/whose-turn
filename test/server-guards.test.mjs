@@ -1,13 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { DEFAULT_RULES, GLOBAL_SETTINGS, settingsViolations } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { CONNECTORS, secretsRequired } from '../connectors/index.mjs';
 import { MAX_BODY_CHARS } from '../lib/feedback.mjs';
 import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const HOUR = 3600 * 1000;
 const script = { activity: [] };
@@ -21,7 +19,7 @@ const event = (id, at) => ({ at: new Date(at).toISOString(), pr: `o/r#${id}`, ke
 const openWorkspace = async () => {
   const workspace = createWorkspace(
     { id: 'guard', name: 'Guard', key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ id: 'guarded', type: 'guarded' }] },
-    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: {}, notify: () => {} },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, http: {}, notify: () => {} },
   );
   await workspace.poll();
   return workspace;

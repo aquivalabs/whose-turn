@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DEFAULT_RULES, loadConfig, saveWorkspaces, normaliseWorkspaces } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
@@ -9,6 +8,7 @@ import { createRegistry } from '../lib/registry.mjs';
 import { isDue, PARKED_EVERY_MS } from '../lib/backoff.mjs';
 import { CONNECTORS } from '../connectors/index.mjs';
 import { startTestApi } from './fixtures/api.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const ME = 'Alex Doe';
 const script = { tickets: [], polls: 0 };
@@ -36,7 +36,7 @@ const open = async (hidden, tickets = [ticket('PROJ-1')]) => {
   const mode = { hidden: hidden || '' };
   const workspace = createWorkspace(
     { id: 'quiet', name: 'Quiet', key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ id: 'parkable', type: 'parkable' }], ...(hidden ? { hidden } : {}) },
-    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: {}, notify: (title) => notes.push(title), hidden: () => mode.hidden, unpark: async (id) => { unparked.push(id); mode.hidden = ''; } },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, http: {}, notify: (title) => notes.push(title), hidden: () => mode.hidden, unpark: async (id) => { unparked.push(id); mode.hidden = ''; } },
   );
   await workspace.poll();
   return { workspace, unparked, notes };
@@ -53,7 +53,7 @@ test('hidden is validated: only parked or paused, and not every workspace at onc
 });
 
 test('hidden survives a save and a load of the config file', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   saveWorkspaces(file, [{ id: 'a', hidden: 'paused' }, { id: 'b' }]);
   assert.equal(loadConfig({ WHOSE_TURN_DATA: dir }).workspaces[0].hidden, 'paused');
@@ -79,7 +79,7 @@ test('a paused workspace makes no request at all', async () => {
   script.polls = 0;
   const workspace = createWorkspace(
     { id: 'still', name: 'Still', key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ id: 'parkable', type: 'parkable' }], hidden: 'paused' },
-    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: {}, notify: () => {} },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, http: {}, notify: () => {} },
   );
   await workspace.pollIfDue();
   assert.equal(script.polls, 0);
@@ -116,7 +116,7 @@ test('a paused workspace never comes back by itself, even when polled by hand', 
 });
 
 test('a parked workspace is due 15 minutes after its stored check, and at once without one or with an older one', async () => {
-  const dataDir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dataDir = scratchDir('whose-turn-');
   const definition = { id: 'quiet', name: 'Quiet', key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ id: 'parkable', type: 'parkable' }], hidden: 'parked' };
   const rig = () => createWorkspace(definition, { dataDir, historyDays: 14, http: {}, notify: () => {} });
   const stored = (minutesAgo) => writeFileSync(join(dataDir, 'workspaces', 'quiet', 'state.json'), JSON.stringify({ polled_at: new Date(Date.now() - minutesAgo * 60000).toISOString() }));
@@ -135,7 +135,7 @@ test('a parked workspace is due 15 minutes after its stored check, and at once w
 });
 
 test('the registry unparks through the config and keeps the workspace object', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   writeFileSync(file, JSON.stringify({ workspaces: [{ id: 'a', hidden: 'parked' }, { id: 'b' }] }));
   const registry = createRegistry({
@@ -155,7 +155,7 @@ test('the registry unparks through the config and keeps the workspace object', a
 });
 
 const hiddenApi = async (initial) => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   const file = join(dir, 'config.json');
   writeFileSync(file, JSON.stringify({ workspaces: initial }));
   const registry = createRegistry({

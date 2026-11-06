@@ -1,11 +1,11 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { clientOf, createFeedback, MAX_BODY_CHARS, mayReceiveAdminToken, openReports, RELAY_URL } from '../lib/feedback.mjs';
 import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
 import { RateLimited } from '../lib/http-client.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const RELAY = 'https://relay.invalid/';
 
@@ -22,7 +22,7 @@ const stub = ({ issues = [] } = {}) => {
 };
 const none = async () => false;
 const failing = (error) => ({ fetchJson: async () => { throw error; } });
-const reportsDir = () => mkdtempSync(join(tmpdir(), 'wt-reports-'));
+const reportsDir = () => scratchDir('wt-reports-');
 const relayIssue = (extra = {}) => ({ identifier: 'RMA-500', title: 'Chevron wraps on narrow feed', url: 'u', outcome: 'open', updatedAt: '2026-11-02T12:00:00.000Z', answers: [], ...extra });
 const open = (dir, { http = stub().http } = {}) => openReports(dir, { http, relayUrl: RELAY });
 const filed = (dir) => open(dir).add({ id: 'RMA-500', title: 'The chevron wraps', kind: 'bug', filed_at: '2026-11-02T10:00:00.000Z' });

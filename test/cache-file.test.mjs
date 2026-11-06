@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, chmodSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync, readFileSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { openStore } from '../lib/store.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
-const scratch = () => mkdtempSync(join(tmpdir(), 'wt-cache-'));
+const scratch = () => scratchDir('wt-cache-');
 const cachePath = (dir) => join(dir, 'workspaces', 'w', 'cache.json');
 const data = { prs: new Map([[7, { updated_at: 'u1', row: { pr: 7, state: 'OPEN' }, sha: 'abc', activity: [{ at: 'a' }] }]]), asks: new Map([['n1', { updated_at: 'u2', row: null }]]) };
 const secret = { token: 'ghp_secret', tokenAt: 1, me: 'alex', last: { prs: [] } };

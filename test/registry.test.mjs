@@ -1,10 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRegistry } from '../lib/registry.mjs';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { loadConfig, saveNotifications, saveWorkspaces } from '../lib/config.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const fakeWorkspace = (definition) => {
   const listeners = [];
@@ -85,7 +83,7 @@ test('a workspace whose build throws at load is dropped with a problem line and 
 });
 
 test('the real notifications save reloads the registry, so a toggle applies live without a restart', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'wt-registry-'));
+  const dir = scratchDir('wt-registry-');
   const env = { WHOSE_TURN_DATA: dir };
   const configFile = loadConfig(env).configFile;
   const registry = createRegistry({

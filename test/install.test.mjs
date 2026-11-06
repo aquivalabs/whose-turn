@@ -1,15 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, existsSync, rmSync, copyFileSync, realpathSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync, readFileSync, chmodSync, existsSync, rmSync, copyFileSync, realpathSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const ROOT = resolve(import.meta.dirname, '..');
 
 // The script runs from a copy laid out like the installed package, in a folder whose path has a space.
 const harness = (kernel, { built = true } = {}) => {
-  const home = realpathSync(mkdtempSync(join(tmpdir(), 'wt-install-')));
+  const home = realpathSync(scratchDir('wt-install-'));
   const bin = join(home, 'stub-bin');
   const log = join(home, 'calls.log');
   const root = join(home, 'plugin data', 'node_modules', 'whose-turn');

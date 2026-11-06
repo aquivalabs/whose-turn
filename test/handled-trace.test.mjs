@@ -1,13 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { CONNECTORS } from '../connectors/index.mjs';
 import { feedRows } from '../lib/rules.mjs';
 import { passedRows, traceOf } from '../lib/trace.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const ME = 'Alex Doe';
 const script = { tickets: [], prs: [] };
@@ -29,7 +27,7 @@ const open = async () => {
   script.prs = [];
   const workspace = createWorkspace(
     { id: 'trace', name: 'Trace', key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ id: 'scripted', type: 'scripted' }] },
-    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: {}, notify: () => {} },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, http: {}, notify: () => {} },
   );
   await workspace.poll();
   return workspace;

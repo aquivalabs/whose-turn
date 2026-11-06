@@ -1,8 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import {
   configSanity,
@@ -16,6 +15,7 @@ import {
   structure,
   surfaceRules,
 } from '../scripts/docs-check.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const SCRIPT = join(import.meta.dirname, '..', 'scripts', 'docs-check.mjs');
 const README = '# Section\n\n## Boundary\n\n## Shape\n\n## Update trigger\n\n## Exclusions\n\n## Acceptance criteria\n';
@@ -32,7 +32,7 @@ const baseConfig = () => ({
 });
 
 const makeRepo = (config = baseConfig(), files = {}) => {
-  const root = mkdtempSync(join(tmpdir(), 'wt-docs-'));
+  const root = scratchDir('wt-docs-');
   const all = {
     '.claude/docs.config.json': JSON.stringify(config),
     '.claude/docs.config.schema.json': JSON.stringify({ version: '1' }),

@@ -1,12 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadConfig, resolvePort, DEFAULT_RULES } from '../lib/config.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const withConfig = (value) => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   if (value !== null) {
     writeFileSync(join(dir, 'config.json'), typeof value === 'string' ? value : JSON.stringify(value));
   }
@@ -52,7 +53,7 @@ test('a connector list may hold two entries of one type when each has its own id
 });
 
 test('the port comes from the environment before the file', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+  const dir = scratchDir('whose-turn-');
   writeFileSync(join(dir, 'config.json'), JSON.stringify({ port: 9000 }));
   assert.equal(loadConfig({ WHOSE_TURN_DATA: dir, WHOSE_TURN_PORT: '9001' }).port, 9001);
 });
@@ -78,17 +79,17 @@ test('a workspace id must be lowercase letters, digits and hyphens; only a missi
   assert.equal(missing.workspaces[0].id, 'ws1');
 });
 
-const scratchDir = (config) => {
-  const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+const configDir = (config) => {
+  const dir = scratchDir('whose-turn-');
   writeFileSync(join(dir, 'config.json'), JSON.stringify(config));
   return dir;
 };
 
 test('resolvePort takes the env first, then the config file, then 8765', () => {
-  const dir = scratchDir({ port: 8828 });
+  const dir = configDir({ port: 8828 });
   assert.equal(resolvePort(dir, { WHOSE_TURN_PORT: '8830' }), 8830);
   assert.equal(resolvePort(dir, {}), 8828);
-  assert.equal(resolvePort(scratchDir({}), {}), 8765);
+  assert.equal(resolvePort(configDir({}), {}), 8765);
   assert.equal(resolvePort(join(dir, 'missing'), {}), 8765);
 });
 

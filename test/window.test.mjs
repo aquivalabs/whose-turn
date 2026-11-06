@@ -1,17 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, chmodSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync, chmodSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { request as httpRequest } from 'node:http';
 import { createServer } from 'node:net';
 import { appDir, startTestApi } from './fixtures/api.mjs';
 import { resolveMode, tabUrl } from '../web/src/lib/window-mode.ts';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 test('the window size is stored per data dir, read back, and bad values are refused', async () => {
   // Setup
-  const dataDir = mkdtempSync(join(tmpdir(), 'wt-window-'));
+  const dataDir = scratchDir('wt-window-');
   const opened = [];
   const { server, port, url, post } = await startTestApi({ reports: {}, dataDir, opener: (call) => opened.push(call) });
   try {
@@ -55,7 +55,7 @@ const freePort = await new Promise((resolve) => {
   });
 });
 
-const stubDir = mkdtempSync(join(tmpdir(), 'wt-stubs-'));
+const stubDir = scratchDir('wt-stubs-');
 const stub = (name, body) => {
   writeFileSync(join(stubDir, name), `#!/bin/bash\n${body}\n`);
   chmodSync(join(stubDir, name), 0o755);
@@ -99,7 +99,7 @@ test('open.sh on Linux uses the first Chrome or Edge on PATH, else xdg-open', as
 test('a second /api/open of the same mode within five seconds is refused and opens one window', async () => {
   // Setup
   const opened = [];
-  const { server, port: at, post } = await startTestApi({ reports: {}, dataDir: mkdtempSync(join(tmpdir(), 'wt-open-')), opener: (call) => opened.push(call) });
+  const { server, port: at, post } = await startTestApi({ reports: {}, dataDir: scratchDir('wt-open-'), opener: (call) => opened.push(call) });
   const open = (mode) => post('/api/open', { mode });
   try {
     // Exercise

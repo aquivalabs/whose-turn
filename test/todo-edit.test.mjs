@@ -1,16 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import './fixtures/demo-connector.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const workspaceWith = (text) => {
   const workspace = createWorkspace(
     { id: 'edit', name: 'Edit', key_pattern: 'PROJ-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'demo', scenario: 'northwind' }] },
-    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, http: {}, notify: () => {} },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, http: {}, notify: () => {} },
   );
   workspace.addTodo({ text });
   return { workspace, todo: workspace.store.todos[0] };

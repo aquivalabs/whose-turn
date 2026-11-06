@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, restartServer, runsInstalled, updatePlugin } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
-const scratch = () => mkdtempSync(join(tmpdir(), 'wt-update-'));
+const scratch = () => scratchDir('wt-update-');
 
 /** A plugin step that touches nothing, so no test can reach the real Claude CLI. */
 const idlePlugin = async () => 'manual';
