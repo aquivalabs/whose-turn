@@ -333,6 +333,10 @@ export const pairedDocs = (config, repoRoot, changedPaths) => {
   return findings;
 };
 
+/** Repository paths a mechanism page names in the first cell of a table row, such as `| \`lib/rules.mjs\` | Role |`. */
+const namedFiles = (markdown) =>
+  [...markdown.matchAll(/^\|\s*`([^`\s<>]+\/[^`\s<>]+\.[a-z]+)`\s*\|/gm)].map(([, path]) => path);
+
 export const declaredDocsResolve = (config, repoRoot) => {
   const findings = [];
   for (const mechanism of config.mechanisms || []) {
@@ -346,6 +350,13 @@ export const declaredDocsResolve = (config, repoRoot) => {
           `mechanism ${mechanismId} declares a doc that does not exist: ${mechanism.doc ?? 'None'}`,
         ),
       );
+      continue;
+    }
+    for (const named of namedFiles(readFileSync(docPath, 'utf8'))) {
+      const namedPath = containedPath(repoRoot, named);
+      if (namedPath === null || !isFile(namedPath)) {
+        findings.push(finding('declared-docs-resolve', mechanism.doc, `mechanism ${mechanismId} names a file that does not exist: ${named}`));
+      }
     }
   }
   return findings;

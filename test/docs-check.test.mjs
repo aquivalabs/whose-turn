@@ -142,6 +142,18 @@ test('declared-docs-resolve flags a doc that is missing or escapes the repositor
   assert.deepEqual(declaredDocsResolve(baseConfig(), root), []);
 });
 
+test('declared-docs-resolve flags a file a mechanism page names in its table that does not exist (RMA-366)', () => {
+  // Setup
+  const root = makeRepo(baseConfig(), {
+    'lib/rules.mjs': '',
+    'docs/mechanisms/rules.md': '# Rules\n\n| File | Role |\n|---|---|\n| `lib/rules.mjs` | rows |\n| `web/src/Gone.vue` | gone |\n',
+  });
+  // Exercise
+  const found = messages(declaredDocsResolve(baseConfig(), root));
+  // Verify
+  assert.deepEqual(found, ['declared-docs-resolve: mechanism rules names a file that does not exist: web/src/Gone.vue']);
+});
+
 test('section-readmes flags a missing README and a missing heading', () => {
   const root = makeRepo(baseConfig(), { 'docs/mechanisms/README.md': '# S\n\n## Boundary\n', 'docs/bare/x.md': '# X\n' });
   assert.ok(messages(sectionReadmes(baseConfig(), root)).includes('section-readmes: README.md missing heading: Shape'));

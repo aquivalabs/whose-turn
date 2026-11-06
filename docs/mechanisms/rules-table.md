@@ -33,7 +33,7 @@ with the text `now <status>, with <who>`.
 | `lib/rules.mjs` | `compileRules` expands the workspace table and the status-group order once per workspace; `ticketRow` and `runRow` match the table and apply `then` |
 | `lib/config.mjs` | `normaliseRules` validates `rules.table` on load and on `POST /api/config` |
 | `lib/api.mjs` | `GET /api/config` returns `facts` (the dictionary) and `tables` (the effective rows per workspace) |
-| `web/src/features/settings/SettingsSheet.vue` | Shows the effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into a sentence, reading fact names and flag sentences from the `facts` the server sends ("When the ticket is in review and the PR is open and the PR is approved: your move, \"Merge it\"") |
+| `web/src/features/settings/WorkspaceSettingsSheet.vue` | Shows the workspace's effective rows read-only; `ruleText` in `web/src/lib/settings.ts` turns a row into a sentence, reading fact names and flag sentences from the `facts` the server sends ("When the ticket is in review and the PR is open and the PR is approved: your move, \"Merge it\"") |
 
 ## How it behaves
 
@@ -171,11 +171,11 @@ is reported in `problems` and the workspace runs on the default table.
 A valid table can still be a mistake, so `tableWarnings` adds two warnings that never refuse a write: the
 table hides every ticket (its first catch-all row, an empty `when`, is `hidden` and nothing before it
 shows), or a catch-all row precedes other rows, which then never apply. On load they are appended to
-`problems`; `GET /api/config` returns them per workspace as `table_warnings`, and the settings sheet shows
+`problems`; `GET /api/config` returns them per workspace as `table_warnings`, and the workspace settings sheet shows
 them above the rows.
 
 Claude edits the table through `POST /api/config` and reads the dictionary and the effective rows from
-`GET /api/config` (`facts`, `tables`). The settings sheet only shows the rows.
+`GET /api/config` (`facts`, `tables`). The workspace settings sheet only shows the rows.
 
 ### Custom rules module (not implemented)
 
