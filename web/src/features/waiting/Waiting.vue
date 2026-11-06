@@ -14,6 +14,10 @@ import ExtLink from '@/ui/ExtLink.vue';
 import AiButton from '@/ui/AiButton.vue';
 import RowScroll from '@/ui/RowScroll.vue';
 import Swap from '@/ui/Swap.vue';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
+const MARK_APPROVED = '✓';
+const MARK_CHANGES = '✗';
 const rows = computed(() => {
   void now.value;
   return waitingRows(snapshot.turn).map((row) => ({
@@ -26,35 +30,35 @@ const showPr = computed(() => hasPrColumn(rows.value.map(({ row }) => row)));
 const showReason = computed(() => rows.value.some(({ row, own }) => row.hold_url || (!own && row.next)));
 const note = computed(() =>
   rows.value.length && rows.value.every(({ own }) => own)
-    ? 'Your backlog'
-    : 'Someone else holds the next step',
+    ? t('waiting.note.backlog')
+    : t('waiting.note.others'),
 );
 </script>
 <template>
   <Island
     id="waiting"
     :size-key="`${snapshot.workspace.id}:waiting`"
-    title="Waiting on others"
+    :title="t('waiting.title')"
     :note="note"
-    tip="Tickets you touched in the last 30 days where someone else holds the next step: a reviewer, QA, or a new owner."
+    :tip="t('waiting.tip')"
   >
     <template #head
       ><span v-if="rows.length" class="count">{{ rows.length }}</span></template
     >
     <Swap v-slot="{ face }" :face="rows.length ? 'list' : 'empty'">
-    <Motion v-if="face === 'empty'" key="empty" v-bind="fade" as="p" class="empty">Nothing is waiting on someone else.</Motion>
+    <Motion v-if="face === 'empty'" key="empty" v-bind="fade" as="p" class="empty">{{ t('waiting.empty') }}</Motion>
     <Motion v-else-if="face === 'list'" key="list" v-bind="fade" class="island__fade">
     <RowScroll>
       <table class="table waiting__table">
         <thead>
           <tr>
-            <th class="waiting__col waiting__col--ticket">Ticket</th>
-            <th class="waiting__col waiting__col--status">Status</th>
-            <th class="waiting__col waiting__col--with">With</th>
-            <th v-if="showReason" class="hide-narrow">Waiting for</th>
-            <th v-if="showPr" class="waiting__col waiting__col--pr">PR</th>
+            <th class="waiting__col waiting__col--ticket">{{ t('waiting.col.ticket') }}</th>
+            <th class="waiting__col waiting__col--status">{{ t('waiting.col.status') }}</th>
+            <th class="waiting__col waiting__col--with">{{ t('waiting.col.with') }}</th>
+            <th v-if="showReason" class="hide-narrow">{{ t('waiting.col.waitingFor') }}</th>
+            <th v-if="showPr" class="waiting__col waiting__col--pr">{{ t('waiting.col.pr') }}</th>
             <th class="table__actions-col waiting__col waiting__col--actions">
-              <span class="visually-hidden">Copy for AI</span>
+              <span class="visually-hidden">{{ t('waiting.col.copyForAi') }}</span>
             </th>
           </tr>
         </thead>
@@ -75,20 +79,20 @@ const note = computed(() =>
                   class="waiting__reviewer"
                   ><template v-if="reviewer.state"
                     ><span class="waiting__mark" aria-hidden="true">{{
-                      reviewer.state === 'approved' ? '✓' : '✗'
+                      reviewer.state === 'approved' ? MARK_APPROVED : MARK_CHANGES
                     }}</span
                     ><span class="visually-hidden">{{
-                      reviewer.state === 'approved' ? ' approved by ' : ' changes requested by '
+                      reviewer.state === 'approved' ? t('waiting.row.approvedBy') : t('waiting.row.changesBy')
                     }}</span> </template
                   >{{ reviewer.name }}{{ ' ' }}</span
                 >
               </template>
-              <template v-else>{{ own ? 'you' : row.whose }}</template>
+              <template v-else>{{ own ? t('waiting.row.you') : row.whose }}</template>
               <span
                 v-if="since"
                 class="age"
                 :class="{ 'age--old': since.hours >= 72 }"
-                :data-tip="row.status + ' since ' + when(row.status_since)"
+                :data-tip="t('waiting.row.since', { status: row.status, when: when(row.status_since) })"
                 >{{ since.text }}</span
               >
             </td>
@@ -97,10 +101,10 @@ const note = computed(() =>
                 ><ExtLink :text="row.next" :url="row.hold_url" class="waiting__reason" /><button
                   type="button"
                   class="hint-label"
-                  aria-label="Full reason"
+                  :aria-label="t('waiting.row.fullReason')"
                   :data-tip="row.hold_full || row.next"
                 >
-                  full
+                  {{ t('waiting.row.full') }}
                 </button></span
               >
               <template v-else-if="!own">{{ row.next }}</template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // The chrome both settings sheets wear: the dialog, the unsaved flag and Save in its head, the confirm bar and the one alert line above the form.
+import { useText } from '@/i18n/index.ts';
 import Modal from '@/ui/Modal.vue';
 import type { Ask } from './useSheetGuard.ts';
 
@@ -13,6 +14,7 @@ defineProps<{
   wide?: boolean;
 }>();
 const emit = defineEmits<{ close: []; save: []; answer: [yes: boolean] }>();
+const t = useText();
 </script>
 <template>
   <Modal
@@ -23,9 +25,9 @@ const emit = defineEmits<{ close: []; save: []; answer: [yes: boolean] }>();
     @close="emit('close')"
   >
     <template #head>
-      <span v-if="dirty" class="settings-frame__dirty">Unsaved changes</span>
+      <span v-if="dirty" class="settings-frame__dirty">{{ t('settings.frame.unsaved') }}</span>
       <button v-if="!unloaded" type="button" class="btn btn--tonal" @click="emit('save')">
-        Save
+        {{ t('settings.frame.save') }}
       </button>
     </template>
     <div v-if="ask" class="settings-frame__confirm" role="alertdialog">

@@ -16,13 +16,15 @@ import FeedItemRow from './FeedItem.vue';
 import ExtLink from '@/ui/ExtLink.vue';
 import AiButton from '@/ui/AiButton.vue';
 import Chevron from '@/ui/Chevron.vue';
+import { useText } from '@/i18n/index.ts';
 import { useFeedState } from './useFeedState.ts';
 const emit = defineEmits<{ open: [item: FeedItem] }>();
+const t = useText();
 const feedState = useFeedState();
-const VIEWS = [
-  { id: 'ticket', label: 'By ticket' },
-  { id: 'flat', label: 'Flat' },
-];
+const views = computed(() => [
+  { id: 'ticket', label: t('feed.views.ticket') },
+  { id: 'flat', label: t('feed.views.flat') },
+]);
 const connectors = computed(() => snapshot.workspace.connectors || []);
 const sources = computed(() =>
   Object.fromEntries(connectors.value.map((connector) => [connector.id, connector])),
@@ -30,7 +32,7 @@ const sources = computed(() =>
 const sourceOf = (id: string): ConnectorSummary => sources.value[id] || { id, type: id, label: id };
 const filters = computed(() =>
   connectors.value.length > 1
-    ? [{ id: 'all', label: 'All' }].concat(
+    ? [{ id: 'all', label: t('feed.filters.all') }].concat(
         connectors.value.map((connector) => ({ id: connector.id, label: connector.label })),
       )
     : [],
@@ -125,16 +127,16 @@ const restoreMarks = async () => {
   <Island
     id="feed"
     :size-key="`${snapshot.workspace.id}:feed`"
-    title="What changed"
-    note="Newest first, every source"
-    tip="Newest first: comments, reviews, merges and failed checks on your PRs, and ticket changes. Each item opens where it happened."
+    :title="t('feed.title')"
+    :note="t('feed.note')"
+    :tip="t('feed.tip')"
     class="feed"
     column
     resize="width"
   >
     <template #head
       ><AnimatePresence
-        ><Motion v-if="newCount" v-bind="fade" as="span" class="feed__new-count">{{ newCount }} new</Motion></AnimatePresence
+        ><Motion v-if="newCount" v-bind="fade" as="span" class="feed__new-count">{{ t('feed.newCount', { count: newCount }) }}</Motion></AnimatePresence
       ></template
     >
     <div class="feed__bar">
@@ -142,9 +144,9 @@ const restoreMarks = async () => {
         v-if="filters.length"
         v-model="feedFilter"
         :options="filters"
-        label="Feed source"
+        :label="t('feed.filters.sourceLabel')"
       />
-      <Segmented v-model="feedState.view" :options="VIEWS" label="Feed view" />
+      <Segmented v-model="feedState.view" :options="views" :label="t('feed.filters.viewLabel')" />
     </div>
     <AnimatePresence>
       <Motion v-if="problem" v-bind="fade" as="p" class="alert alert--inline" role="alert">{{
@@ -153,8 +155,8 @@ const restoreMarks = async () => {
     </AnimatePresence>
     <AnimatePresence>
       <Motion v-if="cleared" v-bind="fade" as="p" class="feed__undo" role="status">
-        Marked all read.
-        <button type="button" class="feed__undo-btn" @click="restoreMarks">Undo</button>
+        {{ t('feed.undo.markedAll') }}
+        <button type="button" class="feed__undo-btn" @click="restoreMarks">{{ t('feed.undo.undo') }}</button>
       </Motion>
     </AnimatePresence>
     <div class="feed__search">
@@ -162,17 +164,17 @@ const restoreMarks = async () => {
         v-model.trim="typed"
         class="input feed__search-input"
         type="search"
-        placeholder="Search the feed: key, author, words…"
-        aria-label="Search the feed"
+        :placeholder="t('feed.search.placeholder')"
+        :aria-label="t('feed.search.label')"
         autocomplete="off"
       />
       <span class="feed__search-count">{{
-        feedState.query ? rows.length + ' of ' + bySource.length : ''
+        feedState.query ? t('feed.search.count', { shown: rows.length, total: bySource.length }) : ''
       }}</span>
-      <button type="button" class="feed__mark-read" @click="markAll">Mark all read</button>
+      <button type="button" class="feed__mark-read" @click="markAll">{{ t('feed.search.markAll') }}</button>
     </div>
     <p v-if="!snapshot.feed.length" class="empty">
-      No changes yet. New comments, reviews and status changes show up here.
+      {{ t('feed.empty') }}
     </p>
     <ol v-else class="feed__list">
       <template v-if="feedState.view === 'ticket'">
@@ -191,10 +193,10 @@ const restoreMarks = async () => {
         >
           <div
             class="feed__group-head"
-            :title="group.move ? 'Your move on this ticket' : undefined"
+            :title="group.move ? t('feed.group.yourMove') : undefined"
             @click="toggleGroup(group)"
           >
-            <Chevron :open="group.open" :aria-label="'Fold ' + group.id" />
+            <Chevron :open="group.open" :aria-label="t('feed.group.fold', { id: group.id })" />
             <div class="feed__group-text">
               <div class="feed__group-key">
                 <ExtLink
@@ -210,7 +212,7 @@ const restoreMarks = async () => {
                 <span
                   class="feed__group-count"
                   :class="{ 'feed__group-count--new': group.unread }"
-                  >{{ group.unread ? group.unread + ' new' : group.items.length + (group.items.length === 1 ? ' event' : ' events') }}</span
+                  >{{ group.unread ? t('feed.group.unread', { count: group.unread }) : t('feed.group.events', { count: group.items.length }, group.items.length) }}</span
                 >
                 <span class="feed__group-kinds">{{ group.kinds }}</span>
                 <span class="timestamp feed__group-when">{{ group.when }}</span>

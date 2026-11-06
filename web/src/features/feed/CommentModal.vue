@@ -4,8 +4,10 @@ import { AnimatePresence } from 'motion-v';
 import { computed } from 'vue';
 import { snapshot, ui } from '@/store.ts';
 import { safeUrl } from '@/lib/api.ts';
+import { useText } from '@/i18n/index.ts';
 import Modal from '@/ui/Modal.vue';
 import MarkdownView from '@/ui/MarkdownView.vue';
+const t = useText();
 const item = computed(() => ui.modal);
 const title = computed(() =>
   item.value ? [item.value.ref, item.value.kind, item.value.who].filter(Boolean).join(' · ') : '',
@@ -15,7 +17,7 @@ const label = computed(() => {
   const connector = (snapshot.workspace.connectors || []).find(
     (entry) => entry.id === item.value?.source,
   );
-  return 'Open in ' + (connector ? connector.label : item.value?.source);
+  return t('feed.item.openIn', { source: connector ? connector.label : item.value?.source });
 });
 const close = () => {
   ui.modal = null;

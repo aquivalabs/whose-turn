@@ -6,6 +6,8 @@ import { GEAR } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
 import ExtLink from '@/ui/ExtLink.vue';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
 const { collapsed, toggle: flip } = useFold('header');
 const header = useTemplateRef<HTMLElement>('header');
 const toggle = () => glideThrough(header.value, 'height', flip);
@@ -18,17 +20,18 @@ const toggle = () => glideThrough(header.value, 'height', flip);
     :class="{ 'workspace-header--collapsed': collapsed }"
   >
     <div class="workspace-header__title">
-      <h1 class="workspace-header__name">{{ snapshot.workspace.name || 'Whose Turn' }}</h1>
+      <h1 class="workspace-header__name">{{ snapshot.workspace.name || t('header.fallbackName') }}</h1>
       <p v-if="collapsed" class="workspace-header__line workspace-header__strip">
-        Your move <b class="workspace-header__count">{{ counts.mine }}</b> · Waiting on others
-        <b class="workspace-header__count">{{ counts.others }}</b> · Failing
-        <b class="workspace-header__count">{{ counts.failing }}</b> · Done
+        {{ t('header.tiles.yourMove') }} <b class="workspace-header__count">{{ counts.mine }}</b> ·
+        {{ t('header.tiles.waitingOnOthers') }}
+        <b class="workspace-header__count">{{ counts.others }}</b> · {{ t('header.strip.failing') }}
+        <b class="workspace-header__count">{{ counts.failing }}</b> · {{ t('header.strip.done') }}
         <b class="workspace-header__count">{{ counts.done }}</b>
       </p>
       <p class="workspace-header__line workspace-header__give">
         <AiButton :query="{ ws: snapshot.workspace.id, kind: 'workspace' }" big /><span
           class="ai-hint"
-          >Copy for AI: this workspace</span
+          >{{ t('header.copyForAi') }}</span
         >
         <span class="workspace-header__links"
           ><ExtLink
@@ -44,8 +47,8 @@ const toggle = () => glideThrough(header.value, 'height', flip);
       <button
         type="button"
         class="fold-toggle workspace-header__settings"
-        aria-label="Workspace settings"
-        data-tip="Workspace settings: this workspace's name and links, its look, sources and rules"
+        :aria-label="t('header.settings')"
+        :data-tip="t('header.settingsTip')"
         @click.stop="openSettings()"
       >
         <svg viewBox="0 0 24 24" class="workspace-header__gear" aria-hidden="true">
@@ -56,8 +59,8 @@ const toggle = () => glideThrough(header.value, 'height', flip);
         type="button"
         class="fold-toggle workspace-header__fold"
         :class="{ 'fold-toggle--folded': collapsed }"
-        aria-label="Fold the header"
-        data-tip="Fold the header; it stays folded until you open it again"
+        :aria-label="t('header.fold')"
+        :data-tip="t('header.foldTip')"
         @click.stop="toggle"
       >
         ▾
@@ -68,22 +71,22 @@ const toggle = () => glideThrough(header.value, 'height', flip);
         class="workspace-header__tile"
         :class="{ 'workspace-header__tile--you': counts.mine > 0 }"
       >
-        <span class="workspace-header__tile-label">Your move</span
+        <span class="workspace-header__tile-label">{{ t('header.tiles.yourMove') }}</span
         ><strong class="workspace-header__tile-value">{{ counts.mine }}</strong>
       </div>
       <div class="workspace-header__tile">
-        <span class="workspace-header__tile-label">Waiting on others</span
+        <span class="workspace-header__tile-label">{{ t('header.tiles.waitingOnOthers') }}</span
         ><strong class="workspace-header__tile-value">{{ counts.others }}</strong>
       </div>
       <div
         class="workspace-header__tile"
         :class="{ 'workspace-header__tile--fail': counts.failing }"
       >
-        <span class="workspace-header__tile-label">Open PRs with failing checks</span
+        <span class="workspace-header__tile-label">{{ t('header.tiles.failing') }}</span
         ><strong class="workspace-header__tile-value">{{ counts.failing }}</strong>
       </div>
       <div class="workspace-header__tile">
-        <span class="workspace-header__tile-label">Done in the last 30 days</span
+        <span class="workspace-header__tile-label">{{ t('header.tiles.done') }}</span
         ><strong class="workspace-header__tile-value">{{ counts.done }}</strong>
       </div>
     </div>

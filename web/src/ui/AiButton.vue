@@ -4,14 +4,16 @@ import { computed, ref, watch } from 'vue';
 import { refAutoReset } from '@vueuse/core';
 import { handOffText } from '@/lib/api.ts';
 import { COPY, SPARKLE } from '@/lib/icons.ts';
+import { useText } from '@/i18n/index.ts';
 const props = defineProps<{ query: Record<string, string>; big?: boolean }>();
-const TIPS: Record<string, string> = {
-  '': 'Copy for AI: this with its context as text, ready to paste into Claude or any other assistant',
-  sent: 'Copied',
-  failed: 'Could not copy',
-};
+const t = useText();
+const TIPS = {
+  '': 'common.aiButton.tip',
+  sent: 'common.aiButton.copied',
+  failed: 'common.aiButton.failed',
+} as const;
 const state = refAutoReset<'' | 'sent' | 'failed'>('', 1600);
-const tip = computed(() => TIPS[state.value]);
+const tip = computed(() => t(TIPS[state.value]));
 const button = ref<(HTMLButtonElement & { _tippy?: { setContent: (text: string) => void } }) | null>(null);
 watch(tip, (text) => button.value?._tippy?.setContent(text));
 const copy = () =>
@@ -36,7 +38,7 @@ const copy = () =>
       'ai-button--sent': state === 'sent',
       'ai-button--failed': state === 'failed',
     }"
-    aria-label="Copy for AI"
+    :aria-label="t('common.aiButton.label')"
     :data-tip="tip"
     @click.stop="copy"
   >

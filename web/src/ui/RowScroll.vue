@@ -4,7 +4,9 @@ import { computed, ref } from 'vue';
 import { useElementSize, useScroll } from '@vueuse/core';
 import { hiddenBelow } from '@/lib/moves.ts';
 import { reduced } from '@/motion.ts';
+import { useText } from '@/i18n/index.ts';
 defineProps<{ floor?: boolean }>();
+const t = useText();
 const cellSlack = 13;
 const scroller = ref<HTMLElement | null>(null);
 const content = ref<HTMLElement | null>(null);
@@ -51,7 +53,7 @@ const reveal = () => {
     <div ref="content"><slot /></div>
   </div>
   <button v-if="hidden" type="button" class="row-scroll__more" @click="reveal">
-    +{{ hidden }} more
+    {{ t('common.rowScroll.more', { count: hidden }) }}
   </button>
 </template>
 <style scoped>

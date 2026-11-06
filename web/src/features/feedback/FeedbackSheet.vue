@@ -13,6 +13,7 @@ import { fold } from '@/motion.ts';
 import { ago } from '@/lib/time.ts';
 import { outcomeTone } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
+import { useText } from '@/i18n/index.ts';
 import Modal from '@/ui/Modal.vue';
 
 type ReportLine = Pick<
@@ -33,6 +34,7 @@ interface FeedbackReply {
   reports?: ReportLine[];
 }
 
+const t = useText();
 const text = ref('');
 const field = ref<HTMLTextAreaElement | null>(null);
 const sending = ref(false);
@@ -89,7 +91,7 @@ const load = () =>
       reports.value = list.reports || [];
     },
     () => {
-      problems.value = [SERVER_DOWN + '; past reports cannot be loaded.'];
+      problems.value = [t('feedback.problem.pastReports', { down: SERVER_DOWN })];
     },
   );
 const everyone = computed(() => reports.value.some((report) => report.mine !== undefined));
@@ -102,7 +104,7 @@ const send = () => {
   }
   const remark = text.value.trim();
   if (!remark) {
-    problems.value = ['Write at least one line.'];
+    problems.value = [t('feedback.problem.empty')];
     return;
   }
   sending.value = true;
@@ -125,7 +127,7 @@ const send = () => {
     })
     .catch((failure: Error) => {
       sending.value = false;
-      problems.value = [writeProblem(failure, { refused: 'Not sent', unreachable: TEXT_KEPT })];
+      problems.value = [writeProblem(failure, { refused: t('feedback.problem.notSent'), unreachable: TEXT_KEPT })];
     });
 };
 watch(
@@ -147,7 +149,7 @@ watch(
   <AnimatePresence>
     <Modal
       v-if="ui.feedback"
-      title="Report a problem or a wish"
+      :title="t('feedback.title')"
       label-id="feedback-title"
       flush
       card-class="feedback-sheet__card"
@@ -155,7 +157,7 @@ watch(
     >
       <template #head>
         <button type="button" class="btn btn--tonal" :aria-disabled="sending" @click="send">
-          {{ sending ? 'Composing…' : 'Send' }}
+          {{ sending ? t('feedback.composing') : t('feedback.send') }}
         </button>
       </template>
       <div v-if="problems.length" class="alert">{{ problems.join('  ·  ') }}</div>
@@ -165,13 +167,13 @@ watch(
           v-model="text"
           class="input feedback-sheet__text"
           rows="5"
-          placeholder="Describe the problem or the wish in your own words. Cmd+Enter sends."
+          :placeholder="t('feedback.placeholder')"
           autocomplete="off"
           @keydown.meta.enter.prevent="send"
           @keydown.ctrl.enter.prevent="send"
         ></textarea>
         <p class="feedback-sheet__note">
-          Only what you write, the monitor version, a rough description of your system and counts about the monitor's health are sent: no names, keys, titles, links or error text.
+          {{ t('feedback.note') }}
           <button
             v-if="preview"
             type="button"
@@ -179,7 +181,7 @@ watch(
             :aria-expanded="showPayload"
             @click="showPayload = !showPayload"
           >
-            {{ showPayload ? 'Hide what is sent' : 'What is sent' }}
+            {{ showPayload ? t('feedback.hidePayload') : t('feedback.showPayload') }}
           </button>
         </p>
         <AnimatePresence>
@@ -188,20 +190,20 @@ watch(
           }}</Motion>
         </AnimatePresence>
         <p v-if="done" class="empty">
-          Filed as
+          {{ t('feedback.filedAs') }}
           <a :href="reportPage(done.identifier)" target="_blank" rel="noopener">{{
             done.identifier
           }}</a>
           · {{ done.title }}
         </p>
         <div v-if="reports.length" class="feedback-sheet__reports">
-          <h4 class="sheet-form__heading">{{ everyone ? 'All reports' : 'Your reports' }}</h4>
+          <h4 class="sheet-form__heading">{{ everyone ? t('feedback.allReports') : t('feedback.yourReports') }}</h4>
           <div v-for="report in reports" :key="report.id" class="feedback-sheet__report">
             <a :href="reportPage(report.id)" target="_blank" rel="noopener">{{ report.id }}</a>
             <span class="feedback-sheet__report-title">{{ report.title }}</span>
-            <span v-if="report.mine" class="pill">yours</span>
+            <span v-if="report.mine" class="pill">{{ t('feedback.yours') }}</span>
             <span class="pill" :class="modifier('pill', outcomeTone(report.outcome))">{{
-              report.state || 'filed'
+              report.state || t('feedback.filed')
             }}</span>
             <span class="timestamp">{{ ago(report.changed_at || report.filed_at) }}</span>
           </div>

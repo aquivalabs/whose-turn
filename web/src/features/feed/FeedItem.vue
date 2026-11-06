@@ -11,6 +11,7 @@ import ExtLink from '@/ui/ExtLink.vue';
 import AiButton from '@/ui/AiButton.vue';
 import Chevron from '@/ui/Chevron.vue';
 import { modifier } from '@/lib/bem.ts';
+import { useText } from '@/i18n/index.ts';
 const props = defineProps<{
   item: FeedItem;
   source: ConnectorSummary;
@@ -19,6 +20,7 @@ const props = defineProps<{
   expanded: boolean;
 }>();
 const emit = defineEmits<{ open: [item: FeedItem]; toggle: [id: string]; seen: [id: string] }>();
+const t = useText();
 const badge = computed(() => badgeOf(props.source));
 const subject = computed(() => subjectOf(props.item));
 const line = computed(() => itemLine(props.item));
@@ -55,7 +57,7 @@ const toggle = () => {
         <Chevron
           v-if="written"
           :open="open"
-          :aria-label="open ? 'Collapse' : 'Expand'"
+          :aria-label="open ? t('feed.item.collapse') : t('feed.item.expand')"
           @click.stop="toggle"
         />
         <ExtLink :text="item.ref" :url="item.url" />
@@ -63,9 +65,9 @@ const toggle = () => {
           item.kind
         }}</span>
         <span v-if="item.who" class="feed-item__who">{{ item.who }}</span>
-        <span v-if="item.mention" class="at-you">@you</span>
+        <span v-if="item.mention" class="at-you">{{ t('feed.item.you') }}</span>
         <span class="feed-item__right">
-          <span class="timestamp feed-item__when">{{ when }}</span>
+          <span class="timestamp feed-item__when" :data-new="t('feed.item.new')">{{ when }}</span>
         </span>
       </div>
       <template v-if="open">
@@ -73,10 +75,10 @@ const toggle = () => {
         <div class="feed-item__full">{{ item.body }}</div>
         <div class="feed-item__actions">
           <button type="button" class="btn btn--tonal" @click.stop="emit('open', item)">
-            Open formatted
+            {{ t('feed.item.openFormatted') }}
           </button>
           <AiButton :query="{ ws: snapshot.workspace.id, kind: 'feed', ref: item.id }" />
-          <ExtLink :text="'Open in ' + source.label" :url="item.url" class="btn" />
+          <ExtLink :text="t('feed.item.openIn', { source: source.label })" :url="item.url" class="btn" />
         </div>
       </template>
       <span v-else-if="line" class="feed-item__text">{{ line }}</span>
@@ -223,7 +225,7 @@ const toggle = () => {
 }
 
 .feed-item--new .feed-item__when::before {
-  content: 'NEW';
+  content: attr(data-new);
   display: inline-block;
   margin-right: 0.375rem;
   padding: 0.0625rem 0.375rem;

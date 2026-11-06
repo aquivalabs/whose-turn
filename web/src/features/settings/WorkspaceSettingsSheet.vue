@@ -20,6 +20,7 @@ import type {
   RawWorkspace,
   RuleRow,
 } from '@/lib/types.ts';
+import { useText } from '@/i18n/index.ts';
 import FieldRow from '@/ui/FieldRow.vue';
 import SettingsFrame from './SettingsFrame.vue';
 import { useConfigSheet } from './useConfigSheet.ts';
@@ -45,11 +46,12 @@ interface ConfigReply {
   table_warnings?: Record<string, string[]>;
 }
 
-const MODES = [
-  { value: '', label: 'Visible', line: 'Checked every minute and shown in the list.' },
-  { value: 'parked', label: 'Park', line: 'Hidden from the list, checked every 15 minutes. Comes back by itself when something needs you.' },
-  { value: 'paused', label: 'Pause', line: 'Hidden and not checked at all. Stays hidden until you bring it back.' },
-];
+const t = useText();
+const MODES = computed(() => [
+  { value: '', label: t('settings.workspace.modeVisible'), line: t('settings.workspace.modeVisibleLine') },
+  { value: 'parked', label: t('settings.workspace.modePark'), line: t('settings.workspace.modeParkLine') },
+  { value: 'paused', label: t('settings.workspace.modePause'), line: t('settings.workspace.modePauseLine') },
+]);
 
 const list = ref<RawWorkspace[]>([]);
 const selected = ref(0);
@@ -116,11 +118,11 @@ const errorAt = (path: string) => fieldErrors.value[`workspaces[${selected.value
 const idHint = computed(() => {
   const was = current.value && loadedIds.get(uidOf(current.value));
   return was && current.value && was !== current.value.id
-    ? `Its to-dos and marks stay under the old id "${was}"; they do not follow the rename.`
+    ? t('settings.workspace.renameHint', { was })
     : '';
 });
-const ID_SPEC: FieldSpec = { key: 'id', label: 'Source id' };
-const LABEL_SPEC: FieldSpec = { key: 'label', label: 'Label' };
+const ID_SPEC = computed<FieldSpec>(() => ({ key: 'id', label: t('settings.workspace.sourceId') }));
+const LABEL_SPEC = computed<FieldSpec>(() => ({ key: 'label', label: t('settings.workspace.sourceLabel') }));
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
 const ruleRows = computed(() =>
   ((current.value && tables.value[current.value.id]) || []).map((row) =>
@@ -143,7 +145,7 @@ const connectorCards = computed(() =>
 );
 const derivedSeedHint = (id: string) => {
   const seed = snapshot.workspaces.find((workspace) => workspace.id === id)?.theme_seed;
-  return seed ? `empty: ${seed}, derived from the workspace id` : 'empty derives one from the workspace id';
+  return seed ? t('settings.workspace.seedDerived', { seed }) : t('settings.workspace.seedEmpty');
 };
 const fieldValue = (target: Record<string, unknown>, key: string) =>
   target[key] as string | string[] | undefined;
@@ -168,7 +170,12 @@ const askRemoveWorkspace = () => {
   if (!current.value) {
     return;
   }
-  confirm(`Delete ${current.value.name || current.value.id}? Its to-dos and marks stay on disk.`, 'Delete', 'Keep', removeWorkspace);
+  confirm(
+    t('settings.workspace.deleteQuestion', { name: current.value.name || current.value.id }),
+    t('settings.workspace.delete'),
+    t('settings.workspace.keep'),
+    removeWorkspace,
+  );
 };
 const addConnector = (spec: ConnectorSpec) => current.value?.connectors.push({ type: spec.type });
 const removeConnector = (index: number) => {
@@ -183,7 +190,12 @@ const askRemoveConnector = (index: number) => {
     return;
   }
   const label = specOf(current.value.connectors[index]).label;
-  confirm(`Remove the ${label} source from ${current.value.name || current.value.id}?`, 'Remove', 'Keep', () => removeConnector(index));
+  confirm(
+    t('settings.workspace.removeQuestion', { label, name: current.value.name || current.value.id }),
+    t('settings.workspace.remove'),
+    t('settings.workspace.keep'),
+    () => removeConnector(index),
+  );
 };
 const save = () =>
   saveTo(
@@ -205,7 +217,7 @@ const save = () =>
   <AnimatePresence>
     <SettingsFrame
       v-if="ui.settings"
-      :title="adding ? 'New workspace' : 'Workspace settings'"
+      :title="adding ? t('settings.workspace.titleNew') : t('settings.workspace.title')"
       label-id="settings-title"
       :dirty="dirty"
       :ask="ask"
@@ -218,7 +230,7 @@ const save = () =>
     >
       <div class="sheet-form">
         <template v-if="current">
-          <h4 class="sheet-form__heading">Workspace</h4>
+          <h4 class="sheet-form__heading">{{ t('settings.workspace.heading') }}</h4>
           <FieldRow
             v-for="spec in fields.workspace"
             :key="spec.key"
@@ -229,7 +241,7 @@ const save = () =>
             @update:model-value="setWorkspaceField(current, spec.key, $event)"
           />
           <fieldset class="workspace-settings-sheet__modes">
-            <legend class="field-row__label">In the list</legend>
+            <legend class="field-row__label">{{ t('settings.workspace.inTheList') }}</legend>
             <label v-for="mode in MODES" :key="mode.value" class="workspace-settings-sheet__mode">
               <input
                 type="radio"
@@ -241,7 +253,7 @@ const save = () =>
               <span class="workspace-settings-sheet__mode-line">{{ mode.line }}</span>
             </label>
           </fieldset>
-          <h4 class="sheet-form__heading">Look</h4>
+          <h4 class="sheet-form__heading">{{ t('settings.workspace.look') }}</h4>
           <FieldRow
             v-for="spec in fields.theme"
             :key="spec.key"
@@ -250,7 +262,7 @@ const save = () =>
             :model-value="fieldValue(current.theme, spec.key)"
             @update:model-value="setOrDrop(current.theme, spec.key, $event)"
           />
-          <h4 ref="connectors-head" class="sheet-form__heading">Sources</h4>
+          <h4 ref="connectors-head" class="sheet-form__heading">{{ t('settings.workspace.sources') }}</h4>
           <div
             v-for="({ entry, spec: entrySpec, uid }, index) in connectorCards"
             :key="uid"
@@ -259,20 +271,20 @@ const save = () =>
             <div class="workspace-settings-sheet__connector-head">
               <strong class="workspace-settings-sheet__connector-name">{{ entrySpec.label }}</strong
               ><button type="button" class="btn btn--danger" @click="askRemoveConnector(index)">
-                Remove
+                {{ t('settings.workspace.remove') }}
               </button>
             </div>
             <FieldRow
               :spec="ID_SPEC"
               :placeholder="entrySpec.type"
-              hint="only needed when one type appears twice"
+              :hint="t('settings.workspace.sourceIdHint')"
               :model-value="fieldValue(entry, 'id')"
               @update:model-value="setOrDrop(entry, 'id', $event)"
             />
             <FieldRow
               :spec="LABEL_SPEC"
               :placeholder="entrySpec.label"
-              hint="its name in the feed"
+              :hint="t('settings.workspace.sourceLabelHint')"
               :model-value="fieldValue(entry, 'label')"
               @update:model-value="setOrDrop(entry, 'label', $event)"
             />
@@ -294,10 +306,10 @@ const save = () =>
               class="btn"
               @click="addConnector(spec)"
             >
-              + Add {{ spec.label }} source
+              {{ t('settings.workspace.addSource', { label: spec.label }) }}
             </button>
           </div>
-          <h4 class="sheet-form__heading">Rules</h4>
+          <h4 class="sheet-form__heading">{{ t('settings.workspace.rules') }}</h4>
           <FieldRow
             v-for="spec in fields.rules"
             :key="spec.key"
@@ -313,10 +325,9 @@ const save = () =>
             :model-value="fieldValue(current.rules.statuses, spec.key)"
             @update:model-value="setOrDrop(current.rules.statuses, spec.key, $event)"
           />
-          <h4 class="sheet-form__heading">Whose turn table</h4>
+          <h4 class="sheet-form__heading">{{ t('settings.workspace.table') }}</h4>
           <p class="workspace-settings-sheet__rules-note">
-            The rows in force, top to bottom: the first one that fits decides. Read-only here: ask
-            Claude to change them.
+            {{ t('settings.workspace.tableNote') }}
           </p>
           <p v-for="warning in ruleWarnings" :key="warning" class="workspace-settings-sheet__rules-warning">
             {{ warning }}
@@ -327,10 +338,10 @@ const save = () =>
               <span class="workspace-settings-sheet__rule-then">{{ rule.then }}</span>
             </li>
           </ol>
-          <p v-else class="empty">Save the workspace to see its rows.</p>
+          <p v-else class="empty">{{ t('settings.workspace.tableEmpty') }}</p>
           <div v-if="!adding" class="workspace-settings-sheet__actions">
             <button type="button" class="btn btn--danger" @click="askRemoveWorkspace">
-              Delete workspace
+              {{ t('settings.workspace.deleteWorkspace') }}
             </button>
           </div>
         </template>

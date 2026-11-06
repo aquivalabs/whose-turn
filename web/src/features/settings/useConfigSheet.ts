@@ -1,6 +1,7 @@
 // What both settings sheets share beyond the frame: loading /api/config when the sheet opens, saving to it with the server's refusals mapped onto the form, the unsaved flag and the confirm bar.
 import { computed, ref, watch } from 'vue';
 import { getJson, post, problemsOf, violationsOf } from '@/lib/api.ts';
+import { text } from '@/i18n/index.ts';
 import { SERVER_DOWN, writeProblem } from '@/lib/problems.ts';
 import type { ApiError } from '@/lib/types.ts';
 import { useSheetGuard } from './useSheetGuard.ts';
@@ -18,8 +19,8 @@ export const useConfigSheet = <Reply extends { problems?: string[] }>(options: {
   const unloaded = ref('');
   const dirty = computed(() => options.isOpen() && !unloaded.value && options.changed());
   const { ask, requestClose, answer } = useSheetGuard(options.isOpen, () => dirty.value, options.close);
-  const confirm = (text: string, yes: string, keep: string, run: () => void) => {
-    ask.value = { text, yes, no: keep, run };
+  const confirm = (question: string, yes: string, keep: string, run: () => void) => {
+    ask.value = { text: question, yes, no: keep, run };
   };
 
   const load = () =>
@@ -32,7 +33,7 @@ export const useConfigSheet = <Reply extends { problems?: string[] }>(options: {
         return options.apply(reply);
       })
       .catch(() => {
-        unloaded.value = SERVER_DOWN + '; settings cannot be loaded.';
+        unloaded.value = SERVER_DOWN + text('settings.sheet.cannotLoad');
       });
 
   /** Posts `body` to /api/config. A refusal puts the field messages under their fields and the rest in the alert line; an accepted save runs `saved`. */
@@ -48,14 +49,14 @@ export const useConfigSheet = <Reply extends { problems?: string[] }>(options: {
           ? found.filter((entry) => entry.field === 'workspaces').map((entry) => entry.description)
           : problemsOf(reply.error);
         if (found.length && !problems.value.length) {
-          problems.value = ['Fix the marked fields; nothing was saved.'];
+          problems.value = [text('settings.sheet.fixMarked')];
         }
         return;
       }
       await saved();
     } catch (error) {
       problems.value = [
-        writeProblem(error, { unreachable: SERVER_DOWN + '; your changes are kept, save again.' }),
+        writeProblem(error, { unreachable: SERVER_DOWN + text('settings.sheet.keptSaveAgain') }),
       ];
     }
   };

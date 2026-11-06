@@ -5,6 +5,8 @@ import { computed, nextTick, ref, watch } from 'vue';
 import { snapshot, ui, setMarks, showInFeed, justHandled } from '@/store.ts';
 import { when } from '@/lib/time.ts';
 import Modal from '@/ui/Modal.vue';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
 const row = computed(() => snapshot.turn.find((item) => item.row_id === ui.note));
 const info = computed(() => snapshot.marks.info[ui.note]);
 const pending = computed(() => row.value?.group === 'you' && !row.value.handled);
@@ -73,42 +75,48 @@ const happened = computed(() => detail.value?.what || info.value?.outcome || '')
   <AnimatePresence>
     <Modal
       v-if="ui.note && row"
-      :title="row.key + ' · ' + (info?.auto ? 'Passed on' : 'Handled')"
+      :title="
+        info?.auto
+          ? t('yourMove.note.titlePassedOn', { key: row.key })
+          : t('yourMove.note.titleHandled', { key: row.key })
+      "
       label-id="note-title"
       @close="close"
     >
       <template v-if="info?.auto" #head>
-        <button v-if="info.event" type="button" class="btn" @click="openInFeed">Open in feed</button>
+        <button v-if="info.event" type="button" class="btn" @click="openInFeed">
+          {{ t('yourMove.note.openInFeed') }}
+        </button>
       </template>
       <p class="note-modal__summary">{{ row.summary }}</p>
       <dl v-if="info?.auto" class="note-modal__facts">
-        <dt>What happened</dt>
+        <dt>{{ t('yourMove.note.whatHappened') }}</dt>
         <dd>{{ happened }}</dd>
         <template v-if="detail?.assignee">
-          <dt>Assignee</dt>
+          <dt>{{ t('yourMove.note.assignee') }}</dt>
           <dd>{{ detail.assignee }}</dd>
         </template>
         <template v-if="detail?.status">
-          <dt>Status</dt>
+          <dt>{{ t('yourMove.note.status') }}</dt>
           <dd>{{ detail.status }}</dd>
         </template>
         <template v-if="detail?.summary">
-          <dt>Event</dt>
+          <dt>{{ t('yourMove.note.event') }}</dt>
           <dd>{{ detail.summary }}</dd>
         </template>
         <template v-if="comment">
-          <dt>Comment</dt>
+          <dt>{{ t('yourMove.note.comment') }}</dt>
           <dd>
             <span class="note-modal__author">{{ comment.author }}:</span>
             {{ comment.text }}
           </dd>
         </template>
-        <dt>When</dt>
+        <dt>{{ t('yourMove.note.when') }}</dt>
         <dd>{{ when(snapshot.marks.handled[ui.note] || '') }}</dd>
       </dl>
-      <label class="note-modal__label" for="note-text"
-        >{{ info?.auto ? 'Your note on top' : 'Note' }} (optional)</label
-      >
+      <label class="note-modal__label" for="note-text">{{
+        info?.auto ? t('yourMove.note.labelOnTop') : t('yourMove.note.label')
+      }}</label>
       <textarea
         id="note-text"
         ref="field"
@@ -116,13 +124,17 @@ const happened = computed(() => detail.value?.what || info.value?.outcome || '')
         class="input note-modal__text"
         rows="3"
         maxlength="200"
-        placeholder="Add a note…"
+        :placeholder="t('yourMove.note.placeholder')"
         @keydown.enter.prevent="save"
       />
       <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
       <template #footer>
-        <button type="button" class="btn" @click="skip">{{ kept && !pending ? 'Cancel' : 'Skip' }}</button>
-        <button type="button" class="btn btn--tonal" @click="save">Save</button>
+        <button type="button" class="btn" @click="skip">
+          {{ kept && !pending ? t('yourMove.note.cancel') : t('yourMove.note.skip') }}
+        </button>
+        <button type="button" class="btn btn--tonal" @click="save">
+          {{ t('yourMove.note.save') }}
+        </button>
       </template>
     </Modal>
   </AnimatePresence>

@@ -20,6 +20,7 @@ import { SERVER_DOWN, TEXT_KEPT, errorProblem, writeProblem } from './lib/proble
 import type { ApiError, FeedItem, Lifecycle, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
+import { text } from './i18n/index.ts';
 
 // docs/adr/0002-vueuse-in-the-window.md (storage rows)
 const STORED = { writeDefaults: false };
@@ -51,7 +52,7 @@ export const ui = reactive({
   lastEventAt: 0,
   consoleErrors: 0,
   lifecycle: '' as Lifecycle | '',
-  status: 'Connecting…',
+  status: text('core.store.connecting'),
   modal: null as FeedItem | null,
   note: '',
   feedback: false,
@@ -91,7 +92,7 @@ export const toggleNotifications = async () => {
   const before = snapshot.notifications;
   snapshot.notifications = { desktop: !before.desktop };
   const settle = (outcome: unknown) => {
-    if (!tellProblem(outcome, { refused: 'The notification setting was not saved' })) {
+    if (!tellProblem(outcome, { refused: text('core.store.notificationNotSaved') })) {
       snapshot.notifications = before;
     }
   };
@@ -136,7 +137,7 @@ export const alerts = computed(() => {
   const owner = (key: string) => failing.find(({ source }) => key === source || key.startsWith(source + '.'));
   const streaks = failing.map(({ source, polls }) => {
     const reasons = errors.filter(([key]) => owner(key)?.source === source).map(([, text]) => text);
-    return `Source ${source}: ${reasons.join(', ') || 'failing'}, failed ${polls} polls in a row`;
+    return text('core.store.sourceStreak', { source, reasons: reasons.join(', ') || text('core.store.failingWord'), polls });
   });
   const failingIds = new Set(failing.map(({ source }) => 'failing:' + source));
   return [
@@ -221,7 +222,7 @@ export const load = (asked = ui.ws): Promise<Snapshot> => {
       }
       if (reply.error) {
         if (reasonOf(reply.error) !== 'NO_SUCH_WORKSPACE' || !asked) {
-          ui.status = errorProblem(reply.error, 'Could not load');
+          ui.status = errorProblem(reply.error, text('core.store.couldNotLoad'));
           return snapshot;
         }
         return load('');
@@ -233,7 +234,7 @@ export const load = (asked = ui.ws): Promise<Snapshot> => {
       ui.ws = snapshot.workspace.id;
       ui.status = '';
       showBackdrop({ workspace: snapshot.workspace.id });
-      document.title = 'Whose Turn · ' + snapshot.workspace.name;
+      document.title = text('core.store.pageTitle', { name: snapshot.workspace.name });
       return snapshot;
     },
   );
@@ -266,7 +267,7 @@ watch(
   stream.error,
   (error) => {
     if (error && !ui.lifecycle) {
-      ui.status = 'Disconnected from the local server, retrying…';
+      ui.status = text('core.store.disconnected');
     }
   },
   { flush: 'sync' },
@@ -284,7 +285,7 @@ watch(
     }
     if ('lifecycle' in message) {
       ui.lifecycle = message.lifecycle;
-      ui.status = message.lifecycle === 'restarting' ? 'Restarting the monitor…' : 'The monitor is stopped.';
+      ui.status = message.lifecycle === 'restarting' ? text('core.store.restarting') : text('core.store.stopped');
       if (message.lifecycle === 'quitting') {
         stream.close();
       }
@@ -412,24 +413,24 @@ export const reorderWorkspaces = (ids: string[]) =>
     )
     .then(
       (reply) => {
-        if (tellProblem(reply, { refused: 'The order was not saved' })) {
+        if (tellProblem(reply, { refused: text('core.store.orderNotSaved') })) {
           reload();
         }
       },
-      (failure: Error) => tellProblem(failure, { refused: 'The order was not saved' }),
+      (failure: Error) => tellProblem(failure, { refused: text('core.store.orderNotSaved') }),
     );
 /** Brings a parked or paused workspace back into the rail through the server's one hide endpoint. */
 export const restoreWorkspace = (id: string) =>
   post<{ error?: ApiError }>('/api/workspaces/hidden', { id, hidden: null }).then(
     (reply) => {
-      if (tellProblem(reply, { refused: 'The workspace was not restored' })) {
+      if (tellProblem(reply, { refused: text('core.store.workspaceNotRestored') })) {
         reload();
       }
     },
-    (failure: Error) => tellProblem(failure, { refused: 'The workspace was not restored' }),
+    (failure: Error) => tellProblem(failure, { refused: text('core.store.workspaceNotRestored') }),
   );
 export const refresh = () => {
-  ui.status = 'Checking now…';
+  ui.status = text('core.store.checking');
   post('/api/refresh').catch((failure: Error) => {
     ui.status = '';
     tellProblem(failure);
@@ -440,6 +441,6 @@ export const refresh = () => {
 /** Stops or restarts the monitor server; the stream then carries the new state to every open window (RMA-356). */
 export const stopServer = (action: 'quit' | 'restart') =>
   post(`/api/${action}`).then(
-    (reply) => tellProblem(reply, { refused: action === 'quit' ? 'The monitor did not stop' : 'The monitor did not restart' }),
+    (reply) => tellProblem(reply, { refused: action === 'quit' ? text('core.store.notStopped') : text('core.store.notRestarted') }),
     (failure: Error) => tellProblem(failure),
   );

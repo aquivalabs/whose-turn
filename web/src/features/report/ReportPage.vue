@@ -7,21 +7,23 @@ import { when } from '@/lib/time.ts';
 import { outcomeTone } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
 import type { FiledReport } from '@/lib/types.ts';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
 const id = new URLSearchParams(location.search).get('id') || '';
 const report = ref<FiledReport | null>(null);
-const note = ref(id ? 'Loading…' : 'No report id in the link.');
+const note = ref(id ? t('report.loading') : t('report.noId'));
 onMounted(() => {
   if (!id) {
     return;
   }
-  document.title = id + ' · Your report · Whose Turn';
+  document.title = t('report.pageTitle', { id });
   getJson<{ report?: FiledReport }>('/api/feedback?id=' + encodeURIComponent(id))
     .then((reply) => {
       report.value = reply.report || null;
-      note.value = reply.report ? '' : 'No report ' + id + ' was filed from this machine.';
+      note.value = reply.report ? '' : t('report.notFiled', { id });
     })
     .catch(() => {
-      note.value = SERVER_DOWN + '; reload this page once it is back.';
+      note.value = t('report.serverDown', { problem: SERVER_DOWN });
     });
 });
 </script>
@@ -33,36 +35,35 @@ onMounted(() => {
         <span class="report-page__id">{{ report.id }}</span>
         <h1 class="report-page__title">{{ report.title }}</h1>
         <span class="pill" :class="modifier('pill', outcomeTone(report.outcome))">{{
-          report.state || 'filed, not yet seen'
+          report.state || t('report.notSeen')
         }}</span>
       </header>
       <p class="report-page__meta">
-        {{ report.kind || 'report' }} · filed {{ when(report.filed_at)
-        }}<template v-if="report.changed_at"> · last change {{ when(report.changed_at) }}</template>
+        {{ t('report.meta', { kind: report.kind || t('report.kindFallback'), filed: when(report.filed_at) })
+        }}<template v-if="report.changed_at">{{ t('report.lastChange', { changed: when(report.changed_at) }) }}</template>
       </p>
       <section class="report-page__section">
-        <h2 class="report-page__heading">What you reported</h2>
-        <p class="report-page__text">{{ report.body || '(no text kept)' }}</p>
+        <h2 class="report-page__heading">{{ t('report.reported') }}</h2>
+        <p class="report-page__text">{{ report.body || t('report.noText') }}</p>
       </section>
       <section class="report-page__section">
-        <h2 class="report-page__heading">Answers</h2>
+        <h2 class="report-page__heading">{{ t('report.answers') }}</h2>
         <p v-if="report.unanswered" class="report-page__unanswered">
-          Closed without an answer. The maintainer owes you a reason; this page will show it once it
-          is written.
+          {{ t('report.unanswered') }}
         </p>
         <p v-else-if="report.answers_hidden" class="empty">
-          Answers to reports sent before this version cannot be shown here; the state above stays current.
+          {{ t('report.hidden') }}
         </p>
-        <p v-else-if="!report.answers.length" class="empty">No answer yet.</p>
+        <p v-else-if="!report.answers.length" class="empty">{{ t('report.none') }}</p>
         <article v-for="(answer, index) in report.answers" :key="index" class="report-page__answer">
           <p class="report-page__answer-meta">
-            {{ answer.by || 'maintainer' }} · {{ when(answer.at) }}
+            {{ answer.by || t('report.maintainer') }} · {{ when(answer.at) }}
           </p>
           <p class="report-page__text">{{ answer.text }}</p>
         </article>
       </section>
     </template>
-    <a class="report-page__back" href="/">Back to the window</a>
+    <a class="report-page__back" href="/">{{ t('report.back') }}</a>
   </main>
 </template>
 <style scoped>

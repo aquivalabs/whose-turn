@@ -11,6 +11,10 @@ import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
 import ExtLink from '@/ui/ExtLink.vue';
 import { useTodosView } from './useTodosView.ts';
+import { useText } from '@/i18n/index.ts';
+
+const t = useText();
+const PENCIL = '\u270E';
 
 interface TextPart {
   text: string;
@@ -108,32 +112,32 @@ const view = computed({
   },
 });
 const options = computed(() => [
-  { id: 'open', label: 'Open', count: open.value.length },
-  { id: 'done', label: 'Done', count: done.value.length },
+  { id: 'open', label: t('todos.view.open'), count: open.value.length },
+  { id: 'done', label: t('todos.view.done'), count: done.value.length },
 ]);
 </script>
 <template>
   <Island
     id="todo"
     :size-key="`${snapshot.workspace.id}:todo`"
-    title="To do"
-    note="Your own notes"
-    tip='Your personal to-dos, kept on this machine. Add here, or ask Claude: "add to my to-do: …". A ticket key like PROJ-123 in the text becomes a link.'
+    :title="t('todos.title')"
+    :note="t('todos.note')"
+    :tip="t('todos.tip')"
   >
     <template #head
-      ><Segmented v-model="view" :options="options" label="Show" class="todos__view"
+      ><Segmented v-model="view" :options="options" :label="t('todos.view.label')" class="todos__view"
     /></template>
     <div class="todos__add">
       <input
         v-model="draft"
         class="input todos__input"
         type="text"
-        placeholder="Add a to-do and press Enter"
-        aria-label="New to-do"
+        :placeholder="t('todos.add.placeholder')"
+        :aria-label="t('todos.add.label')"
         autocomplete="off"
         @keydown.enter="add"
       />
-      <button type="button" class="btn btn--tonal" @click="add">Add</button>
+      <button type="button" class="btn btn--tonal" @click="add">{{ t('todos.add.button') }}</button>
     </div>
     <AnimatePresence>
       <Motion v-if="problem" v-bind="fade" as="p" class="alert alert--inline" role="alert">{{
@@ -142,8 +146,8 @@ const options = computed(() => [
     </AnimatePresence>
     <AnimatePresence>
       <Motion v-if="removed" v-bind="fade" as="p" class="todos__undo" role="status">
-        To-do deleted.
-        <button type="button" class="todos__undo-btn" @click="restore">Undo</button>
+        {{ t('todos.undo.deleted') }}
+        <button type="button" class="todos__undo-btn" @click="restore">{{ t('todos.undo.button') }}</button>
       </Motion>
     </AnimatePresence>
     <ul class="todos__list">
@@ -162,7 +166,7 @@ const options = computed(() => [
           :class="{ 'todos__check--on': todo.done }"
           role="checkbox"
           :aria-checked="!!todo.done"
-          :aria-label="todo.done ? 'Mark not done' : 'Mark done'"
+          :aria-label="todo.done ? t('todos.item.markNotDone') : t('todos.item.markDone')"
           @click="flip(todo)"
         ></button>
         <input
@@ -172,7 +176,7 @@ const options = computed(() => [
           class="input todos__edit"
           type="text"
           maxlength="500"
-          aria-label="Edit to-do"
+          :aria-label="t('todos.item.edit')"
           autocomplete="off"
           @keydown.enter="saveEdit(todo)"
           @keydown.esc="cancelEdit"
@@ -187,16 +191,16 @@ const options = computed(() => [
           ></span
         >
         <span class="todos__meta">{{ meta }}</span>
-        <button type="button" class="todos__pencil" aria-label="Edit to-do" @click="startEdit(todo)">
-          &#9998;
+        <button type="button" class="todos__pencil" :aria-label="t('todos.item.edit')" @click="startEdit(todo)">
+          {{ PENCIL }}
         </button>
-        <button type="button" class="todos__delete" aria-label="Delete to-do" @click="remove(todo)">
+        <button type="button" class="todos__delete" :aria-label="t('todos.item.delete')" @click="remove(todo)">
           ×
         </button>
       </Motion>
       </AnimatePresence>
       <span v-if="!rows.length" class="empty todos__empty">{{
-        showDone ? 'Nothing here yet.' : 'Nothing to do. Add one above, or ask Claude.'
+        showDone ? t('todos.empty.done') : t('todos.empty.open')
       }}</span>
     </ul>
   </Island>

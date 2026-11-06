@@ -1,2 +1,20 @@
 // docs/mechanisms/i18n.md
-export default {};
+export default {
+  loading: 'Loading…',
+  noId: 'No report id in the link.',
+  pageTitle: '{id} · Your report · Whose Turn',
+  notFiled: 'No report {id} was filed from this machine.',
+  serverDown: '{problem}; reload this page once it is back.',
+  notSeen: 'filed, not yet seen',
+  kindFallback: 'report',
+  meta: '{kind} · filed {filed}',
+  lastChange: ' · last change {changed}',
+  reported: 'What you reported',
+  noText: '(no text kept)',
+  answers: 'Answers',
+  unanswered: 'Closed without an answer. The maintainer owes you a reason; this page will show it once it is written.',
+  hidden: 'Answers to reports sent before this version cannot be shown here; the state above stays current.',
+  none: 'No answer yet.',
+  maintainer: 'maintainer',
+  back: 'Back to the window',
+};

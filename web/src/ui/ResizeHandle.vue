@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { clampSize } from '@/composables/usePanelSize.ts';
+import { useText } from '@/i18n/index.ts';
 const props = defineProps<{
   label: string;
   axis: 'x' | 'y';
@@ -9,6 +10,7 @@ const props = defineProps<{
   off?: boolean;
 }>();
 const emit = defineEmits<{ resize: [value: number]; reset: [] }>();
+const t = useText();
 const KEY_STEP = 16;
 const direction = props.grow ?? 1;
 let start = { pointer: 0, size: 0, min: 0, max: 0 };
@@ -46,7 +48,7 @@ const key = (event: KeyboardEvent) => {
     :aria-hidden="off || undefined"
     :aria-orientation="axis === 'y' ? 'horizontal' : 'vertical'"
     :aria-label="label"
-    data-tip="Drag to resize; double click to reset"
+    :data-tip="t('common.resizeHandle.tip')"
     @pointerdown.prevent="down"
     @pointermove="move"
     @keydown="key"

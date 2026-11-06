@@ -6,8 +6,10 @@ import { ui } from '@/store.ts';
 import { useWhatsNew } from '@/composables/useWhatsNew.ts';
 import { importantOf, versionMarkdown } from '@/lib/whats-new.ts';
 import MarkdownView from '@/ui/MarkdownView.vue';
+import { useText } from '@/i18n/index.ts';
 import Modal from '@/ui/Modal.vue';
 
+const t = useText();
 const { changelog, problem, unseen, load, markSeen } = useWhatsNew();
 const fresh = ref<string[]>([]);
 
@@ -31,9 +33,9 @@ watch(
 </script>
 <template>
   <AnimatePresence>
-    <Modal v-if="ui.whatsNew" title="What's new" label-id="whats-new-title" flush @close="close">
+    <Modal v-if="ui.whatsNew" :title="t('whatsNew.title')" label-id="whats-new-title" flush @close="close">
       <template v-if="changelog" #head>
-        <span class="modal__meta">Running {{ changelog.current }}</span>
+        <span class="modal__meta">{{ t('whatsNew.running', { version: changelog.current }) }}</span>
       </template>
       <div v-if="problem" class="alert" role="alert">{{ problem }}</div>
       <article v-for="entry in changelog?.versions" :key="entry.version" class="whats-new-sheet__version">
@@ -45,16 +47,16 @@ watch(
           <span
             v-if="entry.version === changelog?.current"
             class="whats-new-sheet__tag whats-new-sheet__tag--running"
-            >Running</span
+            >{{ t('whatsNew.runningTag') }}</span
           >
-          <span v-if="fresh.includes(entry.version)" class="whats-new-sheet__tag">New</span>
+          <span v-if="fresh.includes(entry.version)" class="whats-new-sheet__tag">{{ t('whatsNew.newTag') }}</span>
         </header>
         <div v-if="importantOf(entry).length" class="whats-new-sheet__important" role="note">
-          <strong class="whats-new-sheet__important-title">Important</strong>
+          <strong class="whats-new-sheet__important-title">{{ t('whatsNew.important') }}</strong>
           <MarkdownView v-for="item in importantOf(entry)" :key="item" :source="item" />
         </div>
         <MarkdownView v-if="versionMarkdown(entry)" :source="versionMarkdown(entry)" />
-        <p v-else class="whats-new-sheet__empty">No notes for this version.</p>
+        <p v-else class="whats-new-sheet__empty">{{ t('whatsNew.noNotes') }}</p>
       </article>
     </Modal>
   </AnimatePresence>

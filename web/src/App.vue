@@ -38,6 +38,8 @@ import MonitorSettingsSheet from './features/settings/MonitorSettingsSheet.vue';
 import WhatsNewSheet from './features/whats-new/WhatsNewSheet.vue';
 import StoppedNotice from './features/lifecycle/StoppedNotice.vue';
 import { useWhatsNew } from './composables/useWhatsNew.ts';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
 const firstRun = computed(
   () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
 );
@@ -94,7 +96,7 @@ onMounted(() => {
         <Motion v-if="alerts.length" v-bind="fade" class="alert" :inert="covered">
           {{ alerts.join('  ·  ') }}
           <button type="button" class="alert__action" @click="openSettings()">
-            Open workspace settings
+            {{ t('common.app.openWorkspaceSettings') }}
           </button>
         </Motion>
       </AnimatePresence>

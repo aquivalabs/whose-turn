@@ -5,7 +5,9 @@ import { speciesNames, posesOf } from '@/lib/species.ts';
 import { registry } from '@/species/index.ts';
 import { dark } from '@/scheme.ts';
 import SpeciesCell from './SpeciesCell.vue';
+import { useText } from '@/i18n/index.ts';
 
+const t = useText();
 const query = new URLSearchParams(location.search);
 const count = ref(Math.min(12, Math.max(1, Number(query.get('seeds')) || 6)));
 const first = ref(Number(query.get('from')) || 1);
@@ -34,20 +36,20 @@ watch(dark, readInk);
 <template>
   <main ref="page" class="app sheet-page">
     <header class="sheet-page__head">
-      <h1 class="sheet-page__title">Species sheet</h1>
+      <h1 class="sheet-page__title">{{ t('sheet.title') }}</h1>
       <label class="sheet-page__field"
-        >Species
+        >{{ t('sheet.species') }}
         <select v-model="only">
-          <option value="">all ({{ names.length }})</option>
+          <option value="">{{ t('sheet.allSpecies', { count: names.length }) }}</option>
           <option v-for="name in names" :key="name" :value="name">{{ name }}</option>
         </select>
       </label>
       <label class="sheet-page__field"
-        >Seeds
+        >{{ t('sheet.seeds') }}
         <input v-model.number="count" class="sheet-page__number" type="number" min="1" max="12"
       /></label>
       <label class="sheet-page__field"
-        >From seed <input v-model.number="first" class="sheet-page__number" type="number" min="0"
+        >{{ t('sheet.fromSeed') }} <input v-model.number="first" class="sheet-page__number" type="number" min="0"
       /></label>
     </header>
     <section v-for="row in rows" :key="row.key" class="sheet-page__row">

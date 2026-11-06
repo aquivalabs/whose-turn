@@ -1,6 +1,7 @@
 // The settings form's shaping: what the server's raw workspace becomes in the form, and what goes back.
 import { toRaw } from 'vue';
 import type { ConnectorEntry, FactWords, RawWorkspace, RuleRow } from './types.ts';
+import { text, type TextKey } from '../i18n/index.ts';
 
 /** A raw workspace as config.json may hold it: connectors as a list or keyed by type, rules and theme optional. */
 export interface StoredWorkspace {
@@ -117,87 +118,79 @@ export const movedIds = (ids: string[], dragged: string, target: string, before:
   return rest;
 };
 
-const STATUS_PHRASES: Record<string, string> = {
-  backlog: 'in the backlog',
-  passed: 'passed',
-  code_review: 'in review',
-  qa: 'in testing',
-  on_hold: 'on hold',
-  todo: 'to do',
-  in_progress: 'in progress',
-  done: 'done',
+const STATUS_KEYS: Record<string, TextKey> = {
+  backlog: 'core.rules.status.backlog',
+  passed: 'core.rules.status.passed',
+  code_review: 'core.rules.status.codeReview',
+  qa: 'core.rules.status.qa',
+  on_hold: 'core.rules.status.onHold',
+  todo: 'core.rules.status.todo',
+  in_progress: 'core.rules.status.inProgress',
+  done: 'core.rules.status.done',
 };
-const statusPhrase = (group: string) => STATUS_PHRASES[group] || `in ${group.replace(/_/g, ' ')}`;
+const statusPhrase = (group: string) =>
+  STATUS_KEYS[group] ? text(STATUS_KEYS[group]) : text('core.rules.status.other', { group: group.replace(/_/g, ' ') });
 
-const WHOSE_PHRASES: Record<string, string> = {
-  you: 'your move',
-  reviewer: "the reviewer's move",
-  qa: "the tester's move",
-  them: 'waiting on others',
+const WHOSE_KEYS: Record<string, TextKey> = {
+  you: 'core.rules.whose.you',
+  reviewer: 'core.rules.whose.reviewer',
+  qa: 'core.rules.whose.qa',
+  them: 'core.rules.whose.them',
 };
 
 const factName = (facts: FactWords, fact: string) =>
   facts[fact]?.name || fact.replace(/[._]/g, ' ');
 
-const flag = (operand: unknown, whenTrue: string, whenFalse: string) =>
-  operand ? whenTrue : whenFalse;
-
-const REVIEW_PHRASES: Record<string, string> = {
-  approved: 'the PR is approved',
-  changes_requested: 'changes are requested on the PR',
-  none: 'the PR has no review',
+const REVIEW_KEYS: Record<string, TextKey> = {
+  approved: 'core.rules.review.approved',
+  changes_requested: 'core.rules.review.changesRequested',
+  none: 'core.rules.review.none',
 };
 
 const valuePhrase = (facts: FactWords, fact: string, value: unknown): string => {
   switch (fact) {
     case 'ticket.status':
-      return `the ticket is ${statusPhrase(String(value))}`;
+      return text('core.rules.ticketIs', { phrase: statusPhrase(String(value)) });
     case 'ticket.assignee':
-      return value === 'me' ? 'the ticket is on you' : `the ticket is assigned to ${value}`;
+      return value === 'me' ? text('core.rules.ticketOnYou') : text('core.rules.ticketAssigned', { value });
     case 'pr.checks':
-      return value === 'none' ? 'the PR has no checks' : `the PR checks are ${value}`;
+      return value === 'none' ? text('core.rules.noChecks') : text('core.rules.checksAre', { value });
     case 'pr.review':
-      return REVIEW_PHRASES[String(value)] || `the PR review is ${value}`;
+      return REVIEW_KEYS[String(value)] ? text(REVIEW_KEYS[String(value)]) : text('core.rules.review.other', { value });
     case 'pr.base':
-      return `the PR goes into ${value}`;
+      return text('core.rules.goesInto', { value });
     default:
-      return `${factName(facts, fact)} is ${value}`;
+      return text('core.rules.factIs', { fact: factName(facts, fact), value });
   }
 };
 
+const BOUND_KEYS: Record<string, TextKey> = { gt: 'core.rules.moreThan', gte: 'core.rules.atLeast', lt: 'core.rules.fewerThan', lte: 'core.rules.atMost' };
+const SIGN_KEYS: Record<string, TextKey> = { gt: 'core.rules.sign.gt', gte: 'core.rules.sign.gte', lt: 'core.rules.sign.lt', lte: 'core.rules.sign.lte' };
+
 const operatorPhrase = (facts: FactWords, fact: string, operator: string, operand: unknown) => {
+  const name = factName(facts, fact);
   if (operator === 'present') {
-    return flag(operand, `${factName(facts, fact)} is given`, `${factName(facts, fact)} is missing`);
+    return operand ? text('core.rules.factGiven', { fact: name }) : text('core.rules.factMissing', { fact: name });
   }
   if (operator === 'prefix') {
-    return fact === 'pr.base'
-      ? `the PR goes into a branch starting with ${operand}`
-      : `${factName(facts, fact)} starts with ${operand}`;
+    return fact === 'pr.base' ? text('core.rules.goesIntoPrefix', { operand }) : text('core.rules.factStarts', { fact: name, operand });
   }
   if (fact === 'unanswered_count') {
-    const count = Number(operand);
-    const bounds: Record<string, string> = {
-      gt: `more than ${count}`,
-      gte: `at least ${count}`,
-      lt: `fewer than ${count}`,
-      lte: `at most ${count}`,
-    };
-    return `${bounds[operator]} mentions of you wait for an answer`;
+    return text('core.rules.mentionsWait', { bound: text(BOUND_KEYS[operator], { count: Number(operand) }) });
   }
-  const signs: Record<string, string> = { gt: 'more than', gte: 'at least', lt: 'less than', lte: 'at most' };
-  return `${factName(facts, fact)} is ${signs[operator]} ${operand}`;
+  return text('core.rules.factCompares', { fact: name, sign: text(SIGN_KEYS[operator]), operand });
 };
 
 const conditionText = (facts: FactWords, fact: string, condition: unknown): string => {
   if (Array.isArray(condition)) {
     return fact === 'ticket.status'
-      ? `the ticket is ${condition.map((group) => statusPhrase(String(group))).join(' or ')}`
-      : `${factName(facts, fact)} is ${condition.join(' or ')}`;
+      ? text('core.rules.ticketIs', { phrase: condition.map((group) => statusPhrase(String(group))).join(text('core.rules.or')) })
+      : text('core.rules.factIs', { fact: factName(facts, fact), value: condition.join(text('core.rules.or')) });
   }
   if (condition && typeof condition === 'object') {
     return Object.entries(condition)
       .map(([operator, operand]) => operatorPhrase(facts, fact, operator, operand))
-      .join(' and ');
+      .join(text('core.rules.and'));
   }
   const says = facts[fact]?.says;
   if (typeof condition === 'boolean' && says) {
@@ -216,10 +209,10 @@ export const ruleText = (row: RuleRow, facts: FactWords = {}) => {
   );
   const outcome =
     row.then.whose === 'hidden'
-      ? 'not shown'
-      : `${WHOSE_PHRASES[row.then.whose] || row.then.whose}, "${nextText(facts, row.then.next || '')}"`;
+      ? text('core.rules.notShown')
+      : text('core.rules.outcome', { whose: WHOSE_KEYS[row.then.whose] ? text(WHOSE_KEYS[row.then.whose]) : row.then.whose, next: nextText(facts, row.then.next || '') });
   return {
-    when: conditions.length ? `When ${conditions.join(' and ')}:` : 'In every other case:',
+    when: conditions.length ? text('core.rules.when', { conditions: conditions.join(text('core.rules.and')) }) : text('core.rules.otherwise'),
     then: outcome,
   };
 };

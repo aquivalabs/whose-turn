@@ -3,8 +3,10 @@
 // A click on the backdrop asks to close. docs/mechanisms/motion.md § The dialog
 import { M as Motion } from 'motion-v';
 import { fade, rise } from '@/motion.ts';
+import { useText } from '@/i18n/index.ts';
 defineProps<{ title: string; labelId: string; flush?: boolean; cardClass?: string }>();
 const emit = defineEmits<{ close: [] }>();
+const t = useText();
 </script>
 <template>
   <Motion
@@ -19,7 +21,7 @@ const emit = defineEmits<{ close: [] }>();
       <div class="modal__head">
         <h3 :id="labelId" class="modal__title">{{ title }}</h3>
         <slot name="head" />
-        <button type="button" class="btn" @click="emit('close')">Close</button>
+        <button type="button" class="btn" @click="emit('close')">{{ t('common.modal.close') }}</button>
       </div>
       <div class="modal__body" :class="{ 'modal__body--flush': flush }"><slot /></div>
       <div v-if="$slots.footer" class="modal__foot"><slot name="footer" /></div>

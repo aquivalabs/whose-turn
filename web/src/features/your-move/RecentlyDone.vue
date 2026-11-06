@@ -12,8 +12,12 @@ import Chevron from '@/ui/Chevron.vue';
 import ResizeHandle from '@/ui/ResizeHandle.vue';
 import { usePanelSize } from '@/composables/usePanelSize.ts';
 import { glideThrough } from '@/motion.ts';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
 const LIST_MAX = 480;
-const { size: listHeight, set: setListHeight } = usePanelSize(() => `${snapshot.workspace.id}:recently-done`);
+const { size: listHeight, set: setListHeight } = usePanelSize(
+  () => `${snapshot.workspace.id}:recently-done`,
+);
 const list = useTemplateRef<HTMLElement>('list');
 const scrollerRoom = (element: HTMLElement) => {
   const scroller = element.closest('.island__body')?.querySelector<HTMLElement>('.row-scroll');
@@ -24,7 +28,8 @@ const scrollerRoom = (element: HTMLElement) => {
 const listBounds = () => {
   const element = list.value as HTMLElement;
   const first = element.querySelector('tbody > tr');
-  const bottom = (first ?? element).getBoundingClientRect().bottom - element.getBoundingClientRect().top;
+  const bottom =
+    (first ?? element).getBoundingClientRect().bottom - element.getBoundingClientRect().top;
   const padding = parseFloat(getComputedStyle(element).paddingBottom) || 0;
   return {
     current: element.offsetHeight,
@@ -51,20 +56,26 @@ const rows = computed(() => {
   <details v-if="rows.length" ref="root" class="recently-done" :open="open">
     <summary class="recently-done__summary" @click.prevent="toggle">
       <Chevron tag="span" :open="open" />
-      Recently done <span class="count">{{ rows.length }}</span>
+      {{ t('yourMove.recentlyDone.title') }} <span class="count">{{ rows.length }}</span>
     </summary>
     <div
       ref="list"
       class="recently-done__list"
-      :style="listHeight === null ? undefined : { maxHeight: listHeight + 'px', height: listHeight + 'px' }"
+      :style="
+        listHeight === null
+          ? undefined
+          : { maxHeight: listHeight + 'px', height: listHeight + 'px' }
+      "
     >
       <table class="table">
         <thead>
           <tr>
-            <th>Ticket</th>
-            <th>Status</th>
-            <th>Done</th>
-            <th class="table__actions-col"><span class="visually-hidden">Copy for AI</span></th>
+            <th>{{ t('yourMove.recentlyDone.ticket') }}</th>
+            <th>{{ t('yourMove.recentlyDone.status') }}</th>
+            <th>{{ t('yourMove.recentlyDone.done') }}</th>
+            <th class="table__actions-col">
+              <span class="visually-hidden">{{ t('yourMove.recentlyDone.copyForAi') }}</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -76,9 +87,15 @@ const rows = computed(() => {
               }}</span>
             </td>
             <td>
-              <span class="age" :data-tip="'Done ' + when(row.status_since || row.updated)">{{
-                since.text
-              }}</span>
+              <span
+                class="age"
+                :data-tip="
+                  t('yourMove.recentlyDone.doneTip', {
+                    when: when(row.status_since || row.updated),
+                  })
+                "
+                >{{ since.text }}</span
+              >
             </td>
             <td class="table__actions">
               <AiButton
@@ -92,7 +109,7 @@ const rows = computed(() => {
     </div>
     <ResizeHandle
       v-if="open"
-      label="Resize Recently done"
+      :label="t('yourMove.recentlyDone.resize')"
       axis="y"
       top
       :grow="-1"

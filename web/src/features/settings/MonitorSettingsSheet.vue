@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 import { snapshot, ui, reload, restoreWorkspace, stopServer, toggleNotifications } from '@/store.ts';
 import { listed } from '@/motion.ts';
 import type { FieldSpec } from '@/lib/types.ts';
+import { useText } from '@/i18n/index.ts';
 import FieldRow from '@/ui/FieldRow.vue';
 import SettingsFrame from './SettingsFrame.vue';
 import { useConfigSheet } from './useConfigSheet.ts';
@@ -16,6 +17,7 @@ interface ConfigReply {
   problems?: string[];
 }
 
+const t = useText();
 const draft = ref<Record<string, string>>({});
 const specs = ref<FieldSpec[]>([]);
 const configFile = ref('');
@@ -48,7 +50,7 @@ const close = () => {
 };
 const restart = () => stopServer('restart').then(close);
 const askQuit = () =>
-  confirm('Quit Whose Turn? It stops checking your sources until you start it again.', 'Quit', 'Keep running', () => {
+  confirm(t('settings.monitor.quitQuestion'), t('settings.monitor.quit'), t('settings.monitor.keepRunning'), () => {
     void stopServer('quit').then(close);
   });
 const save = () =>
@@ -61,7 +63,7 @@ const save = () =>
   <AnimatePresence>
     <SettingsFrame
       v-if="ui.monitor"
-      title="Monitor settings"
+      :title="t('settings.monitor.title')"
       label-id="monitor-title"
       :dirty="dirty"
       :ask="ask"
@@ -72,7 +74,7 @@ const save = () =>
       @answer="answer"
     >
       <div class="sheet-form">
-        <h4 class="sheet-form__heading">Notifications</h4>
+        <h4 class="sheet-form__heading">{{ t('settings.monitor.notifications') }}</h4>
         <label class="monitor-settings-sheet__switch">
           <input
             type="checkbox"
@@ -80,10 +82,9 @@ const save = () =>
             :checked="snapshot.notifications.desktop"
             @change="toggleNotifications"
           />
-          Desktop notifications for every workspace; saved as you click, like the bell in the status
-          bar
+          {{ t('settings.monitor.notificationsSwitch') }}
         </label>
-        <h4 class="sheet-form__heading">Polling and health</h4>
+        <h4 class="sheet-form__heading">{{ t('settings.monitor.polling') }}</h4>
         <FieldRow
           v-for="spec in specs"
           :key="spec.key"
@@ -92,10 +93,9 @@ const save = () =>
           :error="fieldErrors['settings.' + spec.key]"
         />
         <template v-if="hiddenWorkspaces.length">
-          <h4 class="sheet-form__heading">Parked and paused workspaces</h4>
+          <h4 class="sheet-form__heading">{{ t('settings.monitor.hiddenHeading') }}</h4>
           <p class="monitor-settings-sheet__note">
-            Parked: checked every 15 minutes, back in the rail when something needs you. Paused: not
-            checked at all, back only when you restore it.
+            {{ t('settings.monitor.hiddenNote') }}
           </p>
           <AnimatePresence>
             <Motion
@@ -109,25 +109,24 @@ const save = () =>
               <button
                 type="button"
                 class="btn"
-                :aria-label="'Restore ' + workspace.name"
-                data-tip="Show it in the list again and check it every minute."
+                :aria-label="t('settings.monitor.restoreLabel', { name: workspace.name })"
+                :data-tip="t('settings.monitor.restoreTip')"
                 @click="restoreWorkspace(workspace.id)"
               >
-                Restore
+                {{ t('settings.monitor.restore') }}
               </button>
             </Motion>
           </AnimatePresence>
         </template>
-        <h4 class="sheet-form__heading">The monitor</h4>
+        <h4 class="sheet-form__heading">{{ t('settings.monitor.lifecycleHeading') }}</h4>
         <p class="monitor-settings-sheet__note">
-          Restart reloads the monitor and the window reconnects by itself. Quit stops it until you start
-          it again, from Claude or with a new Claude Code session.
+          {{ t('settings.monitor.lifecycleNote') }}
         </p>
         <div class="monitor-settings-sheet__lifecycle">
-          <button type="button" class="btn" @click="restart">Restart</button>
-          <button type="button" class="btn btn--danger" @click="askQuit">Quit</button>
+          <button type="button" class="btn" @click="restart">{{ t('settings.monitor.restart') }}</button>
+          <button type="button" class="btn btn--danger" @click="askQuit">{{ t('settings.monitor.quit') }}</button>
         </div>
-        <h4 class="sheet-form__heading">Config file</h4>
+        <h4 class="sheet-form__heading">{{ t('settings.monitor.configFile') }}</h4>
         <p class="monitor-settings-sheet__file">{{ configFile }}</p>
       </div>
     </SettingsFrame>

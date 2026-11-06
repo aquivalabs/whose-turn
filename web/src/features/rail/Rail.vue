@@ -10,15 +10,20 @@ import type { Workspace } from '@/lib/types.ts';
 import { mulberry32 } from '@/lib/random.ts';
 import { fade, listed } from '@/motion.ts';
 import { useWhatsNew } from '@/composables/useWhatsNew.ts';
+import { useText } from '@/i18n/index.ts';
 const emit = defineEmits<{ settings: []; addWorkspace: []; whatsNew: [] }>();
+const t = useText();
 const { unseen } = useWhatsNew();
 
 const shown = computed(() => snapshot.workspaces.filter((workspace) => !workspace.hidden));
 const hiddenCount = computed(() => snapshot.workspaces.length - shown.value.length);
 const hiddenLine = computed(() => {
   const count = (mode: string) => snapshot.workspaces.filter((workspace) => workspace.hidden === mode).length;
-  return [`${count('parked')} parked`, `${count('paused')} paused`]
-    .filter((part) => !part.startsWith('0 '))
+  return [
+    count('parked') ? t('rail.parked', { count: count('parked') }) : '',
+    count('paused') ? t('rail.paused', { count: count('paused') }) : '',
+  ]
+    .filter(Boolean)
     .join(' · ');
 });
 
@@ -131,7 +136,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 };
 </script>
 <template>
-  <nav class="rail" aria-label="Workspaces">
+  <nav class="rail" :aria-label="t('rail.workspaces')">
     <AnimatePresence>
     <Motion
       v-for="workspace in shown"
@@ -178,21 +183,21 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
         </text>
       </svg>
       <span class="rail__label">{{ workspace.name }}</span>
-      <span v-if="failing(workspace)" class="rail__warn" title="A source of this workspace fails">!</span>
-      <span v-if="workspace.returned" class="rail__dot" title="Back in the rail: something needs you"></span>
+      <span v-if="failing(workspace)" class="rail__warn" :title="t('rail.sourceFails')">{{ t('rail.warnMark') }}</span>
+      <span v-if="workspace.returned" class="rail__dot" :title="t('rail.returned')"></span>
       <span v-if="workspace.open_moves" class="rail__badge">{{ workspace.open_moves }}</span>
     </Motion>
     </AnimatePresence>
     <a
       class="rail__item"
       href="#add-workspace"
-      aria-label="Add workspace"
+      :aria-label="t('rail.addWorkspace')"
       @click.prevent="onAddWorkspace"
     >
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
         <path :d="PLUS" fill="currentColor" />
       </svg>
-      <span class="rail__label">Add workspace</span>
+      <span class="rail__label">{{ t('rail.addWorkspace') }}</span>
     </a>
     <span class="rail__spacer"></span>
     <AnimatePresence>
@@ -202,31 +207,31 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
         as="a"
         class="rail__item rail__hidden"
         href="#hidden-workspaces"
-        :aria-label="hiddenCount + ' hidden'"
-        :data-tip="'Hidden workspaces: ' + hiddenLine + '. Open to bring one back.'"
+        :aria-label="t('rail.hiddenCount', { count: hiddenCount })"
+        :data-tip="t('rail.hiddenTip', { summary: hiddenLine })"
         @click.prevent="onSettings"
       >
         <span class="rail__hidden-count" aria-hidden="true">{{ hiddenCount }}</span>
-        <span class="rail__label">{{ hiddenCount }} hidden</span>
+        <span class="rail__label">{{ t('rail.hiddenCount', { count: hiddenCount }) }}</span>
       </Motion>
     </AnimatePresence>
-    <a class="rail__item" href="#whats-new" aria-label="What's new" @click.prevent="onWhatsNew">
+    <a class="rail__item" href="#whats-new" :aria-label="t('rail.whatsNew')" @click.prevent="onWhatsNew">
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
         <path :d="NEW_RELEASES" fill="currentColor" />
       </svg>
-      <span class="rail__label">What's new</span>
-      <span v-if="unseen.length" class="rail__dot" title="Unseen changes"></span>
+      <span class="rail__label">{{ t('rail.whatsNew') }}</span>
+      <span v-if="unseen.length" class="rail__dot" :title="t('rail.unseen')"></span>
     </a>
     <a
       class="rail__item"
       href="#settings"
-      aria-label="Monitor settings"
+      :aria-label="t('rail.settings')"
       @click.prevent="onSettings"
     >
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
         <path :d="GEAR" fill="currentColor" />
       </svg>
-      <span class="rail__label">Monitor settings</span>
+      <span class="rail__label">{{ t('rail.settings') }}</span>
     </a>
   </nav>
 </template>

@@ -1,22 +1,23 @@
 <script setup lang="ts">
 // The first-run card for a workspace without sources: what the window does, and how to give it something to watch.
 import { snapshot, openSettings } from '@/store.ts';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
 const addSource = () => openSettings('connectors');
 </script>
 <template>
   <section id="first-run" class="island first-run" aria-labelledby="first-run-title">
     <h2 id="first-run-title" class="first-run__title">
-      Whose Turn watches your tickets and pull requests and shows what is waiting on you.
+      {{ t('firstRun.title') }}
     </h2>
-    <p class="first-run__text">
-      <b>{{ snapshot.workspace.name }}</b> has no sources yet, so there is nothing to watch. Connect
-      a repository or a tracker.
-    </p>
+    <i18n-t keypath="firstRun.noSources" tag="p" class="first-run__text">
+      <template #name><b>{{ snapshot.workspace.name }}</b></template>
+    </i18n-t>
     <div class="first-run__actions">
-      <button type="button" class="btn btn--tonal" @click="addSource">Add a source</button>
+      <button type="button" class="btn btn--tonal" @click="addSource">{{ t('firstRun.addSource') }}</button>
     </div>
     <p class="first-run__text first-run__ai">
-      Or ask Claude: "add my GitHub repository to Whose Turn."
+      {{ t('firstRun.askClaude') }}
     </p>
   </section>
 </template>

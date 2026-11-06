@@ -4,6 +4,7 @@ import { useMutationObserver, useResizeObserver } from '@vueuse/core';
 import { useFold } from '@/composables/useFold.ts';
 import { glideThrough, LEAVING } from '@/motion.ts';
 import { ceilingHeight, floorHeight, usePanelSize } from '@/composables/usePanelSize.ts';
+import { useText } from '@/i18n/index.ts';
 import Chevron from './Chevron.vue';
 import ResizeHandle from './ResizeHandle.vue';
 const props = withDefaults(
@@ -23,6 +24,7 @@ const props = withDefaults(
     resize: 'height',
   },
 );
+const t = useText();
 const MIN_WIDTH = 280;
 const MAIN_MIN_WIDTH = 360;
 const { collapsed, toggle: flip, folded } = useFold(props.id);
@@ -172,16 +174,16 @@ const bounds = () => {
     <div class="island__head" @click="strip && toggle()">
       <Chevron
         :open="!collapsed"
-        :aria-label="(collapsed ? 'Open ' : 'Fold ') + title"
-        :data-tip="collapsed ? 'Open this panel' : 'Fold this panel; it stays folded until you open it again'"
+        :aria-label="t(collapsed ? 'common.island.open' : 'common.island.fold', { title })"
+        :data-tip="t(collapsed ? 'common.island.openTip' : 'common.island.foldTip')"
         :data-tippy-placement="strip ? 'left' : undefined"
         @click.stop="toggle"
       />
       <h2 class="island__title">{{ title }} <slot name="head" /></h2>
       <p class="island__note">
         <span class="island__note-text">{{ note }}</span>
-        <button v-if="tip" type="button" class="hint-icon" :aria-label="'About ' + title" :data-tip="tip" data-tip-click>
-          ?
+        <button v-if="tip" type="button" class="hint-icon" :aria-label="t('common.island.about', { title })" :data-tip="tip" data-tip-click>
+          {{ t('common.island.hintMark') }}
         </button>
       </p>
     </div>
@@ -189,7 +191,7 @@ const bounds = () => {
     <div v-if="!collapsed" ref="body" class="island__body"><slot /></div>
     <ResizeHandle
       v-if="!collapsed"
-      :label="'Resize ' + title"
+      :label="t('common.island.resize', { title })"
       :axis="resize === 'width' ? 'x' : 'y'"
       :grow="resize === 'width' ? -1 : 1"
       :bounds="bounds"

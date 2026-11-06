@@ -14,5 +14,6 @@ import sheet from './sheet.ts';
 import whatsNew from './whats-new.ts';
 import firstRun from './first-run.ts';
 import lifecycle from './lifecycle.ts';
+import core from './core.ts';
 
-export default { common, status, rail, header, yourMove, waiting, todos, feed, settings, feedback, report, sheet, whatsNew, firstRun, lifecycle };
+export default { common, status, rail, header, yourMove, waiting, todos, feed, settings, feedback, report, sheet, whatsNew, firstRun, lifecycle, core };

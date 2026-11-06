@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // One settings field drawn from its spec: a checkbox, a colour, a list, a secret, or plain text; the value goes out through v-model and the parent decides how to store it.
 import type { FieldSpec } from '@/lib/types.ts';
+import { useText } from '@/i18n/index.ts';
 const props = withDefaults(
   defineProps<{
     spec: FieldSpec;
@@ -12,6 +13,7 @@ const props = withDefaults(
 );
 const emit = defineEmits<{ secret: [key: string, value: string] }>();
 const value = defineModel<string | string[] | boolean>();
+const t = useText();
 const HEX = /^#[0-9a-f]{6}$/i;
 const text = () => String(value.value ?? '');
 const list = () => (value.value as string[] | undefined) || [];
@@ -34,7 +36,7 @@ const setList = (typedText: string) =>
 </script>
 <template>
   <div class="field-row">
-    <label class="field-row__label">{{ spec.label }}{{ spec.required ? ' *' : '' }}</label>
+    <label class="field-row__label">{{ spec.label }}{{ spec.required ? t('settings.field.requiredMark') : '' }}</label>
     <label v-if="spec.boolean" class="field-row__check">
       <input
         type="checkbox"
@@ -50,7 +52,7 @@ const setList = (typedText: string) =>
       :value="text()"
       @change="set(typed($event))"
     >
-      <option v-if="!spec.required && !spec.choices.includes(text())" value="">(default)</option>
+      <option v-if="!spec.required && !spec.choices.includes(text())" value="">{{ t('settings.field.defaultChoice') }}</option>
       <option v-if="text() && !spec.choices.includes(text())" :value="text()">{{ text() }}</option>
       <option v-for="choice in spec.choices" :key="choice" :value="choice">{{ choice }}</option>
     </select>
@@ -58,7 +60,7 @@ const setList = (typedText: string) =>
       v-else-if="spec.secret"
       class="input"
       type="password"
-      placeholder="paste to replace"
+      :placeholder="t('settings.field.pasteToReplace')"
       autocomplete="off"
       @input="emit('secret', spec.key, typed($event))"
     />
@@ -72,11 +74,11 @@ const setList = (typedText: string) =>
       <input
         class="input"
         type="text"
-        placeholder="#rrggbb"
+        :placeholder="t('settings.field.colourPlaceholder')"
         :value="text()"
         @input="set(typed($event))"
       />
-      <button type="button" class="btn" @click="set('')">None</button>
+      <button type="button" class="btn" @click="set('')">{{ t('settings.field.none') }}</button>
     </div>
     <input
       v-else-if="spec.list"

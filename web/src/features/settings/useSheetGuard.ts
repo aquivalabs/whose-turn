@@ -1,5 +1,6 @@
 // What both settings sheets share: the unsaved-changes flag, the confirm bar's question, and Escape asking before it drops edits.
 import { ref, watch } from 'vue';
+import { text } from '@/i18n/index.ts';
 import { ui } from '@/store.ts';
 
 export interface Ask {
@@ -12,7 +13,12 @@ export interface Ask {
 export const useSheetGuard = (isOpen: () => boolean, isDirty: () => boolean, close: () => void) => {
   const ask = ref<Ask | null>(null);
   const askDiscard = () => {
-    ask.value = { text: 'Discard changes?', yes: 'Discard', no: 'Keep editing', run: close };
+    ask.value = {
+      text: text('settings.guard.discardQuestion'),
+      yes: text('settings.guard.discard'),
+      no: text('settings.guard.keepEditing'),
+      run: close,
+    };
   };
   const requestClose = () => (isDirty() ? askDiscard() : close());
   const answer = (yes: boolean) => {

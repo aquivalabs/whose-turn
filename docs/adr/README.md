@@ -59,6 +59,7 @@ Example shape: `0001-choose-the-message-queue.md`.
 | 0013 | [The server is plain ESM on Node's built-in modules, with no build step and no runtime dependencies](0013-dependency-free-node-server.md) | accepted |
 | 0014 | [The config API trusts every local process, and binds each stored token to its service, account and endpoint](0014-config-api-trusts-local-processes.md) | accepted |
 | 0015 | [Defaults cover the common case; everything else is the user's config, explained where it is set](0015-defaults-and-user-config.md) | accepted |
+| 0016 | [Window texts live in one catalog through vue-i18n](0016-vue-i18n-for-window-texts.md) | accepted |
 
 ## Referencing an ADR from code
 
