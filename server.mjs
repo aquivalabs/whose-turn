@@ -8,7 +8,7 @@ import { createHttpClient } from './lib/http-client.mjs';
 import { nextDelay } from './lib/backoff.mjs';
 import { createSecrets } from './lib/secrets.mjs';
 import { createWorkspace } from './lib/workspace.mjs';
-import { createRegistry } from './lib/registry.mjs';
+import { askOwner, createRegistry } from './lib/registry.mjs';
 import { openInbox } from './lib/inbox.mjs';
 import { openReports, RELAY_URL, NEWS_EVERY_MS } from './lib/feedback.mjs';
 import { startApi } from './lib/api.mjs';
@@ -56,7 +56,7 @@ const registry = createRegistry({
   saveNotifications: (notifications) => saveNotifications(first.configFile, notifications),
   saveSettings: (settings) => saveSettings(first.configFile, settings),
   normalise: (rawWorkspaces) => normaliseWorkspaces(rawWorkspaces).workspaces,
-  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify, hidden: () => registry.hiddenOf(definition.id), unpark: (id) => registry.setHidden(id, ''), onFailure: failureLog.record }),
+  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify, hidden: () => registry.hiddenOf(definition.id), unpark: (id) => registry.setHidden(id, ''), onFailure: failureLog.record, asksOwner: (repo) => askOwner(registry.workspaces, registry.hiddenOf, repo) }),
 });
 
 let wake = null;

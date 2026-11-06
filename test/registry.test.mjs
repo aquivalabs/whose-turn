@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRegistry } from '../lib/registry.mjs';
+import { askOwner, createRegistry } from '../lib/registry.mjs';
 import { loadConfig, saveNotifications, saveWorkspaces } from '../lib/config.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
@@ -97,4 +97,25 @@ test('the real notifications save reloads the registry, so a toggle applies live
   assert.equal(registry.notifications.desktop, false);
   await registry.saveNotifications({ desktop: true });
   assert.equal(registry.notifications.desktop, true);
+});
+
+test('a review request belongs to the first shown workspace watching its repository, else the first shown one in its org, else nobody (RMA-378)', () => {
+  // Setup
+  const github = (id, repo, extra = {}) => ({ type: 'github', id, repo, ...extra });
+  const workspaces = [
+    { id: 'tools', connectors: [{ type: 'linear', id: 'lin' }, github('gh', 'acme/tools')] },
+    { id: 'app', connectors: [github('front', 'Acme/App'), github('back', 'acme/app')] },
+    { id: 'parked', connectors: [github('gh', 'acme/infra')] },
+    { id: 'other', connectors: [github('gh', 'zed/site', { org: 'zed' })] },
+  ];
+  const hiddenOf = (id) => (id === 'parked' ? 'parked' : '');
+  // Exercise
+  const owner = (repo) => askOwner(workspaces, hiddenOf, repo);
+  // Verify
+  assert.equal(owner('acme/app'), 'app/front');
+  assert.equal(owner('ACME/tools'), 'tools/gh');
+  assert.equal(owner('acme/infra'), 'tools/gh');
+  assert.equal(owner('zed/docs'), 'other/gh');
+  assert.equal(owner('nobody/repo'), '');
+  assert.equal(askOwner(workspaces, () => '', 'acme/infra'), 'parked/gh');
 });

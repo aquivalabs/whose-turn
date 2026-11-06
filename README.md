@@ -178,7 +178,7 @@ Every row carries a numeric `rank` from its table row's `then.rank`, lowest firs
 Extra rows, one per item:
 
 - **Ticket comments:** a comment by a human that @-mentions you in the last `history_days` and is not answered. It is a question if it has `?` outside links or one of `question_words`. Otherwise it is "read". Your later comment answers only the people it @-mentions. Authors matching `automation_authors` are ignored.
-- **GitHub review requests and mentions:** "Review PR #N" while you are a requested reviewer of the open PR, whether or not you have opened it. "Answer X on #N" until you comment there after the mention.
+- **GitHub review requests and mentions:** "Review PR #N" while you are a requested reviewer of the open PR, whether or not you have opened it. "Answer X on #N" until you comment there after the mention. Each one shows once, in one workspace: the first shown workspace in the rail whose GitHub source watches that repository, else the first shown one with a GitHub source in the same org. A parked or paused workspace takes none, and moving workspaces in the rail moves the requests from repositories nobody watches (RMA-378).
 
 The On Hold reason is the comment by whoever moved the ticket to On Hold, closest to that moment. If there is none, the last comment before it. As a last resort, the newest comment saying "on hold". Shown on one line, with the full comment in a tooltip and a link.
 

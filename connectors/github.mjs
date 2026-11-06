@@ -309,13 +309,13 @@ const pollReviewRequests = async (api, { org, me, keyOf }) => {
 };
 
 const pollAsks = async (api, context) => {
-  const { org, cache, sinceIso } = context;
-  const reviews = await pollReviewRequests(api, context);
+  const { org, cache, sinceIso, owns } = context;
+  const reviews = (await pollReviewRequests(api, context)).filter((review) => owns(review.repo));
   const notes = await api(`/notifications?participating=true&all=true&since=${encodeURIComponent(sinceIso)}&per_page=50`);
   cache.asks = cache.asks || new Map();
   const rows = [];
   const seen = new Set();
-  const relevant = notes.filter((note) => note.repository.full_name.startsWith(`${org}/`) && ['mention', 'team_mention', 'assign'].includes(note.reason));
+  const relevant = notes.filter((note) => note.repository.full_name.startsWith(`${org}/`) && owns(note.repository.full_name) && ['mention', 'team_mention', 'assign'].includes(note.reason));
   await mapLimit(relevant, 4, async (note) => {
     seen.add(note.id);
     const cached = cache.asks.get(note.id);
@@ -333,10 +333,10 @@ const pollAsks = async (api, context) => {
   return [...reviews, ...rows];
 };
 
-export const poll = async ({ settings, http, cache, sinceIso, keyOf }) => {
+export const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () => true }) => {
   const api = createApi(http, await ghToken(settings.account, cache));
   const me = settings.me || (cache.me ??= (await api('/user')).login);
-  const context = { repo: settings.repo, org: settings.org || settings.repo.split('/')[0], me, bots: wordsRegex(settings.bots || ['github-actions', 'dependabot', '[bot]']), keyOf, sinceIso, cache };
+  const context = { repo: settings.repo, org: settings.org || settings.repo.split('/')[0], me, bots: wordsRegex(settings.bots || ['github-actions', 'dependabot', '[bot]']), keyOf, sinceIso, cache, owns };
   const watchRuns = settings.workflow_runs !== false;
   const [prsOutcome, asksOutcome, runsOutcome] = await Promise.allSettled([pollPrs(api, context), pollAsks(api, context), watchRuns ? pollRuns(api, context) : { runs: [], activity: [] }]);
   const errors = {};

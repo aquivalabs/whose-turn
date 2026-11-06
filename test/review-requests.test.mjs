@@ -69,3 +69,13 @@ test('a review_requested notification no longer makes a row of its own, so a req
   // Verify
   assert.equal(result.asks.filter((ask) => ask.kind === 'review requested').length, 1);
 });
+
+test('a source keeps only the review requests and mentions it owns, so one request shows once across the workspaces (RMA-378)', async () => {
+  // Setup
+  const { http } = fakeGh({ reviewItems: [reviewItem(4011), reviewItem(12, 'acme/api')] });
+  const owns = (repo) => repo === 'acme/app';
+  // Exercise
+  const result = await github.poll({ settings: { repo: 'acme/app', me: 'pat', workflow_runs: false }, http, cache: {}, sinceIso: SINCE, keyOf: () => '', owns });
+  // Verify
+  assert.deepEqual(result.asks.map((ask) => ask.ref), ['app#4011']);
+});
