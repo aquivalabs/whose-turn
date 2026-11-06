@@ -20,7 +20,8 @@ Rows for an open PR whose ticket is not in your list, for GitHub review
 requests and mentions, and for unanswered @-mentions in ticket comments are built in code in
 `lib/rules.mjs` (`orphanPrRow`, `askRow`, `mentionRow`), as is the feed. A review request or mention
 without a ticket key says "this PR" in its next step, since the PR's own key already stands in the
-ticket column. A ticket change that no comment or event explains is a feed item of kind `touched`
+ticket column. A ticket a connector marks `mention_only` (Jira, a ticket whose comment mentions you though it
+was never yours, RMA-86) gives its mention rows and no ticket row. A ticket change that no comment or event explains is a feed item of kind `touched`
 with the text `now <status>, with <who>`.
 
 ## Where it lives
