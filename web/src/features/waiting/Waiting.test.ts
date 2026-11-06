@@ -81,3 +81,10 @@ test('a row leaving Waiting on others is marked while it is still in the page', 
   expect(container.querySelectorAll('.waiting__table tbody')).toHaveLength(2);
   expect(container.querySelectorAll('.waiting__table tbody[data-leaving]')).toHaveLength(1);
 });
+
+test('the list wrapper carries island__fade, the class the island styles reach through :deep() (RMA-361)', () => {
+  snapshot.turn = [{ ...backlogRow, row_id: 'r-fade', status_group: 'code_review', whose: 'sam', reviewers: [{ name: 'sam', state: '' }] }];
+  const { container } = render(Waiting);
+
+  expect(container.querySelector('.island__fade .waiting__table')).not.toBeNull();
+});

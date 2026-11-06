@@ -35,3 +35,8 @@ test('the configured bug words of another language count, as stems, next to the 
   const inside = await composeIssue('a debugger session', { run: fail });
   assert.equal(inside.kind, 'improvement');
 });
+
+test('with no claude binary found, the first line becomes the title without running anything (RMA-361)', async () => {
+  const issue = await composeIssue('the list is broken\nmore', { find: () => '' });
+  assert.deepEqual(issue, { title: 'the list is broken', kind: 'bug', body: 'more', composed_by: 'fallback' });
+});

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin, compareVersions } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
@@ -461,4 +461,32 @@ test('the plugin headers of an API request reach the updater, and the summary sa
   } finally {
     api.server.close();
   }
+});
+
+test('pluginCopied is a no-op that still returns the status: on a fresh data dir, for another version memo, and on a second call (RMA-361)', () => {
+  // Setup
+  const make = (dataDir) => createUpdater({ http: null, dataDir, version: '1.0.0-beta.1', installed: true, notify: () => {}, restart: async () => {} });
+  const memoOf = (dataDir) => JSON.parse(readFileSync(join(dataDir, 'update.json'), 'utf8'));
+  const fresh = scratchDir('wt-copied-fresh-');
+  const other = scratchDir('wt-copied-other-');
+  const otherMemo = { plugin: { for: '1.0.0-alpha.1', state: 'updated' } };
+  writeFileSync(join(other, 'update.json'), JSON.stringify(otherMemo));
+  const twice = scratchDir('wt-copied-twice-');
+  writeFileSync(join(twice, 'update.json'), JSON.stringify({ plugin: { for: '1.0.0-beta.1', state: 'updated' } }));
+  // Exercise
+  const onFresh = make(fresh).pluginCopied();
+  const onOther = make(other).pluginCopied();
+  const updater = make(twice);
+  const first = updater.pluginCopied();
+  const afterFirst = memoOf(twice);
+  const second = updater.pluginCopied();
+  // Verify
+  assert.equal(onFresh.plugin, undefined);
+  assert.equal(existsSync(join(fresh, 'update.json')), false);
+  assert.equal(onOther.plugin, undefined);
+  assert.deepEqual(memoOf(other), otherMemo);
+  assert.equal(first.plugin, undefined);
+  assert.deepEqual(afterFirst.plugin, { for: '1.0.0-beta.1', state: 'updated', copied: true });
+  assert.equal(second.plugin, undefined);
+  assert.deepEqual(memoOf(twice), afterFirst);
 });

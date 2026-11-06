@@ -3,7 +3,7 @@ import type { UpdateStatus } from '@/lib/types.ts';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { nextTick } from 'vue';
-import { snapshot, ui } from '@/store.ts';
+import { notice, snapshot, ui } from '@/store.ts';
 import { post } from '@/lib/api.ts';
 import { rememberUpdated, reloadPage, takeUpdated } from '@/lib/page-reload.ts';
 import UpdateChip from './UpdateChip.vue';
@@ -170,6 +170,23 @@ test('a refused copy says so and leaves the chip for the server to keep', async 
 
   expect(post).not.toHaveBeenCalled();
   expect(screen.getByRole('button', { name: 'Reload Claude skill · Copy' })).toBeTruthy();
+});
+
+test.each([
+  ['an error answer', () => vi.mocked(post).mockResolvedValue({ error: { code: 400, message: 'x', details: [] } })],
+  ['a failed request', () => vi.mocked(post).mockRejectedValue(new Error('offline'))],
+])('a copy the server refuses to record (%s) says Copied and puts the problem in the notice', async (_name, refuse) => {
+  clipboard();
+  notice.value = '';
+  withPlugin('updated', '/reload-plugins --force');
+  refuse();
+  render(UpdateChip);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
+
+  expect(await screen.findByText('Copied')).toBeTruthy();
+  await vi.waitFor(() => expect(notice.value).toContain('The copy was not recorded'));
+  expect(snapshot.update.plugin?.state).toBe('updated');
 });
 
 test('a newer monitor version wins over the plugin chip, and no plugin result shows nothing', async () => {
