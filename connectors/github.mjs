@@ -38,8 +38,24 @@ const createApi = (http, token) => (path) => {
   return http.fetchJson(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' } });
 };
 
-const checksFor = async (api, repo, sha) => {
-  const runs = (await api(`/repos/${repo}/commits/${sha}/check-runs?per_page=100`)).check_runs || [];
+/** One run per check, the latest attempt: a re-run or a cancelled run replaced by a newer one no longer counts. RMA-382. */
+export const latestRuns = (runs) => {
+  const latest = new Map();
+  for (const checkRun of runs) {
+    const key = `${checkRun.app?.id ?? ''}:${checkRun.name ?? ''}`;
+    const held = latest.get(key);
+    const startedAt = String(checkRun.started_at || '');
+    const heldAt = String(held?.started_at || '');
+    if (!held || startedAt > heldAt || (startedAt === heldAt && (checkRun.id ?? 0) > (held.id ?? 0))) {
+      latest.set(key, checkRun);
+    }
+  }
+  return [...latest.values()];
+};
+
+/** The PR's checks state from its head commit's check runs, judged on each check's latest attempt. */
+export const checksState = (allRuns) => {
+  const runs = latestRuns(allRuns);
   const conclusions = runs.map((checkRun) => checkRun.conclusion || checkRun.status);
   let state = 'passing';
   if (conclusions.some((value) => ['failure', 'timed_out', 'cancelled', 'action_required'].includes(value))) {
@@ -52,6 +68,9 @@ const checksFor = async (api, repo, sha) => {
   const failed = runs.filter((checkRun) => ['failure', 'timed_out'].includes(checkRun.conclusion));
   return { state, failed };
 };
+
+const checksFor = async (api, repo, sha) =>
+  checksState((await api(`/repos/${repo}/commits/${sha}/check-runs?per_page=100`)).check_runs || []);
 
 const reviewDecision = (reviews) => {
   const latest = {};

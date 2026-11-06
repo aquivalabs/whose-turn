@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Fixed
+- A pull request whose CI you re-ran and that passed no longer stays marked as failing; only the latest run of each check counts now. RMA-382.
 - With reduced motion turned on in your system, the "+N more" line under a list now jumps to the hidden rows instead of scrolling smoothly. RMA-375.
 
 ### Changed

@@ -121,7 +121,7 @@ Restart after a self-update: launchd names its job in `XPC_SERVICE_NAME` and res
 **GitHub**, token from `gh auth token`, or from `GH_TOKEN` when that variable is set (CI, a machine without `gh`):
 
 - `search/issues` finds your open PRs and PRs updated in the last `history_days`. Full details are fetched only for PRs whose `updated_at` changed: PR, reviews, issue comments, inline comments, check runs.
-- Open PRs get their check runs re-polled every cycle, because CI finishing does not bump `updated_at`.
+- Open PRs get their check runs re-polled every cycle, because CI finishing does not bump `updated_at`. Each check counts by its latest attempt: a re-run, or a run that a newer one cancelled, replaces the older one (RMA-382).
 - Workflow runs: one `GET /repos/{owner}/{repo}/actions/runs?branch=<default branch>` per poll (the default branch itself is asked once a day) finds runs that fail on the default branch after a merge, on a schedule or in a `workflow_run` chain; each failure and the success that ends it reach the feed as `check failed` and `check passed`, runs of pull requests are left to the PR path, and `workflow_runs: false` on the connector turns this off.
 - `/notifications?participating=true` gives review requests and @-mentions on PRs and issues that are not yours, filtered to the org.
 - Every GET carries an ETag; a 304 does not count against the 5000/h limit. Steady state is about 1 to 10 requests a minute per workspace.
