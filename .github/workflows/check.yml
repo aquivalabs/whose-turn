@@ -17,3 +17,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      # The coverage ratchet: thresholds in vitest.config.ts and package.json `coverage:server`, set at the measured numbers (RMA-364).
+      - run: npm run coverage

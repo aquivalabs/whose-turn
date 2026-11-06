@@ -11,5 +11,11 @@ export default defineConfig({
     include: ['web/**/*.test.ts'],
     restoreMocks: true,
     unstubGlobals: true,
+    coverage: {
+      provider: 'v8',
+      include: ['web/src/**'],
+      exclude: ['web/src/**/*.test.ts'],
+      thresholds: { lines: 68, branches: 56, functions: 68, statements: 68 },
+    },
   },
 });
