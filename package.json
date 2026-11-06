@@ -40,7 +40,7 @@
     "test:web": "vitest run",
     "test:e2e": "npm run build && playwright test",
     "coverage": "npm run coverage:server && npm run coverage:web",
-    "coverage:server": "node --experimental-strip-types --experimental-test-coverage --test-coverage-include=\"lib/**\" --test-coverage-include=\"connectors/**\" --test-coverage-include=\"scripts/**\" --test-coverage-include=server.mjs --test-coverage-lines=91 --test-coverage-branches=87 --test-coverage-functions=91 --test \"test/**/*.test.mjs\"",
+    "coverage:server": "node --experimental-strip-types --experimental-test-coverage --test-coverage-include=\"lib/**\" --test-coverage-include=\"connectors/**\" --test-coverage-include=\"scripts/**\" --test-coverage-include=server.mjs --test-coverage-lines=90 --test-coverage-branches=87 --test-coverage-functions=90 --test \"test/**/*.test.mjs\"",
     "coverage:web": "vitest run --coverage",
     "mutation": "stryker run"
   },

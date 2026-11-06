@@ -43,6 +43,13 @@ jobs:
         run: npm ci
       - if: steps.version.outputs.new == 'true'
         run: npm run check
+      # The same gates as check.yml, so a release cannot publish what main's CI would refuse (RMA-378).
+      - if: steps.version.outputs.new == 'true'
+        run: npm run coverage
+      - if: steps.version.outputs.new == 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.version.outputs.new == 'true'
+        run: npm run test:e2e
       - if: steps.version.outputs.new == 'true'
         run: npm run build
       - name: Pack
