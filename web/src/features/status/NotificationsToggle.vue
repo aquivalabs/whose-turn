@@ -3,7 +3,9 @@
 import { computed } from 'vue';
 import { snapshot, toggleNotifications as toggle } from '@/store.ts';
 import { BELL, BELL_OFF } from '@/lib/icons.ts';
+import { useText } from '@/i18n/index.ts';
 
+const t = useText();
 const on = computed(() => snapshot.notifications.desktop);
 </script>
 
@@ -14,16 +16,12 @@ const on = computed(() => snapshot.notifications.desktop);
     class="btn notifications-toggle"
     :class="{ 'notifications-toggle--off': !on }"
     :aria-checked="on"
-    :data-tip="
-      on
-        ? 'Desktop notifications are on for every workspace. Click to turn them all off; the window and Claude\'s session summary keep updating.'
-        : 'Desktop notifications are off for every workspace. The window and Claude\'s session summary still update. Click to turn them back on.'
-    "
+    :data-tip="on ? t('status.notifications.onTip') : t('status.notifications.offTip')"
     @click="toggle"
   >
     <svg class="notifications-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
       <path :d="on ? BELL : BELL_OFF" fill="currentColor" /></svg
-    >{{ on ? 'Notifications on' : 'Notifications off' }}
+    >{{ on ? t('status.notifications.on') : t('status.notifications.off') }}
   </button>
 </template>
 

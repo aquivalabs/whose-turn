@@ -14,7 +14,9 @@ import { useAttention } from '@/composables/useAttention.ts';
 import AiButton from '@/ui/AiButton.vue';
 import UpdateChip from './UpdateChip.vue';
 import NotificationsToggle from './NotificationsToggle.vue';
+import { useText } from '@/i18n/index.ts';
 const emit = defineEmits<{ report: [] }>();
+const t = useText();
 const wiggling = useAttention(computed(() => ui.reportNews));
 const verdict = computed(() => {
   void now.value;
@@ -29,12 +31,10 @@ const OPEN_COOLDOWN_MS = 5000;
 const opening = refAutoReset(false, OPEN_COOLDOWN_MS);
 const opened = ref(false);
 const status = computed(() =>
-  opened.value
-    ? 'Opened in the app window. You can close this tab.'
-    : ui.status || verdict.value.text,
+  opened.value ? t('status.bar.openedInApp') : ui.status || verdict.value.text,
 );
 const tellOpen = (outcome: unknown) =>
-  tellProblem(outcome, { refused: 'The app window did not open' });
+  tellProblem(outcome, { refused: t('status.bar.appNotOpened') });
 const openAsApp = () => {
   if (opening.value) {
     return;
@@ -63,22 +63,24 @@ const openAsApp = () => {
           notice
         }}</Motion>
       </AnimatePresence>
-      <button type="button" class="btn status-bar__btn" @click="refresh">Refresh now</button>
+      <button type="button" class="btn status-bar__btn" @click="refresh">
+        {{ t('status.bar.refresh') }}
+      </button>
     </div>
     <div class="status-bar__center">
       <UpdateChip />
     </div>
     <div class="status-bar__group status-bar__actions">
-      <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint"
-        >Copy for AI: everything</span
-      >
+      <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint">{{
+        t('status.bar.copyForAi')
+      }}</span>
       <a
         v-if="ui.mode === 'app'"
         class="btn status-bar__btn"
         :href="tabUrl(ui.ws)"
         target="_blank"
         rel="noopener"
-        >Open in browser</a
+        >{{ t('status.bar.openInBrowser') }}</a
       >
       <button
         v-else
@@ -88,25 +90,26 @@ const openAsApp = () => {
         :aria-disabled="opening"
         @click="openAsApp"
       >
-        {{ opening ? 'Opening…' : 'Open as app' }}
+        {{ opening ? t('status.bar.opening') : t('status.bar.openAsApp') }}
       </button>
       <NotificationsToggle />
       <button
         type="button"
         class="btn status-bar__btn status-bar__report"
         :class="{ 'status-bar__report--wiggle': wiggling }"
-        title="A bug or a wish about this monitor, straight to its backlog"
+        :title="t('status.bar.reportTitle')"
         @click="emit('report')"
       >
         <svg class="status-bar__icon" viewBox="0 0 24 24" aria-hidden="true">
           <path :d="BUG" fill="currentColor" /></svg
-        >Report<AnimatePresence
+        >{{ t('status.bar.report')
+        }}<AnimatePresence
           ><Motion
             v-if="ui.reportNews"
             v-bind="fade"
             as="span"
             class="status-bar__dot"
-            title="A report has news"
+            :title="t('status.bar.reportNews')"
         /></AnimatePresence>
       </button>
     </div>

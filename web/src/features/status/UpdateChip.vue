@@ -9,7 +9,9 @@ import { post } from '@/lib/api.ts';
 import { rememberUpdated, reloadPage, takeUpdated } from '@/lib/page-reload.ts';
 import Swap from '@/ui/Swap.vue';
 import type { ApiError, UpdateStatus } from '@/lib/types.ts';
+import { useText } from '@/i18n/index.ts';
 
+const t = useText();
 const UPDATED_SHOWN_MS = 15000;
 const SLOW_RESTART_MS = 90000;
 const COPIED_SHOWN_MS = 2500;
@@ -25,10 +27,22 @@ const restarting = computed(
 );
 const pluginFace = computed(() =>
   update.value.plugin?.state === 'updated'
-    ? { label: 'Reload Claude skill · Copy', hint: 'paste it in your Claude session to load the updated skill', failed: false }
-    : { label: 'Update Claude skill · Copy', hint: 'run it in a terminal, then reload plugins in your Claude session', failed: true },
+    ? {
+        label: t('status.update.pluginReload'),
+        hint: t('status.update.pluginReloadHint'),
+        failed: false,
+      }
+    : {
+        label: t('status.update.pluginUpdate'),
+        hint: t('status.update.pluginUpdateHint'),
+        failed: true,
+      },
 );
-const working = computed(() => !ready.value && (update.value.state === 'installing' || restarting.value || Boolean(target.value)));
+const working = computed(
+  () =>
+    !ready.value &&
+    (update.value.state === 'installing' || restarting.value || Boolean(target.value)),
+);
 const face = computed(() => {
   if (updatedTo.value) {
     return 'done';
@@ -50,9 +64,13 @@ const face = computed(() => {
   }
   return '';
 });
-const { start: watchSlow, stop: stopSlow } = useTimeoutFn(() => (slow.value = true), SLOW_RESTART_MS, {
-  immediate: false,
-});
+const { start: watchSlow, stop: stopSlow } = useTimeoutFn(
+  () => (slow.value = true),
+  SLOW_RESTART_MS,
+  {
+    immediate: false,
+  },
+);
 
 onMounted(() => {
   updatedTo.value = takeUpdated();
@@ -85,7 +103,7 @@ const onUpdate = () => {
   target.value = update.value.latest;
   watchSlow();
   const settle = (outcome: unknown) => {
-    if (!tellProblem(outcome, { refused: 'The update did not start' })) {
+    if (!tellProblem(outcome, { refused: t('status.update.notStarted') })) {
       target.value = '';
       stopSlow();
       return;
@@ -99,12 +117,14 @@ const onCopyPlugin = async () => {
   try {
     await navigator.clipboard.writeText(update.value.plugin?.copy ?? '');
   } catch (error) {
-    tellProblem(error, { refused: 'Could not copy' });
+    tellProblem(error, { refused: t('status.update.notCopied') });
     return;
   }
   copied.value = true;
-  const outcome = await post<{ update: UpdateStatus; error?: ApiError }>('/api/update/plugin-copied').catch((error: unknown) => error);
-  if (tellProblem(outcome, { refused: 'The copy was not recorded' })) {
+  const outcome = await post<{ update: UpdateStatus; error?: ApiError }>(
+    '/api/update/plugin-copied',
+  ).catch((error: unknown) => error);
+  if (tellProblem(outcome, { refused: t('status.update.copyNotRecorded') })) {
     snapshot.update = (outcome as { update: UpdateStatus }).update;
   }
 };
@@ -125,10 +145,10 @@ const onReload = () => {
       as="button"
       type="button"
       class="update-chip update-chip--done"
-      title="See what changed"
+      :title="t('status.update.seeChanges')"
       @click="ui.whatsNew = true"
     >
-      Updated to {{ updatedTo }}
+      {{ t('status.update.done', { version: updatedTo }) }}
     </Motion>
     <Motion
       v-else-if="shown === 'ready'"
@@ -137,21 +157,31 @@ const onReload = () => {
       as="button"
       type="button"
       class="update-chip update-chip--ready"
-      title="Reload the window to apply the changes"
+      :title="t('status.update.reloadTitle')"
       @click="onReload"
     >
-      Updated to {{ ready }} · Reload
+      {{ t('status.update.ready', { version: ready }) }}
     </Motion>
-    <Motion v-else-if="shown === 'busy'" key="busy" v-bind="fade" as="span" class="update-chip update-chip--busy" role="status"
+    <Motion
+      v-else-if="shown === 'busy'"
+      key="busy"
+      v-bind="fade"
+      as="span"
+      class="update-chip update-chip--busy"
+      role="status"
       ><span class="update-chip__spinner" aria-hidden="true"></span
-      >{{ restarting ? 'Restarting…' : `Installing ${target || update.latest}…` }}<button
+      >{{
+        restarting
+          ? t('status.update.restarting')
+          : t('status.update.installing', { version: target || update.latest })
+      }}<button
         v-if="slow"
         type="button"
         class="update-chip__link"
-        title="The restart is taking longer than usual"
+        :title="t('status.update.slowRestart')"
         @click="onReload"
       >
-        Reload
+        {{ t('status.update.reload') }}
       </button></Motion
     >
     <Motion
@@ -164,7 +194,7 @@ const onReload = () => {
       :title="update.reason"
       @click="onUpdate"
     >
-      Update failed · Retry
+      {{ t('status.update.failed') }}
     </Motion>
     <Motion
       v-else-if="shown === 'plugin'"
@@ -173,16 +203,33 @@ const onReload = () => {
       as="button"
       type="button"
       :class="['update-chip', { 'update-chip--failed': pluginFace.failed }]"
-      :title="`Copies ${update.plugin?.copy}: ${pluginFace.hint}`"
+      :title="
+        t('status.update.pluginTitle', { copy: update.plugin?.copy ?? '', hint: pluginFace.hint })
+      "
       @click="onCopyPlugin"
     >
       {{ pluginFace.label }}
     </Motion>
-    <Motion v-else-if="shown === 'copied'" key="copied" v-bind="fade" as="span" class="update-chip" role="status">
-      Copied
+    <Motion
+      v-else-if="shown === 'copied'"
+      key="copied"
+      v-bind="fade"
+      as="span"
+      class="update-chip"
+      role="status"
+    >
+      {{ t('status.update.copied') }}
     </Motion>
-    <Motion v-else-if="shown === 'out'" key="out" v-bind="fade" as="button" type="button" class="update-chip" @click="onUpdate">
-      {{ update.latest }} is out · Update
+    <Motion
+      v-else-if="shown === 'out'"
+      key="out"
+      v-bind="fade"
+      as="button"
+      type="button"
+      class="update-chip"
+      @click="onUpdate"
+    >
+      {{ t('status.update.out', { version: update.latest }) }}
     </Motion>
   </Swap>
 </template>
