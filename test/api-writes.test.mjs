@@ -275,3 +275,20 @@ test('a settings write saves the global keys and answers them; a bad one is refu
     server.close();
   }
 });
+
+test('a POST body over the size cap is refused with BODY_TOO_LARGE, and a normal one still works (RMA-367)', async () => {
+  // Setup
+  const { MAX_BODY_BYTES } = await import('../lib/api.mjs');
+  const { server, post } = await startTestApi();
+  try {
+    // Exercise
+    const response = await post('/api/marks', { ws: 'home', seen: ['x'.repeat(MAX_BODY_BYTES)] });
+    // Verify
+    const body = await response.json();
+    assert.equal(response.status, 413);
+    assert.equal(body.error.details[0].reason, 'BODY_TOO_LARGE');
+    assert.equal((await post('/api/refresh', {})).status, 200);
+  } finally {
+    server.close();
+  }
+});

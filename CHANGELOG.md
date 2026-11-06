@@ -141,7 +141,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - Whose Turn updates itself. When a new version is out you get one notification and an "Update" chip in the status bar; a click installs it and restarts the monitor. A new Claude Code session installs it for you and says so. RMA-231.
 
 ### Fixed
-- The window updates live again when the monitor checks your sources. Before, you saw new items only after reloading the page.
+- The window updates live again when the monitor checks your sources. Before, you saw new items only after reloading the page. RMA-231.
 
 ## [1.0.0-alpha.2] - 2026-11-03
 

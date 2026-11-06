@@ -35,4 +35,6 @@ window already has. RMA-258.
 
 ## What obliges an update
 
-Any change to `yourRows` that changes which rows are listed, their order, or the counts.
+Any change to `yourRows` that changes which rows are listed, their order, or the counts; to `recentlyDone`, which
+lists done tickets newest first and at most 15; or to `isDue` in `lib/backoff.mjs`, which decides when a parked
+workspace is polled.

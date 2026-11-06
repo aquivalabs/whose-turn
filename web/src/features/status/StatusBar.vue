@@ -3,6 +3,7 @@
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { computed, ref } from 'vue';
+import { refAutoReset } from '@vueuse/core';
 import { snapshot, ui, now, notice, refresh, tellProblem } from '@/store.ts';
 import { post } from '@/lib/api.ts';
 import { tabUrl } from '@/lib/window-mode.ts';
@@ -25,7 +26,7 @@ const verdict = computed(() => {
   );
 });
 const OPEN_COOLDOWN_MS = 5000;
-const opening = ref(false);
+const opening = refAutoReset(false, OPEN_COOLDOWN_MS);
 const opened = ref(false);
 const status = computed(() =>
   opened.value
@@ -39,7 +40,6 @@ const openAsApp = () => {
     return;
   }
   opening.value = true;
-  setTimeout(() => (opening.value = false), OPEN_COOLDOWN_MS);
   const settle = (outcome: unknown) => {
     tellOpen(outcome);
     opened.value = !writeProblem(outcome);

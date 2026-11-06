@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
 import { computed, nextTick, ref, watch } from 'vue';
-import { watchDebounced } from '@vueuse/core';
+import { refAutoReset, watchDebounced } from '@vueuse/core';
 import { snapshot, ui, now, setMarks, tellProblem } from '@/store.ts';
 import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
 import type { FeedGroup } from '@/lib/feed.ts';
@@ -54,7 +54,7 @@ watch(
   },
 );
 const FOCUS_MS = 2500;
-const flashed = ref('');
+const flashed = refAutoReset('', FOCUS_MS);
 watch(
   () => ui.focusFeed,
   async (id) => {
@@ -69,9 +69,6 @@ watch(
     flashed.value = id;
     await nextTick();
     document.getElementById(`feed-${id}`)?.scrollIntoView({ block: 'center' });
-    setTimeout(() => {
-      flashed.value = '';
-    }, FOCUS_MS);
   },
 );
 const marks = computed(() => ({ base: snapshot.marks.base, seen: new Set(snapshot.marks.seen) }));

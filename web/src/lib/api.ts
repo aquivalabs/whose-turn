@@ -45,8 +45,9 @@ export const reasonOf = (error: ApiError): string => detailOf(error, 'ErrorInfo'
 
 /** The hand-off text of a row, a thread, a feed item or a workspace, for the clipboard. */
 export const handOffText = (query: Record<string, string>): Promise<string> =>
-  fetch('/api/handoff?' + new URLSearchParams(query)).then((response) =>
-    response.ok ? response.text() : Promise.reject(new Error(String(response.status))),
+  fetch('/api/handoff?' + new URLSearchParams(query)).then(
+    (response) => (response.ok ? response.text() : Promise.reject(new Error(String(response.status)))),
+    () => Promise.reject(new Error('unreachable')),
   );
 
 /** Data from the sources is untrusted: only https links are followed. */

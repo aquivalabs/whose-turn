@@ -54,6 +54,10 @@ Example shape: `0001-choose-the-message-queue.md`.
 | 0008 | [Every source is an adapter under one versioned, capability-declared contract; a user adapter is a module named by path](0008-integration-contract.md) | proposed |
 | 0009 | [Motion in the window is motion-v, pinned, through shared tokens, and off under reduced motion](0009-motion-in-the-window.md) | accepted |
 | 0010 | [A rule a tool can check is enforced by the tool; a review lens judges only what no tool can](0010-static-analysis-first.md) | accepted |
+| 0011 | [Whose turn is decided once, on the server; the window only renders the rows it receives](0011-rules-on-the-server.md) | accepted |
+| 0012 | [One tab is one workspace, and nothing is mixed between workspaces](0012-one-tab-one-workspace.md) | accepted |
+| 0013 | [The server is plain ESM on Node's built-in modules, with no build step and no runtime dependencies](0013-dependency-free-node-server.md) | accepted |
+| 0014 | [The config API trusts every local process, and binds each stored token to its service, account and endpoint](0014-config-api-trusts-local-processes.md) | accepted |
 
 ## Referencing an ADR from code
 

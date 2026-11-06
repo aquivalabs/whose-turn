@@ -41,7 +41,8 @@
     {
       "id": "your-move",
       "paths": [
-        "web/src/lib/moves.ts"
+        "web/src/lib/moves.ts",
+        "lib/backoff.mjs"
       ],
       "doc": "docs/mechanisms/your-move.md"
     },
