@@ -128,8 +128,12 @@ const STATUS_KEYS: Record<string, TextKey> = {
   in_progress: 'core.rules.status.inProgress',
   done: 'core.rules.status.done',
 };
+/** The text a lookup table holds for `value`, or `fallback()` when the table has none. */
+const phrase = (map: Record<string, TextKey>, value: string, fallback: () => string) =>
+  map[value] ? text(map[value]) : fallback();
+
 const statusPhrase = (group: string) =>
-  STATUS_KEYS[group] ? text(STATUS_KEYS[group]) : text('core.rules.status.other', { group: group.replace(/_/g, ' ') });
+  phrase(STATUS_KEYS, group, () => text('core.rules.status.other', { group: group.replace(/_/g, ' ') }));
 
 const WHOSE_KEYS: Record<string, TextKey> = {
   you: 'core.rules.whose.you',
@@ -156,7 +160,7 @@ const valuePhrase = (facts: FactWords, fact: string, value: unknown): string => 
     case 'pr.checks':
       return value === 'none' ? text('core.rules.noChecks') : text('core.rules.checksAre', { value });
     case 'pr.review':
-      return REVIEW_KEYS[String(value)] ? text(REVIEW_KEYS[String(value)]) : text('core.rules.review.other', { value });
+      return phrase(REVIEW_KEYS, String(value), () => text('core.rules.review.other', { value }));
     case 'pr.base':
       return text('core.rules.goesInto', { value });
     default:
@@ -210,7 +214,7 @@ export const ruleText = (row: RuleRow, facts: FactWords = {}) => {
   const outcome =
     row.then.whose === 'hidden'
       ? text('core.rules.notShown')
-      : text('core.rules.outcome', { whose: WHOSE_KEYS[row.then.whose] ? text(WHOSE_KEYS[row.then.whose]) : row.then.whose, next: nextText(facts, row.then.next || '') });
+      : text('core.rules.outcome', { whose: phrase(WHOSE_KEYS, row.then.whose, () => row.then.whose), next: nextText(facts, row.then.next || '') });
   return {
     when: conditions.length ? text('core.rules.when', { conditions: conditions.join(text('core.rules.and')) }) : text('core.rules.otherwise'),
     then: outcome,

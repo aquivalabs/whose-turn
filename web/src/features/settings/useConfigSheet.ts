@@ -33,7 +33,7 @@ export const useConfigSheet = <Reply extends { problems?: string[] }>(options: {
         return options.apply(reply);
       })
       .catch(() => {
-        unloaded.value = SERVER_DOWN + text('settings.sheet.cannotLoad');
+        unloaded.value = text('settings.sheet.cannotLoad', { problem: SERVER_DOWN });
       });
 
   /** Posts `body` to /api/config. A refusal puts the field messages under their fields and the rest in the alert line; an accepted save runs `saved`. */
@@ -56,7 +56,7 @@ export const useConfigSheet = <Reply extends { problems?: string[] }>(options: {
       await saved();
     } catch (error) {
       problems.value = [
-        writeProblem(error, { unreachable: SERVER_DOWN + text('settings.sheet.keptSaveAgain') }),
+        writeProblem(error, { unreachable: text('settings.sheet.keptSaveAgain', { problem: SERVER_DOWN }) }),
       ];
     }
   };

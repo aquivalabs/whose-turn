@@ -114,7 +114,7 @@ const onCopyPlugin = async () => {
   try {
     await navigator.clipboard.writeText(update.value.plugin?.copy ?? '');
   } catch (error) {
-    tellProblem(error, { refused: t('status.update.notCopied') });
+    tellProblem(error, { refused: t('common.aiButton.failed') });
     return;
   }
   copied.value = true;
@@ -215,7 +215,7 @@ const onReload = () => {
       class="update-chip"
       role="status"
     >
-      {{ t('status.update.copied') }}
+      {{ t('common.aiButton.copied') }}
     </Motion>
     <Motion
       v-else-if="shown === 'out'"

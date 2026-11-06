@@ -10,8 +10,8 @@ export default {
     keepEditing: 'Keep editing',
   },
   sheet: {
-    cannotLoad: '; settings cannot be loaded.',
-    keptSaveAgain: '; your changes are kept, save again.',
+    cannotLoad: '{problem}; settings cannot be loaded.',
+    keptSaveAgain: '{problem}; your changes are kept, save again.',
     fixMarked: 'Fix the marked fields; nothing was saved.',
   },
   field: {
