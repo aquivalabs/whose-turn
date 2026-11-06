@@ -31,7 +31,7 @@ const pluginFace = computed(() => {
     return { label: t('status.update.pluginReload'), hint: t('status.update.pluginReloadHint'), failed: false };
   }
   if (state === 'behind') {
-    return { label: t('status.update.pluginUpdate'), hint: t('status.update.pluginBehindHint', { latest: update.value.plugin?.latest ?? '' }), failed: false };
+    return { label: t('status.update.pluginUpdate'), hint: t('status.update.pluginBehindHint', { current: update.value.current }), failed: false };
   }
   return { label: t('status.update.pluginUpdate'), hint: t('status.update.pluginUpdateHint'), failed: true };
 });

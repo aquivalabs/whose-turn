@@ -32,7 +32,7 @@ export default {
     pluginReloadHint: 'paste it in your Claude session to load the updated skill',
     pluginUpdate: 'Update Claude skill · Copy',
     pluginUpdateHint: 'run it in a terminal, then reload plugins in your Claude session',
-    pluginBehindHint: 'your Claude plugin is older than {latest}; run it in a terminal, then reload plugins in your Claude session',
+    pluginBehindHint: 'your Claude plugin does not know monitor {current} yet; run it in a terminal, then reload plugins in your Claude session',
   },
   notifications: {
     on: 'Notifications on',

@@ -28,7 +28,7 @@ test('a newer version under the channel tag is offered and announced once', asyn
   const first = await updater.check();
   await updater.check();
   // Verify
-  assert.deepEqual(asked.slice(0, 2), ['https://raw.githubusercontent.com/aquivalabs/BladeForge/main/plugins/whose-turn/.claude-plugin/plugin.json', 'http://registry.test/-/package/whose-turn/dist-tags']);
+  assert.equal(asked[0], 'http://registry.test/-/package/whose-turn/dist-tags');
   assert.deepEqual(first, { current: '1.0.0-alpha.2', latest: '1.0.0-alpha.3', available: true, state: 'idle' });
   assert.deepEqual(notes, [['Whose Turn 1.0.0-alpha.3 is out', 'Update from the window.']]);
 });
@@ -68,13 +68,13 @@ test('an unreachable registry or a malformed tag leaves the offer as it was', as
   }
 });
 
-test('a checkout never asks the registry and is never offered an update; it still reads the plugin version', async () => {
+test('a checkout never asks the registry and is never offered an update', async () => {
   // Setup
   const { updater, asked } = updaterWith({ latest: '1.0.0-alpha.3' }, { installed: false });
   // Exercise
   const status = await updater.check();
   // Verify
-  assert.deepEqual(asked, ['https://raw.githubusercontent.com/aquivalabs/BladeForge/main/plugins/whose-turn/.claude-plugin/plugin.json']);
+  assert.deepEqual(asked, []);
   assert.equal(status.available, false);
 });
 
@@ -427,39 +427,37 @@ test('versions compare by number, and a release outranks its prereleases (RMA-35
   assert.equal(compareVersions('1.0.13', '1.0.13'), 0);
 });
 
-test('a running plugin older than the marketplace one shows as behind until its command is copied; a current one shows nothing (RMA-350)', async () => {
+test('a plugin whose skill knows an older monitor shows as behind until its command is copied; one that knows this monitor shows nothing (RMA-350)', () => {
   // Setup
-  const dataDir = scratchDir('wt-plugin-behind-');
-  const http = { fetchJson: async (url) => (url.includes('plugin.json') ? { version: '1.0.14' } : { latest: '1.0.0-alpha.2' }) };
-  const updater = createUpdater({ http, dataDir, version: '1.0.0-alpha.2', installed: true, notify: () => {}, restart: async () => {}, pluginManifest: 'https://example.test/plugin.json' });
+  const updater = createUpdater({ http: null, dataDir: scratchDir('wt-plugin-behind-'), version: '1.0.0-beta.1', installed: true, notify: () => {}, restart: async () => {} });
   // Exercise
-  await updater.check();
   const unseen = updater.status().plugin;
-  updater.sawPlugin('1.0.12');
+  updater.sawPlugin('1.0.14', '1.0.0-alpha.14');
   const behind = updater.status().plugin;
   updater.pluginCopied();
   const copied = updater.status().plugin;
-  updater.sawPlugin('1.0.14');
+  updater.sawPlugin('1.0.15', '1.0.0-beta.1');
   const current = updater.status().plugin;
+  updater.sawPlugin('1.0.13');
+  const old = updater.status().plugin;
   // Verify
   assert.equal(unseen, undefined);
-  assert.deepEqual(behind, { state: 'behind', copy: 'claude plugin update whose-turn@bladeforge', seen: '1.0.12', latest: '1.0.14' });
+  assert.deepEqual(behind, { state: 'behind', copy: 'claude plugin update whose-turn@bladeforge', seen: '1.0.14', knows: '1.0.0-alpha.14' });
   assert.equal(copied, undefined);
   assert.equal(current, undefined);
+  assert.equal(old, undefined);
 });
 
-test('the X-Whose-Turn-Plugin header of an API request reaches the updater once per new version (RMA-350)', async () => {
+test('the plugin headers of an API request reach the updater, and the summary says the plugin is behind (RMA-350)', async () => {
   // Setup
-  const seen = [];
-  const updater = { ...createUpdater({ http: null, dataDir: scratchDir('wt-header-'), version: '1.0.0', installed: false, notify: () => {}, restart: async () => {} }), sawPlugin: (version) => seen.push(version) };
+  const updater = createUpdater({ http: null, dataDir: scratchDir('wt-header-'), version: '1.0.0-beta.1', installed: false, notify: () => {}, restart: async () => {} });
   const api = await startTestApi({ updater });
   try {
     // Exercise
-    await api.get('/api/summary', { headers: { 'X-Whose-Turn-Plugin': '1.0.13' } });
-    await api.get('/api/summary', { headers: { 'X-Whose-Turn-Plugin': '1.0.13' } });
-    await api.get('/api/summary', { headers: { 'X-Whose-Turn-Plugin': '1.0.14' } });
+    await api.get('/api/summary', { headers: { 'X-Whose-Turn-Plugin': '1.0.14', 'X-Whose-Turn-Plugin-Knows': '1.0.0-alpha.14' } });
     // Verify
-    assert.deepEqual(seen, ['1.0.13', '1.0.14']);
+    assert.equal(updater.status().plugin.state, 'behind');
+    assert.equal(updater.status().plugin.knows, '1.0.0-alpha.14');
   } finally {
     api.server.close();
   }

@@ -180,13 +180,13 @@ test('a newer monitor version wins over the plugin chip, and no plugin result sh
   expect(container.textContent).not.toContain('Claude skill');
 });
 
-test('a plugin behind the marketplace shows a calm Update Claude skill chip that names the latest version (RMA-350)', async () => {
+test('a plugin whose skill does not know this monitor shows a calm Update Claude skill chip (RMA-350)', async () => {
   clipboard();
-  snapshot.update = offer({ available: false, latest: '1.0.0-alpha.2', plugin: { state: 'behind', copy: 'claude plugin update whose-turn@bladeforge', seen: '1.0.12', latest: '1.0.14' } });
+  snapshot.update = offer({ available: false, latest: '1.0.0-alpha.2', plugin: { state: 'behind', copy: 'claude plugin update whose-turn@bladeforge', seen: '1.0.12', knows: '1.0.0-alpha.1' } });
   render(UpdateChip);
 
   const chip = await screen.findByRole('button', { name: 'Update Claude skill · Copy' });
 
   expect(chip.className).not.toContain('update-chip--failed');
-  expect(chip.getAttribute('data-tip') || chip.getAttribute('title') || '').toContain('older than 1.0.14');
+  expect(chip.getAttribute('data-tip') || chip.getAttribute('title') || '').toContain('does not know monitor');
 });
