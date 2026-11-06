@@ -1,4 +1,3 @@
-import type * as Store from '@/store.ts';
 import { expect, test, vi } from 'vitest';
 import { defineComponent, h, nextTick } from 'vue';
 import { render, screen } from '@testing-library/vue';
@@ -10,8 +9,6 @@ import Waiting from './Waiting.vue';
 
 // docs/mechanisms/motion.md § The empty text waits for the list
 vi.mock('motion-v', () => vi.importActual('motion-v'));
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
-vi.mock('@/store.ts', async (importOriginal) => ({ ...(await importOriginal<typeof Store>()) }));
 
 const EMPTY = 'Nothing is waiting on someone else.';
 const loadSlowly = () => new Promise((resolve) => setTimeout(resolve, 200)).then(loadFeatures);

@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/vue';
 import { snapshot, todoAct, ui } from '@/store.ts';
 import Todos from './Todos.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
+// docs/adr/0006: the store is the seam between islands; the feature's contract is the call it makes there.
 vi.mock('@/store.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof Store>()),
   todoAct: vi.fn(),

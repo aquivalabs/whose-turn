@@ -4,7 +4,6 @@ import { snapshot, ui } from '@/store.ts';
 import { turnRow } from '@/test-rows.ts';
 import App from './App.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)));

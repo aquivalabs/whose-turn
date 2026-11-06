@@ -8,10 +8,12 @@ import { post } from '@/lib/api.ts';
 import { rememberUpdated, reloadPage, takeUpdated } from '@/lib/page-reload.ts';
 import UpdateChip from './UpdateChip.vue';
 
+// The network boundary: post is the only call that leaves the window.
 vi.mock('@/lib/api.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof Api>()),
   post: vi.fn(),
 }));
+// The browser boundary: a test cannot reload its own page.
 vi.mock('@/lib/page-reload.ts', () => ({ rememberUpdated: vi.fn(), reloadPage: vi.fn(), takeUpdated: vi.fn(() => '') }));
 
 const offer = (extra: Partial<UpdateStatus> = {}): UpdateStatus => ({

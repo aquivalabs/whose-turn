@@ -6,7 +6,6 @@ import { SEEN_KEY, useWhatsNew } from '@/composables/useWhatsNew.ts';
 import type { Changelog } from '@/lib/whats-new.ts';
 import WhatsNewSheet from './WhatsNewSheet.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 const reply: Changelog = {
   current: '1.2.0',

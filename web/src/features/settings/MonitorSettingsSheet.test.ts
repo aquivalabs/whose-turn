@@ -3,7 +3,6 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/vue
 import { snapshot, ui } from '@/store.ts';
 import App from '@/App.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 const reply = {
   settings: { poll_seconds: 60, history_days: 14, stale_minutes: 15, failing_polls: 3 },

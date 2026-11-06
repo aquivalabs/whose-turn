@@ -1,10 +1,9 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, expect, test } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { snapshot } from '@/store.ts';
 import type { Workspace } from '@/lib/types.ts';
 import Rail from './Rail.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 const workspace = (id: string, extra: Partial<Workspace> = {}): Workspace => ({
   id,

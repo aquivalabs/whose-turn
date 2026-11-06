@@ -2,7 +2,6 @@ import { ref, watch } from 'vue';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { SERVER_DOWN } from './lib/problems.ts';
 
-vi.mock('./backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 const reply = (body: unknown) => ({ json: () => Promise.resolve(body) }) as Response;
 const workspaceReply = (id: string) => ({ workspace: { id, name: id.toUpperCase() } });

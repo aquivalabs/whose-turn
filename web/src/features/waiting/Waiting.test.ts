@@ -1,5 +1,4 @@
-import type * as Store from '@/store.ts';
-import { expect, test, vi } from 'vitest';
+import { expect, test } from 'vitest';
 import { nextTick } from 'vue';
 import { render, screen } from '@testing-library/vue';
 import { snapshot } from '@/store.ts';
@@ -7,8 +6,6 @@ import { exits } from '@/test-motion.ts';
 import { backlogRow } from '@/test-rows.ts';
 import Waiting from './Waiting.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
-vi.mock('@/store.ts', async (importOriginal) => ({ ...(await importOriginal<typeof Store>()) }));
 
 test('backlog rows listed under Waiting on others say "you" and leave Waiting for empty', () => {
   snapshot.turn = [backlogRow];

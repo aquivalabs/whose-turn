@@ -5,7 +5,6 @@ import type { Workspace } from '@/lib/types.ts';
 import App from '@/App.vue';
 import WorkspaceSettingsSheet from './WorkspaceSettingsSheet.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 const reply = {
   workspaces: [

@@ -1,9 +1,8 @@
-import { expect, test, vi } from 'vitest';
+import { expect, test } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import type { FeedItem } from '@/lib/types.ts';
 import FeedItemRow from './FeedItem.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 const item: FeedItem = {
   id: 'c1',

@@ -8,7 +8,7 @@ import type { FeedItem } from '@/lib/types.ts';
 import Feed from './Feed.vue';
 import { useFeedState } from './useFeedState.ts';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
+// docs/adr/0006: the store is the seam between islands; the feature's contract is the call it makes there.
 vi.mock('@/store.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof Store>()),
   setMarks: vi.fn(),
