@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Report: one field in the user's words; the server's composer shapes the issue and files it with the maintainer's tracker; the list below shows what this machine filed with the state the tracker reports.
-import { AnimatePresence } from 'motion-v';
+import { AnimatePresence, Motion } from 'motion-v';
 import { computed, ref, watch, nextTick } from 'vue';
 import { snapshot, ui } from '@/store.ts';
 import { dark } from '@/scheme.ts';
@@ -8,6 +8,8 @@ import { getJson, post, problemsOf } from '@/lib/api.ts';
 import { SERVER_DOWN, TEXT_KEPT, writeProblem } from '@/lib/problems.ts';
 import type { ApiError, FiledReport } from '@/lib/types.ts';
 import { describeClient } from '@/lib/client-report.ts';
+import { describeWindow, recentApiFailures } from '@/lib/window-report.ts';
+import { fold } from '@/motion.ts';
 import { ago } from '@/lib/time.ts';
 import { outcomeTone } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
@@ -19,6 +21,11 @@ type ReportLine = Pick<
 >;
 interface FeedbackList {
   reports?: ReportLine[];
+}
+interface FeedbackPreview {
+  error?: ApiError;
+  preview?: { environment: object; diagnostics: object };
+  preview_token?: string;
 }
 interface FeedbackReply {
   error?: ApiError;
@@ -32,7 +39,50 @@ const sending = ref(false);
 const problems = ref<string[]>([]);
 const done = ref<{ identifier: string; title: string } | null>(null);
 const reports = ref<ReportLine[]>([]);
+const preview = ref<FeedbackPreview['preview'] | null>(null);
+const previewToken = ref('');
+const showPayload = ref(false);
 const reportPage = (id: string) => '/report?id=' + encodeURIComponent(id);
+const scrollBox = (selector: string) => document.querySelector<HTMLElement>(selector);
+const describeHere = () => ({
+  client: describeClient({
+    navigator,
+    screen,
+    devicePixelRatio,
+    innerWidth,
+    innerHeight,
+    dark: dark.value,
+    mode: ui.mode,
+  }),
+  window: describeWindow({
+    layers: ui,
+    fontPx: parseFloat(getComputedStyle(document.documentElement).fontSize) || 0,
+    consoleErrors: ui.consoleErrors,
+    reconnects: ui.reconnects,
+    lastEventAt: ui.lastEventAt,
+    now: Date.now(),
+    apiFailures: recentApiFailures(),
+    boxes: {
+      your_move: scrollBox('#your-move .row-scroll'),
+      waiting: scrollBox('#waiting .row-scroll'),
+      feed: scrollBox('#feed .feed__list'),
+    },
+  }),
+});
+let described = describeHere;
+const loadPreview = () => {
+  const here = described();
+  described = () => here;
+  return post<FeedbackPreview>('/api/feedback', { preview: true, from: 'the window', ws: snapshot.workspace.id, ...here }).then(
+    (reply) => {
+      preview.value = reply.preview || null;
+      previewToken.value = reply.preview_token || '';
+    },
+    () => {
+      preview.value = null;
+    },
+  );
+};
 const load = () =>
   getJson<FeedbackList>('/api/feedback').then(
     (list) => {
@@ -60,15 +110,8 @@ const send = () => {
     text: remark,
     from: 'the window',
     ws: snapshot.workspace.id,
-    client: describeClient({
-      navigator,
-      screen,
-      devicePixelRatio,
-      innerWidth,
-      innerHeight,
-      dark: dark.value,
-      mode: ui.mode,
-    }),
+    preview_token: previewToken.value || undefined,
+    ...described(),
   })
     .then((reply) => {
       sending.value = false;
@@ -92,6 +135,9 @@ watch(
       ui.reportNews = false;
       problems.value = [];
       done.value = null;
+      showPayload.value = false;
+      described = describeHere;
+      loadPreview();
       load().then(() => nextTick(() => field.value?.focus()));
     }
   },
@@ -125,8 +171,22 @@ watch(
           @keydown.ctrl.enter.prevent="send"
         ></textarea>
         <p class="feedback-sheet__note">
-          Only what you write, the monitor version and a description of your system are sent: OS and processor type, Node version, how the monitor was installed, browser, screen and window size, language, time zone, light or dark, app or tab, and which kinds of source you use.
+          Only what you write, the monitor version, a rough description of your system and counts about the monitor's health are sent: no names, keys, titles, links or error text.
+          <button
+            v-if="preview"
+            type="button"
+            class="feedback-sheet__payload-toggle"
+            :aria-expanded="showPayload"
+            @click="showPayload = !showPayload"
+          >
+            {{ showPayload ? 'Hide what is sent' : 'What is sent' }}
+          </button>
         </p>
+        <AnimatePresence>
+          <Motion v-if="showPayload && preview" v-bind="fold" as="pre" class="feedback-sheet__payload">{{
+            JSON.stringify(preview, null, 2)
+          }}</Motion>
+        </AnimatePresence>
         <p v-if="done" class="empty">
           Filed as
           <a :href="reportPage(done.identifier)" target="_blank" rel="noopener">{{
@@ -163,6 +223,26 @@ watch(
 .feedback-sheet__note {
   margin: 0;
   color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.feedback-sheet__payload-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--md-primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.feedback-sheet__payload {
+  max-height: 16rem;
+  margin: 0;
+  overflow: auto;
+  padding: 0.5rem;
+  border-radius: var(--md-r-chip);
+  background: var(--md-s-high);
   font-size: 0.75rem;
 }
 

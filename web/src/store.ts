@@ -48,6 +48,8 @@ export const ui = reactive({
   mode: resolveMode(location.search, lastMode.value),
   live: false,
   reconnects: 0,
+  lastEventAt: 0,
+  consoleErrors: 0,
   status: 'Connecting…',
   modal: null as FeedItem | null,
   note: '',
@@ -273,6 +275,7 @@ watch(
     if (!message) {
       return;
     }
+    ui.lastEventAt = Date.now();
     if ('update' in message) {
       snapshot.update = message.update;
       return;
@@ -309,9 +312,15 @@ export const connect = () => {
     stream.open();
   }
 };
+const countError = () => {
+  ui.consoleErrors++;
+};
+
 /** Starts what runs on its own: the clock, the first load and the stream behind it; importing this module does none of it. */
 export const start = () => {
   clock.resume();
+  useEventListener(window, 'error', countError);
+  useEventListener(window, 'unhandledrejection', countError);
   return load().then(connect);
 };
 

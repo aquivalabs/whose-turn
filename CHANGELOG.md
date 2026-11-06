@@ -10,6 +10,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - With reduced motion turned on in your system, the "+N more" line under a list now jumps to the hidden rows instead of scrolling smoothly. RMA-375.
 
 ### Changed
+- A report you send from the Report sheet or through Claude now also carries counts about the monitor's health: how long ago it last polled, which kinds of source fail and with what kind of error, how many rows each list holds, your poll settings, and for the window which view was open and how much of each list was in view. No names, keys, titles, links or error text go along, and "What is sent" in the Report sheet shows the exact payload before you send. The time zone now goes as an offset from UTC and the screen size rounded to the nearest 100. RMA-383.
 - The window now follows the text size you set in your browser: raise the default font size and the whole window grows with it, instead of keeping its fixed size. With a large font it switches to the narrow layout sooner, so columns do not crowd each other. RMA-344, RMA-377.
 
 ## [1.0.0-alpha.14] - 2026-11-05

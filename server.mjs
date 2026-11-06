@@ -16,10 +16,12 @@ import { notifier } from './lib/notify.mjs';
 import { loadChangelog } from './lib/changelog.mjs';
 import { createUpdater, pinnedVersion, restartServer, runsInstalled } from './lib/update.mjs';
 import { listOf } from './lib/text.mjs';
+import { openFailureLog } from './lib/diagnostics.mjs';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 const http = createHttpClient();
 const first = loadConfig();
+const failureLog = openFailureLog(first.dataDir);
 const secrets = createSecrets(first.dataDir);
 const inbox = openInbox(first.dataDir);
 const reports = openReports(first.dataDir, { http, relayUrl: process.env.WHOSE_TURN_FEEDBACK_URL || RELAY_URL, adminToken: () => secrets.get('whose-turn-feedback-admin', 'relay'), adminHosts: listOf(process.env.WHOSE_TURN_FEEDBACK_ADMIN_HOSTS) });
@@ -54,7 +56,7 @@ const registry = createRegistry({
   saveNotifications: (notifications) => saveNotifications(first.configFile, notifications),
   saveSettings: (settings) => saveSettings(first.configFile, settings),
   normalise: (rawWorkspaces) => normaliseWorkspaces(rawWorkspaces).workspaces,
-  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify, hidden: () => registry.hiddenOf(definition.id), unpark: (id) => registry.setHidden(id, '') }),
+  build: (definition, config) => createWorkspace(definition, { dataDir: config.dataDir, historyDays: () => historyDays, http, secrets, limits: () => healthLimits, notify, hidden: () => registry.hiddenOf(definition.id), unpark: (id) => registry.setHidden(id, ''), onFailure: failureLog.record }),
 });
 
 let wake = null;
@@ -79,7 +81,7 @@ const saveConfig = async (rawWorkspaces) => {
 };
 
 try {
-  server = await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir, updater, changelog: loadChangelog(appDir, version), version });
+  server = await startApi({ port: first.port, appDir, registry, requestPoll, saveConfig, secrets, inbox, http, reports, dataDir: first.dataDir, updater, changelog: loadChangelog(appDir, version), version, failureLog });
 } catch (error) {
   console.error(error.message);
   process.exit(1);

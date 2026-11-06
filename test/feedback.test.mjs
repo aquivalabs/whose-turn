@@ -2,7 +2,7 @@ import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { clientOf, createFeedback, MAX_BODY_CHARS, mayReceiveAdminToken, openReports, RELAY_URL } from '../lib/feedback.mjs';
+import { clientOf, createFeedback, MAX_BODY_CHARS, mayReceiveAdminToken, openReports, osMajor, refusesDiagnostics, RELAY_URL, utcOffsetZone } from '../lib/feedback.mjs';
 import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
 import { RateLimited } from '../lib/http-client.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
@@ -40,19 +40,20 @@ test('a bug is posted to the relay with its kind, title, body, version and envir
   assert.equal(calls[0].body.version, '1.0.0');
   assert.deepEqual(Object.keys(calls[0].body).sort(), ['body', 'environment', 'kind', 'product', 'title', 'version']);
   assert.deepEqual(Object.keys(calls[0].body.environment), ['os', 'osVersion', 'arch', 'node', 'install', 'sources']);
-  assert.equal(calls[0].body.environment.node, process.version);
+  assert.equal(calls[0].body.environment.node, process.version.split('.').slice(0, 2).join('.'));
+  assert.match(calls[0].body.environment.osVersion, /^\d+$/);
   assert.deepEqual(calls[0].body.environment.sources, ['github', 'linear']);
 });
 
 test('each client field is kept only when it is exactly the agreed shape, and a bad one is dropped without an error', () => {
-  const good = { browser: { name: 'Edge', version: '130' }, display: { width: 1512, height: 982, scale: 2.00001, viewport: [1200, 800] }, locale: 'en-GB', timezone: 'Europe/Berlin', theme: 'dark', mode: 'app' };
-  const clean = { ...good, display: { width: 1512, height: 982, scale: 2, viewport: [1200, 800] } };
+  const good = { browser: { name: 'Edge', version: '130' }, display: { width: 1512, height: 982, scale: 2.00001, viewport: [1240, 30] }, locale: 'en-GB', timezone: 'Asia/Tokyo', theme: 'dark', mode: 'app' };
+  const clean = { ...good, display: { width: 1500, height: 1000, scale: 2, viewport: [1200, 100] }, timezone: 'Etc/GMT-9' };
   assert.deepEqual(clientOf(good), clean);
   const bad = {
     browser: [null, 'Chrome', { name: 'Chrome' }, { name: 'Netscape', version: '4' }, { name: 'Chrome', version: '130.0.1' }, { name: 'Chrome', version: '1234567' }, { name: 'Chrome', version: 130 }, { name: 'Chrome', version: '130', ua: 'Mozilla/5.0' }],
     display: [null, 'wide', { ...good.display, extra: 'x' }, { ...good.display, width: 0 }, { ...good.display, height: 20001 }, { ...good.display, width: 1.5 }, { ...good.display, scale: 9 }, { ...good.display, scale: 0.4 }, { ...good.display, scale: '2' }, { ...good.display, viewport: [1200] }, { ...good.display, viewport: [1200, -1] }, { width: 1, height: 1, scale: 1 }],
     locale: [5, '', 'en_GB', 'en-GB ', 'x'.repeat(36), 'https://host.invalid'],
-    timezone: [5, '', 'Europe Berlin', 'Europe/Berlin\n', 'x'.repeat(65), 'http://host.invalid/a'],
+    timezone: [5, '', 'Europe Berlin', 'Europe/Berlin\n', 'x'.repeat(65), 'http://host.invalid/a', 'Asia/Kolkata', 'Mars/Olympus'],
     theme: ['blue', 1, null],
     mode: ['window', 1, null],
   };
@@ -75,6 +76,51 @@ test('the environment is built on the server, adds the clean client report, and 
   assert.equal(environment.arch, process.arch);
   assert.equal(environment.install, 'npm');
   assert.equal(environment.theme, 'light');
+});
+
+test('the time zone goes as its whole-hour UTC offset, the OS as its major number, and neither is ever empty', () => {
+  const winter = new Date('2026-01-15T12:00:00Z');
+  assert.equal(utcOffsetZone('Europe/Berlin', winter), 'Etc/GMT-1');
+  assert.equal(utcOffsetZone('America/New_York', winter), 'Etc/GMT+5');
+  assert.equal(utcOffsetZone('Europe/London', winter), 'Etc/GMT');
+  assert.equal(utcOffsetZone('Asia/Kolkata', winter), undefined);
+  assert.equal(utcOffsetZone('Nowhere/Land', winter), undefined);
+  assert.equal(osMajor('25.5.0'), '25');
+  assert.equal(osMajor('10.0.26100'), '10');
+  assert.equal(osMajor('rolling'), 'rolling');
+});
+
+const relayRefusal = (code, message) => Object.assign(new Error('HTTP 400 from relay.invalid'), { upstreamStatus: 400, upstreamBody: JSON.stringify({ code, message }) });
+
+test('diagnostics ride along; a relay that does not know them yet gets the report once more without them', async () => {
+  const bodies = [];
+  const http = { fetchJson: async (url, options) => {
+    bodies.push(options.body);
+    if (bodies.length === 1) {
+      throw relayRefusal('unexpected_field', 'The report carries a field this relay does not accept. Field: diagnostics.');
+    }
+    return { identifier: 'RMA-501', url: 'u' };
+  } };
+  const issue = await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, diagnostics: { channel: 'window' } }, { title: 'T' });
+  assert.equal(issue.identifier, 'RMA-501');
+  assert.deepEqual(bodies[0].diagnostics, { channel: 'window' });
+  assert.equal('diagnostics' in bodies[1], false);
+});
+
+test('any other refusal, a 5xx or a timeout is never retried, because the issue may already exist', async () => {
+  for (const error of [relayRefusal('unexpected_field', 'Field: context.'), relayRefusal('invalid_diagnostics', 'x'), Object.assign(new Error('HTTP 502'), { upstreamStatus: 502 }), Object.assign(new Error('timeout'), { name: 'TimeoutError' })]) {
+    let posts = 0;
+    const http = { fetchJson: async () => { posts += 1; throw error; } };
+    await assert.rejects(createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, diagnostics: { channel: 'api' } }, { title: 'T' }));
+    assert.equal(posts, 1, error.message);
+  }
+  assert.equal(refusesDiagnostics(Object.assign(new Error('x'), { upstreamStatus: 400, upstreamBody: 'not json' })), false);
+});
+
+test('an empty diagnostics object is left out of the report', async () => {
+  const { http, calls } = stub();
+  await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, diagnostics: {} }, { title: 'T' });
+  assert.equal('diagnostics' in calls[0].body, false);
 });
 
 test('an over-long title is cut to the relay limit, and an empty title is refused before any call', async () => {
@@ -532,4 +578,28 @@ test('the admin token goes only to the built-in relay or an allow-listed host', 
   await reports.states();
   assert.equal(looked.length, 0);
   assert.ok(calls.every((call) => !call.headers?.Authorization));
+});
+
+test('a preview returns the exact payload and a token; the send with that token carries those diagnostics, and nothing is sent by the preview', async () => {
+  const { http, calls } = stub();
+  const reports = { list: () => [], add: () => {}, states: async () => [], relayUrl: RELAY };
+  const facts = { hidden: '', stale: false, lastAttemptAt: Date.now(), lastSuccessAt: Date.now(), failures: [], customRules: false, workflowRunsOff: 0, rows: { your_move: 2, waiting: 0, done: 0, failing_checks: 0, review_requested: 0, mentions: 0 } };
+  const registry = emptyRegistry({ workspaces: [{ id: 'a', sourceTypes: ['github'], diagnosticFacts: () => facts }], settings: { poll_seconds: 120 } });
+  const api = await startTestApi({ registry, http, reports, version: '1.2.3' });
+  try {
+    const preview = await (await api.post('/api/feedback', { preview: true, from: 'mcp:claude-code', agent: { tools: ['whose_turn_state'] } }, { 'X-Whose-Turn-Plugin': '1.0.13' })).json();
+    assert.equal(calls.length, 0);
+    assert.equal(preview.preview.diagnostics.channel, 'mcp:claude-code');
+    assert.equal(preview.preview.diagnostics['plugin.version_seen'], '1.0.13');
+    assert.equal(preview.preview.diagnostics['settings.poll_seconds'], 120);
+    assert.equal(preview.preview.diagnostics['settings.history_days'], 14);
+    assert.equal(preview.preview.diagnostics['rows.your_move'], '1-5');
+    facts.rows.your_move = 30;
+    await api.post('/api/feedback', { kind: 'bug', title: 'T', from: 'mcp:claude-code', preview_token: preview.preview_token });
+    assert.deepEqual(calls[0].body.diagnostics, preview.preview.diagnostics);
+    await api.post('/api/feedback', { kind: 'bug', title: 'T2', from: 'mcp:claude-code', preview_token: 'made-up' });
+    assert.equal(calls[1].body.diagnostics['rows.your_move'], '21+');
+  } finally {
+    api.server.close();
+  }
 });

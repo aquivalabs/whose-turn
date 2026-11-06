@@ -1,10 +1,18 @@
 // The local server's API: JSON in, JSON out; a workspace write always names its workspace (RMA-115).
 import type { ApiError, ApiErrorDetail } from './types.ts';
+import { trackApiFailure } from './window-report.ts';
+
+const read = <T>(response: Response): Promise<T> => {
+  if (!response.ok) {
+    trackApiFailure(response.status);
+  }
+  return response.json() as Promise<T>;
+};
 
 /** Resolves with the reply (a refusal is its error envelope); rejects with Error('unreachable') when the server cannot be reached. */
 export const getJson = <T>(url: string): Promise<T> =>
   fetch(url).then(
-    (response) => response.json() as Promise<T>,
+    (response) => read<T>(response),
     () => Promise.reject(new Error('unreachable')),
   );
 /** Resolves with the reply (a refusal is its error envelope); rejects with Error('unreachable') when the server cannot be reached. */
@@ -14,7 +22,7 @@ export const post = <T>(url: string, body?: object): Promise<T> =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {}),
   }).then(
-    (response) => response.json() as Promise<T>,
+    (response) => read<T>(response),
     () => Promise.reject(new Error('unreachable')),
   );
 
