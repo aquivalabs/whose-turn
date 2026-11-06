@@ -70,6 +70,7 @@ test('the failure log keeps the last ten failures across a restart and drops ent
   assert.equal(log.recent().length, 10);
   assert.deepEqual(log.recent().at(-1), { type: 'github', code: 'UNKNOWN', at: NOW + 12 * MINUTE });
   assert.equal(log.recent()[0].type, 'other');
+  log.flush();
   const file = join(dir, 'failures.json');
   writeFileSync(file, JSON.stringify([...JSON.parse(readFileSync(file, 'utf8')), { type: 'jira', code: 'jira.example said 401', at: 1 }, null]));
   assert.equal(openFailureLog(dir).recent().length, 10);

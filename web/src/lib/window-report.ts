@@ -1,7 +1,9 @@
 // What the window measures about itself for a report: closed panel names, counts and ratios, never text from the page. RMA-383.
 import { clamp } from './math.ts';
 
-export type Panel = 'dashboard' | 'settings' | 'monitor_settings' | 'whats_new' | 'comment' | 'note';
+export const PANELS = ['dashboard', 'settings', 'monitor_settings', 'whats_new', 'comment', 'note'] as const;
+
+export type Panel = (typeof PANELS)[number];
 
 export interface WindowReport {
   panel: Panel;
