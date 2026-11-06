@@ -33,13 +33,13 @@ the chunk is in; until then they sit in their start state for a moment. RMA-314.
 
 Waiting on others puts its list and its empty text in `Swap`, one `AnimatePresence` whose children are keyed `list`
 and `empty`. When the face changes, `Swap` renders nothing at once (a swap from nothing shows the new face at once), so the old face leaves (the list fades through
-its wrapper's `island__fade` class), and puts the new face in when the presence reports `exit-complete`. In a fitted dashboard that wrapper is a flex column with `min-height: 0`, so the panel's height reaches the row scroller and the list scrolls; a plain block wrapper grew to the whole table (RMA-354). The rule sits in `Waiting.vue`'s scoped style, because Waiting renders the wrapper and a scoped rule in `Island.vue` never matches it.
+its wrapper's `island__fade` class), and puts the new face in when the presence reports `exit-complete`. In a fitted dashboard that wrapper is a flex column with `min-height: 0`, so the panel's height reaches the row scroller and the list scrolls; a plain block wrapper grew to the whole table (RMA-354). `Island.vue` holds the rule through `:deep()`, because the wrapper is rendered by Waiting and a plain scoped Island rule never matches it.
 
 It is not `AnimatePresence mode="wait"`. That mode is Vue's out-in `Transition`, which re-renders its own instance
 when the leave ends, and `motion-v` ends an exit at once, inside the patch, while the element has no registered
 motion state, which is the case until the lazy feature chunk is in. The re-render then runs on a half-patched
 instance and throws `Cannot read properties of null (reading 'parentNode')`. RMA-337. The update chip swaps its faces
-through `Swap` too, and nothing uses mode `wait`. Its faces include the Claude plugin's copy chip and the short "Copied" that follows a copy (RMA-341).
+through `Swap` too, and nothing uses mode `wait`.
 
 ### A group and Recently done fold on the way out
 

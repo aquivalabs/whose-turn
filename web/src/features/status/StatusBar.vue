@@ -49,7 +49,7 @@ const openAsApp = () => {
 </script>
 <template>
   <div class="status-bar">
-    <div class="status-bar__group status-bar__state">
+    <div class="status-bar__group">
       <span
         class="status-bar__live"
         :class="{

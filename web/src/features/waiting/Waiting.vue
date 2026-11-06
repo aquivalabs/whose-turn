@@ -126,16 +126,6 @@ const note = computed(() =>
   table-layout: fixed;
 }
 
-/* The fade wrapper sits between the island body and the row scroller; scoped here because Waiting renders it. RMA-354. */
-@media (width >= 901px) {
-  .dashboard--fit .dashboard__main .island__fade {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    min-height: 0;
-  }
-}
-
 .waiting__col--ticket {
   width: 22%;
 }

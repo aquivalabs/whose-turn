@@ -23,7 +23,11 @@ const update = computed(() => snapshot.update);
 const restarting = computed(
   () => update.value.state === 'restarting' || (Boolean(target.value) && !ui.live),
 );
-const pluginReloads = computed(() => update.value.plugin?.state === 'updated');
+const pluginFace = computed(() =>
+  update.value.plugin?.state === 'updated'
+    ? { label: 'Reload Claude skill · Copy', hint: 'paste it in your Claude session to load the updated skill', failed: false }
+    : { label: 'Update Claude skill · Copy', hint: 'run it in a terminal, then reload plugins in your Claude session', failed: true },
+);
 const working = computed(() => !ready.value && (update.value.state === 'installing' || restarting.value || Boolean(target.value)));
 const face = computed(() => {
   if (updatedTo.value) {
@@ -168,15 +172,11 @@ const onReload = () => {
       v-bind="fade"
       as="button"
       type="button"
-      :class="['update-chip', { 'update-chip--failed': !pluginReloads }]"
-      :title="
-        pluginReloads
-          ? `Copies ${update.plugin?.copy}: paste it in your Claude session to load the updated skill`
-          : `Copies ${update.plugin?.copy}: run it in a terminal, then reload plugins in your Claude session`
-      "
+      :class="['update-chip', { 'update-chip--failed': pluginFace.failed }]"
+      :title="`Copies ${update.plugin?.copy}: ${pluginFace.hint}`"
       @click="onCopyPlugin"
     >
-      {{ pluginReloads ? 'Reload Claude skill · Copy' : 'Update Claude skill · Copy' }}
+      {{ pluginFace.label }}
     </Motion>
     <Motion v-else-if="shown === 'copied'" key="copied" v-bind="fade" as="span" class="update-chip" role="status">
       Copied
