@@ -331,7 +331,7 @@ const options = computed(() => [
   opacity: 1;
 }
 
-@media (width >= 901px) {
+@media (width >= 56.3125em) {
   .dashboard--fit .dashboard__todo .todos__list {
     flex: 1 1 auto;
     min-height: 0;

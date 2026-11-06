@@ -39,7 +39,7 @@ export default {
       },
     ],
     'color-no-hex': [true, { message: 'Colours come from tokens (var(--…)), not hex literals.' }],
-    // docs/adr/0010, frontend-css:rem: sizes in rem; border and outline widths, shadows, filters and breakpoints stay px. RMA-344.
+    // docs/adr/0010, frontend-css:rem: sizes in rem, breakpoints in em; border and outline widths, shadows and filters stay px. RMA-344, RMA-377.
     'unit-disallowed-list': [
       ['px'],
       {
@@ -55,8 +55,7 @@ export default {
             '--focus-ring',
           ],
         },
-        ignoreMediaFeatureNames: { px: ['width', 'min-width', 'max-width', 'height'] },
-        message: 'Sizes are rem (frontend-css:rem); px only for border and outline widths, shadows, filters and breakpoints.',
+        message: 'Sizes are rem (frontend-css:rem); px only for border and outline widths, shadows and filters; breakpoints are em.',
       },
     ],
   },

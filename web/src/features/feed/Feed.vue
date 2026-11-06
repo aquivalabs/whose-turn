@@ -266,7 +266,7 @@ const restoreMarks = async () => {
   </Island>
 </template>
 <style scoped>
-@media (width <= 1500px) {
+@media (width <= 93.75em) {
   .feed :deep(.island__note-text) {
     display: none;
   }
@@ -503,7 +503,7 @@ const restoreMarks = async () => {
   padding-left: 0.875rem;
 }
 
-@media (width >= 901px) {
+@media (width >= 56.3125em) {
   .dashboard--fit .feed__list::-webkit-scrollbar {
     width: 0.5rem;
     height: 0.5rem;
@@ -515,7 +515,7 @@ const restoreMarks = async () => {
   }
 }
 
-@media (width <= 900px) {
+@media (width <= 56.25em) {
   .feed__list {
     max-height: 28rem;
   }

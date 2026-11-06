@@ -141,13 +141,13 @@ onMounted(() => {
   min-height: 0;
 }
 
-@media (width >= 901px) {
+@media (width >= 56.3125em) {
   .app__shell > .dashboard.dashboard--fit {
     height: auto;
   }
 }
 
-@media (width <= 900px) {
+@media (width <= 56.25em) {
   .app__shell {
     height: auto;
   }

@@ -26,7 +26,7 @@ In force from this decision:
 - `curly: ['error', 'all']` comes after `eslint-config-prettier`, for the window and the server.
 - `id-length` has no `el` or `e` exceptions.
 - `stylelint-selector-bem-pattern` 5.0.0, pinned: the first part of every selector in a `.vue` file is the block named after the file, in kebab-case, or the page context (`.app`, `.dashboard`) that places it. `implicitComponents` is `true`, because its glob form crashes in `postcss-bem-linter` (`minimatch is not a function`). The global sheets in `web/src/styles/` hold shared primitives and are exempt.
-- `px` gets a Stylelint `unit-disallowed-list` once the window is converted. That is RMA-344.
+- Stylelint `unit-disallowed-list` bans `px` except border and outline widths, shadows and filters (RMA-344). Breakpoints are `em`, so the layout switches with the browser's font size, not only with the window's width (RMA-377).
 
 ## Consequences
 

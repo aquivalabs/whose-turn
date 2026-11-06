@@ -8,7 +8,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - With reduced motion turned on in your system, the "+N more" line under a list now jumps to the hidden rows instead of scrolling smoothly. RMA-375.
 
 ### Changed
-- The window now follows the text size you set in your browser: raise the default font size and the whole window grows with it, instead of keeping its fixed size. RMA-344.
+- The window now follows the text size you set in your browser: raise the default font size and the whole window grows with it, instead of keeping its fixed size. With a large font it switches to the narrow layout sooner, so columns do not crowd each other. RMA-344, RMA-377.
 
 ## [1.0.0-alpha.14] - 2026-11-05
 

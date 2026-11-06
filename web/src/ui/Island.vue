@@ -259,7 +259,7 @@ const bounds = () => {
   padding-top: 0.25rem;
 }
 
-@media (width >= 901px) {
+@media (width >= 56.3125em) {
   .island--strip {
     cursor: pointer;
   }

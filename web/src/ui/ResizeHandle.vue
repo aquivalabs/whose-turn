@@ -153,7 +153,7 @@ const key = (event: KeyboardEvent) => {
   height: 2.5rem;
 }
 
-@media (width <= 900px) {
+@media (width <= 56.25em) {
   .resize-handle {
     display: none;
   }

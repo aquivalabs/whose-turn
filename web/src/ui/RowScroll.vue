@@ -60,7 +60,7 @@ const reveal = () => {
   margin: 0 -1.25rem;
 }
 
-@media (width >= 901px) {
+@media (width >= 56.3125em) {
   .dashboard--fit .dashboard__main .row-scroll {
     flex: 1 1 auto;
     min-height: 0;

@@ -275,7 +275,7 @@ const toggle = () => glideThrough(header.value, 'height', flip);
   font-size: 0.8125rem;
 }
 
-@media (width <= 900px) {
+@media (width <= 56.25em) {
   .workspace-header,
   .workspace-header--collapsed {
     grid-template-columns: minmax(0, 1fr) 2rem;
@@ -290,7 +290,7 @@ const toggle = () => glideThrough(header.value, 'height', flip);
   }
 }
 
-@media (width <= 640px) {
+@media (width <= 40em) {
   .workspace-header__tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
