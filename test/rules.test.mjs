@@ -199,3 +199,12 @@ test('a ticket you were only mentioned on gives its mention row and no ticket ro
   assert.deepEqual(result.map((row) => row.row_id), ['PROJ-1:c1']);
   assert.equal(result[0].group, 'you');
 });
+
+test('a ticket you were only mentioned on gives no touched feed row (RMA-86)', () => {
+  // Setup
+  const state = { tickets: [ticket({ assignee: 'Sam Reviewer', mention_only: true, updated: '2026-11-02T10:00:00.000+0000' })], comments: [] };
+  // Exercise
+  const feed = feedRows(state, { me, rules: compileRules(DEFAULT_RULES), historyDays: 3650 });
+  // Verify
+  assert.deepEqual(feed.filter((item) => item.kind === 'touched'), []);
+});

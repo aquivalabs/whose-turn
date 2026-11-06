@@ -133,7 +133,7 @@ Restart after a self-update: launchd names its job in `XPC_SERVICE_NAME` and res
 
 **Jira Cloud REST**, email plus API token, Basic auth:
 
-- `POST /rest/api/3/search/jql` with the workspace's JQL. Fields: summary, status, assignee, updated, comment. All comments are kept. Comment bodies arrive as ADF and are turned into Markdown-ish text: mentions become `@Name`, media becomes `[image]`.
+- `POST /rest/api/3/search/jql` with the workspace's JQL, and in parallel a second search, `comment ~ "<your account id>"` over the history window, for tickets that mention you though they were never yours; `jira.mentions: false` turns it off (RMA-86). Fields: summary, status, assignee, updated, comment. All comments are kept. Comment bodies arrive as ADF and are turned into Markdown-ish text: mentions become `@Name`, media becomes `[image]`.
 - `GET /rest/api/3/issue/{key}/changelog` for each open ticket tells when and by whom it entered its current status. Cached until the ticket's `updated` changes.
 - Status and assignee changes between polls become feed events.
 

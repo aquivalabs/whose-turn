@@ -214,3 +214,27 @@ test('restoring a workspace posts one hide request with null and reloads the sta
   expect(JSON.parse(String(init.body))).toEqual({ id: 'parked-one', hidden: null });
   expect(fetchStub.mock.calls.some(([target]) => String(target).startsWith('/api/state'))).toBe(true);
 });
+
+test('a lifecycle message sets the state and the status; quitting closes the stream, a disconnect keeps the text, and the next open clears it (RMA-356)', async () => {
+  const data = ref<unknown>(null);
+  const status = ref('OPEN');
+  const error = ref<unknown>(null);
+  const close = vi.fn();
+  vi.stubGlobal('fetch', vi.fn());
+  vi.doMock('@vueuse/core', async (original) => ({
+    ...(await original<object>()),
+    useEventSource: () => ({ status, error, data, open: vi.fn(), close }),
+  }));
+  const store = await freshStore();
+  data.value = { lifecycle: 'restarting' };
+  expect([store.ui.lifecycle, store.ui.status]).toEqual(['restarting', 'Restarting the monitor…']);
+  error.value = new Event('error');
+  expect(store.ui.status).toBe('Restarting the monitor…');
+  status.value = 'CONNECTING';
+  status.value = 'OPEN';
+  expect([store.ui.lifecycle, store.ui.status]).toEqual(['', '']);
+  data.value = { lifecycle: 'quitting' };
+  expect([store.ui.lifecycle, store.ui.status]).toEqual(['quitting', 'The monitor is stopped.']);
+  expect(close).toHaveBeenCalledOnce();
+  vi.doUnmock('@vueuse/core');
+});

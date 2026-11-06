@@ -447,3 +447,20 @@ test('a running plugin older than the marketplace one shows as behind until its 
   assert.equal(copied, undefined);
   assert.equal(current, undefined);
 });
+
+test('the X-Whose-Turn-Plugin header of an API request reaches the updater once per new version (RMA-350)', async () => {
+  // Setup
+  const seen = [];
+  const updater = { ...createUpdater({ http: null, dataDir: scratchDir('wt-header-'), version: '1.0.0', installed: false, notify: () => {}, restart: async () => {} }), sawPlugin: (version) => seen.push(version) };
+  const api = await startTestApi({ updater });
+  try {
+    // Exercise
+    await api.get('/api/summary', { headers: { 'X-Whose-Turn-Plugin': '1.0.13' } });
+    await api.get('/api/summary', { headers: { 'X-Whose-Turn-Plugin': '1.0.13' } });
+    await api.get('/api/summary', { headers: { 'X-Whose-Turn-Plugin': '1.0.14' } });
+    // Verify
+    assert.deepEqual(seen, ['1.0.13', '1.0.14']);
+  } finally {
+    api.server.close();
+  }
+});
