@@ -106,3 +106,18 @@ test('an unreadable changelog shows the server message', async () => {
 
   expect(await screen.findByRole('alert')).toBeTruthy();
 });
+
+test('an Important entry shows first in its version, in its own highlighted note (RMA-86)', async () => {
+  stubChangelog({
+    current: '1.3.0',
+    versions: [{ version: '1.3.0', date: '2026-11-06', sections: [{ kind: 'Fixed', items: ['A fix.'] }, { kind: 'Important', items: ['Check your **Jira** settings.'] }] }],
+  });
+  const { container } = render(WhatsNewSheet);
+  ui.whatsNew = true;
+
+  const note = await screen.findByRole('note');
+
+  expect(note.className).toContain('whats-new-sheet__important');
+  expect(note.textContent).toContain('Check your Jira settings.');
+  expect(container.querySelector('.whats-new-sheet__important + .markdown-view')?.textContent).toContain('A fix.');
+});

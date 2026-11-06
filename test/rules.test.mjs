@@ -189,3 +189,13 @@ test('a workspace that sets its own statuses keeps the release group from the de
   const rules = { ...DEFAULT_RULES, statuses: { ...DEFAULT_RULES.statuses, release: ['shipping'] } };
   assert.equal(only(rows({ tickets: [ticket({ status: 'Shipping' })] }, rules), (candidate) => candidate.row_id === 'PROJ-1').whose, 'Release');
 });
+
+test('a ticket you were only mentioned on gives its mention row and no ticket row (RMA-86)', () => {
+  // Setup
+  const state = { tickets: [ticket({ assignee: 'Sam Reviewer', mention_only: true })], comments: [comment()] };
+  // Exercise
+  const result = rows(state);
+  // Verify
+  assert.deepEqual(result.map((row) => row.row_id), ['PROJ-1:c1']);
+  assert.equal(result[0].group, 'you');
+});

@@ -30,7 +30,15 @@ export const unseenVersions = (
 };
 
 /** One version's sections as Markdown for the shared renderer: a heading per kind, a list of items. */
+const IMPORTANT = 'Important';
+
+/** The items of a version's Important section, which the sheet shows first and highlighted. RMA-86. */
+export const importantOf = (entry: ChangelogVersion): string[] =>
+  entry.sections.filter((section) => section.kind === IMPORTANT).flatMap((section) => section.items);
+
+/** A version as Markdown, one heading and list per kind, without its Important section. */
 export const versionMarkdown = (entry: ChangelogVersion): string =>
   entry.sections
+    .filter((section) => section.kind !== IMPORTANT)
     .map((section) => `### ${section.kind}\n${section.items.map((item) => `- ${item}`).join('\n')}`)
     .join('\n\n');

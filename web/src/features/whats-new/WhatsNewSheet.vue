@@ -4,7 +4,7 @@ import { AnimatePresence } from 'motion-v';
 import { ref, watch } from 'vue';
 import { ui } from '@/store.ts';
 import { useWhatsNew } from '@/composables/useWhatsNew.ts';
-import { versionMarkdown } from '@/lib/whats-new.ts';
+import { importantOf, versionMarkdown } from '@/lib/whats-new.ts';
 import MarkdownView from '@/ui/MarkdownView.vue';
 import Modal from '@/ui/Modal.vue';
 
@@ -49,13 +49,31 @@ watch(
           >
           <span v-if="fresh.includes(entry.version)" class="whats-new-sheet__tag">New</span>
         </header>
-        <MarkdownView v-if="entry.sections.length" :source="versionMarkdown(entry)" />
+        <div v-if="importantOf(entry).length" class="whats-new-sheet__important" role="note">
+          <strong class="whats-new-sheet__important-title">Important</strong>
+          <MarkdownView v-for="item in importantOf(entry)" :key="item" :source="item" />
+        </div>
+        <MarkdownView v-if="versionMarkdown(entry)" :source="versionMarkdown(entry)" />
         <p v-else class="whats-new-sheet__empty">No notes for this version.</p>
       </article>
     </Modal>
   </AnimatePresence>
 </template>
 <style scoped>
+.whats-new-sheet__important {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-left: 3px solid var(--md-primary);
+  border-radius: 0 var(--md-r-chip) var(--md-r-chip) 0;
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.whats-new-sheet__important-title {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
 .whats-new-sheet__version {
   padding: 1rem 0 0.25rem;
   border-bottom: 1px solid var(--md-outline-variant);

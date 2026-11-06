@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Important
+- Jira now shows a mention of you even on a ticket that was never yours, as one row to answer in Your move, so you may see new rows after the update. If you do not want them, turn off "Mentions on other tickets" in the Jira source of the workspace settings, or ask Claude to. What the monitor watches is yours to set: each setting says what it does where you set it, and Claude can explain and change it for you. RMA-86.
+
 ### Added
 - Monitor settings has Restart and Quit. Restart reloads the monitor and the window comes back by itself; Quit asks first, stops checking your sources, and the window says how to start it again. RMA-356.
 

@@ -43,7 +43,7 @@ Every change starts from an issue and lives on a branch named `rma-<number>-<slu
 
 ## Changelog
 CHANGELOG.md is read by the people who use the monitor: the window shows it under What's new (RMA-253). It is not a developer log; commits and the Linear issues are.
-- **Every change a user can notice gets one entry** under `## [Unreleased]`, in Added, Changed, Fixed or Removed, in the same commit as the change. A change nobody using the monitor can notice (tests, CI, refactors, docs for contributors, the release pipeline) gets none.
+- **Every change a user can notice gets one entry** under `## [Unreleased]`, in Added, Changed, Fixed or Removed, in the same commit as the change. A change the user must know about before it surprises them (new rows, a default that changed, a setting to check) goes under `### Important`, which the window shows first and highlighted (RMA-86). A change nobody using the monitor can notice (tests, CI, refactors, docs for contributors, the release pipeline) gets none.
 - **Write it for the user, in plain words:** what they now see or can do, or what stopped going wrong, in one or two short sentences. No file names, functions, endpoints, HTTP codes, store or component names, and no "we refactored". A name the user types or reads on screen (a button label, a config key, a command) is fine.
 - **End the entry with its issue id or ids** (`RMA-123.`). They are for us; the window drops them, so the sentence must read complete without them.
 - **A release moves `[Unreleased]` to the new version** with its date (RMA-240). Never edit a released version's entries except to fix wording.

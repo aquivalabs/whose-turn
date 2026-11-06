@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { unseenVersions, versionMarkdown } from '../web/src/lib/whats-new.ts';
+import { importantOf, unseenVersions, versionMarkdown } from '../web/src/lib/whats-new.ts';
 
 const entry = (version, sections = []) => ({ version, date: '2026-11-01', sections });
 const versions = [entry('Unreleased'), entry('1.3.0'), entry('1.2.0'), entry('1.1.0'), entry('1.0.0')];
@@ -33,4 +33,11 @@ test('a running version missing from the changelog gives nothing', () => {
 test('a version becomes Markdown with a heading per kind and a list of items', () => {
   const text = versionMarkdown(entry('1.0.0', [{ kind: 'Fixed', items: ['One.', 'Two.'] }, { kind: 'Added', items: ['Three.'] }]));
   assert.equal(text, '### Fixed\n- One.\n- Two.\n\n### Added\n- Three.');
+});
+
+test('an Important section is taken out of the Markdown and handed over on its own (RMA-86)', () => {
+  const version = entry('1.0.0', [{ kind: 'Fixed', items: ['One.'] }, { kind: 'Important', items: ['Read me.', 'And me.'] }]);
+  assert.equal(versionMarkdown(version), '### Fixed\n- One.');
+  assert.deepEqual(importantOf(version), ['Read me.', 'And me.']);
+  assert.deepEqual(importantOf(entry('0.9.0', [{ kind: 'Added', items: ['x'] }])), []);
 });

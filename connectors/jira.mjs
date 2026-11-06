@@ -13,7 +13,8 @@ export const fields = [
   { key: 'email', label: 'Account email', hint: 'the account the API token belongs to', required: true },
   { key: 'token', label: 'API token', hint: 'stored in the secret store, never in the config', secret: { account: 'email', service: 'token_service', default: DEFAULT_SERVICE } },
   { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-jira' },
-  { key: 'jql', label: 'JQL', hint: 'which tickets to watch; leave empty for the default' },
+  { key: 'jql', label: 'JQL', hint: 'which tickets to watch; leave empty for the default: tickets you hold, or held in the last 30 days' },
+  { key: 'mentions', label: 'Mentions on other tickets', hint: 'also show a ticket that mentions you in a comment though it was never yours, as one Answer row in Your move; on unless set to false', boolean: true, default: true },
 ];
 
 const SIMPLE_MARKS = { code: '`', strong: '**' };
@@ -113,7 +114,12 @@ const jiraToken = async (settings, secrets, cache) => {
   return token;
 };
 
-export const poll = async ({ settings, http, secrets, cache }) => {
+/** The JQL for tickets with a comment that mentions your account id, which Jira indexes; those the main query missed are mention-only. RMA-86. */
+export const mentionsJql = (accountId, historyDays = 30) => (/^[\w:-]+$/.test(accountId)
+  ? `comment ~ "${accountId}" AND updated >= -${Math.max(1, Math.round(historyDays))}d ORDER BY updated DESC`
+  : '');
+
+export const poll = async ({ settings, http, secrets, cache, historyDays }) => {
   const base = String(settings.base).replace(/\/$/, '');
   if (!base.startsWith('https://')) {
     throw new Error('jira.base must start with https://');
@@ -123,15 +129,26 @@ export const poll = async ({ settings, http, secrets, cache }) => {
   const meId = cache.me.accountId;
   const meName = cache.me.displayName || 'me';
   const jql = settings.jql || '(assignee = currentUser() AND statusCategory != Done) OR (assignee was currentUser() AND updated >= -30d) ORDER BY updated DESC';
-  const result = await api('/rest/api/3/search/jql', { jql, maxResults: 100, fields: ['summary', 'status', 'assignee', 'updated', 'comment'] });
+  const search = (query) => api('/rest/api/3/search/jql', { jql: query, maxResults: 100, fields: ['summary', 'status', 'assignee', 'updated', 'comment'] });
+  const result = await search(jql);
+  const mentionQuery = settings.mentions === false ? '' : mentionsJql(meId, historyDays);
+  const errors = {};
+  let mentioned = [];
+  try {
+    mentioned = mentionQuery ? (await search(mentionQuery)).issues || [] : [];
+  } catch (error) {
+    errors.mentions = `${error.name}: ${error.message}`;
+  }
+  const held = new Set((result.issues || []).map((issue) => issue.key));
   const tickets = [];
   const comments = [];
-  for (const issue of result.issues || []) {
+  for (const issue of [...(result.issues || []), ...mentioned.filter((issue) => !held.has(issue.key))]) {
     const fields = issue.fields;
     const url = `${base}/browse/${issue.key}`;
     tickets.push({
       key: issue.key, summary: fields.summary || '', status: (fields.status || {}).name || '', status_category: ((fields.status || {}).statusCategory || {}).key || '',
       assignee: (fields.assignee || {}).displayName || 'Unassigned', updated: fields.updated || '', url,
+      ...(held.has(issue.key) ? {} : { mention_only: true }),
     });
     for (const comment of ((fields.comment || {}).comments || [])) {
       const body = comment.body;
@@ -142,8 +159,7 @@ export const poll = async ({ settings, http, secrets, cache }) => {
     }
   }
   cache.statusEntered ??= new Map();
-  const errors = {};
-  await mapLimit(tickets.filter((ticket) => ticket.status_category !== 'done'), 4, async (ticket) => {
+  await mapLimit(tickets.filter((ticket) => ticket.status_category !== 'done' && !ticket.mention_only), 4, async (ticket) => {
     try {
       ticket.status_change = await statusEntered(api, cache.statusEntered, ticket.key, ticket.updated, ticket.status);
     } catch (error) {
