@@ -3,15 +3,14 @@
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { rise } from '@/motion.ts';
 import { ui } from '@/store.ts';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
 </script>
 <template>
   <AnimatePresence>
     <Motion v-if="ui.lifecycle === 'quitting'" v-bind="rise" class="stopped-notice" role="status">
-      <h2 class="stopped-notice__title">Whose Turn is stopped</h2>
-      <p class="stopped-notice__text">
-        It no longer checks your sources, and this page shows what it knew when it stopped. To start
-        it again, ask Claude to start the monitor, or open a new Claude Code session.
-      </p>
+      <h2 class="stopped-notice__title">{{ t('lifecycle.stopped.title') }}</h2>
+      <p class="stopped-notice__text">{{ t('lifecycle.stopped.text') }}</p>
     </Motion>
   </AnimatePresence>
 </template>

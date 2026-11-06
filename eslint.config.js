@@ -3,6 +3,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import pluginVue from 'eslint-plugin-vue';
 import prettier from 'eslint-config-prettier';
+import vueI18n from '@intlify/eslint-plugin-vue-i18n';
 
 const webFiles = ['web/src/**/*.{ts,vue}'];
 const nodeGlobals = Object.fromEntries(
@@ -20,6 +21,15 @@ export default tseslint.config(
     languageOptions: { parserOptions: { parser: tseslint.parser, extraFileExtensions: ['.vue'] } },
   },
   {
+    // docs/mechanisms/i18n.md: every visible text comes from the catalog (RMA-342)
+    files: ['web/src/**/*.vue'],
+    plugins: { '@intlify/vue-i18n': vueI18n },
+    settings: { 'vue-i18n': { messageSyntaxVersion: '^11.0.0' } },
+    rules: {
+      '@intlify/vue-i18n/no-raw-text': ['error', { ignorePattern: '^[\\s\\d·×+…/|,.:;()#&@%–—•▾▸↗→←↑↓-]*$', attributes: { '/.+/': ['title', 'placeholder', 'aria-label', 'data-tip', 'label', 'alt', 'note', 'tip', 'text'] } }],
+    },
+  },
+  {
     files: webFiles,
     rules: {
       // frontend-js:conventions
@@ -32,7 +42,7 @@ export default tseslint.config(
         {
           min: 3,
           properties: 'never',
-          exceptions: ['id', 'to', 'at', 'on', 'of', 'in', 'is', 'ui', 'x', 'y'],
+          exceptions: ['id', 'to', 'at', 'on', 'of', 'in', 'is', 'ui', 'x', 'y', 't', 'en'],
         },
       ],
       'no-restricted-imports': [

@@ -67,6 +67,14 @@
         "web/src/ui/RowScroll.vue"
       ],
       "doc": "docs/mechanisms/motion.md"
+    },
+    {
+      "id": "i18n",
+      "paths": [
+        "web/src/i18n/index.ts",
+        "web/src/i18n/en/index.ts"
+      ],
+      "doc": "docs/mechanisms/i18n.md"
     }
   ],
   "surfaceRules": {
