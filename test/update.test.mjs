@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin } from '../lib/update.mjs';
+import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin, compareVersions } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
@@ -28,7 +28,7 @@ test('a newer version under the channel tag is offered and announced once', asyn
   const first = await updater.check();
   await updater.check();
   // Verify
-  assert.equal(asked[0], 'http://registry.test/-/package/whose-turn/dist-tags');
+  assert.deepEqual(asked.slice(0, 2), ['https://raw.githubusercontent.com/aquivalabs/BladeForge/main/plugins/whose-turn/.claude-plugin/plugin.json', 'http://registry.test/-/package/whose-turn/dist-tags']);
   assert.deepEqual(first, { current: '1.0.0-alpha.2', latest: '1.0.0-alpha.3', available: true, state: 'idle' });
   assert.deepEqual(notes, [['Whose Turn 1.0.0-alpha.3 is out', 'Update from the window.']]);
 });
@@ -68,13 +68,13 @@ test('an unreachable registry or a malformed tag leaves the offer as it was', as
   }
 });
 
-test('a checkout never asks the registry and is never offered an update', async () => {
+test('a checkout never asks the registry and is never offered an update; it still reads the plugin version', async () => {
   // Setup
   const { updater, asked } = updaterWith({ latest: '1.0.0-alpha.3' }, { installed: false });
   // Exercise
   const status = await updater.check();
   // Verify
-  assert.deepEqual(asked, []);
+  assert.deepEqual(asked, ['https://raw.githubusercontent.com/aquivalabs/BladeForge/main/plugins/whose-turn/.claude-plugin/plugin.json']);
   assert.equal(status.available, false);
 });
 
@@ -415,4 +415,35 @@ test('POST /api/quit and /api/restart answer first, tell every open window, then
     api.server.closeAllConnections();
     api.server.close();
   }
+});
+
+test('versions compare by number, and a release outranks its prereleases (RMA-350)', () => {
+  // Setup
+  const sorted = ['1.0.0-alpha.2', '1.0.0-alpha.10', '1.0.0-beta.1', '1.0.0', '1.0.12', '1.0.13', '1.1.0'];
+  // Exercise
+  const pairs = sorted.slice(1).map((newer, index) => compareVersions(sorted[index], newer));
+  // Verify
+  assert.ok(pairs.every((difference) => difference < 0), JSON.stringify(pairs));
+  assert.equal(compareVersions('1.0.13', '1.0.13'), 0);
+});
+
+test('a running plugin older than the marketplace one shows as behind until its command is copied; a current one shows nothing (RMA-350)', async () => {
+  // Setup
+  const dataDir = scratchDir('wt-plugin-behind-');
+  const http = { fetchJson: async (url) => (url.includes('plugin.json') ? { version: '1.0.14' } : { latest: '1.0.0-alpha.2' }) };
+  const updater = createUpdater({ http, dataDir, version: '1.0.0-alpha.2', installed: true, notify: () => {}, restart: async () => {}, pluginManifest: 'https://example.test/plugin.json' });
+  // Exercise
+  await updater.check();
+  const unseen = updater.status().plugin;
+  updater.sawPlugin('1.0.12');
+  const behind = updater.status().plugin;
+  updater.pluginCopied();
+  const copied = updater.status().plugin;
+  updater.sawPlugin('1.0.14');
+  const current = updater.status().plugin;
+  // Verify
+  assert.equal(unseen, undefined);
+  assert.deepEqual(behind, { state: 'behind', copy: 'claude plugin update whose-turn@bladeforge', seen: '1.0.12', latest: '1.0.14' });
+  assert.equal(copied, undefined);
+  assert.equal(current, undefined);
 });

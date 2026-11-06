@@ -25,19 +25,16 @@ const update = computed(() => snapshot.update);
 const restarting = computed(
   () => update.value.state === 'restarting' || (Boolean(target.value) && !ui.live),
 );
-const pluginFace = computed(() =>
-  update.value.plugin?.state === 'updated'
-    ? {
-        label: t('status.update.pluginReload'),
-        hint: t('status.update.pluginReloadHint'),
-        failed: false,
-      }
-    : {
-        label: t('status.update.pluginUpdate'),
-        hint: t('status.update.pluginUpdateHint'),
-        failed: true,
-      },
-);
+const pluginFace = computed(() => {
+  const state = update.value.plugin?.state;
+  if (state === 'updated') {
+    return { label: t('status.update.pluginReload'), hint: t('status.update.pluginReloadHint'), failed: false };
+  }
+  if (state === 'behind') {
+    return { label: t('status.update.pluginUpdate'), hint: t('status.update.pluginBehindHint', { latest: update.value.plugin?.latest ?? '' }), failed: false };
+  }
+  return { label: t('status.update.pluginUpdate'), hint: t('status.update.pluginUpdateHint'), failed: true };
+});
 const working = computed(
   () =>
     !ready.value &&
