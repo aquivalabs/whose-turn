@@ -111,6 +111,9 @@ then stays open until `exits.release()`. The tokens and the reduced-motion switc
 `web/src/motion.test.ts`; the real library runs in the browser build and in the one test that must see it,
 `web/src/features/waiting/Waiting.motion.test.ts`, which loads the features late like the browser does.
 
+The texts these components show (the fold and resize hints, the "+N more" line, the Close button) come from the
+window's catalog since RMA-342 (`docs/mechanisms/i18n.md`); how they move did not change.
+
 ## What obliges an update
 
 A change to any file in the table above: a new preset, a changed token, a new way a panel measures itself or
