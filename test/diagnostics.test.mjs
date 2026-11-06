@@ -159,3 +159,12 @@ test('a workspace reports its facts: attempt and success times, current failure 
   assert.deepEqual(Object.keys(facts.rows), ['your_move', 'waiting', 'done', 'failing_checks', 'review_requested', 'mentions']);
   delete CONNECTORS.diagflaky;
 });
+
+test('a failing source of a type that is not built in is reported as other, never by its own name (RMA-291)', () => {
+  // Setup
+  const facts = [{ hidden: '', stale: false, lastAttemptAt: NOW, lastSuccessAt: NOW, failures: [{ id: 'x', type: 'acme-internal-tracker', code: 'UNKNOWN' }], customRules: false, workflowRunsOff: 0, rows: { your_move: 0, waiting: 0, done: 0, failing_checks: 0, review_requested: 0, mentions: 0 } }];
+  // Exercise
+  const diagnostics = buildDiagnostics({ version: '1.0.0', channel: 'api', now: NOW, workspaces: () => facts });
+  // Verify
+  assert.deepEqual(diagnostics['failures.now'], ['other:UNKNOWN']);
+});
