@@ -119,3 +119,15 @@ test('a review request belongs to the first shown workspace watching its reposit
   assert.equal(owner('nobody/repo'), '');
   assert.equal(askOwner(workspaces, () => '', 'acme/infra'), 'parked/gh');
 });
+
+test('a source whose org does not hold the repository never owns its requests, even when it watches that repository', () => {
+  // Setup
+  const workspaces = [
+    { id: 'quiet', connectors: [{ type: 'github', id: 'gh', repo: 'acme/app', org: 'nobody-here' }] },
+    { id: 'main', connectors: [{ type: 'github', id: 'gh', repo: 'acme/tools' }] },
+  ];
+  // Exercise
+  const owner = askOwner(workspaces, () => '', 'acme/app');
+  // Verify
+  assert.equal(owner, 'main/gh');
+});
