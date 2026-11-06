@@ -21,7 +21,7 @@ requests and mentions, and for unanswered @-mentions in ticket comments are buil
 `lib/rules.mjs` (`orphanPrRow`, `askRow`, `mentionRow`), as is the feed. A review request or mention
 without a ticket key says "this PR" in its next step, since the PR's own key already stands in the
 ticket column. A ticket a connector marks `mention_only` (Jira, a ticket whose comment mentions you though it
-was never yours, RMA-86) gives its mention rows and no ticket row, no `touched` feed item and no ticket event; mention rows are built from ticket rows only. A ticket change that no comment or event explains is a feed item of kind `touched`
+was never yours, RMA-86) gives its mention rows and no ticket row, no `touched` feed item and no ticket event; mention rows are built from ticket rows only, each row carrying its own mention-only flag. A ticket change that no comment or event explains is a feed item of kind `touched`
 with the text `now <status>, with <who>`.
 
 ## Where it lives
