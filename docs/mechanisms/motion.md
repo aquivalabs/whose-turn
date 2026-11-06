@@ -113,6 +113,8 @@ then stays open until `exits.release()`. The tokens and the reduced-motion switc
 
 The texts these components show (the fold and resize hints, the "+N more" line, the Close button) come from the
 window's catalog since RMA-342 (`docs/mechanisms/i18n.md`); how they move did not change.
+`RowScroll.vue` also hands its scroll element to the store's `scrollers` on mount and takes it back before
+unmount, so the Report sheet can measure a list without reading another panel's markup (RMA-387).
 
 ## What obliges an update
 
