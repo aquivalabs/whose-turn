@@ -3,6 +3,7 @@
 import { computed, ref } from 'vue';
 import { useElementSize, useScroll } from '@vueuse/core';
 import { hiddenBelow } from '@/lib/moves.ts';
+import { reduced } from '@/motion.ts';
 defineProps<{ floor?: boolean }>();
 const cellSlack = 13;
 const scroller = ref<HTMLElement | null>(null);
@@ -37,7 +38,7 @@ const reveal = () => {
   }
   const head = content.value?.querySelector('thead')?.getBoundingClientRect().bottom;
   const top = head ?? box.getBoundingClientRect().top;
-  box.scrollBy({ top: first.getBoundingClientRect().top - top, behavior: 'smooth' });
+  box.scrollBy({ top: first.getBoundingClientRect().top - top, behavior: reduced.value ? 'auto' : 'smooth' });
 };
 </script>
 <template>

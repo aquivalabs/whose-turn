@@ -62,7 +62,8 @@
         "web/src/ui/Modal.vue",
         "web/src/ui/Swap.vue",
         "web/src/test-motion.ts",
-        "web/src/styles/tokens.css"
+        "web/src/styles/tokens.css",
+        "web/src/ui/RowScroll.vue"
       ],
       "doc": "docs/mechanisms/motion.md"
     }

@@ -32,3 +32,39 @@ test('the scroll padding follows the height of the sticky header', async () => {
 
   expect((container.querySelector('.row-scroll') as HTMLElement).style.scrollPaddingTop).toBe('0px');
 });
+
+const askingReduced = (reduce: boolean) =>
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: reduce && query.includes('prefers-reduced-motion'),
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+  }));
+
+test.each([
+  [false, 'smooth'],
+  [true, 'auto'],
+] as const)('reduced motion %s: "+N more" scrolls with behavior %s (RMA-375)', async (reduce, behavior) => {
+  vi.resetModules();
+  askingReduced(reduce);
+  const { default: Scroll } = await import('./RowScroll.vue');
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    const bottom = Number(this.dataset.bottom ?? 0);
+    return rect(0, this.classList.contains('row-scroll') ? 100 : bottom)();
+  });
+  const { container } = render(Scroll, {
+    slots: { default: () => h('table', [twoLine(60), twoLine(160), twoLine(260)]) },
+  });
+  const scroller = container.querySelector('.row-scroll') as HTMLElement;
+  Object.defineProperty(scroller, 'clientHeight', { value: 100 });
+  const scrollBy = vi.fn();
+  scroller.scrollBy = scrollBy;
+  scroller.scrollTop = 1;
+  await fireEvent.scroll(scroller);
+
+  await fireEvent.click(await screen.findByRole('button', { name: '+2 more' }));
+
+  expect(scrollBy).toHaveBeenCalledWith(expect.objectContaining({ behavior }));
+});
