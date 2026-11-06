@@ -2,7 +2,7 @@
 
 What changed for you in each version of Whose Turn. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/). The window shows this list under What's new; the ids at the end of an entry are ours and the window leaves them out.
 
-## [Unreleased]
+## [1.0.0-beta.1] - 2026-11-06
 
 ### Important
 - Jira now shows a mention of you even on a ticket that was never yours, as one row to answer in Your move, so you may see new rows after the update. If you do not want them, turn off "Mentions on other tickets" in the Jira source of the workspace settings, or ask Claude to. What the monitor watches is yours to set: each setting says what it does where you set it, and Claude can explain and change it for you. RMA-86.
