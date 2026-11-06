@@ -45,7 +45,7 @@ test('a filed report shows its title, state, kind, text and every answer, and na
       outcome: 'open',
       body: 'It wraps at 1200px.',
       changed_at: '2026-11-02T10:00:00Z',
-      answers: [{ by: 'Roman', at: '2026-11-02T11:00:00Z', text: 'Fixed in the next release.' }],
+      answers: [{ by: 'Pat', at: '2026-11-02T11:00:00Z', text: 'Fixed in the next release.' }],
     }),
   });
 
@@ -56,7 +56,7 @@ test('a filed report shows its title, state, kind, text and every answer, and na
   expect(screen.getByText(/bug · filed .* · last change/)).toBeTruthy();
   expect(screen.getByText('It wraps at 1200px.')).toBeTruthy();
   expect(screen.getByText('Fixed in the next release.')).toBeTruthy();
-  expect(screen.getByText(/^Roman · /)).toBeTruthy();
+  expect(screen.getByText(/^Pat · /)).toBeTruthy();
   expect(document.title).toBe('RMA-900 · Your report · Whose Turn');
   expect(getJson).toHaveBeenCalledWith('/api/feedback?id=RMA-900');
 });

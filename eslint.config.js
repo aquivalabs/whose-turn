@@ -90,9 +90,9 @@ export default tseslint.config(
     rules: { 'id-length': 'off' },
   },
   prettier,
-  // docs/adr/0010: eslint-config-prettier switches curly off; Prettier allows curly: 'all', so it comes back here.
+  // docs/adr/0010.
   { files: [...webFiles, ...serverFiles], rules: { curly: ['error', 'all'] } },
-  // docs/adr/0010, frontend-vue:composables-vueuse: a component times through VueUse (useTimeoutFn, refAutoReset), which clears on unmount.
+  // docs/adr/0010.
   {
     files: ['web/src/**/*.vue'],
     rules: {

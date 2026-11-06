@@ -23,6 +23,7 @@ window already has. RMA-258.
   opens the note window first and writes nothing; Save sends the handled flag and the note in one marks
   write, Skip sends the flag alone, and closing the window sends nothing, so the row never changes view
   while the note is typed.
+- A review request lives while you are a requested reviewer of an open PR, read or not (RMA-358).
 - The counts are of the whole list, not of the view: `open` and `handled`.
 
 ## The note window

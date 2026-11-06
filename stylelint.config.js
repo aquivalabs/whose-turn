@@ -1,7 +1,7 @@
 // Stylelint for the window's .vue and .css: the standard rules plus the house BEM selector pattern (frontend-vue:bem-styles), from the frontend-vue:tooling template.
 // docs/adr/0010: a component's classes belong to the block named after its file (UpdateChip.vue → update-chip).
 const kebab = (name) => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-// A selector starts at the component's block, or at the page context (`.app`, `.dashboard`) that places it.
+// docs/adr/0010.
 const ownBlock = (component) => new RegExp(`^\\.(?:${kebab(component)}|app|dashboard)(?:__[a-z0-9-]+)?(?:--[a-z0-9-]+){0,2}(?:[.:\\[].*)?$`);
 
 export default {
@@ -39,7 +39,7 @@ export default {
       },
     ],
     'color-no-hex': [true, { message: 'Colours come from tokens (var(--…)), not hex literals.' }],
-    // docs/adr/0010, frontend-css:rem: sizes in rem, breakpoints in em; border and outline widths, shadows and filters stay px. RMA-344, RMA-377.
+    // docs/adr/0010.
     'unit-disallowed-list': [
       ['px'],
       {

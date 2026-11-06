@@ -293,7 +293,7 @@ const buildAsk = async (api, { me, keyOf }, note, repo) => {
   return { ...base, id: `gha:${note.id}`, kind: 'mentioned you', who: comment.user.login, at, url: comment.html_url || base.url, text: oneline(comment.body || ''), body: (comment.body || '').replace(/\r/g, '').slice(0, 6000) };
 };
 
-// RMA-358: a review request lives while you are a requested reviewer of an open PR, read or not.
+// RMA-358.
 const pollReviewRequests = async (api, { org, me, keyOf }) => {
   const query = `is:pr is:open user-review-requested:${me} org:${org}`;
   const found = (await api(`/search/issues?q=${encodeURIComponent(query)}&per_page=50`)).items || [];
