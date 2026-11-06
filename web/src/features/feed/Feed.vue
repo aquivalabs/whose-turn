@@ -2,7 +2,7 @@
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
 import { computed, nextTick, ref, watch } from 'vue';
 import { refAutoReset, watchDebounced } from '@vueuse/core';
-import { snapshot, ui, now, setMarks, tellProblem } from '@/store.ts';
+import { snapshot, ui, now, setMarks, tellProblem, scrollers } from '@/store.ts';
 import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
 import type { FeedGroup } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
@@ -20,6 +20,9 @@ import { useText } from '@/i18n/index.ts';
 import { useFeedState } from './useFeedState.ts';
 const emit = defineEmits<{ open: [item: FeedItem] }>();
 const t = useText();
+const holdScroller = (element: unknown) => {
+  scrollers.feed = (element as HTMLElement | null) ?? null;
+};
 const feedState = useFeedState();
 const views = computed(() => [
   { id: 'ticket', label: t('feed.views.ticket') },
@@ -176,7 +179,7 @@ const restoreMarks = async () => {
     <p v-if="!snapshot.feed.length" class="empty">
       {{ t('feed.empty') }}
     </p>
-    <ol v-else class="feed__list">
+    <ol v-else :ref="holdScroller" class="feed__list">
       <template v-if="feedState.view === 'ticket'">
         <AnimatePresence :initial="false">
         <Motion

@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { nextTick } from 'vue';
 import { render, screen } from '@testing-library/vue';
-import { snapshot } from '@/store.ts';
+import { scrollers, snapshot } from '@/store.ts';
 import { exits } from '@/test-motion.ts';
 import { backlogRow } from '@/test-rows.ts';
 import Waiting from './Waiting.vue';
@@ -87,4 +87,13 @@ test('the list wrapper carries island__fade, the class the island styles reach t
   const { container } = render(Waiting);
 
   expect(container.querySelector('.island__fade .waiting__table')).not.toBeNull();
+});
+
+test('the panel hands its scroll element to the store and takes it back when it goes', () => {
+  snapshot.turn = [backlogRow];
+  const { unmount } = render(Waiting);
+
+  expect(scrollers.waiting?.classList.contains('row-scroll')).toBe(true);
+  unmount();
+  expect(scrollers.waiting).toBeNull();
 });

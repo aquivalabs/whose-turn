@@ -2,7 +2,7 @@
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed, reactive } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
-import { snapshot, ui, now, setMarks, justHandled } from '@/store.ts';
+import { snapshot, ui, now, setMarks, justHandled, scrollers } from '@/store.ts';
 import { yourRows, hasPrColumn } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
 import { age, ago, when } from '@/lib/time.ts';
@@ -20,6 +20,9 @@ import { useMoveView } from './useMoveView.ts';
 import { fade, leaving, listed } from '@/motion.ts';
 import { useText } from '@/i18n/index.ts';
 const t = useText();
+const holdScroller = (element: unknown) => {
+  scrollers.your_move = (element as HTMLElement | null) ?? null;
+};
 const moveView = useMoveView();
 const view = computed(() => {
   void now.value;
@@ -107,7 +110,7 @@ const undoHandled = () => {
         </button>
       </Motion>
     </AnimatePresence>
-    <RowScroll floor>
+    <RowScroll floor @scroller="holdScroller">
       <table class="table">
         <thead>
           <tr>

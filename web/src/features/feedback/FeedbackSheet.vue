@@ -2,7 +2,7 @@
 // Report: one field in the user's words; the server's composer shapes the issue and files it with the maintainer's tracker; the list below shows what this machine filed with the state the tracker reports.
 import { AnimatePresence, Motion } from 'motion-v';
 import { computed, ref, watch, nextTick } from 'vue';
-import { snapshot, ui } from '@/store.ts';
+import { scrollers, snapshot, ui } from '@/store.ts';
 import { dark } from '@/scheme.ts';
 import { getJson, post, problemsOf } from '@/lib/api.ts';
 import { SERVER_DOWN, TEXT_KEPT, writeProblem } from '@/lib/problems.ts';
@@ -45,7 +45,6 @@ const preview = ref<FeedbackPreview['preview'] | null>(null);
 const previewToken = ref('');
 const showPayload = ref(false);
 const reportPage = (id: string) => '/report?id=' + encodeURIComponent(id);
-const scrollBox = (selector: string) => document.querySelector<HTMLElement>(selector);
 const describeHere = () => ({
   client: describeClient({
     navigator,
@@ -64,17 +63,13 @@ const describeHere = () => ({
     lastEventAt: ui.lastEventAt,
     now: Date.now(),
     apiFailures: recentApiFailures(),
-    boxes: {
-      your_move: scrollBox('#your-move .row-scroll'),
-      waiting: scrollBox('#waiting .row-scroll'),
-      feed: scrollBox('#feed .feed__list'),
-    },
+    boxes: { your_move: scrollers.your_move ?? null, waiting: scrollers.waiting ?? null, feed: scrollers.feed ?? null },
   }),
 });
-let described = describeHere;
+const described = ref<ReturnType<typeof describeHere> | null>(null);
 const loadPreview = () => {
-  const here = described();
-  described = () => here;
+  const here = describeHere();
+  described.value = here;
   return post<FeedbackPreview>('/api/feedback', { preview: true, from: 'the window', ws: snapshot.workspace.id, ...here }).then(
     (reply) => {
       preview.value = reply.preview || null;
@@ -113,7 +108,7 @@ const send = () => {
     from: 'the window',
     ws: snapshot.workspace.id,
     preview_token: previewToken.value || undefined,
-    ...described(),
+    ...(described.value ?? describeHere()),
   })
     .then((reply) => {
       sending.value = false;
@@ -138,7 +133,7 @@ watch(
       problems.value = [];
       done.value = null;
       showPayload.value = false;
-      described = describeHere;
+      described.value = null;
       loadPreview();
       load().then(() => nextTick(() => field.value?.focus()));
     }

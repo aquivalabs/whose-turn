@@ -1,15 +1,18 @@
 <script setup lang="ts">
 // Scroll area of a table island with a "+N more" line for the rows below it.
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useElementSize, useScroll } from '@vueuse/core';
 import { hiddenBelow } from '@/lib/moves.ts';
 import { reduced } from '@/motion.ts';
 import { useText } from '@/i18n/index.ts';
 defineProps<{ floor?: boolean }>();
+const emit = defineEmits<{ scroller: [element: HTMLElement | null] }>();
 const t = useText();
 const cellSlack = 13;
 const scroller = ref<HTMLElement | null>(null);
 const content = ref<HTMLElement | null>(null);
+onMounted(() => emit('scroller', scroller.value));
+onBeforeUnmount(() => emit('scroller', null));
 const { y } = useScroll(scroller);
 const { height } = useElementSize(scroller);
 const { height: contentHeight } = useElementSize(content);

@@ -1,7 +1,7 @@
 import type * as Store from '@/store.ts';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { setMarks, showInFeed, snapshot, ui } from '@/store.ts';
+import { scrollers, setMarks, showInFeed, snapshot, ui } from '@/store.ts';
 import { turnRow as row } from '@/test-rows.ts';
 import YourMove from './YourMove.vue';
 import NoteModal from './NoteModal.vue';
@@ -257,4 +257,13 @@ test('Handled offers Undo for a moment, and Undo moves the row back', async () =
   await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
 
   expect(setMarks).toHaveBeenLastCalledWith({ handled: { 'nw-1': null } });
+});
+
+test('the panel hands its scroll element to the store and takes it back when it goes', async () => {
+  const { unmount } = render(YourMove);
+  await screen.findByText('Review nw-1');
+
+  expect(scrollers.your_move?.classList.contains('row-scroll')).toBe(true);
+  unmount();
+  expect(scrollers.your_move).toBeNull();
 });

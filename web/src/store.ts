@@ -43,6 +43,8 @@ export const snapshot = shallowReactive<Snapshot>({
   update: { current: '', latest: '', available: false, state: 'idle' },
   notifications: { desktop: true },
 });
+/** Each panel's scroll element, handed over on mount and cleared on unmount, so other islands read it here and not from the DOM. */
+export const scrollers = shallowReactive<Partial<Record<'your_move' | 'waiting' | 'feed', HTMLElement | null>>>({});
 export const ui = reactive({
   ws: new URLSearchParams(location.search).get('ws') || lastWorkspace.value,
   open: new Set<string>(),

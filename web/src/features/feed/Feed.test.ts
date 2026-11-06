@@ -2,7 +2,7 @@ import type * as Store from '@/store.ts';
 import { nextTick } from 'vue';
 import { expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { setMarks, snapshot, ui } from '@/store.ts';
+import { scrollers, setMarks, snapshot, ui } from '@/store.ts';
 import { exits } from '@/test-motion.ts';
 import type { FeedItem } from '@/lib/types.ts';
 import Feed from './Feed.vue';
@@ -107,4 +107,13 @@ test('a ticket group folding keeps its events on the page until the exit has pla
   exits.release();
   await vi.waitFor(() => expect(container.querySelector('.feed__children')).toBeNull());
   state.openGroups.clear();
+});
+
+test('the panel hands its list element to the store and takes it back when it goes', () => {
+  snapshot.feed = [{ id: 'a', source: 's', at: '2026-11-02T10:00:00Z' }] as FeedItem[];
+  const { unmount } = render(Feed);
+
+  expect(scrollers.feed?.classList.contains('feed__list')).toBe(true);
+  unmount();
+  expect(scrollers.feed).toBeNull();
 });
