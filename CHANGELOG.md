@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+- Monitor settings has Restart and Quit. Restart reloads the monitor and the window comes back by itself; Quit asks first, stops checking your sources, and the window says how to start it again. RMA-356.
+
 ### Fixed
 - Nobody else can read the title or the maintainer's answers of a report you sent by guessing its number: each new report gets its own key on your machine. For a report sent before this version you still see whether it is open or fixed, and its page says its answers cannot be shown. RMA-386.
 - A review request or a mention now shows once, in the workspace that watches its repository, instead of in every workspace and twice where two repositories are watched. A request from a repository no workspace watches shows in the topmost visible workspace of the same organisation, so nothing is lost. RMA-378.

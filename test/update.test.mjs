@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, restartServer, runsInstalled, updatePlugin } from '../lib/update.mjs';
+import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
@@ -370,5 +370,49 @@ test('a plugin step that fails or throws never fails the monitor update', async 
     // Verify
     assert.equal(restarts, 1);
     assert.equal(updater.status().state, 'restarting');
+  }
+});
+
+test('quitting under launchd unloads its own agent so KeepAlive does not bring it back; elsewhere it only exits 0 (RMA-356)', () => {
+  // Setup
+  const run = (agent, platform) => {
+    const spawned = [];
+    const exits = [];
+    quitServer({ agent: () => agent, platform, uid: 501, spawn: (file, args) => { spawned.push([file, ...args]); return { unref: () => {} }; }, exit: (code) => exits.push(code) });
+    return { spawned, exits };
+  };
+  // Exercise
+  const launchd = run({ exitCode: 0 }, 'darwin');
+  const systemd = run({ exitCode: 75 }, 'linux');
+  const plain = run(null, 'darwin');
+  // Verify
+  assert.deepEqual(launchd, { spawned: [['launchctl', 'bootout', 'gui/501/local.whose-turn']], exits: [0] });
+  assert.deepEqual(systemd, { spawned: [], exits: [0] });
+  assert.deepEqual(plain, { spawned: [], exits: [0] });
+});
+
+test('POST /api/quit and /api/restart answer first, tell every open window, then act (RMA-356)', async () => {
+  // Setup
+  const acted = [];
+  const api = await startTestApi({ lifecycle: { quit: () => acted.push('quit'), restart: async () => acted.push('restart') } });
+  const stream = await fetch(api.url('/api/stream'));
+  const reader = stream.body.getReader();
+  try {
+    // Exercise
+    const quit = await (await api.post('/api/quit', {})).json();
+    const restart = await (await api.post('/api/restart', {})).json();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    let seen = '';
+    while (!seen.includes('restarting')) {
+      seen += new TextDecoder().decode((await reader.read()).value);
+    }
+    // Verify
+    assert.deepEqual([quit, restart], [{ lifecycle: 'quitting' }, { lifecycle: 'restarting' }]);
+    assert.deepEqual(acted, ['quit', 'restart']);
+    assert.match(seen, /"lifecycle":"quitting"/);
+  } finally {
+    await reader.cancel();
+    api.server.closeAllConnections();
+    api.server.close();
   }
 });

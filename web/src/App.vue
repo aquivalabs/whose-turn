@@ -36,6 +36,7 @@ import FeedbackSheet from './features/feedback/FeedbackSheet.vue';
 import WorkspaceSettingsSheet from './features/settings/WorkspaceSettingsSheet.vue';
 import MonitorSettingsSheet from './features/settings/MonitorSettingsSheet.vue';
 import WhatsNewSheet from './features/whats-new/WhatsNewSheet.vue';
+import StoppedNotice from './features/lifecycle/StoppedNotice.vue';
 import { useWhatsNew } from './composables/useWhatsNew.ts';
 const firstRun = computed(
   () => Boolean(snapshot.workspace.id) && !snapshot.workspace.connectors.length,
@@ -119,6 +120,7 @@ onMounted(() => {
         <WorkspaceSettingsSheet />
         <MonitorSettingsSheet />
         <WhatsNewSheet />
+        <StoppedNotice />
         <CommentModal />
         <NoteModal />
       </div>

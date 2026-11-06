@@ -17,7 +17,7 @@ import { orderWorkspaces } from './lib/settings.ts';
 import { topLayer, type Layer } from './lib/layers.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
 import { SERVER_DOWN, TEXT_KEPT, errorProblem, writeProblem } from './lib/problems.ts';
-import type { ApiError, FeedItem, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
+import type { ApiError, FeedItem, Lifecycle, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
 
@@ -50,6 +50,7 @@ export const ui = reactive({
   reconnects: 0,
   lastEventAt: 0,
   consoleErrors: 0,
+  lifecycle: '' as Lifecycle | '',
   status: 'Connecting…',
   modal: null as FeedItem | null,
   note: '',
@@ -254,6 +255,7 @@ watch(
   (status) => {
     ui.live = status === 'OPEN';
     if (ui.live) {
+      ui.lifecycle = '';
       ui.status = '';
       ui.reconnects++;
     }
@@ -263,7 +265,7 @@ watch(
 watch(
   stream.error,
   (error) => {
-    if (error) {
+    if (error && !ui.lifecycle) {
       ui.status = 'Disconnected from the local server, retrying…';
     }
   },
@@ -278,6 +280,14 @@ watch(
     ui.lastEventAt = Date.now();
     if ('update' in message) {
       snapshot.update = message.update;
+      return;
+    }
+    if ('lifecycle' in message) {
+      ui.lifecycle = message.lifecycle;
+      ui.status = message.lifecycle === 'restarting' ? 'Restarting the monitor…' : 'The monitor is stopped.';
+      if (message.lifecycle === 'quitting') {
+        stream.close();
+      }
       return;
     }
     if ('report_news' in message) {
@@ -426,3 +436,10 @@ export const refresh = () => {
   });
   showBackdrop({ workspace: snapshot.workspace.id, seed: Math.floor(Math.random() * 4294967296) });
 };
+
+/** Stops or restarts the monitor server; the stream then carries the new state to every open window (RMA-356). */
+export const stopServer = (action: 'quit' | 'restart') =>
+  post(`/api/${action}`).then(
+    (reply) => tellProblem(reply, { refused: action === 'quit' ? 'The monitor did not stop' : 'The monitor did not restart' }),
+    (failure: Error) => tellProblem(failure),
+  );
