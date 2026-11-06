@@ -277,17 +277,6 @@ const buildAsk = async (api, { me, keyOf }, note, repo) => {
   }
   const title = subject.title || '';
   const base = { repo, number, ref: prRef(repo, number), title, key: keyOf(title), url: `https://github.com/${repo}/${subject.type === 'PullRequest' ? 'pull' : 'issues'}/${number}` };
-  if (note.reason === 'review_requested' && subject.type === 'PullRequest') {
-    const pr = await api(`/repos/${repo}/pulls/${number}`);
-    if (pr.state !== 'open') {
-      return null;
-    }
-    const requested = await api(`/repos/${repo}/pulls/${number}/requested_reviewers`);
-    if (!(requested.users || []).some((user) => user.login === me)) {
-      return null;
-    }
-    return { ...base, id: `gha:${note.id}`, kind: 'review requested', who: pr.user.login, at: note.updated_at, text: oneline(title), body: (pr.body || '').slice(0, 6000) };
-  }
   let comment = subject.latest_comment_url ? await api(subject.latest_comment_url) : null;
   const comments = await api(`/repos/${repo}/issues/${number}/comments?per_page=100`);
   if (!comment || !(comment.body || '').includes(`@${me}`)) {
@@ -304,13 +293,29 @@ const buildAsk = async (api, { me, keyOf }, note, repo) => {
   return { ...base, id: `gha:${note.id}`, kind: 'mentioned you', who: comment.user.login, at, url: comment.html_url || base.url, text: oneline(comment.body || ''), body: (comment.body || '').replace(/\r/g, '').slice(0, 6000) };
 };
 
+// RMA-358: a review request lives while you are a requested reviewer of an open PR, read or not.
+const pollReviewRequests = async (api, { org, me, keyOf }) => {
+  const query = `is:pr is:open user-review-requested:${me} org:${org}`;
+  const found = (await api(`/search/issues?q=${encodeURIComponent(query)}&per_page=50`)).items || [];
+  return found.map((item) => {
+    const repo = String(item.repository_url || '').split('/repos/')[1] || '';
+    const title = item.title || '';
+    return {
+      repo, number: item.number, ref: prRef(repo, item.number), title, key: keyOf(title), url: item.html_url,
+      id: `gha:review:${repo}#${item.number}`, kind: 'review requested', who: item.user?.login || '', at: item.updated_at,
+      text: oneline(title), body: (item.body || '').slice(0, 6000),
+    };
+  });
+};
+
 const pollAsks = async (api, context) => {
-  const { org, cache } = context;
-  const notes = await api('/notifications?participating=true&all=false&per_page=50');
+  const { org, cache, sinceIso } = context;
+  const reviews = await pollReviewRequests(api, context);
+  const notes = await api(`/notifications?participating=true&all=true&since=${encodeURIComponent(sinceIso)}&per_page=50`);
   cache.asks = cache.asks || new Map();
   const rows = [];
   const seen = new Set();
-  const relevant = notes.filter((note) => note.repository.full_name.startsWith(`${org}/`) && ['review_requested', 'mention', 'team_mention', 'assign'].includes(note.reason));
+  const relevant = notes.filter((note) => note.repository.full_name.startsWith(`${org}/`) && ['mention', 'team_mention', 'assign'].includes(note.reason));
   await mapLimit(relevant, 4, async (note) => {
     seen.add(note.id);
     const cached = cache.asks.get(note.id);
@@ -325,7 +330,7 @@ const pollAsks = async (api, context) => {
       cache.asks.delete(noteId);
     }
   }
-  return rows;
+  return [...reviews, ...rows];
 };
 
 export const poll = async ({ settings, http, cache, sinceIso, keyOf }) => {

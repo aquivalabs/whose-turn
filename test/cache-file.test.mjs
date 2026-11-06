@@ -49,7 +49,7 @@ const stubHttp = (calls, numbers) => ({
     const path = url.replace('https://api.github.com', '');
     calls.push(path);
     if (path.startsWith('/search/issues')) {
-      return { items: path.includes('is%3Aopen') ? numbers.map((number) => ({ number, updated_at: `t${number}` })) : [] };
+      return { items: path.includes('is%3Aopen') && !path.includes('review-requested') ? numbers.map((number) => ({ number, updated_at: `t${number}` })) : [] };
     }
     if (path === '/user') {
       return { login: 'alex' };
@@ -98,9 +98,9 @@ test('a restart with the file re-fetches nothing but the searches and the checks
     const withoutFile = await startAndPoll(scratch(), numbers);
     const searches = (calls) => calls.filter((path) => path.startsWith('/search/issues')).length;
     const details = (calls) => calls.filter((path) => /\/pulls\/\d+$/.test(path)).length;
-    assert.equal(searches(warm), 2);
+    assert.equal(searches(warm), 3);
     assert.equal(details(warm), 0);
-    assert.equal(warm.length, 2 + 1 + 1 + 2 + numbers.length, 'two searches, /user, notifications, the repository and its workflow runs, one checks refresh per open PR');
+    assert.equal(warm.length, 3 + 1 + 1 + 2 + numbers.length, 'three searches (open PRs, updated PRs, review requests), /user, notifications, the repository and its workflow runs, one checks refresh per open PR');
     assert.equal(details(withoutFile), 3);
     assert.ok(withoutFile.length > warm.length && cold.length === withoutFile.length);
   });

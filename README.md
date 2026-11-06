@@ -63,7 +63,7 @@ The four numbers `poll_seconds`, `history_days`, `stale_minutes` and `failing_po
 | `workspaces[].key_pattern` | regex for ticket keys in PR titles and to-dos; the default matches any Jira-style key; a pattern that does not compile is refused on save |
 | `workspaces[].connectors` | an object keyed by type, or a list of `{type, id?, label?, …}` entries when one type appears twice |
 | `…connectors.github.repo` | the repository whose PRs are yours, `owner/name` |
-| `…github.org` | notifications are kept only from this org; defaults to the repo owner |
+| `…github.org` | review requests and notifications are kept only from this org; defaults to the repo owner |
 | `…github.me` | your GitHub login; left empty, it is asked from the API once |
 | `…github.account` | which `gh` account's token to use when several are logged in |
 | `…github.bots` | logins whose comments never count as a human reply |
@@ -123,7 +123,8 @@ Restart after a self-update: launchd names its job in `XPC_SERVICE_NAME` and res
 - `search/issues` finds your open PRs and PRs updated in the last `history_days`. Full details are fetched only for PRs whose `updated_at` changed: PR, reviews, issue comments, inline comments, check runs.
 - Open PRs get their check runs re-polled every cycle, because CI finishing does not bump `updated_at`. Each check counts by its latest attempt: a re-run, or a run that a newer one cancelled, replaces the older one (RMA-382).
 - Workflow runs: one `GET /repos/{owner}/{repo}/actions/runs?branch=<default branch>` per poll (the default branch itself is asked once a day) finds runs that fail on the default branch after a merge, on a schedule or in a `workflow_run` chain; each failure and the success that ends it reach the feed as `check failed` and `check passed`, runs of pull requests are left to the PR path, and `workflow_runs: false` on the connector turns this off.
-- `/notifications?participating=true` gives review requests and @-mentions on PRs and issues that are not yours, filtered to the org.
+- `search/issues` with `is:pr is:open user-review-requested:<you> org:<org>` gives the open PRs that still wait for your review, read or unread, with no dependency on GitHub's web notifications (RMA-358).
+- `/notifications?participating=true&all=true&since=<history window>` gives @-mentions on PRs and issues that are not yours, read ones included, filtered to the org.
 - Every GET carries an ETag; a 304 does not count against the 5000/h limit. Steady state is about 1 to 10 requests a minute per workspace.
 - The token is sent only to `https://api.github.com/`.
 
@@ -177,7 +178,7 @@ Every row carries a numeric `rank` from its table row's `then.rank`, lowest firs
 Extra rows, one per item:
 
 - **Ticket comments:** a comment by a human that @-mentions you in the last `history_days` and is not answered. It is a question if it has `?` outside links or one of `question_words`. Otherwise it is "read". Your later comment answers only the people it @-mentions. Authors matching `automation_authors` are ignored.
-- **GitHub notifications:** "Review PR #N" while you are still a requested reviewer. "Answer X on #N" until you comment there after the mention.
+- **GitHub review requests and mentions:** "Review PR #N" while you are a requested reviewer of the open PR, whether or not you have opened it. "Answer X on #N" until you comment there after the mention.
 
 The On Hold reason is the comment by whoever moved the ticket to On Hold, closest to that moment. If there is none, the last comment before it. As a last resort, the newest comment saying "on hold". Shown on one line, with the full comment in a tooltip and a link.
 
