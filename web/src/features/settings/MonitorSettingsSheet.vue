@@ -65,7 +65,7 @@ const save = () =>
     >
       <div class="sheet-form">
         <h4 class="sheet-form__heading">Notifications</h4>
-        <label class="monitor-settings__switch">
+        <label class="monitor-settings-sheet__switch">
           <input
             type="checkbox"
             role="switch"
@@ -85,7 +85,7 @@ const save = () =>
         />
         <template v-if="hiddenWorkspaces.length">
           <h4 class="sheet-form__heading">Parked and paused workspaces</h4>
-          <p class="monitor-settings__note">
+          <p class="monitor-settings-sheet__note">
             Parked: checked every 15 minutes, back in the rail when something needs you. Paused: not
             checked at all, back only when you restore it.
           </p>
@@ -94,10 +94,10 @@ const save = () =>
               v-for="workspace in hiddenWorkspaces"
               :key="workspace.id"
               v-bind="listed"
-              class="monitor-settings__hidden"
+              class="monitor-settings-sheet__hidden"
             >
-              <strong class="monitor-settings__hidden-name">{{ workspace.name }}</strong>
-              <span class="monitor-settings__hidden-mode">{{ workspace.hidden }}</span>
+              <strong class="monitor-settings-sheet__hidden-name">{{ workspace.name }}</strong>
+              <span class="monitor-settings-sheet__hidden-mode">{{ workspace.hidden }}</span>
               <button
                 type="button"
                 class="btn"
@@ -111,13 +111,13 @@ const save = () =>
           </AnimatePresence>
         </template>
         <h4 class="sheet-form__heading">Config file</h4>
-        <p class="monitor-settings__file">{{ configFile }}</p>
+        <p class="monitor-settings-sheet__file">{{ configFile }}</p>
       </div>
     </SettingsFrame>
   </AnimatePresence>
 </template>
 <style scoped>
-.monitor-settings__switch {
+.monitor-settings-sheet__switch {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -125,31 +125,31 @@ const save = () =>
   font-size: 13px;
 }
 
-.monitor-settings__note {
+.monitor-settings-sheet__note {
   margin: 0;
   color: var(--md-on-surface-variant);
   font-size: 13px;
 }
 
-.monitor-settings__hidden {
+.monitor-settings-sheet__hidden {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.monitor-settings__hidden-name {
+.monitor-settings-sheet__hidden-name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.monitor-settings__hidden-mode {
+.monitor-settings-sheet__hidden-mode {
   color: var(--md-on-surface-variant);
   font-size: 13px;
 }
 
-.monitor-settings__file {
+.monitor-settings-sheet__file {
   margin: 0;
   color: var(--md-on-surface-variant);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

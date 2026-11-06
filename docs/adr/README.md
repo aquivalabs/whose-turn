@@ -53,6 +53,7 @@ Example shape: `0001-choose-the-message-queue.md`.
 | 0007 | [A tag publishes the package with the built window inside; the marketplace entry installs that package](0007-release-pipeline.md) | accepted |
 | 0008 | [Every source is an adapter under one versioned, capability-declared contract; a user adapter is a module named by path](0008-integration-contract.md) | proposed |
 | 0009 | [Motion in the window is motion-v, pinned, through shared tokens, and off under reduced motion](0009-motion-in-the-window.md) | accepted |
+| 0010 | [A rule a tool can check is enforced by the tool; a review lens judges only what no tool can](0010-static-analysis-first.md) | accepted |
 
 ## Referencing an ADR from code
 

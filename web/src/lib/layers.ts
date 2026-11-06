@@ -9,11 +9,11 @@ export const topLayer = (open: {
   feedback: boolean;
   whatsNew?: boolean;
 }): Layer | null => {
-  if (open.modal) return 'modal';
-  if (open.note) return 'note';
-  if (open.settings) return 'settings';
-  if (open.monitor) return 'monitor';
-  if (open.feedback) return 'feedback';
-  if (open.whatsNew) return 'whatsNew';
+  if (open.modal) {return 'modal';}
+  if (open.note) {return 'note';}
+  if (open.settings) {return 'settings';}
+  if (open.monitor) {return 'monitor';}
+  if (open.feedback) {return 'feedback';}
+  if (open.whatsNew) {return 'whatsNew';}
   return null;
 };

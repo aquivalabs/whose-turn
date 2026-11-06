@@ -36,54 +36,54 @@ watch(
         <span class="modal__meta">Running {{ changelog.current }}</span>
       </template>
       <div v-if="problem" class="alert" role="alert">{{ problem }}</div>
-      <article v-for="entry in changelog?.versions" :key="entry.version" class="whats-new__version">
-        <header class="whats-new__head">
-          <h4 class="whats-new__name">
+      <article v-for="entry in changelog?.versions" :key="entry.version" class="whats-new-sheet__version">
+        <header class="whats-new-sheet__head">
+          <h4 class="whats-new-sheet__name">
             {{ entry.version }}
           </h4>
-          <span v-if="entry.date" class="whats-new__date">{{ entry.date }}</span>
+          <span v-if="entry.date" class="whats-new-sheet__date">{{ entry.date }}</span>
           <span
             v-if="entry.version === changelog?.current"
-            class="whats-new__tag whats-new__tag--running"
+            class="whats-new-sheet__tag whats-new-sheet__tag--running"
             >Running</span
           >
-          <span v-if="fresh.includes(entry.version)" class="whats-new__tag">New</span>
+          <span v-if="fresh.includes(entry.version)" class="whats-new-sheet__tag">New</span>
         </header>
         <MarkdownView v-if="entry.sections.length" :source="versionMarkdown(entry)" />
-        <p v-else class="whats-new__empty">No notes for this version.</p>
+        <p v-else class="whats-new-sheet__empty">No notes for this version.</p>
       </article>
     </Modal>
   </AnimatePresence>
 </template>
 <style scoped>
-.whats-new__version {
+.whats-new-sheet__version {
   padding: 16px 0 4px;
   border-bottom: 1px solid var(--md-outline-variant);
 }
 
-.whats-new__version:last-child {
+.whats-new-sheet__version:last-child {
   border-bottom: 0;
 }
 
-.whats-new__head {
+.whats-new-sheet__head {
   display: flex;
   gap: 10px;
   align-items: baseline;
   padding: 0 20px;
 }
 
-.whats-new__name {
+.whats-new-sheet__name {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
 
-.whats-new__date {
+.whats-new-sheet__date {
   font-size: 12px;
   color: var(--md-on-surface-variant);
 }
 
-.whats-new__tag {
+.whats-new-sheet__tag {
   padding: 1px 8px;
   font-size: 11px;
   font-weight: 600;
@@ -92,12 +92,12 @@ watch(
   border-radius: var(--md-r-chip);
 }
 
-.whats-new__tag--running {
+.whats-new-sheet__tag--running {
   color: var(--md-on-secondary-container);
   background: var(--md-secondary-container);
 }
 
-.whats-new__empty {
+.whats-new-sheet__empty {
   margin: 6px 20px 14px;
   font-size: 13px;
   color: var(--md-on-surface-variant);

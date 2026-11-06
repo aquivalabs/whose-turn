@@ -16,7 +16,7 @@ const idlePlugin = async () => 'manual';
 const updaterWith = (tags, extra = {}) => {
   const notes = [];
   const asked = [];
-  const http = { fetchJson: async (url) => { asked.push(url); if (tags instanceof Error) throw tags; return tags; } };
+  const http = { fetchJson: async (url) => { asked.push(url); if (tags instanceof Error) {throw tags;} return tags; } };
   const updater = createUpdater({ http, dataDir: scratch(), version: '1.0.0-alpha.2', installed: true, notify: (title, body) => notes.push([title, body]), registry: 'http://registry.test', restart: async () => {}, plugin: idlePlugin, ...extra });
   return { updater, notes, asked };
 };

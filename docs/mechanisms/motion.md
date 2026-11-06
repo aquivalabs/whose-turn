@@ -14,7 +14,7 @@ The window's movement: panels fold, rows slide in and out, dialogs fade, all thr
 | `web/src/motion.ts` | the same numbers for JavaScript, the presets `fade`, `rise`, `listed`, `fold`, the spring, `glideThrough` and the `leaving` marker |
 | `web/src/motion-features.ts` | the only door to the heavy part of `motion-v` (the feature set and `animate`), imported lazily |
 | `web/src/features/your-move/RecentlyDone.vue` | the Recently done block: its fold glides |
-| `web/src/ui/Island.vue` | a panel: its fold, its floor and its natural height |
+| `web/src/ui/Island.vue` | a panel: its fold, its floor and its natural height, and the `:deep(.island__fade)` rule that passes the panel's height to Waiting's list |
 | `web/src/ui/Modal.vue` | the dialog: the backdrop and the card |
 | `web/src/ui/Swap.vue` | faces that take turns (the empty text and the list, the update chip): the one on show leaves before the other enters |
 | `web/src/test-motion.ts` | the stand-in the Vitest tier uses instead of `motion-v` |

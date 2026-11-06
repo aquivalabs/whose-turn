@@ -43,7 +43,7 @@ test('the sheet lists every version newest first, marks the running one and rend
 
   await screen.findByText('1.2.0');
 
-  const names = [...container.querySelectorAll('.whats-new__name')].map((node) => node.textContent?.trim());
+  const names = [...container.querySelectorAll('.whats-new-sheet__name')].map((node) => node.textContent?.trim());
   expect(names).toEqual(['1.2.0', '1.1.0', '1.0.0']);
   expect(screen.getByText('Running')).toBeTruthy();
   expect(screen.getByText('Running 1.2.0').className).toContain('modal__meta');
@@ -66,7 +66,7 @@ test('opening the sheet flags the versions since the last visit and marks them s
   await screen.findByText('1.2.0');
   await nextTick();
 
-  expect(container.querySelectorAll('.whats-new__tag:not(.whats-new__tag--running)')).toHaveLength(2);
+  expect(container.querySelectorAll('.whats-new-sheet__tag:not(.whats-new-sheet__tag--running)')).toHaveLength(2);
   expect(unseen.value).toEqual([]);
   expect(localStorage.getItem(SEEN_KEY)).toBe('1.2.0');
 });

@@ -123,7 +123,7 @@ const launch = (t, { shell, path, hint }) => {
   const nodes = {};
   if (path) { nodes.path = make(join(h.home, 'on-path'), 'node'); env.PATH = `${join(h.home, 'on-path')}:${env.PATH}`; }
   if (hint) { nodes.hint = make(join(h.home, 'hint'), 'node'); env.WHOSE_TURN_NODE = nodes.hint; }
-  if (shell) nodes.shell = make(join(h.home, 'nvm'), 'node');
+  if (shell) {nodes.shell = make(join(h.home, 'nvm'), 'node');}
   writeFileSync(join(h.home, 'sh'), `#!/bin/sh\n${shell ? `echo ${nodes.shell}` : 'exit 0'}\n`);
   chmodSync(join(h.home, 'sh'), 0o755);
   env.SHELL = join(h.home, 'sh');

@@ -17,8 +17,8 @@ const head = computed(() => {
 const { height: headHeight } = useElementSize(head);
 const rows = () => [...(content.value?.querySelector('table')?.tBodies || [])];
 const viewBottom = () => {
-  const el = scroller.value;
-  return el ? el.getBoundingClientRect().top + el.clientTop + el.clientHeight : 0;
+  const box = scroller.value;
+  return box ? box.getBoundingClientRect().top + box.clientTop + box.clientHeight : 0;
 };
 const hidden = computed(() => {
   void [y.value, height.value, contentHeight.value];
@@ -29,15 +29,15 @@ const hidden = computed(() => {
   );
 });
 const reveal = () => {
-  const el = scroller.value;
+  const box = scroller.value;
   const list = rows();
   const first = list[list.length - hidden.value];
-  if (!el || !first) {
+  if (!box || !first) {
     return;
   }
   const head = content.value?.querySelector('thead')?.getBoundingClientRect().bottom;
-  const top = head ?? el.getBoundingClientRect().top;
-  el.scrollBy({ top: first.getBoundingClientRect().top - top, behavior: 'smooth' });
+  const top = head ?? box.getBoundingClientRect().top;
+  box.scrollBy({ top: first.getBoundingClientRect().top - top, behavior: 'smooth' });
 };
 </script>
 <template>

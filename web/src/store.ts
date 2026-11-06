@@ -160,11 +160,11 @@ export const currentLayer = computed(() => topLayer(ui));
 /** Closes only the topmost layer; a settings sheet with unsaved edits asks first. */
 export const closeTopLayer = () => {
   const layer = currentLayer.value;
-  if (layer === 'modal') ui.modal = null;
-  if (layer === 'note') ui.note = '';
-  if (layer === 'feedback') ui.feedback = false;
-  if (layer === 'whatsNew') ui.whatsNew = false;
-  if (layer !== 'settings' && layer !== 'monitor') return;
+  if (layer === 'modal') {ui.modal = null;}
+  if (layer === 'note') {ui.note = '';}
+  if (layer === 'feedback') {ui.feedback = false;}
+  if (layer === 'whatsNew') {ui.whatsNew = false;}
+  if (layer !== 'settings' && layer !== 'monitor') {return;}
   if (ui.settingsDirty) {
     ui.settingsAsk = true;
     return;
@@ -175,13 +175,13 @@ export const closeTopLayer = () => {
 
 const openers = new Map<Layer, Element | null>();
 const rememberOpener = (layer: Layer, isOpen: boolean) => {
-  if (isOpen) openers.set(layer, document.activeElement);
+  if (isOpen) {openers.set(layer, document.activeElement);}
 };
 const returnFocus = (layer: Layer, isOpen: boolean) => {
-  if (isOpen) return;
+  if (isOpen) {return;}
   const opener = openers.get(layer);
   openers.delete(layer);
-  if (opener instanceof HTMLElement) opener.focus();
+  if (opener instanceof HTMLElement) {opener.focus();}
 };
 const layerFlags: Record<Layer, () => boolean> = {
   modal: () => Boolean(ui.modal),
@@ -194,7 +194,7 @@ const layerFlags: Record<Layer, () => boolean> = {
 watch(
   () => snapshot.turn.some((row) => row.row_id === ui.note),
   (present) => {
-    if (!present) ui.note = '';
+    if (!present) {ui.note = '';}
   },
   { flush: 'sync' },
 );

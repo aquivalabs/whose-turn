@@ -32,7 +32,7 @@ export default tseslint.config(
         {
           min: 3,
           properties: 'never',
-          exceptions: ['id', 'to', 'at', 'on', 'of', 'in', 'is', 'el', 'e', 'ui', 'x', 'y'],
+          exceptions: ['id', 'to', 'at', 'on', 'of', 'in', 'is', 'ui', 'x', 'y'],
         },
       ],
       'no-restricted-imports': [
@@ -71,7 +71,7 @@ export default tseslint.config(
       'func-style': ['error', 'expression'],
       quotes: ['error', 'single', { avoidEscape: true }],
       curly: ['error', 'all'],
-      'id-length': ['error', { min: 3, properties: 'never', exceptions: ['id', 'to', 'at', 'on', 'of', 'in', 'is', 'el', 'e', 'x', 'y', 'pr', 'me', 'a', 'b'] }],
+      'id-length': ['error', { min: 3, properties: 'never', exceptions: ['id', 'to', 'at', 'on', 'of', 'in', 'is', 'x', 'y', 'pr', 'me', 'a', 'b'] }],
       'no-unused-vars': ['error', { ignoreRestSiblings: true }],
     },
   },
@@ -80,4 +80,6 @@ export default tseslint.config(
     rules: { 'id-length': 'off' },
   },
   prettier,
+  // docs/adr/0010: eslint-config-prettier switches curly off; Prettier allows curly: 'all', so it comes back here.
+  { files: [...webFiles, ...serverFiles], rules: { curly: ['error', 'all'] } },
 );

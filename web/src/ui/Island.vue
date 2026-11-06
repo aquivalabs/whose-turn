@@ -75,22 +75,22 @@ const siblingsBelow = (body: HTMLElement, row: HTMLElement) => {
     }, 0);
 };
 const measure = () => {
-  const el = root.value;
-  const body = el?.querySelector<HTMLElement>('.island__body');
-  if (!el || !body || collapsed.value || props.resize !== 'height') {
+  const island = root.value;
+  const body = island?.querySelector<HTMLElement>('.island__body');
+  if (!island || !body || collapsed.value || props.resize !== 'height') {
     return;
   }
   const rows = body.querySelectorAll<HTMLElement>(OWN_ROWS);
   const hadRows = hasRows.value;
   hasRows.value = rows.length > 0;
-  const top = el.getBoundingClientRect().top;
+  const top = island.getBoundingClientRect().top;
   const padding = pixels(getComputedStyle(body).paddingBottom);
   if (!rows.length) {
     const natural = [...body.children].reduce((sum, node) => sum + naturalHeight(node as HTMLElement), 0);
     floor.value = hadRows ? 0 : Math.ceil(body.offsetTop + natural + padding);
     return;
   }
-  const bottom = rows[0].getBoundingClientRect().bottom - top + scrolledAbove(rows[0], el);
+  const bottom = rows[0].getBoundingClientRect().bottom - top + scrolledAbove(rows[0], island);
   floor.value = floorHeight(bottom + siblingsBelow(body, rows[0]) + padding + 2, rows.length);
 };
 let frame = 0;
@@ -108,14 +108,14 @@ onMounted(schedule);
 watch(collapsed, () => nextTick(schedule));
 // docs/mechanisms/motion.md § The grip fades where dragging does nothing
 const openBelow = ref(true);
-const siblingsOf = (el: HTMLElement) => {
-  const all = [...(el.parentElement?.children ?? [])].filter((node): node is HTMLElement => node instanceof HTMLElement);
-  return { others: all.filter((node) => node !== el), below: all.slice(all.indexOf(el) + 1) };
+const siblingsOf = (island: HTMLElement) => {
+  const all = [...(island.parentElement?.children ?? [])].filter((node): node is HTMLElement => node instanceof HTMLElement);
+  return { others: all.filter((node) => node !== island), below: all.slice(all.indexOf(island) + 1) };
 };
 const trace = () => {
-  const el = root.value;
+  const island = root.value;
   const open = (node: Element) => node.classList.contains('island') && !node.classList.contains('island--collapsed');
-  openBelow.value = !!el && siblingsOf(el).below.some(open);
+  openBelow.value = !!island && siblingsOf(island).below.some(open);
 };
 const watching = props.resize === 'height';
 useMutationObserver(() => (watching ? (root.value?.parentElement ?? null) : null), trace, { childList: true });
@@ -125,30 +125,30 @@ if (watching) {
 }
 const gripOff = computed(() => !openBelow.value);
 const sized = computed(() => size.value !== null && props.resize === 'height' && hasRows.value);
-const neighbours = (el: HTMLElement) =>
-  siblingsOf(el).others.map((node) => ({
+const neighbours = (island: HTMLElement) =>
+  siblingsOf(island).others.map((node) => ({
     collapsed: node.classList.contains('island--collapsed'),
     height: node.offsetHeight,
     floor: pixels(node.style.getPropertyValue('--island-floor')),
   }));
 const bounds = () => {
-  const el = root.value as HTMLElement;
+  const island = root.value as HTMLElement;
   measure();
   if (props.resize === 'width') {
-    const layout = el.parentElement as HTMLElement;
+    const layout = island.parentElement as HTMLElement;
     const gap = pixels(getComputedStyle(layout).columnGap);
     return {
-      current: el.offsetWidth,
+      current: island.offsetWidth,
       min: MIN_WIDTH,
       max: layout.clientWidth - gap - MAIN_MIN_WIDTH,
     };
   }
-  const column = el.parentElement as HTMLElement;
+  const column = island.parentElement as HTMLElement;
   const gap = pixels(getComputedStyle(column).rowGap);
   return {
-    current: el.offsetHeight,
+    current: island.offsetHeight,
     min: floor.value,
-    max: Math.max(ceilingHeight(column.clientHeight, gap, neighbours(el)), column.clientHeight),
+    max: Math.max(ceilingHeight(column.clientHeight, gap, neighbours(island)), column.clientHeight),
   };
 };
 </script>

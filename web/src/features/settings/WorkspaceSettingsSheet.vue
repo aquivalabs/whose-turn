@@ -232,17 +232,17 @@ const save = () =>
             :model-value="fieldValue(current, spec.key)"
             @update:model-value="setWorkspaceField(current, spec.key, $event)"
           />
-          <fieldset class="settings-sheet__modes">
+          <fieldset class="workspace-settings-sheet__modes">
             <legend class="field-row__label">In the list</legend>
-            <label v-for="mode in MODES" :key="mode.value" class="settings-sheet__mode">
+            <label v-for="mode in MODES" :key="mode.value" class="workspace-settings-sheet__mode">
               <input
                 type="radio"
                 name="hidden-mode"
                 :checked="(current.hidden || '') === mode.value"
                 @change="setOrDrop(current, 'hidden', mode.value || undefined)"
               />
-              <span class="settings-sheet__mode-name">{{ mode.label }}</span>
-              <span class="settings-sheet__mode-line">{{ mode.line }}</span>
+              <span class="workspace-settings-sheet__mode-name">{{ mode.label }}</span>
+              <span class="workspace-settings-sheet__mode-line">{{ mode.line }}</span>
             </label>
           </fieldset>
           <h4 class="sheet-form__heading">Look</h4>
@@ -258,10 +258,10 @@ const save = () =>
           <div
             v-for="({ entry, spec: entrySpec, uid }, index) in connectorCards"
             :key="uid"
-            class="settings-sheet__connector"
+            class="workspace-settings-sheet__connector"
           >
-            <div class="settings-sheet__connector-head">
-              <strong class="settings-sheet__connector-name">{{ entrySpec.label }}</strong
+            <div class="workspace-settings-sheet__connector-head">
+              <strong class="workspace-settings-sheet__connector-name">{{ entrySpec.label }}</strong
               ><button type="button" class="btn btn--danger" @click="askRemoveConnector(index)">
                 Remove
               </button>
@@ -290,7 +290,7 @@ const save = () =>
               @secret="(key, value) => setSecret(entry, key, value)"
             />
           </div>
-          <div class="settings-sheet__actions">
+          <div class="workspace-settings-sheet__actions">
             <button
               v-for="spec in catalogue"
               :key="spec.type"
@@ -318,21 +318,21 @@ const save = () =>
             @update:model-value="setOrDrop(current.rules.statuses, spec.key, $event)"
           />
           <h4 class="sheet-form__heading">Whose turn table</h4>
-          <p class="settings-sheet__rules-note">
+          <p class="workspace-settings-sheet__rules-note">
             The rows in force, top to bottom: the first one that fits decides. Read-only here: ask
             Claude to change them.
           </p>
-          <p v-for="warning in ruleWarnings" :key="warning" class="settings-sheet__rules-warning">
+          <p v-for="warning in ruleWarnings" :key="warning" class="workspace-settings-sheet__rules-warning">
             {{ warning }}
           </p>
-          <ol v-if="ruleRows.length" class="settings-sheet__rules">
-            <li v-for="(rule, index) in ruleRows" :key="index" class="settings-sheet__rule">
-              <span class="settings-sheet__rule-when">{{ rule.when }}</span>
-              <span class="settings-sheet__rule-then">{{ rule.then }}</span>
+          <ol v-if="ruleRows.length" class="workspace-settings-sheet__rules">
+            <li v-for="(rule, index) in ruleRows" :key="index" class="workspace-settings-sheet__rule">
+              <span class="workspace-settings-sheet__rule-when">{{ rule.when }}</span>
+              <span class="workspace-settings-sheet__rule-then">{{ rule.then }}</span>
             </li>
           </ol>
           <p v-else class="empty">Save the workspace to see its rows.</p>
-          <div v-if="!adding" class="settings-sheet__actions">
+          <div v-if="!adding" class="workspace-settings-sheet__actions">
             <button type="button" class="btn btn--danger" @click="askRemoveWorkspace">
               Delete workspace
             </button>
@@ -343,7 +343,7 @@ const save = () =>
   </AnimatePresence>
 </template>
 <style scoped>
-.settings-sheet__connector {
+.workspace-settings-sheet__connector {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -353,18 +353,18 @@ const save = () =>
   background: rgb(var(--glass), 0.35);
 }
 
-.settings-sheet__connector-head {
+.workspace-settings-sheet__connector-head {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.settings-sheet__connector-name {
+.workspace-settings-sheet__connector-name {
   flex: 1;
   font-weight: 600;
 }
 
-.settings-sheet__modes {
+.workspace-settings-sheet__modes {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 4px 8px;
@@ -373,7 +373,7 @@ const save = () =>
   border: 0;
 }
 
-.settings-sheet__mode {
+.workspace-settings-sheet__mode {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
@@ -381,24 +381,24 @@ const save = () =>
   font-size: 14px;
 }
 
-.settings-sheet__mode-name {
+.workspace-settings-sheet__mode-name {
   font-weight: 500;
 }
 
-.settings-sheet__mode-line {
+.workspace-settings-sheet__mode-line {
   grid-column: 2;
   color: var(--md-on-surface-variant);
   font-size: 13px;
 }
 
-.settings-sheet__actions {
+.workspace-settings-sheet__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
 
-.settings-sheet__rules {
+.workspace-settings-sheet__rules {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -407,7 +407,7 @@ const save = () =>
   font-size: 13px;
 }
 
-.settings-sheet__rule {
+.workspace-settings-sheet__rule {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: 12px;
@@ -415,23 +415,23 @@ const save = () =>
   border-bottom: 1px solid var(--md-outline-variant);
 }
 
-.settings-sheet__rule-when {
+.workspace-settings-sheet__rule-when {
   color: var(--md-on-surface-variant);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   overflow-wrap: anywhere;
 }
 
-.settings-sheet__rule-then {
+.workspace-settings-sheet__rule-then {
   overflow-wrap: anywhere;
 }
 
-.settings-sheet__rules-note {
+.workspace-settings-sheet__rules-note {
   margin: 0;
   color: var(--md-on-surface-variant);
 }
 
-.settings-sheet__rules-warning {
+.workspace-settings-sheet__rules-warning {
   margin: 0;
   padding: 6px 10px;
   border-radius: 8px;
