@@ -18,8 +18,30 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['web/src/**'],
-      exclude: ['web/src/**/*.test.ts'],
-      thresholds: { lines: 66, branches: 56, functions: 68, statements: 66 },
+      // ADR 0004: pure logic in web/src/lib is measured by the node:test run (package.json coverage:server);
+      // backdrop.ts paints on a canvas, which happy-dom does not have. RMA-372.
+      exclude: [
+        'web/src/**/*.test.ts',
+        'web/src/backdrop.ts',
+        'web/src/lib/bem.ts',
+        'web/src/lib/browser.ts',
+        'web/src/lib/feed.ts',
+        'web/src/lib/icons.ts',
+        'web/src/lib/latest-wins.ts',
+        'web/src/lib/layers.ts',
+        'web/src/lib/live-status.ts',
+        'web/src/lib/markdown-tokens.ts',
+        'web/src/lib/moves.ts',
+        'web/src/lib/problems.ts',
+        'web/src/lib/random.ts',
+        'web/src/lib/settings.ts',
+        'web/src/lib/species.ts',
+        'web/src/lib/silhouette.ts',
+        'web/src/lib/time.ts',
+        'web/src/lib/whats-new.ts',
+        'web/src/lib/window-mode.ts',
+      ],
+      thresholds: { lines: 85, branches: 75, functions: 82, statements: 85 },
     },
   },
 });
