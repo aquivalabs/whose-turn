@@ -16,12 +16,14 @@ type Values = Record<string, unknown>;
 /** The window's one i18n instance. */
 export const i18n = createI18n({ legacy: false, locale: 'en', fallbackLocale: 'en', messages: { en } });
 
+type Translate = (key: string, values: Values, count?: number) => string;
+const bind =
+  (translate: Translate) =>
+  (key: TextKey, values: Values = {}, count?: number): string =>
+    count === undefined ? translate(key, values) : translate(key, values, count);
+
 /** A message for a plain module: `text('status.refresh')`, `text('feed.newCount', { count }, count)` for a plural. */
-export const text = (key: TextKey, values: Values = {}, count?: number): string =>
-  count === undefined ? i18n.global.t(key, values) : i18n.global.t(key, values, count);
+export const text = bind(i18n.global.t as Translate);
 
 /** The same for a component, bound to the component's i18n scope. */
-export const useText = () => {
-  const { t } = useI18n();
-  return (key: TextKey, values: Values = {}, count?: number): string => (count === undefined ? t(key, values) : t(key, values, count));
-};
+export const useText = () => bind(useI18n().t as Translate);

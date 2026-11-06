@@ -130,15 +130,12 @@ export const poll = async ({ settings, http, secrets, cache, historyDays }) => {
   const meName = cache.me.displayName || 'me';
   const jql = settings.jql || '(assignee = currentUser() AND statusCategory != Done) OR (assignee was currentUser() AND updated >= -30d) ORDER BY updated DESC';
   const search = (query) => api('/rest/api/3/search/jql', { jql: query, maxResults: 100, fields: ['summary', 'status', 'assignee', 'updated', 'comment'] });
-  const result = await search(jql);
   const mentionQuery = settings.mentions === false ? '' : mentionsJql(meId, historyDays);
   const errors = {};
-  let mentioned = [];
-  try {
-    mentioned = mentionQuery ? (await search(mentionQuery)).issues || [] : [];
-  } catch (error) {
-    errors.mentions = `${error.name}: ${error.message}`;
-  }
+  const [result, mentioned] = await Promise.all([
+    search(jql),
+    mentionQuery ? search(mentionQuery).then((found) => found.issues || [], (error) => { errors.mentions = `${error.name}: ${error.message}`; return []; }) : [],
+  ]);
   const held = new Set((result.issues || []).map((issue) => issue.key));
   const tickets = [];
   const comments = [];
