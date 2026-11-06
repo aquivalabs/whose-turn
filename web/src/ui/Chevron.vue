@@ -16,8 +16,8 @@ withDefaults(defineProps<{ open: boolean; tag?: 'button' | 'span' }>(), { tag: '
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   color: var(--md-on-surface-variant);
   cursor: pointer;
@@ -26,16 +26,16 @@ withDefaults(defineProps<{ open: boolean; tag?: 'button' | 'span' }>(), { tag: '
 
 .chevron::before {
   content: '';
-  width: 7px;
-  height: 7px;
+  width: 0.4375rem;
+  height: 0.4375rem;
   border-right: 2px solid currentcolor;
   border-bottom: 2px solid currentcolor;
-  transform: translateX(-1px) rotate(-45deg);
+  transform: translateX(-0.0625rem) rotate(-45deg);
   transition: transform var(--motion-fast) var(--motion-ease);
 }
 
 .chevron--open::before {
-  transform: translateY(-2px) rotate(45deg);
+  transform: translateY(-0.125rem) rotate(45deg);
 }
 
 .chevron:hover {

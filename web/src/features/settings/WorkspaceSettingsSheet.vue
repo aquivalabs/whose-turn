@@ -346,17 +346,17 @@ const save = () =>
 .workspace-settings-sheet__connector {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
   border: 1px solid var(--md-outline-variant);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: rgb(var(--glass), 0.35);
 }
 
 .workspace-settings-sheet__connector-head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .workspace-settings-sheet__connector-name {
@@ -367,7 +367,7 @@ const save = () =>
 .workspace-settings-sheet__modes {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 8px;
+  gap: 0.25rem 0.5rem;
   margin: 0;
   padding: 0;
   border: 0;
@@ -378,7 +378,7 @@ const save = () =>
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
   align-items: center;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .workspace-settings-sheet__mode-name {
@@ -388,37 +388,37 @@ const save = () =>
 .workspace-settings-sheet__mode-line {
   grid-column: 2;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .workspace-settings-sheet__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .workspace-settings-sheet__rules {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
   margin: 0;
-  padding: 0 0 0 28px;
-  font-size: 13px;
+  padding: 0 0 0 1.75rem;
+  font-size: 0.8125rem;
 }
 
 .workspace-settings-sheet__rule {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 12px;
-  padding: 4px 0;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
   border-bottom: 1px solid var(--md-outline-variant);
 }
 
 .workspace-settings-sheet__rule-when {
   color: var(--md-on-surface-variant);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   overflow-wrap: anywhere;
 }
 
@@ -433,8 +433,8 @@ const save = () =>
 
 .workspace-settings-sheet__rules-warning {
   margin: 0;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.5rem;
   background: var(--md-warn-container);
   color: var(--md-on-warn-container);
 }

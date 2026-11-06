@@ -273,9 +273,9 @@ const restoreMarks = async () => {
 }
 
 .feed__undo {
-  margin: 0 0 4px;
+  margin: 0 0 0.25rem;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .feed__undo-btn {
@@ -290,29 +290,29 @@ const restoreMarks = async () => {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 8px;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
 }
 
 .feed__new-count {
   display: inline-flex;
   align-items: center;
-  height: 22px;
-  padding: 0 9px;
-  border-radius: 999px;
+  height: 1.375rem;
+  padding: 0 0.5625rem;
+  border-radius: 62.4375rem;
   background: var(--new);
   color: var(--new-ink);
   box-shadow: 0 0 12px var(--new-glow);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
 .feed.island--strip .feed__new-count {
   justify-content: center;
-  width: 20px;
+  width: 1.25rem;
   height: auto;
-  padding: 7px 0;
-  font-size: 11px;
+  padding: 0.4375rem 0;
+  font-size: 0.6875rem;
   line-height: 1;
   letter-spacing: -0.2em;
   word-spacing: -0.5em;
@@ -322,10 +322,10 @@ const restoreMarks = async () => {
 
 .feed__mark-read {
   flex: none;
-  padding: 4px 8px;
-  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 62.4375rem;
   color: var(--md-primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   user-select: none;
@@ -343,29 +343,29 @@ const restoreMarks = async () => {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
 }
 
 .feed__search-input {
   flex: 1;
   min-width: 0;
-  height: 30px;
-  padding: 0 10px;
-  font-size: 13px;
+  height: 1.875rem;
+  padding: 0 0.625rem;
+  font-size: 0.8125rem;
 }
 
 .feed__search-count {
   flex: none;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .feed__list {
   flex: 1 1 auto;
   min-height: 12rem;
-  margin: 0 -20px;
-  padding: 0 0 4px;
+  margin: 0 -1.25rem;
+  padding: 0 0 0.25rem;
   overflow-y: auto;
   list-style: none;
 }
@@ -396,10 +396,10 @@ const restoreMarks = async () => {
 
 .feed__group-head {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
+  gap: 0.75rem;
+  padding: 0.625rem 1.25rem;
   cursor: pointer;
 }
 
@@ -438,8 +438,8 @@ const restoreMarks = async () => {
 .feed__group-key {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  font-size: 14px;
+  gap: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .feed__group-ticket {
@@ -450,7 +450,7 @@ const restoreMarks = async () => {
 .feed__group-sum {
   overflow: hidden;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -458,10 +458,10 @@ const restoreMarks = async () => {
 .feed__group-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 2px;
+  gap: 0.5rem;
+  margin-top: 0.125rem;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .feed__group-kinds {
@@ -478,12 +478,12 @@ const restoreMarks = async () => {
   flex: none;
   display: inline-flex;
   align-items: center;
-  height: 18px;
-  padding: 0 7px;
-  border-radius: 999px;
+  height: 1.125rem;
+  padding: 0 0.4375rem;
+  border-radius: 62.4375rem;
   background: var(--md-s-highest);
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
@@ -493,24 +493,24 @@ const restoreMarks = async () => {
 }
 
 .feed__children {
-  margin: 0 0 0 31px;
-  padding: 0 0 4px;
+  margin: 0 0 0 1.9375rem;
+  padding: 0 0 0.25rem;
   border-left: 2px solid var(--md-outline-variant);
   list-style: none;
 }
 
 .feed__children .feed-item {
-  padding-left: 14px;
+  padding-left: 0.875rem;
 }
 
 @media (width >= 901px) {
   .dashboard--fit .feed__list::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 0.5rem;
+    height: 0.5rem;
   }
 
   .dashboard--fit .feed__list::-webkit-scrollbar-thumb {
-    border-radius: 4px;
+    border-radius: 0.25rem;
     background: var(--md-outline-variant);
   }
 }

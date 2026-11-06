@@ -189,10 +189,10 @@ const onReload = () => {
 <style scoped>
 .update-chip {
   display: inline-flex;
-  gap: 8px;
+  gap: 0.5rem;
   align-items: center;
-  height: 26px;
-  padding: 0 12px;
+  height: 1.625rem;
+  padding: 0 0.75rem;
   font: inherit;
   color: var(--md-on-primary-container);
   white-space: nowrap;
@@ -217,8 +217,8 @@ const onReload = () => {
 }
 
 .update-chip__spinner {
-  width: 12px;
-  height: 12px;
+  width: 0.75rem;
+  height: 0.75rem;
   border: 2px solid currentcolor;
   border-top-color: transparent;
   border-radius: 50%;

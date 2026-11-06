@@ -36,7 +36,7 @@ watchEffect(() => {
 .species-cell {
   margin: 0;
   display: grid;
-  gap: 2px;
+  gap: 0.125rem;
   min-width: 0;
 }
 
@@ -51,8 +51,8 @@ watchEffect(() => {
 .species-cell__error {
   margin: 0;
   aspect-ratio: 1;
-  padding: 8px;
-  font-size: 11px;
+  padding: 0.5rem;
+  font-size: 0.6875rem;
   color: var(--md-error);
   background: var(--md-error-container);
   border-radius: var(--md-r-chip);
@@ -60,7 +60,7 @@ watchEffect(() => {
 }
 
 .species-cell__seed {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--md-on-surface-variant);
   text-align: center;
 }

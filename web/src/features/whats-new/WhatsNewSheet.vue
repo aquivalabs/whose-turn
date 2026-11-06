@@ -57,7 +57,7 @@ watch(
 </template>
 <style scoped>
 .whats-new-sheet__version {
-  padding: 16px 0 4px;
+  padding: 1rem 0 0.25rem;
   border-bottom: 1px solid var(--md-outline-variant);
 }
 
@@ -67,25 +67,25 @@ watch(
 
 .whats-new-sheet__head {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
   align-items: baseline;
-  padding: 0 20px;
+  padding: 0 1.25rem;
 }
 
 .whats-new-sheet__name {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .whats-new-sheet__date {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--md-on-surface-variant);
 }
 
 .whats-new-sheet__tag {
-  padding: 1px 8px;
-  font-size: 11px;
+  padding: 0.0625rem 0.5rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--md-on-primary);
   background: var(--md-primary);
@@ -98,8 +98,8 @@ watch(
 }
 
 .whats-new-sheet__empty {
-  margin: 6px 20px 14px;
-  font-size: 13px;
+  margin: 0.375rem 1.25rem 0.875rem;
+  font-size: 0.8125rem;
   color: var(--md-on-surface-variant);
 }
 </style>

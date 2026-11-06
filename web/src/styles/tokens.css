@@ -71,8 +71,8 @@
   --blob-2: rgb(0 169 224 / 22%);
   --blob-3: rgb(23 223 220 / 16%);
   --md-font: roboto, inter, -apple-system, blinkmacsystemfont, 'Segoe UI', system-ui, sans-serif;
-  --md-r-card: 12px;
-  --md-r-chip: 8px;
+  --md-r-card: 0.75rem;
+  --md-r-chip: 0.5rem;
   --new: #5cc8f0;
   --new-bg: rgb(92 200 240 / 17%);
   --new-ink: #04222e;

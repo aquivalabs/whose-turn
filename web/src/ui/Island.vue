@@ -205,15 +205,15 @@ const bounds = () => {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 12px 20px 12px 12px;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 0.75rem 0.75rem;
 }
 
 .island__title {
   flex: none;
   margin: 0;
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 1rem;
+  line-height: 1.5rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -224,13 +224,13 @@ const bounds = () => {
   flex: 1 1 auto;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 0.375rem;
   min-width: 0;
   margin: 0;
   overflow: visible;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   letter-spacing: 0.03em;
   text-align: right;
   white-space: nowrap;
@@ -245,18 +245,18 @@ const bounds = () => {
 }
 
 .island__body {
-  padding: 0 20px 12px;
+  padding: 0 1.25rem 0.75rem;
 }
 
 .island--column .island__head {
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .island--column .island__body {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding-top: 4px;
+  padding-top: 0.25rem;
 }
 
 @media (width >= 901px) {
@@ -265,20 +265,20 @@ const bounds = () => {
   }
 
   .island--strip .chevron::before {
-    transform: translateX(1px) rotate(135deg);
+    transform: translateX(0.0625rem) rotate(135deg);
   }
 
   .island--strip .island__head {
     flex-direction: column;
     justify-content: flex-start;
     height: 100%;
-    padding: 12px 0;
+    padding: 0.75rem 0;
   }
 
   .island--strip .island__title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
     writing-mode: vertical-rl;
   }
 

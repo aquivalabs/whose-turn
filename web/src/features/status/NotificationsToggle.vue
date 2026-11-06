@@ -29,10 +29,10 @@ const on = computed(() => snapshot.notifications.desktop);
 
 <style scoped>
 .notifications-toggle {
-  gap: 6px;
-  height: 26px;
-  padding: 0 12px;
-  font-size: 12px;
+  gap: 0.375rem;
+  height: 1.625rem;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
 }
 
 .notifications-toggle--off {
@@ -41,7 +41,7 @@ const on = computed(() => snapshot.notifications.desktop);
 }
 
 .notifications-toggle__icon {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
 }
 </style>

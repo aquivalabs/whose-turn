@@ -56,7 +56,7 @@ const reveal = () => {
 <style scoped>
 .row-scroll {
   overflow-x: auto;
-  margin: 0 -20px;
+  margin: 0 -1.25rem;
 }
 
 @media (width >= 901px) {
@@ -67,12 +67,12 @@ const reveal = () => {
   }
 
   .dashboard--fit .row-scroll::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 0.5rem;
+    height: 0.5rem;
   }
 
   .dashboard--fit .row-scroll::-webkit-scrollbar-thumb {
-    border-radius: 4px;
+    border-radius: 0.25rem;
     background: var(--md-outline-variant);
   }
 }
@@ -84,11 +84,11 @@ const reveal = () => {
 .row-scroll__more {
   flex: none;
   display: block;
-  margin: 0 -20px;
-  padding: 4px 20px 6px;
+  margin: 0 -1.25rem;
+  padding: 0.25rem 1.25rem 0.375rem;
   border-top: 1px solid var(--md-outline-variant);
   color: var(--md-primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
 }

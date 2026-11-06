@@ -238,9 +238,9 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 60px;
-  padding: 12px 8px;
+  gap: 0.25rem;
+  width: 3.75rem;
+  padding: 0.75rem 0.5rem;
   overflow: hidden;
   border-right: 1px solid var(--glass-edge);
   background: rgb(var(--glass), 0.72);
@@ -255,7 +255,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 
 .rail:hover,
 .rail:has(:focus-visible) {
-  width: 232px;
+  width: 14.5rem;
   box-shadow: 12px 0 32px rgb(0 0 0 / 12%);
 }
 
@@ -267,10 +267,10 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 44px;
-  padding: 0 4px;
-  border-radius: 12px;
+  gap: 0.75rem;
+  height: 2.75rem;
+  padding: 0 0.25rem;
+  border-radius: 0.75rem;
   color: inherit;
   text-decoration: none;
   white-space: nowrap;
@@ -307,17 +307,17 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 .rail__icon {
   flex: none;
   display: block;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
 }
 
 .rail__gear {
   flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   color: var(--md-on-surface-variant);
 }
 
@@ -326,7 +326,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   opacity: 0;
   transition: opacity var(--motion-fast) var(--motion-ease);
@@ -334,7 +334,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 
 .rail__hidden .rail__label {
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .rail:hover .rail__label,
@@ -344,18 +344,18 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 
 .rail__badge {
   position: absolute;
-  top: 2px;
-  left: 30px;
+  top: 0.125rem;
+  left: 1.875rem;
   box-sizing: border-box;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.3125rem;
+  border-radius: 62.4375rem;
   background: var(--md-primary);
   color: var(--md-on-primary);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 1.125rem;
   text-align: center;
 }
 
@@ -367,27 +367,27 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 
 .rail__warn {
   position: absolute;
-  left: 26px;
-  top: 26px;
+  left: 1.625rem;
+  top: 1.625rem;
   display: grid;
   place-items: center;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   border-radius: 50%;
   background: var(--md-error);
   color: var(--md-on-error);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 800;
   line-height: 1;
 }
 
 .rail__dot {
   position: absolute;
-  top: 6px;
-  left: 28px;
+  top: 0.375rem;
+  left: 1.75rem;
   box-sizing: border-box;
-  width: 10px;
-  height: 10px;
+  width: 0.625rem;
+  height: 0.625rem;
   border: 2px solid var(--md-surface);
   border-radius: 50%;
   background: var(--md-primary);
@@ -397,10 +397,10 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 

@@ -152,7 +152,7 @@ watch(
 </template>
 <style scoped>
 :deep(.feedback-sheet__card) {
-  width: min(640px, 100%);
+  width: min(40rem, 100%);
 }
 
 .feedback-sheet__text {
@@ -163,16 +163,16 @@ watch(
 .feedback-sheet__note {
   margin: 0;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .feedback-sheet__report {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 4px 0;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
   border-top: 1px solid var(--md-outline-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .feedback-sheet__report-title {

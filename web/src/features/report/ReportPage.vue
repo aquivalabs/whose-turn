@@ -66,26 +66,26 @@ onMounted(() => {
 .report-page {
   box-sizing: border-box;
   height: auto;
-  max-width: 720px;
-  margin: 40px auto;
-  padding: 28px 32px;
+  max-width: 45rem;
+  margin: 2.5rem auto;
+  padding: 1.75rem 2rem;
   border: 1px solid var(--md-outline-variant);
-  border-radius: 16px;
+  border-radius: 1rem;
   background: var(--md-surface);
   color: var(--md-on-surface);
   font-family: var(--md-font);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
 .report-page__note {
   margin: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .report-page__back {
   display: inline-block;
-  margin-top: 24px;
+  margin-top: 1.5rem;
   color: var(--md-primary);
 }
 
@@ -93,14 +93,14 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .report-page__title {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 600;
 }
 
@@ -110,15 +110,15 @@ onMounted(() => {
 }
 
 .report-page__meta {
-  margin: 6px 0 20px;
+  margin: 0.375rem 0 1.25rem;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .report-page__heading {
-  margin: 18px 0 8px;
+  margin: 1.125rem 0 0.5rem;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -130,20 +130,20 @@ onMounted(() => {
 }
 
 .report-page__answer {
-  padding: 10px 0;
+  padding: 0.625rem 0;
   border-top: 1px solid var(--md-outline-variant);
 }
 
 .report-page__answer-meta {
-  margin: 0 0 4px;
+  margin: 0 0 0.25rem;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .report-page__unanswered {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
   background: var(--md-error-container);
   color: var(--md-on-error-container);
   font-weight: 600;

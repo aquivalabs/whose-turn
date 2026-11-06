@@ -17,10 +17,10 @@ defineProps<{ row: TurnRow }>();
 .ticket-cell__summary {
   display: block;
   max-width: 44ch;
-  margin-top: 2px;
+  margin-top: 0.125rem;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   letter-spacing: 0.03em;
 }
 </style>

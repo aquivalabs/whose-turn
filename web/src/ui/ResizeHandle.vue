@@ -58,7 +58,7 @@ const key = (event: KeyboardEvent) => {
   position: absolute;
   z-index: 2;
   touch-action: none;
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .resize-handle::before,
@@ -66,7 +66,7 @@ const key = (event: KeyboardEvent) => {
   content: '';
   position: absolute;
   margin: auto;
-  border-radius: 2px;
+  border-radius: 0.125rem;
   transition:
     opacity var(--motion-fast) var(--motion-ease),
     background-color var(--motion-fast) var(--motion-ease);
@@ -110,7 +110,7 @@ const key = (event: KeyboardEvent) => {
   right: 0;
   bottom: 0;
   left: 0;
-  height: 10px;
+  height: 0.625rem;
   cursor: row-resize;
 }
 
@@ -120,37 +120,37 @@ const key = (event: KeyboardEvent) => {
 }
 
 .resize-handle--y::before {
-  inset: 4px 0 auto;
-  height: 2px;
+  inset: 0.25rem 0 auto;
+  height: 0.125rem;
 }
 
 .resize-handle--y.resize-handle--top::before {
-  inset: auto 0 4px;
+  inset: auto 0 0.25rem;
 }
 
 .resize-handle--y::after {
   inset: 0;
-  width: 40px;
-  height: 5px;
+  width: 2.5rem;
+  height: 0.3125rem;
 }
 
 .resize-handle--x {
   top: 0;
   bottom: 0;
   left: 0;
-  width: 10px;
+  width: 0.625rem;
   cursor: col-resize;
 }
 
 .resize-handle--x::before {
-  inset: 0 auto 0 4px;
-  width: 2px;
+  inset: 0 auto 0 0.25rem;
+  width: 0.125rem;
 }
 
 .resize-handle--x::after {
   inset: 0;
-  width: 5px;
-  height: 40px;
+  width: 0.3125rem;
+  height: 2.5rem;
 }
 
 @media (width <= 900px) {

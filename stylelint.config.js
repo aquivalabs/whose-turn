@@ -39,6 +39,26 @@ export default {
       },
     ],
     'color-no-hex': [true, { message: 'Colours come from tokens (var(--…)), not hex literals.' }],
+    // docs/adr/0010, frontend-css:rem: sizes in rem; border and outline widths, shadows, filters and breakpoints stay px. RMA-344.
+    'unit-disallowed-list': [
+      ['px'],
+      {
+        ignoreProperties: {
+          px: [
+            '/^border(-(top|right|bottom|left|block|inline)(-(start|end))?)?(-width)?$/',
+            '/^outline(-offset|-width)?$/',
+            'box-shadow',
+            'text-shadow',
+            'filter',
+            'backdrop-filter',
+            '-webkit-backdrop-filter',
+            '--focus-ring',
+          ],
+        },
+        ignoreMediaFeatureNames: { px: ['width', 'min-width', 'max-width', 'height'] },
+        message: 'Sizes are rem (frontend-css:rem); px only for border and outline widths, shadows, filters and breakpoints.',
+      },
+    ],
   },
   overrides: [
     // Global sheets hold the shared primitives and tokens; they have no component block.

@@ -86,10 +86,10 @@ const toggle = () => {
 <style scoped>
 .feed-item {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-columns: 2rem minmax(0, 1fr);
   align-items: start;
-  gap: 12px;
-  padding: 10px 20px;
+  gap: 0.75rem;
+  padding: 0.625rem 1.25rem;
   cursor: default;
 }
 
@@ -116,12 +116,12 @@ const toggle = () => {
   flex: none;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background: var(--md-s-highest);
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -143,7 +143,7 @@ const toggle = () => {
 
 .feed-item__body {
   display: grid;
-  gap: 2px;
+  gap: 0.125rem;
   min-width: 0;
 }
 
@@ -151,15 +151,15 @@ const toggle = () => {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 6px;
-  font-size: 14px;
+  gap: 0.375rem;
+  font-size: 0.875rem;
 }
 
 .feed-item__right {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   margin-left: auto;
 }
 
@@ -179,8 +179,8 @@ const toggle = () => {
   display: -webkit-box;
   overflow: hidden;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   letter-spacing: 0.03em;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
@@ -189,14 +189,14 @@ const toggle = () => {
 
 .feed-item__full {
   max-height: 16rem;
-  margin-top: 6px;
-  padding: 10px 12px;
+  margin-top: 0.375rem;
+  padding: 0.625rem 0.75rem;
   overflow: auto;
   border: 1px solid var(--glass-edge);
   border-radius: var(--md-r-chip);
   background: rgb(var(--glass), 0.55);
   color: var(--md-on-surface);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -205,8 +205,8 @@ const toggle = () => {
 .feed-item__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .feed-item--new .feed-item__kind {
@@ -225,15 +225,15 @@ const toggle = () => {
 .feed-item--new .feed-item__when::before {
   content: 'NEW';
   display: inline-block;
-  margin-right: 6px;
-  padding: 1px 6px;
-  border-radius: 4px;
+  margin-right: 0.375rem;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.25rem;
   background: var(--new);
   color: var(--new-ink);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  vertical-align: 1px;
+  vertical-align: 0.0625rem;
 }
 
 .feed-item:not(.feed-item--new) .feed-item__body {

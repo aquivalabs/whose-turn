@@ -92,9 +92,9 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 <style scoped>
 .workspace-header {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 32px;
-  gap: 8px;
-  padding: 8px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 2rem;
+  gap: 0.5rem;
+  padding: 0.5rem;
   background: linear-gradient(135deg, var(--blob-1), var(--blob-2));
   color: var(--header-ink, var(--md-on-primary-container));
 }
@@ -108,21 +108,21 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 .workspace-header__title {
   display: grid;
   align-content: center;
-  gap: 4px;
-  padding: 12px 16px;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
 }
 
 .workspace-header__name {
   margin: 0;
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 400;
-  line-height: 36px;
+  line-height: 2.25rem;
   color: var(--md-on-primary-container);
 }
 
 .workspace-header__line {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   opacity: 0.85;
 }
 
@@ -135,27 +135,27 @@ const toggle = () => glideThrough(header.value, 'height', flip);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
-  margin-top: 8px;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
   white-space: nowrap;
 }
 
 .workspace-header__links {
   display: inline-flex;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 /* Only a followed link is a chip; a source link that is not https stays plain text. */
 .workspace-header__links a {
   display: inline-flex;
   align-items: center;
-  height: 24px;
-  padding: 0 10px;
+  height: 1.5rem;
+  padding: 0 0.625rem;
   border: 1px solid var(--glass-edge);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   background: rgb(var(--glass), 0.55);
   color: inherit;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
@@ -170,7 +170,7 @@ const toggle = () => glideThrough(header.value, 'height', flip);
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .workspace-header__fold,
@@ -180,21 +180,21 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 }
 
 .workspace-header__gear {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .workspace-header__tiles {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .workspace-header__tile {
   display: grid;
   align-content: start;
-  gap: 4px;
-  padding: 12px 16px;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--glass-edge);
   border-radius: var(--md-r-card);
   background: rgb(var(--glass), calc(var(--glass-a) + 0.1));
@@ -213,17 +213,17 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 
 .workspace-header__tile-label {
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
-  line-height: 16px;
+  line-height: 1rem;
   letter-spacing: 0.03em;
 }
 
 .workspace-header__tile-value {
-  min-height: 40px;
-  font-size: 32px;
+  min-height: 2.5rem;
+  font-size: 2rem;
   font-weight: 400;
-  line-height: 40px;
+  line-height: 2.5rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -244,20 +244,20 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 
 .workspace-header--collapsed {
   grid-template-columns: minmax(0, 1fr) auto;
-  padding: 4px 8px;
+  padding: 0.25rem 0.5rem;
 }
 
 .workspace-header--collapsed .workspace-header__title {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 14px;
-  padding: 4px 8px;
+  gap: 0.875rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .workspace-header--collapsed .workspace-header__name {
-  font-size: 18px;
-  line-height: 28px;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
 }
 
 .workspace-header--collapsed .workspace-header__tiles,
@@ -272,13 +272,13 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 }
 
 .workspace-header--collapsed .workspace-header__strip {
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 @media (width <= 900px) {
   .workspace-header,
   .workspace-header--collapsed {
-    grid-template-columns: minmax(0, 1fr) 32px;
+    grid-template-columns: minmax(0, 1fr) 2rem;
   }
 
   .workspace-header__tools {

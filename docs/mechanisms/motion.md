@@ -85,6 +85,10 @@ around it) or its to-do list, never a table nested elsewhere in the body. A row 
 exit, so `AnimatePresence` of the row lists calls `leaving` on it (`data-leaving`) and the floor skips it; the
 island measures again when the mark appears.
 
+The floor and the dragged height are measured layout, so the script sets `--island-floor` and
+`--island-height` in pixels. The stylesheets size everything else in rem (RMA-344); the measuring code reads
+computed styles, which the browser reports in pixels whatever unit the stylesheet used.
+
 ### The island's natural height
 
 A child's natural height ignores any room it was stretched into, so the floor never includes the island's own

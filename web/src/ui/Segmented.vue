@@ -32,7 +32,7 @@ const selected = defineModel<string>({ required: true });
   display: inline-flex;
   overflow: hidden;
   border: 1px solid var(--md-outline);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   vertical-align: middle;
 }
 
@@ -45,11 +45,11 @@ const selected = defineModel<string>({ required: true });
 .segmented__option {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 26px;
-  padding: 0 11px;
+  gap: 0.3125rem;
+  height: 1.625rem;
+  padding: 0 0.6875rem;
   border-left: 1px solid var(--md-outline);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--md-on-surface);
   cursor: pointer;
@@ -72,10 +72,10 @@ const selected = defineModel<string>({ required: true });
 
 .segmented--chips .segmented__option {
   gap: normal;
-  height: 32px;
-  padding: 0 14px;
+  height: 2rem;
+  padding: 0 0.875rem;
   font-family: var(--md-font);
-  font-size: 14px;
+  font-size: 0.875rem;
   letter-spacing: 0.01em;
 }
 

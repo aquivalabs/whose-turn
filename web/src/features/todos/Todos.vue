@@ -203,27 +203,27 @@ const options = computed(() => [
 </template>
 <style scoped>
 .todos__view {
-  margin-left: 10px;
+  margin-left: 0.625rem;
 }
 
 .todos__add {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
 }
 
 .todos__input {
   flex: 1;
   min-width: 0;
-  height: 32px;
-  padding: 0 12px;
+  height: 2rem;
+  padding: 0 0.75rem;
   background: rgb(var(--md-state), 0.04);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .todos__list {
-  margin: 0 -20px;
+  margin: 0 -1.25rem;
   padding: 0;
   overflow-y: auto;
   list-style: none;
@@ -231,10 +231,10 @@ const options = computed(() => [
 
 .todos__item {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto 20px 20px;
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto 1.25rem 1.25rem;
   align-items: center;
-  gap: 10px;
-  padding: 7px 20px;
+  gap: 0.625rem;
+  padding: 0.4375rem 1.25rem;
   border-top: 1px solid var(--md-outline-variant);
 }
 
@@ -257,17 +257,17 @@ const options = computed(() => [
 
 .todos__empty {
   display: block;
-  padding: 6px 20px 10px;
+  padding: 0.375rem 1.25rem 0.625rem;
 }
 
 .todos__check {
   box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   border: 2px solid var(--md-outline);
-  border-radius: 5px;
+  border-radius: 0.3125rem;
   cursor: pointer;
 }
 
@@ -278,31 +278,31 @@ const options = computed(() => [
 
 .todos__check--on::after {
   content: '';
-  width: 8px;
-  height: 4px;
+  width: 0.5rem;
+  height: 0.25rem;
   border-bottom: 2px solid var(--md-on-primary);
   border-left: 2px solid var(--md-on-primary);
-  transform: translateY(-1px) rotate(-45deg);
+  transform: translateY(-0.0625rem) rotate(-45deg);
 }
 
 .todos__meta {
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
   white-space: nowrap;
 }
 
 .todos__edit {
   min-width: 0;
-  height: 28px;
-  padding: 0 8px;
-  font-size: 14px;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
 }
 
 .todos__undo {
   margin: 0;
-  padding: 4px 0;
+  padding: 0.25rem 0;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .todos__undo-btn {
@@ -314,7 +314,7 @@ const options = computed(() => [
 .todos__pencil,
 .todos__delete {
   color: var(--md-on-surface-variant);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1;
   text-align: center;
   cursor: pointer;

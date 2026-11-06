@@ -108,26 +108,26 @@ const rows = computed(() => {
   display: flex;
   flex: 0 1 auto;
   flex-direction: column;
-  min-height: 33px;
-  margin: 0 -20px;
-  padding: 0 20px;
+  min-height: 2.0625rem;
+  margin: 0 -1.25rem;
+  padding: 0 1.25rem;
   overflow: hidden;
   border-top: 1px solid var(--md-outline-variant);
 }
 
 .recently-done[open] {
-  min-height: 128px;
+  min-height: 8rem;
 }
 
 .recently-done__summary {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 4px;
-  min-height: 40px;
+  gap: 0.25rem;
+  min-height: 2.5rem;
   list-style: none;
   color: var(--md-on-surface-variant);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
 }
@@ -139,9 +139,9 @@ const rows = computed(() => {
 .recently-done__list {
   flex: 1 1 auto;
   min-height: 0;
-  max-height: min(30vh, 240px);
-  margin: 0 -20px;
-  padding-bottom: 8px;
+  max-height: min(30vh, 15rem);
+  margin: 0 -1.25rem;
+  padding-bottom: 0.5rem;
   overflow: auto;
 }
 
@@ -152,7 +152,7 @@ const rows = computed(() => {
 @keyframes recently-done-open {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-0.375rem);
   }
 }
 </style>

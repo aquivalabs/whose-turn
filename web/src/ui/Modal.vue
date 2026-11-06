@@ -31,9 +31,9 @@ const emit = defineEmits<{ close: [] }>();
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 12px;
+  gap: 0.75rem;
   min-height: 0;
-  padding: 16px 20px;
+  padding: 1rem 1.25rem;
   overflow: auto;
 }
 
@@ -45,8 +45,8 @@ const emit = defineEmits<{ close: [] }>();
 .modal__foot {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
   border-top: 1px solid var(--md-outline-variant);
 }
 </style>

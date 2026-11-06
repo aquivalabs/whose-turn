@@ -53,8 +53,8 @@ const copy = () =>
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 1.625rem;
+  height: 1.625rem;
   border-radius: 50%;
   cursor: pointer;
   color: var(--md-primary);
@@ -66,16 +66,16 @@ const copy = () =>
 }
 
 .ai-button__icon {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
 }
 
 .ai-button__badge {
   position: absolute;
-  right: -3px;
-  top: -3px;
-  width: 12px;
-  height: 12px;
+  right: -0.1875rem;
+  top: -0.1875rem;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .ai-button:hover {
@@ -99,13 +99,13 @@ const copy = () =>
 }
 
 .ai-button--big {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   background: rgb(var(--glass), 0.7);
 }
 
 .ai-button--big .ai-button__icon {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 </style>

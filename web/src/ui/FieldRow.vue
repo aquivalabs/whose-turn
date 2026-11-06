@@ -104,45 +104,45 @@ const setList = (typedText: string) =>
 <style scoped>
 .field-row {
   display: grid;
-  grid-template-columns: 170px minmax(0, 1fr);
+  grid-template-columns: 10.625rem minmax(0, 1fr);
   align-items: center;
-  gap: 4px 14px;
+  gap: 0.25rem 0.875rem;
 }
 
 .field-row__label {
   color: var(--md-on-surface);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .field-row__hint {
   grid-column: 2;
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .field-row__error {
   grid-column: 2;
   color: var(--md-error);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .field-row__check {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .field-row__colour {
-  width: 44px;
-  height: 30px;
-  padding: 2px;
+  width: 2.75rem;
+  height: 1.875rem;
+  padding: 0.125rem;
 }
 
 .field-row__inline {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 </style>

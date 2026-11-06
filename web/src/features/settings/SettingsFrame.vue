@@ -44,17 +44,17 @@ const emit = defineEmits<{ close: []; save: []; answer: [yes: boolean] }>();
 </template>
 <style scoped>
 :deep(.settings-frame__card) {
-  width: min(640px, 100%);
-  height: min(760px, 100%);
+  width: min(40rem, 100%);
+  height: min(47.5rem, 100%);
 }
 
 :deep(.settings-frame__card--wide) {
-  width: min(760px, 100%);
+  width: min(47.5rem, 100%);
 }
 
 .settings-frame__dirty {
   color: var(--md-error);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -62,13 +62,13 @@ const emit = defineEmits<{ close: []; save: []; answer: [yes: boolean] }>();
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin: 12px 20px 0;
-  padding: 8px 12px;
-  border-radius: 10px;
+  gap: 0.625rem;
+  margin: 0.75rem 1.25rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.625rem;
   background: var(--md-warn-container);
   color: var(--md-on-warn-container);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .settings-frame__confirm-text {
@@ -76,7 +76,7 @@ const emit = defineEmits<{ close: []; save: []; answer: [yes: boolean] }>();
 }
 
 .settings-frame__alert {
-  margin: 12px 20px 0;
+  margin: 0.75rem 1.25rem 0;
 }
 
 .settings-frame__body {

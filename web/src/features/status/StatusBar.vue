@@ -118,9 +118,9 @@ const openAsApp = () => {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
-  margin: 0 4px 8px;
+  margin: 0 0.25rem 0.5rem;
   font-family: var(--md-font);
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--md-on-surface-variant);
 }
 
@@ -142,9 +142,9 @@ const openAsApp = () => {
 }
 
 .status-bar__btn {
-  height: 26px;
-  padding: 0 12px;
-  font-size: 12px;
+  height: 1.625rem;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
   text-decoration: none;
 }
 
@@ -155,7 +155,7 @@ const openAsApp = () => {
 
 .status-bar__report {
   position: relative;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .status-bar__report--wiggle {
@@ -210,11 +210,11 @@ const openAsApp = () => {
 .status-bar__dot {
   position: absolute;
   animation: status-bar-pulse 1.6s ease-out infinite;
-  top: -3px;
-  right: -3px;
+  top: -0.1875rem;
+  right: -0.1875rem;
   box-sizing: border-box;
-  width: 10px;
-  height: 10px;
+  width: 0.625rem;
+  height: 0.625rem;
   border: 2px solid var(--md-surface);
   border-radius: 50%;
   background: var(--md-primary);
@@ -250,13 +250,13 @@ const openAsApp = () => {
 }
 
 .status-bar__icon {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
 }
 
 .status-bar__live {
-  width: 8px;
-  height: 8px;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
   background: var(--live-on);
   box-shadow: 0 0 0 0 var(--live-pulse-rest);
@@ -278,7 +278,7 @@ const openAsApp = () => {
 }
 
 .status-bar__ai-hint {
-  margin-left: -4px;
+  margin-left: -0.25rem;
 }
 
 @keyframes status-bar-pulse {

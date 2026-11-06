@@ -25,7 +25,7 @@ defineProps<{ row: TurnRow }>();
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .pr-cell__link {

@@ -131,15 +131,15 @@ const happened = computed(() => detail.value?.what || info.value?.outcome || '')
 .note-modal__summary {
   margin: 0;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .note-modal__facts {
   display: grid;
   grid-template-columns: max-content 1fr;
-  gap: 6px 16px;
+  gap: 0.375rem 1rem;
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .note-modal__facts dt {
@@ -157,7 +157,7 @@ const happened = computed(() => detail.value?.what || info.value?.outcome || '')
 
 .note-modal__label {
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .note-modal__text {

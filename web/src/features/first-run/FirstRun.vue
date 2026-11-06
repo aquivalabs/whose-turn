@@ -24,16 +24,16 @@ const addSource = () => openSettings('connectors');
 .first-run {
   display: grid;
   place-self: start center;
-  gap: 14px;
-  width: min(640px, 100%);
-  padding: 28px 32px;
+  gap: 0.875rem;
+  width: min(40rem, 100%);
+  padding: 1.75rem 2rem;
 }
 
 .first-run__title {
   margin: 0;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 400;
-  line-height: 28px;
+  line-height: 1.75rem;
 }
 
 .first-run__text {
@@ -44,11 +44,11 @@ const addSource = () => openSettings('connectors');
 .first-run__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .first-run__ai {
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 </style>

@@ -77,46 +77,46 @@ watch(dark, readInk);
   background: var(--md-surface);
   height: auto;
   min-height: 100%;
-  padding: 16px 24px 32px;
+  padding: 1rem 1.5rem 2rem;
   box-sizing: border-box;
 }
 
 .sheet-page__head {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .sheet-page__title {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 500;
-  margin: 0 16px 0 0;
+  margin: 0 1rem 0 0;
 }
 
 .sheet-page__field {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
   color: var(--md-on-surface-variant);
 }
 
 .sheet-page__number {
-  width: 64px;
+  width: 4rem;
 }
 
 .sheet-page__row {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 0.75rem;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .sheet-page__label {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
   display: grid;
@@ -124,12 +124,12 @@ watch(dark, readInk);
 
 .sheet-page__pose {
   font-weight: 400;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--md-on-surface-variant);
 }
 
 .sheet-page__cells {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
 }
 </style>

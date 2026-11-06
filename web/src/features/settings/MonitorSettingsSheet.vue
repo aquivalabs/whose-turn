@@ -120,21 +120,21 @@ const save = () =>
 .monitor-settings-sheet__switch {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .monitor-settings-sheet__note {
   margin: 0;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .monitor-settings-sheet__hidden {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .monitor-settings-sheet__hidden-name {
@@ -146,14 +146,14 @@ const save = () =>
 
 .monitor-settings-sheet__hidden-mode {
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .monitor-settings-sheet__file {
   margin: 0;
   color: var(--md-on-surface-variant);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   overflow-wrap: anywhere;
   user-select: all;
 }

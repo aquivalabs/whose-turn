@@ -232,9 +232,9 @@ const undoHandled = () => {
 <style scoped>
 .your-move__undo {
   margin: 0;
-  padding: 4px 0;
+  padding: 0.25rem 0;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .your-move__undo-btn {
@@ -244,7 +244,7 @@ const undoHandled = () => {
 }
 
 .your-move__view {
-  margin-left: 10px;
+  margin-left: 0.625rem;
 }
 
 .your-move__next {
@@ -259,18 +259,18 @@ const undoHandled = () => {
 .your-move__line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 24px;
-  padding: 0 10px 0 8px;
+  height: 1.5rem;
+  padding: 0 0.625rem 0 0.5rem;
   border-left: 2px solid var(--md-outline);
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 0.375rem 0.375rem 0;
   background: var(--md-s-high);
   color: var(--md-on-surface-variant);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   text-align: left;
   cursor: pointer;
 }
@@ -305,8 +305,8 @@ const undoHandled = () => {
 .your-move__quote {
   max-width: 48ch;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 .your-move__quote a {
@@ -314,21 +314,21 @@ const undoHandled = () => {
 }
 
 .your-move__problem {
-  margin: 4px 0 0;
-  padding: 4px 10px;
-  font-size: 12px;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
 }
 
 .your-move__mark {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
+  gap: 0.375rem;
+  height: 1.875rem;
+  padding: 0 0.75rem;
   border: 1px solid var(--md-outline);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   color: var(--md-on-surface);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -341,11 +341,11 @@ const undoHandled = () => {
 
 .your-move__mark::before {
   content: '';
-  width: 9px;
-  height: 5px;
+  width: 0.5625rem;
+  height: 0.3125rem;
   border-bottom: 2px solid currentcolor;
   border-left: 2px solid currentcolor;
-  transform: translateY(-2px) rotate(-45deg);
+  transform: translateY(-0.125rem) rotate(-45deg);
 }
 
 .your-move__mark--undo::before {
@@ -359,7 +359,7 @@ const undoHandled = () => {
 
 .your-move__row--lined td {
   border-bottom: 0;
-  padding-bottom: 8px;
+  padding-bottom: 0.5rem;
 }
 
 .your-move__row td,

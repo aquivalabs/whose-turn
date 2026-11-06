@@ -42,12 +42,12 @@
   isolation: isolate;
   box-sizing: border-box;
   display: grid;
-  gap: 12px;
-  padding: 14px;
-  border-radius: 20px;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border-radius: 1.25rem;
   font-family: var(--md-font);
   color: var(--md-on-surface);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.43;
   letter-spacing: 0.01em;
 }
@@ -57,7 +57,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  border-radius: 20px;
+  border-radius: 1.25rem;
   pointer-events: none;
   background:
     radial-gradient(60% 55% at 12% 8%, var(--blob-1), transparent 70%),
@@ -71,7 +71,7 @@
   z-index: -1;
   width: 100%;
   height: 100%;
-  border-radius: 20px;
+  border-radius: 1.25rem;
   pointer-events: none;
 }
 
@@ -82,13 +82,13 @@
 
 .dashboard a:hover {
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 0.1875rem;
 }
 
 .dashboard a:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .dashboard a.btn {
@@ -96,24 +96,24 @@
 }
 
 .dashboard__layout {
-  --strip-width: 48px;
+  --strip-width: 3rem;
 
   display: grid;
-  gap: 12px;
+  gap: 0.75rem;
   grid-template-columns: minmax(0, 1fr) var(--feed-width, 31%);
   align-items: start;
 }
 
 .dashboard__main {
   display: grid;
-  gap: 12px;
+  gap: 0.75rem;
   min-width: 0;
 }
 
 .dashboard__feed {
   position: sticky;
-  top: 12px;
-  max-height: calc(100vh - 24px);
+  top: 0.75rem;
+  max-height: calc(100vh - 1.5rem);
   display: flex;
   flex-direction: column;
 }
@@ -121,7 +121,7 @@
 /* Fit: on a wide window the dashboard fills the window and each island scrolls inside itself. */
 @media (width >= 901px) {
   .dashboard.dashboard--fit {
-    height: var(--dashboard-height, calc(100vh - 120px));
+    height: var(--dashboard-height, calc(100vh - 7.5rem));
     grid-template-rows: auto minmax(0, 1fr);
     overflow: hidden;
   }
@@ -135,7 +135,7 @@
   .dashboard--fit .dashboard__main {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0.75rem;
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: thin;
@@ -250,13 +250,13 @@
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
-  margin-left: 6px;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 0.375rem;
   border-radius: 50%;
   cursor: pointer;
   color: var(--md-on-surface-variant);
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
   transition: transform var(--motion-fast) var(--motion-ease);
 }
@@ -274,14 +274,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  margin-left: 6px;
-  padding: 0 6px;
-  border-radius: 10px;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  margin-left: 0.375rem;
+  padding: 0 0.375rem;
+  border-radius: 0.625rem;
   background: var(--md-s-high);
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -290,7 +290,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .table th {
@@ -298,28 +298,28 @@
   font-weight: 500;
   color: var(--md-on-surface-variant);
   background: var(--md-s-low);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   letter-spacing: 0.03em;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--glass-edge);
   white-space: nowrap;
 }
 
 .table td {
-  padding: 12px;
+  padding: 0.75rem;
   border-bottom: 1px solid var(--md-outline-variant);
   vertical-align: top;
 }
 
 .table th:first-child,
 .table td:first-child {
-  padding-left: 20px;
+  padding-left: 1.25rem;
 }
 
 .table th:last-child,
 .table td:last-child {
-  padding-right: 20px;
+  padding-right: 1.25rem;
 }
 
 .table tbody tr:hover td {
@@ -343,7 +343,7 @@
 }
 
 .table__ai {
-  margin-right: 6px;
+  margin-right: 0.375rem;
 }
 
 @media (width >= 901px) {
@@ -367,13 +367,13 @@
 .pill {
   display: inline-block;
   max-width: 100%;
-  height: 24px;
-  padding: 0 10px;
+  height: 1.5rem;
+  padding: 0 0.625rem;
   overflow: hidden;
-  line-height: 24px;
+  line-height: 1.5rem;
   text-overflow: ellipsis;
   border-radius: var(--md-r-chip);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.03em;
   white-space: nowrap;
@@ -419,10 +419,10 @@
 .age {
   display: inline-flex;
   align-items: center;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 6px;
-  font-size: 11px;
+  height: 1.125rem;
+  padding: 0 0.375rem;
+  border-radius: 0.375rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--md-on-surface-variant);
@@ -439,11 +439,11 @@
 .handled-chip {
   display: inline-flex;
   align-items: center;
-  height: 18px;
-  padding: 0 7px;
-  margin-left: 6px;
-  border-radius: 999px;
-  font-size: 10px;
+  height: 1.125rem;
+  padding: 0 0.4375rem;
+  margin-left: 0.375rem;
+  border-radius: 62.4375rem;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   background: var(--md-s-highest);
@@ -453,9 +453,9 @@
 
 .at-you {
   display: inline-block;
-  padding: 1px 7px;
-  border-radius: 4px;
-  font-size: 11px;
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 0.25rem;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.03em;
   background: var(--md-warn-container);
@@ -471,12 +471,12 @@
 .timestamp {
   color: var(--md-on-surface-variant);
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
 .ai-hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   opacity: 0.8;
 }
 
@@ -487,12 +487,12 @@
   justify-content: center;
   flex: none;
   box-sizing: border-box;
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   padding: 0;
   border: 1px solid var(--md-outline);
   border-radius: 50%;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   line-height: 1;
   text-align: center;
@@ -514,11 +514,11 @@
 
 .hint-label {
   flex: none;
-  padding: 0 2px;
+  padding: 0 0.125rem;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
   text-decoration: underline dotted;
-  text-underline-offset: 3px;
+  text-underline-offset: 0.1875rem;
   cursor: help;
 }
 
@@ -535,21 +535,21 @@
 .hint-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   min-width: 0;
 }
 
 .empty {
   color: var(--md-on-surface-variant);
-  font-size: 14px;
-  margin: 12px 0 0;
-  padding-bottom: 14px;
+  font-size: 0.875rem;
+  margin: 0.75rem 0 0;
+  padding-bottom: 0.875rem;
 }
 
 .visually-hidden {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: 0.0625rem;
+  height: 0.0625rem;
   overflow: hidden;
   clip-path: inset(50%);
 }
@@ -564,11 +564,11 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  height: 32px;
-  padding: 0 14px;
+  height: 2rem;
+  padding: 0 0.875rem;
   border: 1px solid var(--md-outline);
-  border-radius: 999px;
-  font-size: 13px;
+  border-radius: 62.4375rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--md-primary);
   background: transparent;
@@ -605,10 +605,10 @@
 /* Input */
 .input {
   font: inherit;
-  font-size: 13px;
-  padding: 7px 10px;
+  font-size: 0.8125rem;
+  padding: 0.4375rem 0.625rem;
   border: 1px solid var(--md-outline-variant);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: var(--md-s-low);
   color: var(--md-on-surface);
 }
@@ -625,17 +625,17 @@
 
 /* Alert: a problem line; inline under the control it belongs to. */
 .alert {
-  margin: 0 4px 8px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 13px;
+  margin: 0 0.25rem 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.625rem;
+  font-size: 0.8125rem;
   font-family: var(--md-font);
   background: var(--md-error-container);
   color: var(--md-on-error-container);
 }
 
 .alert__action {
-  margin-left: 8px;
+  margin-left: 0.5rem;
   color: inherit;
   font-weight: 600;
   text-decoration: underline;
@@ -643,7 +643,7 @@
 }
 
 .alert--inline {
-  margin: 0 0 8px;
+  margin: 0 0 0.5rem;
 }
 
 /* Modal: a sheet over the dashboard on a fixed, blurred backdrop. */
@@ -653,20 +653,20 @@
   z-index: 20;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 1.5rem;
   background: rgb(0 0 0 / 45%);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 
 .modal__card {
-  width: min(760px, 100%);
+  width: min(47.5rem, 100%);
   max-height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--glass-edge);
-  border-radius: 16px;
+  border-radius: 1rem;
   background: rgb(var(--glass), 0.9);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
   backdrop-filter: blur(24px) saturate(150%);
@@ -676,8 +676,8 @@
 .modal__head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--md-outline-variant);
 }
 
@@ -685,28 +685,28 @@
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 500;
 }
 
 .modal__meta {
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 /* A sheet's form column: fields and sections down one scrolling column. */
 .sheet-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 16px 20px 24px;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem 1.5rem;
   overflow: auto;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sheet-form__heading {
-  margin: 10px 0 0;
-  font-size: 13px;
+  margin: 0.625rem 0 0;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -716,12 +716,12 @@
 /* Tooltips: Tippy's theme "wt" in the dashboard's palette; keeps the comment's line breaks. */
 .tippy-box[data-theme~='wt'] {
   border: 1px solid var(--tip-edge);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: var(--tip-bg);
   color: var(--tip-ink);
   box-shadow: 0 12px 32px var(--tip-shadow);
   font:
-    13px/1.5 Roboto,
+    0.8125rem/1.5 Roboto,
     Inter,
     -apple-system,
     system-ui,
@@ -729,7 +729,7 @@
 }
 
 .tippy-box[data-theme~='wt'] .tippy-content {
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   max-height: 50vh;
