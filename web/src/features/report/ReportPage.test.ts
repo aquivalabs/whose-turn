@@ -81,6 +81,15 @@ test('a report closed without an answer says the maintainer owes a reason', asyn
   expect(screen.queryByText('No answer yet.')).toBeNull();
 });
 
+test('a report sent before read tokens says its answers cannot be shown, not that it has none', async () => {
+  vi.mocked(getJson).mockResolvedValue({ report: report({ answers_hidden: true }) });
+
+  await open('?id=RMA-900');
+
+  expect(await screen.findByText(/cannot be shown here/)).toBeTruthy();
+  expect(screen.queryByText('No answer yet.')).toBeNull();
+});
+
 test('an id the server does not know says it was not filed from this machine', async () => {
   vi.mocked(getJson).mockResolvedValue({});
 

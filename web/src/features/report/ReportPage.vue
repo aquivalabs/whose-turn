@@ -50,6 +50,9 @@ onMounted(() => {
           Closed without an answer. The maintainer owes you a reason; this page will show it once it
           is written.
         </p>
+        <p v-else-if="report.answers_hidden" class="empty">
+          Answers to reports sent before this version cannot be shown here; the state above stays current.
+        </p>
         <p v-else-if="!report.answers.length" class="empty">No answer yet.</p>
         <article v-for="(answer, index) in report.answers" :key="index" class="report-page__answer">
           <p class="report-page__answer-meta">

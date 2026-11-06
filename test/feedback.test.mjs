@@ -603,3 +603,23 @@ test('a preview returns the exact payload and a token; the send with that token 
     api.server.close();
   }
 });
+
+test('a filed report keeps the relay read token and reads with it; an old one without a token keeps its own title and says its answers are hidden (RMA-386)', async () => {
+  // Setup
+  const dir = reportsDir();
+  const token = 'abcdefghijklmnopqrstu_';
+  const http = { fetchJson: async (url, options = {}) => (options.method === 'POST' ? { identifier: 'RMA-600', url: 'u', readToken: token } : { issues: [{ identifier: 'RMA-500', outcome: 'done', updatedAt: '2026-11-06T10:00:00.000Z' }] }) };
+  filed(dir);
+  const calls = [];
+  const spy = { fetchJson: async (url, options) => { calls.push(url); return http.fetchJson(url, options); } };
+  const reread = open(dir, { http: spy });
+  // Exercise
+  await createFeedback({ mentionsSecret: none, http, relayUrl: RELAY, reports: reread }, { title: 'T' });
+  const detail = await reread.detail('RMA-500');
+  // Verify
+  assert.equal(JSON.parse(readFileSync(join(dir, 'reports.json'), 'utf8'))[0].read_token, token);
+  assert.equal(decodeURIComponent(calls[0]).split('ids=')[1], `RMA-600:${token},RMA-500`);
+  assert.equal(detail.title, 'The chevron wraps');
+  assert.equal(detail.answers_hidden, true);
+  assert.equal(detail.unanswered, false);
+});

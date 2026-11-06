@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Fixed
+- Nobody else can read the title or the maintainer's answers of a report you sent by guessing its number: each new report gets its own key on your machine. For a report sent before this version you still see whether it is open or fixed, and its page says its answers cannot be shown. RMA-386.
 - A review request or a mention now shows once, in the workspace that watches its repository, instead of in every workspace and twice where two repositories are watched. A request from a repository no workspace watches shows in the topmost visible workspace of the same organisation, so nothing is lost. RMA-378.
 - A pull request waiting for your review stays in Your move after you open it on GitHub, until you review it or it closes; it also shows when GitHub's web notifications are turned off. A mention stays until you answer it, read or not. After the update, earlier mentions you read but did not answer come back once; mark them Handled. RMA-358.
 - A pull request whose CI you re-ran and that passed no longer stays marked as failing; only the latest run of each check counts now. RMA-382.
