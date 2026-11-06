@@ -38,6 +38,7 @@
     "format": "prettier --write web/src",
     "check": "npm run typecheck && npm run lint && npm run lint:style && npm test && npm run test:web",
     "test:web": "vitest run",
+    "test:e2e": "npm run build && playwright test",
     "coverage": "npm run coverage:server && npm run coverage:web",
     "coverage:server": "node --experimental-strip-types --experimental-test-coverage --test-coverage-include=\"lib/**\" --test-coverage-include=\"connectors/**\" --test-coverage-include=\"scripts/**\" --test-coverage-include=server.mjs --test-coverage-lines=91 --test-coverage-branches=87 --test-coverage-functions=91 --test \"test/**/*.test.mjs\"",
     "coverage:web": "vitest run --coverage",
@@ -48,6 +49,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.0",
     "@stryker-mutator/core": "^10.1.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/vue": "8.1.0",

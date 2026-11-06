@@ -13,3 +13,5 @@ config.json
 dist/
 .stryker-tmp/
 coverage/
+test-results/
+playwright-report/
