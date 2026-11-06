@@ -303,7 +303,7 @@ watch(
   },
   { flush: 'sync' },
 );
-/** Opens the stream once; VueUse reports a stream that was never opened as CONNECTING, so the guard is the EventSource itself. */
+/** Opens the window's event stream once; a second call while it is open does nothing. */
 export const connect = () => {
   if (!stream.eventSource.value) {
     stream.open();

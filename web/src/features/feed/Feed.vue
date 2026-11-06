@@ -43,7 +43,6 @@ const feedFilter = computed({
   },
 });
 const SEARCH_DEBOUNCE_MS = 150;
-// The box shows every keystroke; the list filters 150 ms after the last one.
 const typed = ref(feedState.query);
 watch(() => feedState.query, (query) => (typed.value = query));
 watchDebounced(typed, (text) => (feedState.query = text), { debounce: SEARCH_DEBOUNCE_MS });

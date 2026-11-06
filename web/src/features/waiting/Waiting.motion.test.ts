@@ -11,7 +11,8 @@ import Waiting from './Waiting.vue';
 vi.mock('motion-v', () => vi.importActual('motion-v'));
 
 const EMPTY = 'Nothing is waiting on someone else.';
-const loadSlowly = () => new Promise((resolve) => setTimeout(resolve, 200)).then(loadFeatures);
+let releaseFeatures = () => {};
+const loadSlowly = () => new Promise<void>((resolve) => (releaseFeatures = resolve)).then(loadFeatures);
 const Window = defineComponent(() => () =>
   h(LazyMotion, { features: loadSlowly }, () => h(MotionConfig, { skipAnimations: true }, () => h(Waiting))),
 );
@@ -26,6 +27,7 @@ test('the list and the empty text swap on the real motion-v before its features 
     await nextTick();
   }
 
+  releaseFeatures();
   await screen.findByText(EMPTY);
   expect(container.querySelector('.waiting__table')).toBeNull();
   snapshot.turn = [backlogRow];

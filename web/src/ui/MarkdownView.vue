@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Renders Markdown as DOM nodes built from text, never as HTML from data; the nodes carry no scope id, so the styles reach them through :deep().
+// Renders Markdown as DOM nodes built from text, never as HTML from data. docs/adr/0003-markdown-rendering.md
 import { ref, watchEffect } from 'vue';
 import { markdownFragment } from '@/lib/markdown.ts';
 const props = withDefaults(defineProps<{ source?: string }>(), { source: '' });

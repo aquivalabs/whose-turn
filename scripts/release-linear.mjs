@@ -28,7 +28,6 @@ query Ready($team: String!, $project: String!, $ready: String!, $after: String) 
 const MOVE = 'mutation Move($id: String!, $state: String!) { issueUpdate(id: $id, input: { stateId: $state }) { success } }';
 const COMMENT = 'mutation Comment($id: String!, $body: String!) { commentCreate(input: { issueId: $id, body: $body }) { success } }';
 
-/** One GraphQL call; a failure names the step and never carries the key. */
 const callWith = (fetchFn, key) => async (query, variables) => {
   const response = await fetchFn(LINEAR_URL, {
     method: 'POST',

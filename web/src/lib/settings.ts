@@ -88,7 +88,7 @@ export const pendingSecrets = (
   return out;
 };
 
-/** Set a field, or drop it when emptied (a boolean is always kept; FieldRow sends undefined for the default), so the saved config stays minimal. */
+/** Sets a field, or drops it when emptied; a boolean is always kept. */
 export const setOrDrop = (
   target: Record<string, unknown>,
   key: string,

@@ -22,7 +22,6 @@ export const fields = [
 
 export const persistedCache = ['prs', 'asks', 'runStreaks'];
 
-/** `GH_TOKEN` when set (CI, a machine without gh), else the token gh holds. */
 const ghToken = (account, cache) => cachedToken(cache, async () => {
   if (process.env.GH_TOKEN) {
     return process.env.GH_TOKEN;
@@ -70,7 +69,7 @@ const reviewDecision = (reviews) => {
 
 const REVIEWER_STATE = { APPROVED: 'approved', CHANGES_REQUESTED: 'changes' };
 
-/** Everyone on an open PR's review: the requested reviewers, then those who reviewed with their latest state. README.md § Sources and polling, RMA-315. */
+// README.md § Sources and polling, RMA-31
 const reviewersOf = (pr, reviews, { me, bots }) => {
   const listed = [...(pr.requested_reviewers || []).map((user) => user.login), ...(pr.requested_teams || []).map((team) => team.slug)];
   const latest = new Map();
@@ -91,7 +90,7 @@ const reviewersOf = (pr, reviews, { me, bots }) => {
   return [...listed.map((name) => ({ name, state: '' })), ...[...latest].map(([name, state]) => ({ name, state }))];
 };
 
-/** A PR's reference in the feed: the repository name and the number, so a PR without a ticket still says where it lives (RMA-167). */
+// RMA-167
 const prRef = (repo, number) => `${repo.split('/').pop()}#${number}`;
 
 const failedCheckActivity = (checkRun, { pr, key, title }) => ({ at: checkRun.completed_at || nowIso(), pr, key, title, kind: 'check failed', who: checkRun.name, url: checkRun.html_url, text: '', body: '' });
@@ -189,7 +188,7 @@ const pollPrs = async (api, context) => {
 const RUN_FAILED = ['failure', 'timed_out', 'startup_failure'];
 const RUN_PASSED = ['success'];
 
-/** A workflow run's reference in the feed and the key of its row: repository name, workflow and branch (RMA-152). */
+// RMA-152
 const runRef = (repo, workflow, branch) => `${repo.split('/').pop()}:${workflow}@${branch}`;
 
 const defaultBranch = async (api, repo, cache) => {
@@ -200,7 +199,6 @@ const defaultBranch = async (api, repo, cache) => {
   return cache.defaultBranch;
 };
 
-/** The completed runs on the default branch, newest first per workflow; pull request runs are left to the PR path. */
 const runsByWorkflow = (listed, branch) => {
   const byWorkflow = new Map();
   const decided = listed.filter((run) => run.head_branch === branch && !String(run.event).startsWith('pull_request') && !(run.pull_requests || []).length
@@ -211,7 +209,6 @@ const runsByWorkflow = (listed, branch) => {
   return byWorkflow;
 };
 
-/** The first failure of the newest unbroken failure streak; a streak longer than the page keeps the start seen on an earlier poll. */
 const streakStart = (runs, ref, cache) => {
   const passedAt = runs.findIndex((run) => RUN_PASSED.includes(run.conclusion));
   const failures = passedAt < 0 ? runs : runs.slice(0, passedAt);

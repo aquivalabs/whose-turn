@@ -333,7 +333,6 @@ export const pairedDocs = (config, repoRoot, changedPaths) => {
   return findings;
 };
 
-/** Repository paths a mechanism page names in the first cell of a table row, such as `| \`lib/rules.mjs\` | Role |`. */
 const namedFiles = (markdown) =>
   [...markdown.matchAll(/^\|\s*`([^`\s<>]+\/[^`\s<>]+\.[a-z]+)`\s*\|/gm)].map(([, path]) => path);
 

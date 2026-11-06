@@ -13,7 +13,7 @@ export const connectorSummaries = (entries) => entries.map((entry) => {
 
 export const connectorCatalogue = () => Object.values(CONNECTORS).map((connector) => ({ type: connector.id, label: connector.label, fields: connector.fields }));
 
-/** The triples a stored secret is bound to: every secret field's service and account plus the connector's endpoint. */
+// docs/adr/0014-config-api-trusts-local-processes.md
 const secretBindings = (entry) => (CONNECTORS[entry.type]?.fields || []).filter((field) => field.secret).map((field) => {
   const target = secretTarget(entry, field.key);
   return target ? { key: field.key, service: target.service, account: target.account, endpoint: String(entry[CONNECTORS[entry.type].endpointKey] || '') } : null;

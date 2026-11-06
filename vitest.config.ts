@@ -10,6 +10,10 @@ export default defineConfig({
     setupFiles: ['web/src/test-setup.ts'],
     include: ['web/**/*.test.ts'],
     restoreMocks: true,
+    // motion-v cancels a running animation when its element unmounts, and the rejected promise is never caught
+    // inside the library. Only that one error is ignored; any other unhandled error still fails the run. RMA-367.
+    onUnhandledError: (error) =>
+      !(error.name === 'AbortError' && error.message === 'The animation was canceled.'),
     unstubGlobals: true,
     coverage: {
       provider: 'v8',

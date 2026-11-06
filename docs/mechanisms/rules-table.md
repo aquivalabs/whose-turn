@@ -28,7 +28,7 @@ with the text `now <status>, with <who>`.
 | File | Role |
 |---|---|
 | `lib/facts.mjs` | `FACTS`, the closed fact dictionary, each fact with its plain words (`name`, and `says` for a boolean); `ticketFacts`, which computes one flat facts object per ticket (plus the whole hold reason for the row's link); `runFacts`, the facts of one failing workflow run; `statusGroupOrder` and `statusGroups`; `chainGroup`, the row's `status_group` the window tones status pills by; `holdReason` |
-| `lib/table.mjs` | Validation (`tableProblems`), the `"default"` marker (`expandTable`), matching (`firstMatch`), placeholders (`fillText`) |
+| `lib/table.mjs` | Validation (`tableProblems`, its object check is `isObject` from `lib/text.mjs`, shared with the config), the `"default"` marker (`expandTable`), matching (`firstMatch`), placeholders (`fillText`) |
 | `lib/default-table.mjs` | `defaultTable(rules)`, the plugin's default rows |
 | `lib/rules.mjs` | `compileRules` expands the workspace table and the status-group order once per workspace; `ticketRow` and `runRow` match the table and apply `then` |
 | `lib/config.mjs` | `normaliseRules` validates `rules.table` on load and on `POST /api/config` |

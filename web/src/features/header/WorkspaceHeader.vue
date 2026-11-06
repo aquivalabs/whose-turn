@@ -145,7 +145,7 @@ const toggle = () => glideThrough(header.value, 'height', flip);
   gap: 0.375rem;
 }
 
-/* Only a followed link is a chip; a source link that is not https stays plain text. */
+/* AGENTS.md § Hard rules: only https links are followed. */
 .workspace-header__links a {
   display: inline-flex;
   align-items: center;

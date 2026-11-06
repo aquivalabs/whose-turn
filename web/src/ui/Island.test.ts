@@ -162,11 +162,13 @@ describe('an empty island with a table of its own below the row scroller', () =>
     fakeLayout(panel);
     const readings: string[] = [];
 
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     for (let round = 0; round < 6; round += 1) {
       panel.querySelector('.recently')?.append(document.createElement('span'));
-      await new Promise((resolve) => setTimeout(resolve, 40));
+      await vi.advanceTimersByTimeAsync(40);
       readings.push(panel.style.getPropertyValue('--island-floor'));
     }
+    vi.useRealTimers();
 
     expect(new Set(readings.slice(-3)).size).toBe(1);
     expect(parseFloat(readings.at(-1) ?? '')).toBeLessThan(300);

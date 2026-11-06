@@ -112,7 +112,6 @@ const {
     });
   },
 });
-/** The server's message for one field of the open workspace, addressed like workspaces[0].rules.backlog_rows. */
 const errorAt = (path: string) => fieldErrors.value[`workspaces[${selected.value}].${path}`] || '';
 const idHint = computed(() => {
   const was = current.value && loadedIds.get(uidOf(current.value));
@@ -142,19 +141,16 @@ const connectorCards = computed(() =>
     spec: specOf(entry),
   })),
 );
-/** The hint under an empty seed field: the colour the server derived from the workspace id, once it is saved. */
 const derivedSeedHint = (id: string) => {
   const seed = snapshot.workspaces.find((workspace) => workspace.id === id)?.theme_seed;
   return seed ? `empty: ${seed}, derived from the workspace id` : 'empty derives one from the workspace id';
 };
-/** A field's stored value as FieldRow shows it; an edit goes back through setOrDrop, so an emptied field leaves the config. */
 const fieldValue = (target: Record<string, unknown>, key: string) =>
   target[key] as string | string[] | undefined;
 const setSecret = (entry: ConnectorEntry, key: string, value: string) => {
   typed.set(entry, Object.assign(typed.get(entry) || {}, { [key]: value }));
   typedCount.value += 1;
 };
-/** The id stays in the form as an empty string so the server can name it as missing; every other field leaves the config when emptied. */
 const setWorkspaceField = (
   workspace: RawWorkspace,
   key: string,
