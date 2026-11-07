@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- The Claude plugin chip now reads "Update Claude plugin · Copy" and copies `/plugin marketplace update bladeforge`, which fetches the new plugin from inside your Claude session; run `/reload-plugins` after it. RMA-432.
+
 ## [1.0.0-beta.3] - 2026-11-07
 
 ### Fixed

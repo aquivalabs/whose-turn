@@ -142,40 +142,40 @@ const withPlugin = (state: 'updated' | 'manual' | 'failed', copy: string) => {
 
 test('after a plugin update the chip copies the text the server chose, says Copied, and tells the server', async () => {
   const write = clipboard();
-  withPlugin('updated', '/reload-plugins --force');
+  withPlugin('updated', '/plugin marketplace update bladeforge');
   vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });
   render(UpdateChip);
 
-  await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Update Claude plugin · Copy' }));
 
-  expect(await copiedText(write)).toBe('/reload-plugins --force');
+  expect(await copiedText(write)).toBe('/plugin marketplace update bladeforge');
   expect(await screen.findByText('Copied')).toBeTruthy();
   expect(post).toHaveBeenCalledWith('/api/update/plugin-copied');
   expect(snapshot.update.plugin).toBeUndefined();
 });
 
-test.each(['manual', 'failed'] as const)('a %s plugin update shows the same Reload Claude skill chip in the error colour, copying /reload-plugins --force (RMA-424)', async (state) => {
+test.each(['manual', 'failed'] as const)('a %s plugin update shows the same Update Claude plugin chip in the error colour, copying /plugin marketplace update bladeforge (RMA-432)', async (state) => {
   const write = clipboard();
-  withPlugin(state, '/reload-plugins --force');
+  withPlugin(state, '/plugin marketplace update bladeforge');
   vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });
   render(UpdateChip);
 
-  await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Update Claude plugin · Copy' }));
 
-  expect(await copiedText(write)).toBe('/reload-plugins --force');
+  expect(await copiedText(write)).toBe('/plugin marketplace update bladeforge');
 });
 
 test('a copy refused by the clipboard and by the fallback says so and leaves the chip for the server to keep', async () => {
   clipboard().mockRejectedValue(new Error('denied'));
   Object.defineProperty(document, 'execCommand', { value: () => { throw new Error('denied'); }, configurable: true });
-  withPlugin('updated', '/reload-plugins --force');
+  withPlugin('updated', '/plugin marketplace update bladeforge');
   render(UpdateChip);
 
-  await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Update Claude plugin · Copy' }));
   await nextTick();
 
   expect(post).not.toHaveBeenCalled();
-  expect(screen.getByRole('button', { name: 'Reload Claude skill · Copy' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Update Claude plugin · Copy' })).toBeTruthy();
 });
 
 test.each([
@@ -184,11 +184,11 @@ test.each([
 ])('a copy the server refuses to record (%s) says Copied and puts the problem in the notice', async (_name, refuse) => {
   clipboard();
   notice.value = '';
-  withPlugin('updated', '/reload-plugins --force');
+  withPlugin('updated', '/plugin marketplace update bladeforge');
   refuse();
   render(UpdateChip);
 
-  await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Update Claude plugin · Copy' }));
 
   expect(await screen.findByText('Copied')).toBeTruthy();
   await vi.waitFor(() => expect(notice.value).toContain('The copy was not recorded'));
@@ -196,19 +196,19 @@ test.each([
 });
 
 test('a newer monitor version wins over the plugin chip, and no plugin result shows nothing', async () => {
-  snapshot.update = offer({ plugin: { state: 'manual', copy: '/reload-plugins --force' } });
+  snapshot.update = offer({ plugin: { state: 'manual', copy: '/plugin marketplace update bladeforge' } });
   const { container } = render(UpdateChip);
 
   expect(await screen.findByRole('button', { name: '1.0.0-alpha.3 is out · Update' })).toBeTruthy();
   expect(container.textContent).not.toContain('Claude skill');
 });
 
-test('a plugin whose skill does not know this monitor shows a calm Reload Claude skill chip (RMA-350, RMA-424)', async () => {
+test('a plugin whose skill does not know this monitor shows a calm Update Claude plugin chip (RMA-350, RMA-432)', async () => {
   clipboard();
-  snapshot.update = offer({ available: false, latest: '1.0.0-alpha.2', plugin: { state: 'behind', copy: '/reload-plugins --force', seen: '1.0.12', knows: '1.0.0-alpha.1' } });
+  snapshot.update = offer({ available: false, latest: '1.0.0-alpha.2', plugin: { state: 'behind', copy: '/plugin marketplace update bladeforge', seen: '1.0.12', knows: '1.0.0-alpha.1' } });
   render(UpdateChip);
 
-  const chip = await screen.findByRole('button', { name: 'Reload Claude skill · Copy' });
+  const chip = await screen.findByRole('button', { name: 'Update Claude plugin · Copy' });
 
   expect(chip.className).not.toContain('update-chip--failed');
   expect(chip.getAttribute('data-tip') || chip.getAttribute('title') || '').toContain('does not know monitor');

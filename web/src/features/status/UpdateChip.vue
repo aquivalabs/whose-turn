@@ -206,7 +206,7 @@ const onReload = () => {
       "
       @click="onCopyPlugin"
     >
-      {{ t('status.update.pluginReload') }}
+      {{ t('status.update.pluginUpdate') }}
     </Motion>
     <Motion
       v-else-if="shown === 'copied'"

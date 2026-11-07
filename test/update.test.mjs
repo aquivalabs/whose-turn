@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { chmodSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin, compareVersions, noUpdates, VERSION } from '../lib/update.mjs';
+import { CHANNEL, PLUGIN_UPDATE, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin, compareVersions, noUpdates, VERSION } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
@@ -338,7 +338,7 @@ test('after the install the plugin result rides in the status of the restarted s
   // Verify
   assert.deepEqual(calls, ['plugin']);
   assert.equal(updating.status().plugin, undefined);
-  assert.deepEqual(make('1.0.0-alpha.3').status().plugin, { state: 'updated', copy: RELOAD_PLUGINS });
+  assert.deepEqual(make('1.0.0-alpha.3').status().plugin, { state: 'updated', copy: PLUGIN_UPDATE });
   assert.equal(make('1.0.0-alpha.4').status().plugin, undefined);
 });
 
@@ -356,7 +356,7 @@ test('/api/state offers the command to copy, and POST /api/update/plugin-copied 
     const { update } = await (await get('/api/state')).json();
     const copied = await (await post('/api/update/plugin-copied', {})).json();
     // Verify
-    assert.deepEqual(update.plugin, { state: 'failed', copy: '/reload-plugins --force' });
+    assert.deepEqual(update.plugin, { state: 'failed', copy: '/plugin marketplace update bladeforge' });
     assert.equal(copied.update.plugin, undefined);
     assert.equal(announced.at(-1).plugin, undefined);
     assert.equal(make().status().plugin, undefined);
@@ -449,7 +449,7 @@ test('a plugin whose skill knows an older monitor shows as behind until its comm
   const old = updater.status().plugin;
   // Verify
   assert.equal(unseen, undefined);
-  assert.deepEqual(behind, { state: 'behind', copy: '/reload-plugins --force', seen: '1.0.14', knows: '1.0.0-alpha.14' });
+  assert.deepEqual(behind, { state: 'behind', copy: '/plugin marketplace update bladeforge', seen: '1.0.14', knows: '1.0.0-alpha.14' });
   assert.equal(copied, undefined);
   assert.equal(current, undefined);
   assert.equal(old, undefined);
