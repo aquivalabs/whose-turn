@@ -1,5 +1,5 @@
 /** User adapter connector: loads the adapter the workspace config names from the adapters folder in the data directory, checks it against the connector contract, and polls it like any built-in. See docs/mechanisms/connector-contract.md. */
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { adapterProblems, resultProblems, ContractError, KINDS } from '../lib/contract.mjs';
@@ -179,10 +179,10 @@ export const writeAdapterTemplates = async (rawWorkspaces, dataDir) => {
   return written;
 };
 
-/** What the settings sheet needs about each adapter in the folder: its label and fields, or the problem that stops it loading. */
-export const adapterCatalogue = async (dataDir) => {
+/** What the settings sheet needs about each adapter a `module` entry of the config names: its label and fields, or the problem that stops it loading; a file no entry names is never run. */
+export const adapterCatalogue = async (dataDir, rawWorkspaces) => {
   const adaptersDir = adaptersDirOf(dataDir);
-  const names = (await readdir(adaptersDir).catch(() => [])).filter((file) => file.endsWith('.mjs') && !file.startsWith('_')).map((file) => file.slice(0, -4)).filter((name) => ADAPTER_NAME.test(name));
+  const names = [...new Set(moduleEntries(rawWorkspaces).map((entry) => entry.adapter).filter((name) => typeof name === 'string' && ADAPTER_NAME.test(name)))];
   const entries = await Promise.all(names.map(async (name) => {
     try {
       const adapter = await loadAdapter(adapterFile(adaptersDir, name));

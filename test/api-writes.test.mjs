@@ -323,7 +323,8 @@ test('a new custom source gets its file name from its label and a template in th
   // Setup
   const savedConfigs = [];
   const dataDir = scratchDir('api-adapters');
-  const { server, post, get } = await startTestApi({ dataDir, saveConfig: async (workspaces) => { savedConfigs.push(workspaces); } });
+  const registry = emptyRegistry();
+  const { server, post, get } = await startTestApi({ dataDir, registry, saveConfig: async (workspaces) => { savedConfigs.push(workspaces); registry.rawWorkspaces = workspaces; } });
   try {
     // Exercise
     const response = await post('/api/config', { workspaces: [{ id: 'w', name: 'W', connectors: [{ type: 'module', id: 'mine', label: 'Team Board 2' }] }] });

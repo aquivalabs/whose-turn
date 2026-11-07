@@ -123,9 +123,10 @@ test('a custom source\'s file name is made from its label: Latin, lowercase, wor
   assert.deepEqual(cases.map(([label]) => moduleConnector.adapterNameOf(label)), cases.map(([, name]) => name));
 });
 
-test('the adapter catalogue lists each adapter\'s label and fields, the problem of a broken one, and skips the shim', async () => {
-  const catalogue = await moduleConnector.adapterCatalogue(await dataDirWithAdapters());
-  assert.deepEqual(Object.keys(catalogue).sort(), ['board', 'broken', 'plain', 'sloppy']);
+test('the adapter catalogue loads only the adapters the config names, with their label and fields or the problem of a broken one', async () => {
+  const workspaces = [{ id: 'w', connectors: [{ type: 'module', id: 'a', adapter: 'board' }, { type: 'module', id: 'b', adapter: 'broken' }, { type: 'github', id: 'gh' }] }];
+  const catalogue = await moduleConnector.adapterCatalogue(await dataDirWithAdapters(), workspaces);
+  assert.deepEqual(Object.keys(catalogue).sort(), ['board', 'broken']);
   assert.deepEqual(catalogue.board, { label: 'Board', fields: [{ key: 'board', label: 'Board', required: true }] });
   assert.match(catalogue.broken.problem, /does not follow connector contract 1/);
 });
