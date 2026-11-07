@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin, compareVersions } from '../lib/update.mjs';
+import { CHANNEL, RELOAD_PLUGINS, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin, compareVersions, noUpdates, VERSION } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
@@ -496,4 +496,410 @@ test('pluginCopied is a no-op that still returns the status: on a fresh data dir
   assert.deepEqual(afterFirst.plugin, { for: '1.0.0-beta.1', state: 'updated', copied: true });
   assert.equal(second.plugin, undefined);
   assert.deepEqual(memoOf(twice), afterFirst);
+});
+
+test('only a plain semver version, with an optional prerelease, matches VERSION', () => {
+  // Setup
+  const good = ['1.0.0', '10.20.30', '1.0.0-alpha.2', '1.0.0-rc-1'];
+  const bad = ['1.0.0 ', 'v1.0.0', '1.0', '1.0.0; rm', '1.0.0-', 'x1.0.0', '1.0.0\n'];
+  // Exercise
+  const accepted = good.filter((value) => VERSION.test(value));
+  const refused = bad.filter((value) => VERSION.test(value));
+  // Verify
+  assert.deepEqual(accepted, good);
+  assert.deepEqual(refused, []);
+});
+
+test('multi-digit version parts match VERSION in every position', () => {
+  // Setup
+  const values = ['12.0.0', '1.12.0', '1.0.12'];
+  // Exercise
+  const matches = values.map((value) => VERSION.test(value));
+  // Verify
+  assert.deepEqual(matches, [true, true, true]);
+});
+
+test('the pin ignores a package.json without dependencies and a spec that is not a string', () => {
+  // Setup
+  const bare = scratch();
+  mkdirSync(join(bare, 'app'), { recursive: true });
+  writeFileSync(join(bare, 'app', 'package.json'), 'null');
+  const odd = scratch();
+  mkdirSync(join(odd, 'app'), { recursive: true });
+  writeFileSync(join(odd, 'app', 'package.json'), JSON.stringify({ dependencies: { 'whose-turn': ['1.2.3'] } }));
+  // Exercise
+  const withoutDependencies = pinnedVersion(bare, {});
+  const arraySpec = pinnedVersion(odd, {});
+  // Verify
+  assert.equal(withoutDependencies, '');
+  assert.equal(arraySpec, '');
+});
+
+test('the agent probe answers null off linux and darwin even when a systemd-looking cgroup is on offer', () => {
+  // Setup
+  const cgroup = () => '0::/user.slice/whose-turn.service\n';
+  // Exercise
+  const windows = probeAgent({ platform: 'win32', cgroup });
+  const unreadable = probeAgent({ platform: 'linux', cgroup: () => { throw new Error('no proc'); } });
+  // Verify
+  assert.equal(windows, null);
+  assert.equal(unreadable, null);
+});
+
+test('findClaude by default accepts an executable file and refuses one without the execute bit', () => {
+  // Setup
+  const bin = scratch();
+  const home = scratch();
+  writeFileSync(join(bin, 'claude'), '');
+  chmodSync(join(bin, 'claude'), 0o644);
+  const plain = findClaude({ env: { PATH: bin }, home, platform: 'linux' });
+  chmodSync(join(bin, 'claude'), 0o755);
+  // Exercise
+  const found = findClaude({ env: { PATH: bin }, home, platform: 'linux' });
+  // Verify
+  assert.notEqual(plain, join(bin, 'claude'));
+  assert.equal(found, join(bin, 'claude'));
+});
+
+test('a restart without an agent closes lingering connections, logs to server.log and detaches the child', async () => {
+  // Setup
+  const dataDir = scratch();
+  const calls = [];
+  const server = { close: (done) => { calls.push('close'); done(); }, closeAllConnections: () => calls.push('closeAll') };
+  let options;
+  // Exercise
+  await restartServer({ server, root: '/app', dataDir, agent: () => null, spawn: (file, args, given) => { options = given; return { unref: () => calls.push('unref') }; }, exit: () => calls.push('exit') });
+  // Verify
+  assert.deepEqual(calls, ['close', 'closeAll', 'unref', 'exit']);
+  assert.equal(options.detached, true);
+  assert.equal(options.cwd, '/app');
+  assert.equal(options.stdio[0], 'ignore');
+  assert.equal(typeof options.stdio[1], 'number');
+  assert.equal(options.stdio[1], options.stdio[2]);
+  assert.ok(existsSync(join(dataDir, 'server.log')));
+});
+
+test('quitting detaches the launchctl call with ignored stdio', () => {
+  // Setup
+  let options;
+  // Exercise
+  quitServer({ agent: () => ({ exitCode: 0 }), platform: 'darwin', uid: 501, spawn: (file, args, given) => { options = given; return { unref: () => {} }; }, exit: () => {} });
+  // Verify
+  assert.deepEqual(options, { detached: true, stdio: 'ignore' });
+});
+
+test('prerelease identifiers compare part by part: a shorter list is older, numbers by value, words by letters', () => {
+  // Setup
+  const cases = [
+    ['1.0.0-alpha', '1.0.0-alpha.1', -1],
+    ['1.0.0-alpha.1', '1.0.0-alpha', 1],
+    ['1.0.0-alpha.1', '1.0.0-alpha.1.2', -1],
+    ['1.0.0-alpha.1.2', '1.0.0-alpha.1', 1],
+    ['1.0.0-rc.1', '1.0.0-rc.1', 0],
+    ['1.0.0-alpha', '1.0.0-beta', -1],
+    ['1.0.0-beta', '1.0.0-alpha', 1],
+    ['1.0.0-1', '1.0.0-alpha', -1],
+    ['1.0.0-alpha', '1.0.0-1', 1],
+    ['1.0.0-1a', '1.0.0-2', -1],
+    ['1.0.0-a1', '1.0.0-2', 1],
+    ['1.0.0-10', '1.0.0-9', 1],
+    ['1.0.0-9', '1.0.0-10', -1],
+  ];
+  // Exercise
+  const results = cases.map(([first, second]) => Math.sign(compareVersions(first, second)));
+  // Verify
+  assert.deepEqual(results, cases.map((entry) => entry[2]));
+});
+
+test('a plugin that knows exactly this monitor, or a newer one, is never behind', () => {
+  for (const knows of ['1.0.0-beta.1', '1.0.0', '2.0.0']) {
+    // Setup
+    const updater = createUpdater({ http: null, dataDir: scratch(), version: '1.0.0-beta.1', installed: true, notify: () => {}, restart: async () => {} });
+    // Exercise
+    updater.sawPlugin('1.0.15', knows);
+    // Verify
+    assert.equal(updater.status().plugin, undefined, knows);
+  }
+});
+
+test('the updater announces a plugin sighting only when the seen or known version changes', () => {
+  // Setup
+  const updater = createUpdater({ http: null, dataDir: scratch(), version: '1.0.0', installed: true, notify: () => {}, restart: async () => {} });
+  const heard = [];
+  updater.subscribe((message) => heard.push(message));
+  // Exercise
+  updater.sawPlugin('1.0.1', '0.9.0');
+  updater.sawPlugin('1.0.1', '0.9.0');
+  const afterRepeat = heard.length;
+  updater.sawPlugin('1.0.2', '0.9.0');
+  const afterSeen = heard.length;
+  updater.sawPlugin('1.0.2', '0.9.1');
+  const afterKnows = heard.length;
+  updater.sawPlugin('', '');
+  // Verify
+  assert.equal(afterRepeat, 1);
+  assert.equal(afterSeen, 2);
+  assert.equal(afterKnows, 3);
+  assert.equal(heard.length, 4);
+  assert.equal(heard[3].update.plugin, undefined);
+  assert.equal(updater.pluginSeen(), '');
+});
+
+test('pluginSeen answers the last valid plugin version', () => {
+  // Setup
+  const updater = createUpdater({ http: null, dataDir: scratch(), version: '1.0.0', installed: true, notify: () => {}, restart: async () => {} });
+  // Exercise
+  updater.sawPlugin('1.2.3', '1.0.0');
+  // Verify
+  assert.equal(updater.pluginSeen(), '1.2.3');
+});
+
+test('a subscriber stops hearing after it unsubscribes', () => {
+  // Setup
+  const updater = createUpdater({ http: null, dataDir: scratch(), version: '1.0.0', installed: true, notify: () => {}, restart: async () => {} });
+  let heard = 0;
+  const unsubscribe = updater.subscribe(() => { heard += 1; });
+  // Exercise
+  updater.sawPlugin('1.0.1', '');
+  unsubscribe();
+  updater.sawPlugin('1.0.2', '');
+  // Verify
+  assert.equal(heard, 1);
+});
+
+test('a dist-tag that is not a string is ignored, and an unchanged tag announces nothing more', async () => {
+  // Setup
+  const bad = updaterWith({ latest: ['1.0.0-alpha.3'] });
+  const same = updaterWith({ latest: '1.0.0-alpha.3' });
+  const heard = [];
+  same.updater.subscribe((message) => heard.push(message));
+  // Exercise
+  const ignored = await bad.updater.check();
+  await same.updater.check();
+  await same.updater.check();
+  // Verify
+  assert.equal(ignored.latest, '');
+  assert.deepEqual(bad.notes, []);
+  assert.equal(heard.length, 1);
+});
+
+test('apply during an install is refused with the state, and a pinned or idle updater with its own facts', async () => {
+  // Setup
+  const installer = deferredRun();
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: installer.run });
+  await updater.check();
+  const pinned = updaterWith({ latest: '1.0.0-alpha.3' }, { pinned: '1.0.0-alpha.2' });
+  const idle = updaterWith({ latest: '1.0.0-alpha.2' });
+  await idle.updater.check();
+  const attempt = (target) => { try { target.apply(); } catch (error) { return error; } return null; };
+  // Exercise
+  updater.apply();
+  const busy = attempt(updater);
+  const pin = attempt(pinned.updater);
+  const nothing = attempt(idle.updater);
+  // Verify
+  assert.equal(busy.reason, 'UPDATE_IN_PROGRESS');
+  assert.deepEqual(busy.metadata, { state: 'installing' });
+  assert.equal(pin.reason, 'PINNED');
+  assert.deepEqual(pin.metadata, { pinned: '1.0.0-alpha.2' });
+  assert.equal(nothing.reason, 'UPDATE_UNAVAILABLE');
+  assert.deepEqual(nothing.metadata, { current: '1.0.0-alpha.2', latest: '1.0.0-alpha.2' });
+});
+
+test('apply is refused while the restart is under way', async () => {
+  // Setup
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: async () => '', restart: () => new Promise(() => {}) });
+  await updater.check();
+  updater.apply();
+  await settle();
+  // Exercise
+  const attempt = () => updater.apply();
+  // Verify
+  assert.equal(updater.status().state, 'restarting');
+  assert.throws(attempt, (error) => error.reason === 'UPDATE_IN_PROGRESS' && error.metadata.state === 'restarting');
+});
+
+test('a restart that throws leaves the updater failed with the error message, or the thrown value', async () => {
+  for (const [thrown, reason] of [[new Error('boom'), 'boom'], ['plain text', 'plain text']]) {
+    // Setup
+    const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: async () => '', restart: async () => { throw thrown; } });
+    await updater.check();
+    // Exercise
+    updater.apply();
+    await settle();
+    // Verify
+    assert.deepEqual(updater.status(), { current: '1.0.0-alpha.2', latest: '1.0.0-alpha.3', available: true, state: 'failed', reason });
+  }
+});
+
+test('a plugin step that throws is remembered as failed for this version', async () => {
+  // Setup
+  const dataDir = scratch();
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { dataDir, run: async () => '', plugin: async () => { throw new Error('boom'); } });
+  await updater.check();
+  // Exercise
+  updater.apply();
+  await settle();
+  const memo = JSON.parse(readFileSync(join(dataDir, 'update.json'), 'utf8'));
+  // Verify
+  assert.equal(memo.plugin.state, 'failed');
+  assert.equal(memo.plugin.for, '1.0.0-alpha.3');
+});
+
+test('start checks the registry at once and again every ten minutes', async (context) => {
+  // Setup
+  context.mock.timers.enable({ apis: ['setInterval'] });
+  const { updater, asked } = updaterWith({ latest: '1.0.0-alpha.2' });
+  // Exercise
+  updater.start();
+  const first = asked.length;
+  context.mock.timers.tick(10 * 60 * 1000 - 1);
+  const early = asked.length;
+  context.mock.timers.tick(1);
+  // Verify
+  assert.equal(first, 1);
+  assert.equal(early, 1);
+  assert.equal(asked.length, 2);
+});
+
+test('noUpdates is idle: it never asks a registry and offers nothing', async () => {
+  // Setup
+  const updater = noUpdates();
+  // Exercise
+  const status = await updater.check();
+  // Verify
+  assert.deepEqual(status, { current: '', latest: '', available: false, state: 'idle' });
+});
+
+/** An executable stand-in for npm or claude: records its argv beside itself, then writes `stdout`, `stderr`, waits `delay` ms and exits with `code`. */
+const fakeTool = ({ stdout = '', stderr = '', code = 0, delay = 0 } = {}) => {
+  const dir = scratch();
+  const path = join(dir, 'tool');
+  const body = [
+    `#!${process.execPath}`,
+    "const { writeFileSync } = require('node:fs');",
+    `writeFileSync(${JSON.stringify(join(dir, 'argv.json'))}, JSON.stringify(process.argv.slice(2)));`,
+    `process.stdout.write(${JSON.stringify(stdout)}, () => process.stderr.write(${JSON.stringify(stderr)}, () => setTimeout(() => process.exit(${code}), ${delay})));`,
+  ].join('\n');
+  writeFileSync(path, body);
+  chmodSync(path, 0o755);
+  return { path, argv: () => JSON.parse(readFileSync(join(dir, 'argv.json'), 'utf8')) };
+};
+
+/** Applies the update through the real npm runner against `tool` and waits for it to finish. */
+const installWith = async (tool, extra = {}) => {
+  const dataDir = scratch();
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { dataDir, npm: tool.path, restart: async () => {}, ...extra });
+  await updater.check();
+  updater.apply();
+  for (let waited = 0; waited < 100 && updater.status().state === 'installing'; waited += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return { status: updater.status(), dataDir };
+};
+
+test('the install runs npm with the exact argument list and, on exit 0, moves on to the restart', async () => {
+  // Setup
+  const tool = fakeTool();
+  // Exercise
+  const { status, dataDir } = await installWith(tool);
+  // Verify
+  assert.equal(status.state, 'restarting');
+  assert.deepEqual(tool.argv(), ['install', '--prefix', join(dataDir, 'app'), '--no-audit', '--no-fund', '--no-save', '--ignore-scripts', 'whose-turn@1.0.0-alpha.3']);
+});
+
+test('a failed npm reports its last three non-empty lines, trimmed and joined', async () => {
+  // Setup
+  const tool = fakeTool({ stderr: 'one\ntwo\n  three  \n\nfour\n  five \n', code: 1 });
+  // Exercise
+  const { status } = await installWith(tool);
+  // Verify
+  assert.equal(status.state, 'failed');
+  assert.equal(status.reason, 'three four five');
+});
+
+test('a failed npm that wrote only to stdout reports stdout; with both streams it reports stderr', async () => {
+  // Setup
+  const onlyOut = fakeTool({ stdout: 'from stdout', code: 1 });
+  const both = fakeTool({ stdout: 'from stdout', stderr: 'from stderr', code: 1 });
+  // Exercise
+  const out = await installWith(onlyOut);
+  const err = await installWith(both);
+  // Verify
+  assert.equal(out.status.reason, 'from stdout');
+  assert.equal(err.status.reason, 'from stderr');
+});
+
+test('a failed npm that wrote nothing reports the process error', async () => {
+  // Setup
+  const tool = fakeTool({ code: 3 });
+  // Exercise
+  const { status } = await installWith(tool);
+  // Verify
+  assert.equal(status.state, 'failed');
+  assert.ok(status.reason.startsWith('Command failed'), status.reason);
+});
+
+test('a failed npm message is cut to 400 characters', async () => {
+  // Setup
+  const tool = fakeTool({ stderr: 'x'.repeat(1000), code: 1 });
+  // Exercise
+  const { status } = await installWith(tool);
+  // Verify
+  assert.equal(status.reason.length, 400);
+});
+
+test('npm output of a few megabytes does not fail the install, and a slow npm is not cut short', async () => {
+  // Setup
+  const loud = fakeTool({ stdout: 'y'.repeat(2 * 1024 * 1024) });
+  const slow = fakeTool({ delay: 400 });
+  // Exercise
+  const noisy = await installWith(loud);
+  const waited = await installWith(slow);
+  // Verify
+  assert.equal(noisy.status.state, 'restarting');
+  assert.equal(waited.status.state, 'restarting');
+});
+
+test('the plugin step runs claude plugin update with its fixed arguments and answers updated on exit 0', async () => {
+  // Setup
+  const tool = fakeTool();
+  // Exercise
+  const answer = await updatePlugin({ find: () => tool.path });
+  // Verify
+  assert.equal(answer, 'updated');
+  assert.deepEqual(tool.argv(), ['plugin', 'update', 'whose-turn@bladeforge']);
+});
+
+test('the plugin step answers failed on a non-zero exit, and tolerates output and a slow run', async () => {
+  // Setup
+  const broken = fakeTool({ code: 1 });
+  const slow = fakeTool({ stdout: 'z'.repeat(5000), delay: 400 });
+  // Exercise
+  const failed = await updatePlugin({ find: () => broken.path });
+  const updated = await updatePlugin({ find: () => slow.path });
+  // Verify
+  assert.equal(failed, 'failed');
+  assert.equal(updated, 'updated');
+});
+
+test('a restart that throws nothing at all still reports failed', async () => {
+  // Setup
+  const { updater } = updaterWith({ latest: '1.0.0-alpha.3' }, { run: async () => '', restart: async () => { throw null; } });
+  await updater.check();
+  // Exercise
+  updater.apply();
+  await settle();
+  // Verify
+  assert.equal(updater.status().state, 'failed');
+  assert.equal(updater.status().reason, 'null');
+});
+
+test('a prerelease part compares as a word when either side is not a plain number', () => {
+  // Setup
+  const cases = [['1.0.0-2', '1.0.0-a1', -1], ['1.0.0-2', '1.0.0-1a', 1], ['1.0.0-1a', '1.0.0-2', -1]];
+  // Exercise
+  const results = cases.map(([first, second]) => Math.sign(compareVersions(first, second)));
+  // Verify
+  assert.deepEqual(results, cases.map((entry) => entry[2]));
 });
