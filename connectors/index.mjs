@@ -1,8 +1,8 @@
 /** The connector registry: every source type the server knows, and the catalogue the settings form and Claude read. */
-import * as github from './github.mjs';
-import * as jira from './jira.mjs';
-import * as linear from './linear.mjs';
-import * as file from './file.mjs';
+import github from './github.mjs';
+import jira from './jira.mjs';
+import linear from './linear.mjs';
+import file from './file.mjs';
 import * as module from './module.mjs';
 
 export const CONNECTORS = { github, jira, linear, file, module };

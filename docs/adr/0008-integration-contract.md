@@ -2,7 +2,7 @@
 
 ## Status
 
-accepted (2026-11-07, by the maintainer, with user adapters in one folder of the data directory)
+accepted (2026-11-07, by the maintainer, with user adapters in one folder of the data directory). Amended 2026-11-07, RMA-429: every adapter is a subclass of `Adapter`; see the amendment under Decision.
 
 ## Context
 
@@ -45,6 +45,14 @@ source. And for the data: one contract with declared capabilities, or several co
 7. **The contract has one page and one check.** `docs/mechanisms/connector-contract.md` is the single
    source, `types/connector.d.ts` its types, `lib/contract.mjs` the run-time check, and a conformance
    command polls an adapter once and shows the rows the default rules make of it.
+
+**Amendment, 2026-11-07 (RMA-429).** Every adapter, built-in or the user's own, is a subclass of the
+base class `Adapter` in `lib/adapter.mjs` and is exported as its module's default. The subclass sets
+`contract`, `id`, `label`, `capabilities` and `fields` and implements `poll(context)`; the base supplies
+the optional parts (`links`, `persistedCache`, `badge`, `tone`) and its own `poll` only refuses, which the
+check reports. Why: the maintainer wants all sources on one data bus with one obligatory shape, and a
+base class is where a later contract adds a member with a default, so existing adapters keep working; a
+change that breaks them raises the contract number instead. The check of a result is unchanged.
 
 ## Consequences
 

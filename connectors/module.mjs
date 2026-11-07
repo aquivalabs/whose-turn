@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { adapterProblems, resultProblems, ContractError, KINDS } from '../lib/contract.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
+import { Adapter } from '../lib/adapter.mjs';
 import { expandHome } from '../lib/text.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-adapter';
@@ -30,6 +31,14 @@ export const adapterFile = (adaptersDir, name) => {
   return join(adaptersDir, `${name}.mjs`);
 };
 
+/** The adapter a module exports: its default Adapter instance, a new one of its default Adapter subclass, else the module itself. */
+const adapterOf = (exported) => {
+  if (exported.default instanceof Adapter) {
+    return exported.default;
+  }
+  return typeof exported.default === 'function' && exported.default.prototype instanceof Adapter ? new exported.default() : exported;
+};
+
 /** The adapter at `path`, imported again when the file changes, checked against the contract; a module that is not a connector throws ContractError. */
 export const loadAdapter = async (path) => {
   const file = expandHome(path);
@@ -40,7 +49,7 @@ export const loadAdapter = async (path) => {
   if (known && known.mtimeMs === mtimeMs) {
     return known.adapter;
   }
-  const adapter = await import(`${pathToFileURL(file).href}?v=${mtimeMs}`);
+  const adapter = adapterOf(await import(`${pathToFileURL(file).href}?v=${mtimeMs}`));
   const problems = adapterProblems(adapter);
   if (problems.length) {
     throw new ContractError(`Adapter ${path}`, problems);

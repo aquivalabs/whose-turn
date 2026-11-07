@@ -2,18 +2,12 @@
 import { readFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { toIsoUtc, expandHome } from '../lib/text.mjs';
+import { Adapter } from '../lib/adapter.mjs';
 
-export const id = 'file';
-export const label = 'Local file';
-export const contract = 1;
-export const capabilities = ['tickets'];
-export const experimental = true;
-export const links = () => [];
-export const fields = [
+const FIELDS = [
   { key: 'path', label: 'File', hint: 'a .md task list or a .json list of tickets; ~ is your home directory', required: true },
   { key: 'me', label: 'Your name', hint: 'how the file names you as an assignee; default me' },
 ];
-export const persistedCache = ['seen'];
 
 const DONE = /^(done|closed|complete|completed)$/i;
 const NOT_STARTED = /^(backlog|to ?do|todo|open|new)$/i;
@@ -24,6 +18,7 @@ const ASSIGNEE = /(?:^|\s)@([\w.-]+)/;
 /** A key for an item that names none: F- and six hex digits of its title, stable while the title is. */
 const derivedKey = (title) => `F-${createHash('sha1').update(title).digest('hex').slice(0, 6)}`;
 
+/** @type {(status: string, done: boolean) => import('../types/connector.js').Ticket['status_category']} */
 const categoryOf = (status, done) => {
   if (done || DONE.test(status)) {
     return 'done';
@@ -76,7 +71,7 @@ const rememberUpdated = (cache, item, fallback) => {
   return at;
 };
 
-export const poll = async ({ settings, cache, keyOf }) => {
+const poll = async ({ settings, cache, keyOf }) => {
   const path = expandHome(settings.path);
   const me = String(settings.me || 'me');
   const [source, info] = await Promise.all([readFile(path, 'utf8'), stat(path)]).catch((error) => {
@@ -93,5 +88,22 @@ export const poll = async ({ settings, cache, keyOf }) => {
   for (const key of [...cache.seen.keys()].filter((candidate) => !keys.has(candidate))) {
     cache.seen.delete(key);
   }
-  return { me, tickets, errors: {} };
+  return { me, tickets, errors: /** @type {Record<string, string>} */ ({}) };
 };
+
+/** The local file source under connector contract 1, offered only through the config for now. */
+class LocalFile extends Adapter {
+  contract = 1;
+  id = 'file';
+  label = 'Local file';
+  capabilities = ['tickets'];
+  fields = FIELDS;
+  persistedCache = ['seen'];
+  experimental = true;
+
+  poll(context) {
+    return poll(context);
+  }
+}
+
+export default new LocalFile();

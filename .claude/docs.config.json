@@ -42,6 +42,7 @@
       "id": "connector-contract",
       "paths": [
         "lib/contract.mjs",
+        "lib/adapter.mjs",
         "types/connector.d.ts",
         "connectors/index.mjs",
         "connectors/module.mjs",

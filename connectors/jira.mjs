@@ -1,16 +1,11 @@
 /** Jira Cloud connector: your tickets by JQL with all comments (ADF turned into text) and the changelog entry for the current status. Token from the secret store. */
 import { toIsoUtc, mapLimit } from '../lib/text.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
+import { Adapter } from '../lib/adapter.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-jira';
 
-export const contract = 1;
-export const id = 'jira';
-export const label = 'Jira';
-export const capabilities = ['tickets', 'comments'];
-export const links = (settings) => (settings.base ? [{ label: 'Jira', url: String(settings.base).replace(/\/$/, '') }] : []);
-export const endpointKey = 'base';
-export const fields = [
+const FIELDS = [
   { key: 'base', label: 'Site', hint: 'https://your-site.atlassian.net', required: true },
   { key: 'email', label: 'Account email', hint: 'the account the API token belongs to', required: true },
   { key: 'token', label: 'API token', hint: 'stored in the secret store, never in the config', secret: { account: 'email', service: 'token_service', default: DEFAULT_SERVICE } },
@@ -121,7 +116,7 @@ export const mentionsJql = (accountId, historyDays = 30) => (/^[\w:-]+$/.test(ac
   ? `comment ~ "${accountId}" AND updated >= -${Math.max(1, Math.round(historyDays))}d ORDER BY updated DESC`
   : '');
 
-export const poll = async ({ settings, http, secrets, cache, historyDays }) => {
+const poll = async ({ settings, http, secrets, cache, historyDays }) => {
   const base = String(settings.base).replace(/\/$/, '');
   if (!base.startsWith('https://')) {
     throw new Error('jira.base must start with https://');
@@ -133,7 +128,7 @@ export const poll = async ({ settings, http, secrets, cache, historyDays }) => {
   const jql = settings.jql || '(assignee = currentUser() AND statusCategory != Done) OR (assignee was currentUser() AND updated >= -30d) ORDER BY updated DESC';
   const search = (query) => api('/rest/api/3/search/jql', { jql: query, maxResults: 100, fields: ['summary', 'status', 'assignee', 'updated', 'comment'] });
   const mentionQuery = settings.mentions === false ? '' : mentionsJql(meId, historyDays);
-  const errors = {};
+  const errors = /** @type {Record<string, string>} */ ({});
   const [result, mentioned] = await Promise.all([
     search(jql),
     mentionQuery ? search(mentionQuery).then((found) => found.issues || [], (error) => { errors.mentions = `${error.name}: ${error.message}`; return []; }) : [],
@@ -168,3 +163,23 @@ export const poll = async ({ settings, http, secrets, cache, historyDays }) => {
   });
   return { me: meName, tickets, comments, ticket_base: `${base}/browse/`, errors };
 };
+
+/** The Jira Cloud source under connector contract 1. */
+class Jira extends Adapter {
+  contract = 1;
+  id = 'jira';
+  label = 'Jira';
+  capabilities = ['tickets', 'comments'];
+  fields = FIELDS;
+  endpointKey = 'base';
+
+  links(settings) {
+    return settings.base ? [{ label: 'Jira', url: String(settings.base).replace(/\/$/, '') }] : [];
+  }
+
+  poll(context) {
+    return poll(context);
+  }
+}
+
+export default new Jira();

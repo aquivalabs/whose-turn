@@ -4,18 +4,12 @@ import { promisify } from 'node:util';
 import { RateLimited } from '../lib/http-client.mjs';
 import { oneline, nowIso, mapLimit, wordsRegex, DAY } from '../lib/text.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
+import { Adapter } from '../lib/adapter.mjs';
 
 const run = promisify(execFile);
 const API = 'https://api.github.com';
 
-export const contract = 1;
-export const id = 'github';
-export const label = 'GitHub';
-export const capabilities = ['prs', 'asks', 'runs', 'activity'];
-export const badge = 'GH';
-export const tone = '';
-export const links = (settings) => (settings.repo ? [{ label: 'GitHub', url: `https://github.com/${settings.repo}` }] : []);
-export const fields = [
+const FIELDS = [
   { key: 'repo', label: 'Repository', hint: 'owner/name whose PRs are yours', required: true },
   { key: 'org', label: 'Organisation', hint: 'notifications are kept only from this org; defaults to the repository owner' },
   { key: 'me', label: 'Your login', hint: 'left empty, it is asked from the API once' },
@@ -23,8 +17,6 @@ export const fields = [
   { key: 'bots', label: 'Bot logins', hint: 'comma-separated; their comments never count as a reply', list: true },
   { key: 'workflow_runs', label: 'Workflow runs', hint: 'watch the Actions runs on the default branch; on unless set to false', boolean: true, default: true },
 ];
-
-export const persistedCache = ['prs', 'asks', 'runStreaks'];
 
 const ghToken = (account, cache) => cachedToken(cache, async () => {
   if (process.env.GH_TOKEN) {
@@ -337,13 +329,13 @@ const pollAsks = async (api, context) => {
   return [...reviews, ...rows];
 };
 
-export const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () => true }) => {
+const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () => true }) => {
   const api = createApi(http, await ghToken(settings.account, cache));
   const me = settings.me || (cache.me ??= (await api('/user')).login);
   const context = { repo: settings.repo, org: settings.org || settings.repo.split('/')[0], me, bots: wordsRegex(settings.bots || ['github-actions', 'dependabot', '[bot]']), keyOf, sinceIso, cache, owns };
   const watchRuns = settings.workflow_runs !== false;
   const [prsOutcome, asksOutcome, runsOutcome] = await Promise.allSettled([pollPrs(api, context), pollAsks(api, context), watchRuns ? pollRuns(api, context) : { runs: [], activity: [] }]);
-  const errors = {};
+  const errors = /** @type {Record<string, string>} */ ({});
   for (const [part, outcome] of /** @type {[string, PromiseSettledResult<unknown>][]} */ ([['pulls', prsOutcome], ['notifications', asksOutcome], ['runs', runsOutcome]])) {
     if (outcome.status === 'rejected') {
       if (outcome.reason instanceof RateLimited) {
@@ -363,3 +355,25 @@ export const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () =
   const { prs, prActivity, asks, runs, runActivity } = cache.last;
   return { me, prs, asks, runs, activity: [...prActivity, ...runActivity].sort((a, b) => b.at.localeCompare(a.at)), errors };
 };
+
+/** The GitHub source under connector contract 1. */
+class GitHub extends Adapter {
+  contract = 1;
+  id = 'github';
+  label = 'GitHub';
+  capabilities = ['prs', 'asks', 'runs', 'activity'];
+  fields = FIELDS;
+  persistedCache = ['prs', 'asks', 'runStreaks'];
+  badge = 'GH';
+  tone = '';
+
+  links(settings) {
+    return settings.repo ? [{ label: 'GitHub', url: `https://github.com/${settings.repo}` }] : [];
+  }
+
+  poll(context) {
+    return poll(context);
+  }
+}
+
+export default new GitHub();

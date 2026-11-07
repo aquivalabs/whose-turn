@@ -4,7 +4,7 @@ import { RateLimited } from '../lib/http-client.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { nextDelay } from '../lib/backoff.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
-import * as github from '../connectors/github.mjs';
+import github from '../connectors/github.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
 const limited = () => {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import * as jira from '../connectors/jira.mjs';
+import jira, { mentionsJql } from '../connectors/jira.mjs';
 
 const issue = (key, assignee) => ({ key, fields: { summary: `${key} summary`, status: { name: 'To Do', statusCategory: { key: 'new' } }, assignee: assignee ? { displayName: assignee } : null, updated: '2026-11-06T10:00:00.000+0000', comment: { comments: [] } } });
 
@@ -41,7 +41,7 @@ test('mentions set to false skips the second query, and an account id that is no
   await pollWith(http, { mentions: false });
   // Verify
   assert.equal(queries.length, 1);
-  assert.equal(jira.mentionsJql('x" OR project = SECRET OR "', 14), '');
+  assert.equal(mentionsJql('x" OR project = SECRET OR "', 14), '');
 });
 
 test('a failed mention query keeps the main tickets and names the part that failed', async () => {

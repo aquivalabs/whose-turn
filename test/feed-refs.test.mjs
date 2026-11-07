@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import * as github from '../connectors/github.mjs';
+import github from '../connectors/github.mjs';
 import { poll as demoPoll } from './fixtures/demo-connector.mjs';
 import { connectorSummaries } from '../connectors/index.mjs';
 import { compileRules, feedRows } from '../lib/rules.mjs';

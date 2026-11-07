@@ -22,6 +22,7 @@ window takes a source's feed badge and icon tone from the connector summary, nev
 
 | File | Role |
 |---|---|
+| `lib/adapter.mjs` | `Adapter`, the base class every adapter extends; it supplies `links`, `persistedCache`, `badge` and `tone`, and its `poll` refuses |
 | `lib/contract.mjs` | `CONTRACT_VERSION`, `KINDS`, `SHAPES` (the fields and closed values of each kind), `adapterProblems`, `resultProblems`, `ContractError` |
 | `types/connector.d.ts` | The same contract as TypeScript types, shipped in the package: `Adapter`, `PollContext`, `PollResult` and one interface per kind |
 | `connectors/index.mjs` | `CONNECTORS`, the registry of types; `connectorCatalogue` leaves out a connector that exports `experimental: true` |
@@ -32,19 +33,25 @@ window takes a source's feed badge and icon tone from the connector summary, nev
 
 ## How it behaves
 
-### Exports
+### Members
 
-| Export | Type | Meaning |
+An adapter is a subclass of `Adapter`, exported as the module's default (`export default new GitHub()`
+for a built-in). A user adapter written as plain module exports, as in the template below, is still
+accepted until user adapters move to the base class too (RMA-430). These members are required:
+
+| Member | Type | Meaning |
 |---|---|---|
 | `contract` | `1` | The contract version the adapter follows |
 | `id` | string | 1 to 40 lowercase letters, digits or hyphens, starting with a letter |
 | `label` | string | The name the window shows for the source |
 | `capabilities` | list | The kinds `poll` may return, a non-empty subset of `tickets`, `comments`, `prs`, `activity`, `asks`, `runs` |
 | `fields` | list | `{ key, label, hint?, required?, list?, boolean? }` per setting of the entry; an empty list is fine |
-| `poll` | async function | `poll(context)` resolves to the result below |
+| `poll` | async method | `poll(context)` resolves to the result below; the base's `poll` only throws, and the check refuses an adapter that does not override it |
 
-A built-in may also export `links(settings)` (quick links for the header), `endpointKey` (the field a
-stored secret is bound to) and `persistedCache` (cache keys holding `Map`s that survive a restart).
+The base supplies the optional members, which an adapter overrides when it needs them: `links(settings)`
+(quick links for the header, none by default), `persistedCache` (cache keys holding `Map`s that survive a
+restart), `badge` (the feed badge under the type's own name) and `tone` (the feed icon tone). A built-in
+may also set `endpointKey`, the field a stored secret is bound to.
 
 ### Context
 

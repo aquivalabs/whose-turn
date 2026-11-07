@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import * as github from '../connectors/github.mjs';
+import github from '../connectors/github.mjs';
 import { compileRules, turnRows, feedRows } from '../lib/rules.mjs';
 import { DEFAULT_RULES, normaliseWorkspaces } from '../lib/config.mjs';
 import { connectorCatalogue } from '../connectors/index.mjs';

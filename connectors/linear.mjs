@@ -2,15 +2,11 @@
 import { toIsoUtc } from '../lib/text.mjs';
 import { linearQuery } from '../lib/linear-api.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
+import { Adapter } from '../lib/adapter.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-linear';
 
-export const contract = 1;
-export const id = 'linear';
-export const label = 'Linear';
-export const capabilities = ['tickets', 'comments'];
-export const links = (settings) => (settings.workspace ? [{ label: 'Linear', url: `https://linear.app/${settings.workspace}${settings.team ? `/team/${settings.team}` : ''}` }] : []);
-export const fields = [
+const FIELDS = [
   { key: 'workspace', label: 'Workspace slug', hint: 'the part after linear.app/ in your issue links', required: true },
   { key: 'api_key', label: 'API key', hint: 'a personal API key, stored in the secret store, never in the config', secret: { account: 'workspace', service: 'token_service', default: DEFAULT_SERVICE } },
   { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-linear' },
@@ -105,11 +101,30 @@ export const normalise = (issues, viewer) => {
   return { me, tickets, comments, ticket_base: base };
 };
 
-export const poll = async ({ settings, http, secrets, cache }) => {
+const poll = async ({ settings, http, secrets, cache }) => {
   const key = await apiKey(settings, secrets, cache);
   const [open, done] = await Promise.all([fetchAll(http, key, buildFilter(settings, false)), fetchAll(http, key, buildFilter(settings, true), true)]);
   const seen = new Set();
   const issues = [...open.nodes, ...done.nodes].filter((issue) => !seen.has(issue.id) && seen.add(issue.id));
   const result = normalise(issues, open.viewer || done.viewer || {});
-  return { ...result, ticket_base: result.ticket_base || `https://linear.app/${settings.workspace}/issue/`, errors: {} };
+  return { ...result, ticket_base: result.ticket_base || `https://linear.app/${settings.workspace}/issue/`, errors: /** @type {Record<string, string>} */ ({}) };
 };
+
+/** The Linear source under connector contract 1. */
+class Linear extends Adapter {
+  contract = 1;
+  id = 'linear';
+  label = 'Linear';
+  capabilities = ['tickets', 'comments'];
+  fields = FIELDS;
+
+  links(settings) {
+    return settings.workspace ? [{ label: 'Linear', url: `https://linear.app/${settings.workspace}${settings.team ? `/team/${settings.team}` : ''}` }] : [];
+  }
+
+  poll(context) {
+    return poll(context);
+  }
+}
+
+export default new Linear();

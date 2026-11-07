@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import * as github from '../connectors/github.mjs';
+import github from '../connectors/github.mjs';
 
 const SINCE = '2026-10-01T00:00:00Z';
 

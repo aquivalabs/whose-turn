@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, utimesSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import * as file from '../connectors/file.mjs';
+import file from '../connectors/file.mjs';
 import { adapterProblems, resultProblems } from '../lib/contract.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';

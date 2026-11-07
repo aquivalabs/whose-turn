@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalise, poll } from '../connectors/linear.mjs';
+import linear, { normalise } from '../connectors/linear.mjs';
 
 const viewer = { id: 'u1', name: 'alex', displayName: 'Alex Doe' };
 const issue = (overrides = {}) => ({
@@ -26,20 +26,20 @@ test('poll asks the API for open and recently completed issues of me, with the k
   const calls = [];
   const http = { fetchJson: async (url, options) => { calls.push({ url, auth: options.headers.Authorization, filter: options.body.variables.filter }); return { data: { viewer, issues: { pageInfo: { hasNextPage: false }, nodes: [issue()] } } }; } };
   const secrets = { get: async (service, account) => (service === 'whose-turn-linear' && account === 'your-space' ? 'lin_api_test' : '') };
-  const result = await poll({ settings: { workspace: 'your-space', team: 'PROJ' }, http, secrets, cache: {} });
+  const result = await linear.poll({ settings: { workspace: 'your-space', team: 'PROJ' }, http, secrets, cache: {} });
   assert.equal(calls.length, 2);
   assert.ok(calls.every((call) => call.url === 'https://api.linear.app/graphql' && call.auth === 'lin_api_test'));
   assert.deepEqual(calls[0].filter.team, { key: { eq: 'PROJ' } });
   assert.ok(calls[1].filter.completedAt.gte);
   assert.equal(result.tickets.length, 1);
-  await assert.rejects(poll({ settings: { workspace: 'other' }, http, secrets, cache: {} }), /No Linear API key/);
+  await assert.rejects(linear.poll({ settings: { workspace: 'other' }, http, secrets, cache: {} }), /No Linear API key/);
 });
 
 test('poll reads archived issues for Recently done, and only active ones for the open list', async () => {
   const calls = [];
   const http = { fetchJson: async (url, options) => { calls.push(options.body); return { data: { viewer, issues: { pageInfo: { hasNextPage: false }, nodes: [] } } }; } };
   const secrets = { get: async () => 'lin_api_test' };
-  await poll({ settings: { workspace: 'your-space' }, http, secrets, cache: {} });
+  await linear.poll({ settings: { workspace: 'your-space' }, http, secrets, cache: {} });
   const done = calls.find((body) => body.variables.filter.completedAt);
   const open = calls.find((body) => !body.variables.filter.completedAt);
   assert.equal(done.variables.archived, true);
