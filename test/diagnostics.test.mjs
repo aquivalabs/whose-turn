@@ -1,6 +1,6 @@
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bucket, buildDiagnostics, channelOf, failureCode, fitForRelay, openFailureLog, sourceType } from '../lib/diagnostics.mjs';
 import { RateLimited } from '../lib/http-client.mjs';
@@ -74,6 +74,23 @@ test('the failure log keeps the last ten failures across a restart and drops ent
   const file = join(dir, 'failures.json');
   writeFileSync(file, JSON.stringify([...JSON.parse(readFileSync(file, 'utf8')), { type: 'jira', code: 'jira.example said 401', at: 1 }, null]));
   assert.equal(openFailureLog(dir).recent().length, 10);
+});
+
+test('a recorded failure reaches the file once a second has passed, without a flush, and several in that second are written together', () => {
+  // Setup
+  mock.timers.enable({ apis: ['setTimeout'] });
+  const dir = scratchDir('wt-diag-');
+  const file = join(dir, 'failures.json');
+  const log = openFailureLog(dir, () => NOW);
+  // Exercise
+  log.record('github', 'TIMEOUT');
+  log.record('jira', 'UNAUTHENTICATED');
+  const before = existsSync(file);
+  mock.timers.tick(1000);
+  // Verify
+  assert.equal(before, false);
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')).map((entry) => entry.code), ['TIMEOUT', 'UNAUTHENTICATED']);
+  mock.timers.reset();
 });
 
 test('a window report carries the monitor, update, settings, health, rows and the window snapshot, all in the relay limits', () => {

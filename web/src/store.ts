@@ -45,6 +45,10 @@ export const snapshot = shallowReactive<Snapshot>({
 });
 /** Each panel's scroll element, handed over on mount and cleared on unmount, so other islands read it here and not from the DOM. */
 export const scrollers = shallowReactive<Partial<Record<'your_move' | 'waiting' | 'feed', HTMLElement | null>>>({});
+/** The ref callback a panel gives its scroll element, so it lands in `scrollers` under the panel's key. */
+export const holdScroller = (panel: keyof typeof scrollers) => (element: unknown) => {
+  scrollers[panel] = (element as HTMLElement | null) ?? null;
+};
 export const ui = reactive({
   ws: new URLSearchParams(location.search).get('ws') || lastWorkspace.value,
   open: new Set<string>(),

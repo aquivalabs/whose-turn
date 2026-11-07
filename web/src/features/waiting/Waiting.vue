@@ -3,7 +3,7 @@
 import { computed } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade, leaving, listed } from '@/motion.ts';
-import { snapshot, now, scrollers } from '@/store.ts';
+import { snapshot, now, holdScroller } from '@/store.ts';
 import { waitingRows, statusTone, hasPrColumn } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
 import { age, when } from '@/lib/time.ts';
@@ -16,9 +16,7 @@ import RowScroll from '@/ui/RowScroll.vue';
 import Swap from '@/ui/Swap.vue';
 import { useText } from '@/i18n/index.ts';
 const t = useText();
-const holdScroller = (element: unknown) => {
-  scrollers.waiting = (element as HTMLElement | null) ?? null;
-};
+const holdPanelScroller = holdScroller('waiting');
 const MARK_APPROVED = '✓';
 const MARK_CHANGES = '✗';
 const rows = computed(() => {
@@ -51,7 +49,7 @@ const note = computed(() =>
     <Swap v-slot="{ face }" :face="rows.length ? 'list' : 'empty'">
     <Motion v-if="face === 'empty'" key="empty" v-bind="fade" as="p" class="empty">{{ t('waiting.empty') }}</Motion>
     <Motion v-else-if="face === 'list'" key="list" v-bind="fade" class="island__fade">
-    <RowScroll @scroller="holdScroller">
+    <RowScroll @scroller="holdPanelScroller">
       <table class="table waiting__table">
         <thead>
           <tr>
