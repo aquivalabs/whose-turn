@@ -299,6 +299,13 @@ test('the Claude CLI is found on PATH first, then in the usual install places, e
   assert.equal(findClaude({ env: { PATH: '/opt/bin' }, home: '/home/me', platform: 'win32', executable: (path) => path === '/opt/bin/claude.exe' }), '/opt/bin/claude.exe');
 });
 
+test('findClaude skips relative PATH entries, so a claude in the working directory never runs (RMA-416)', () => {
+  // Setup
+  const executable = (path) => path === 'bin/claude' || path === 'claude' || path === '/opt/bin/claude';
+  // Exercise + Verify
+  assert.equal(findClaude({ env: { PATH: 'bin::.:/opt/bin' }, home: '/home/me', platform: 'linux', executable }), '/opt/bin/claude');
+});
+
 test('the plugin step runs the one fixed command and reports updated, manual or failed', async () => {
   // Setup
   const ran = [];

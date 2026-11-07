@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkSkillKnows, fetchSkillVersion } from '../scripts/skill-knows-release.mjs';
+import { checkSkillKnows, checkToolsMatch, fetchPluginTools, fetchSkillVersion } from '../scripts/skill-knows-release.mjs';
 
 test('a skill covering the released version passes', async () => {
   assert.equal(await checkSkillKnows('1.0.0-alpha.10', async () => '1.0.0-alpha.10'), null);
@@ -46,4 +46,28 @@ test('a gh failure refuses the release', async () => {
   };
   const refusal = await checkSkillKnows('1.0.0', () => fetchSkillVersion(runGh));
   assert.match(refusal, /could not be read \(gh: Not Found \(HTTP 404\)\)/);
+});
+
+test('plugin tools that match the known list pass, in any order (RMA-416)', async () => {
+  assert.equal(await checkToolsMatch(['whose_turn_a', 'whose_turn_b'], async () => ['whose_turn_b', 'whose_turn_a']), null);
+});
+
+test('a plugin tool the list lacks and a listed tool the plugin dropped both refuse, by name', async () => {
+  const refusal = await checkToolsMatch(['whose_turn_a', 'whose_turn_old'], async () => ['whose_turn_a', 'whose_turn_new']);
+  assert.equal(refusal, "AGENT_TOOLS in lib/diagnostics.mjs differs from the plugin's tools: missing whose_turn_new, not in the plugin whose_turn_old");
+});
+
+test('plugin tools that cannot be read refuse', async () => {
+  assert.match(await checkToolsMatch(['whose_turn_a'], async () => { throw new Error('gh: Not Found (HTTP 404)'); }), /plugin tools could not be read \(gh: Not Found/);
+});
+
+test('the plugin tool names are read from the name fields of its MCP source on BladeForge main', async () => {
+  const source = "const tools = [\n  { name: 'whose_turn_summary', run: () => 1 },\n  { name: 'whose_turn_quit' },\n];\nconst other = { name: 'not_a_tool' };";
+  const calls = [];
+  const runGh = async (command, args) => {
+    calls.push(args.join(' '));
+    return { stdout: Buffer.from(source).toString('base64') };
+  };
+  assert.deepEqual(await fetchPluginTools(runGh), ['whose_turn_summary', 'whose_turn_quit']);
+  assert.match(calls[0], /plugins\/whose-turn\/bin\/mcp\.mjs\?ref=main/);
 });
