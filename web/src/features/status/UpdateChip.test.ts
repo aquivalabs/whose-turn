@@ -126,42 +126,48 @@ test('a refused update returns to the offer', async () => {
 });
 
 const clipboard = () => {
-  const writeText = vi.fn(() => Promise.resolve());
-  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
-  return writeText;
+  const write = vi.fn(async (items: ClipboardItem[]) => {
+    await items[0]!.getType('text/plain');
+  });
+  Object.defineProperty(navigator, 'clipboard', { value: { write }, configurable: true });
+  return write;
 };
+
+const copiedText = async (write: ReturnType<typeof clipboard>) =>
+  (await write.mock.calls[0]![0][0]!.getType('text/plain')).text();
 
 const withPlugin = (state: 'updated' | 'manual' | 'failed', copy: string) => {
   snapshot.update = offer({ available: false, latest: '1.0.0-alpha.2', plugin: { state, copy } });
 };
 
 test('after a plugin update the chip copies the text the server chose, says Copied, and tells the server', async () => {
-  const writeText = clipboard();
+  const write = clipboard();
   withPlugin('updated', '/reload-plugins --force');
   vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });
   render(UpdateChip);
 
   await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
 
-  expect(writeText).toHaveBeenCalledWith('/reload-plugins --force');
+  expect(await copiedText(write)).toBe('/reload-plugins --force');
   expect(await screen.findByText('Copied')).toBeTruthy();
   expect(post).toHaveBeenCalledWith('/api/update/plugin-copied');
   expect(snapshot.update.plugin).toBeUndefined();
 });
 
 test.each(['manual', 'failed'] as const)('a %s plugin update shows the Update Claude skill chip, which copies the command', async (state) => {
-  const writeText = clipboard();
+  const write = clipboard();
   withPlugin(state, 'claude plugin update whose-turn@bladeforge');
   vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });
   render(UpdateChip);
 
   await fireEvent.click(await screen.findByRole('button', { name: 'Update Claude skill · Copy' }));
 
-  expect(writeText).toHaveBeenCalledWith('claude plugin update whose-turn@bladeforge');
+  expect(await copiedText(write)).toBe('claude plugin update whose-turn@bladeforge');
 });
 
-test('a refused copy says so and leaves the chip for the server to keep', async () => {
+test('a copy refused by the clipboard and by the fallback says so and leaves the chip for the server to keep', async () => {
   clipboard().mockRejectedValue(new Error('denied'));
+  Object.defineProperty(document, 'execCommand', { value: () => { throw new Error('denied'); }, configurable: true });
   withPlugin('updated', '/reload-plugins --force');
   render(UpdateChip);
 

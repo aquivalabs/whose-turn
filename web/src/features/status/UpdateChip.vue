@@ -3,7 +3,7 @@
 import { M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { computed, onMounted, ref, watch } from 'vue';
-import { refAutoReset, useTimeoutFn } from '@vueuse/core';
+import { refAutoReset, useClipboard, useTimeoutFn } from '@vueuse/core';
 import { snapshot, tellProblem, ui } from '@/store.ts';
 import { post } from '@/lib/api.ts';
 import { rememberUpdated, reloadPage, takeUpdated } from '@/lib/page-reload.ts';
@@ -22,6 +22,7 @@ const slow = ref(false);
 const updatedTo = refAutoReset('', UPDATED_SHOWN_MS);
 const copied = refAutoReset(false, COPIED_SHOWN_MS);
 const update = computed(() => snapshot.update);
+const { copy } = useClipboard({ legacy: true });
 const restarting = computed(
   () => update.value.state === 'restarting' || (Boolean(target.value) && !ui.live),
 );
@@ -112,7 +113,7 @@ const onUpdate = () => {
 
 const onCopyPlugin = async () => {
   try {
-    await navigator.clipboard.writeText(update.value.plugin?.copy ?? '');
+    await copy(update.value.plugin?.copy ?? '');
   } catch (error) {
     tellProblem(error, { refused: t('common.aiButton.failed') });
     return;

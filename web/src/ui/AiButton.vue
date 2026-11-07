@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The AI button: a copy icon with a sparkle badge everywhere; it copies the item with its context as text for any assistant.
 import { computed, ref, watch } from 'vue';
-import { refAutoReset } from '@vueuse/core';
+import { refAutoReset, useClipboard } from '@vueuse/core';
 import { handOffText } from '@/lib/api.ts';
 import { COPY, SPARKLE } from '@/lib/icons.ts';
 import { useText } from '@/i18n/index.ts';
@@ -16,10 +16,9 @@ const state = refAutoReset<'' | 'sent' | 'failed'>('', 1600);
 const tip = computed(() => t(TIPS[state.value]));
 const button = ref<(HTMLButtonElement & { _tippy?: { setContent: (text: string) => void } }) | null>(null);
 watch(tip, (text) => button.value?._tippy?.setContent(text));
+const { copy: toClipboard } = useClipboard({ legacy: true });
 const copy = () =>
-  handOffText(props.query)
-    .then((text) => navigator.clipboard.writeText(text))
-    .then(
+  toClipboard(() => handOffText(props.query)).then(
       () => {
         state.value = 'sent';
       },
