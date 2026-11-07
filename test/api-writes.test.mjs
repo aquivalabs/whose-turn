@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 test('a workspace write without ws is refused instead of landing in the first workspace', async () => {
   // Setup
@@ -288,6 +289,25 @@ test('a POST body over the size cap is refused with BODY_TOO_LARGE, and a normal
     assert.equal(response.status, 413);
     assert.equal(body.error.details[0].reason, 'BODY_TOO_LARGE');
     assert.equal((await post('/api/refresh', {})).status, 200);
+  } finally {
+    server.close();
+  }
+});
+
+test('a config whose module entry names a missing adapter is refused at that field and nothing is saved', async () => {
+  // Setup
+  let saved = 0;
+  const { server, post } = await startTestApi({ dataDir: scratchDir('api-adapters'), saveConfig: async () => { saved += 1; } });
+  try {
+    // Exercise
+    const response = await post('/api/config', { workspaces: [{ id: 'w', name: 'W', connectors: [{ type: 'module', id: 'mine', adapter: 'nowhere' }] }] });
+    // Verify
+    const body = await response.json();
+    assert.equal(response.status, 400);
+    assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
+    assert.equal(body.error.details[1].field_violations[0].field, 'workspaces[0].connectors[0].adapter');
+    assert.match(body.error.details[1].field_violations[0].description, /No adapter file at .*nowhere\.mjs/);
+    assert.equal(saved, 0);
   } finally {
     server.close();
   }

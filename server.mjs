@@ -17,6 +17,7 @@ import { loadChangelog } from './lib/changelog.mjs';
 import { createUpdater, pinnedVersion, quitServer, restartServer, runsInstalled } from './lib/update.mjs';
 import { listOf } from './lib/text.mjs';
 import { openFailureLog } from './lib/diagnostics.mjs';
+import { adaptersDirOf, writeAdapterShim } from './connectors/module.mjs';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 const http = createHttpClient();
@@ -24,6 +25,7 @@ const first = loadConfig();
 const failureLog = openFailureLog(first.dataDir);
 const secrets = createSecrets(first.dataDir);
 const inbox = openInbox(first.dataDir);
+await writeAdapterShim(adaptersDirOf(first.dataDir)).catch((error) => console.error(`whose-turn: cannot write the adapters folder: ${error.message}`));
 const reports = openReports(first.dataDir, { http, relayUrl: process.env.WHOSE_TURN_FEEDBACK_URL || RELAY_URL, adminToken: () => secrets.get('whose-turn-feedback-admin', 'relay'), adminHosts: listOf(process.env.WHOSE_TURN_FEEDBACK_ADMIN_HOSTS) });
 const { version } = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8'));
 let server;

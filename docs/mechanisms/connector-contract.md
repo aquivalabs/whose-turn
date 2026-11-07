@@ -36,8 +36,8 @@ window takes a source's feed badge and icon tone from the connector summary, nev
 ### Members
 
 An adapter is a subclass of `Adapter`, exported as the module's default (`export default new GitHub()`
-for a built-in). A user adapter written as plain module exports, as in the template below, is still
-accepted until user adapters move to the base class too (RMA-430). These members are required:
+for a built-in, a class or an instance for a user adapter). A module in any other shape is refused.
+These members are required:
 
 | Member | Type | Meaning |
 |---|---|---|
@@ -114,6 +114,10 @@ monitor only reads it.
 
 - `adapter` is the file name without `.mjs`: lowercase letters, digits, `-` and `_`. Any other value,
   a path among them, is the entry's error, so no config can point outside the folder.
+- The file's default export must be a subclass of `Adapter` imported from `./_whose-turn.mjs`, which the
+  monitor writes into the folder at every start; a file that does not extend it is refused.
+- Saving a config loads every `module` entry's adapter; a missing or broken one refuses the save with a
+  violation at that entry's `adapter` field, and nothing is written.
 
 - The file is imported at the entry's first poll and again when its modification time changes; the
   check runs on every import. A failed check is the entry's error, and the next poll tries again.
@@ -141,38 +145,43 @@ A workspace entry `{ "type": "file", "path": "~/notes/tasks.md", "me": "alex" }`
 
 ### Template
 
+`adapters/trello.mjs` in the data directory:
+
 ```js
 /** Trello cards assigned to you on one board. */
-export const contract = 1;
-export const id = 'trello';
-export const label = 'Trello';
-export const capabilities = ['tickets'];
-export const fields = [
-  { key: 'board', label: 'Board id', required: true },
-  { key: 'me', label: 'Your full name on Trello', required: true },
-];
+import { Adapter } from './_whose-turn.mjs';
 
-/** @type {import('whose-turn/types/connector.js').Adapter['poll']} */
-export const poll = async ({ settings, http, secret }) => {
-  const [key, token] = (await secret()).split(':');
-  if (!token) {
-    throw new Error('Store the token as "<api key>:<token>" for this entry');
+export default class Trello extends Adapter {
+  contract = 1;
+  id = 'trello';
+  label = 'Trello';
+  capabilities = ['tickets'];
+  fields = [
+    { key: 'board', label: 'Board id', required: true },
+    { key: 'me', label: 'Your full name on Trello', required: true },
+  ];
+
+  async poll({ settings, http, secret }) {
+    const [key, token] = (await secret()).split(':');
+    if (!token) {
+      throw new Error('Store the token as "<api key>:<token>" for this entry');
+    }
+    const auth = `key=${encodeURIComponent(key)}&token=${encodeURIComponent(token)}`;
+    const cards = await http.fetchJson(`https://api.trello.com/1/boards/${settings.board}/cards?members=true&list=true&${auth}`);
+    const mine = cards.filter((card) => card.members.some((member) => member.fullName === settings.me));
+    return {
+      me: settings.me,
+      tickets: mine.map((card) => ({
+        key: card.idShort ? `TR-${card.idShort}` : card.id, summary: card.name, status: card.list?.name || 'Open',
+        status_category: card.closed || card.dueComplete ? 'done' : 'indeterminate',
+        assignee: settings.me, updated: card.dateLastActivity, url: card.shortUrl,
+      })),
+    };
   }
-  const auth = `key=${encodeURIComponent(key)}&token=${encodeURIComponent(token)}`;
-  const cards = await http.fetchJson(`https://api.trello.com/1/boards/${settings.board}/cards?members=true&list=true&${auth}`);
-  const mine = cards.filter((card) => card.members.some((member) => member.fullName === settings.me));
-  return {
-    me: settings.me,
-    tickets: mine.map((card) => ({
-      key: card.idShort ? `TR-${card.idShort}` : card.id, summary: card.name, status: card.list?.name || 'Open',
-      status_category: card.closed || card.dueComplete ? 'done' : 'indeterminate',
-      assignee: settings.me, updated: card.dateLastActivity, url: card.shortUrl,
-    })),
-  };
-};
+}
 ```
 
-The Trello calls are a sketch to be checked against Trello's API reference; the shape of the result is the part this page fixes. The type import resolves where the `whose-turn` package is installed; elsewhere, point it at that package's `types/connector.d.ts` or drop the line. The fixture `test/fixtures/adapters/board.mjs` is a complete adapter that needs no network.
+The Trello calls are a sketch to be checked against Trello's API reference; the shape of the result is the part this page fixes. `_whose-turn.mjs` is written into the folder by the monitor at every start and re-exports its `Adapter`, so the import resolves after every update. The fixture `test/fixtures/adapters/board.mjs` is a complete adapter that needs no network.
 
 ### Conformance check
 

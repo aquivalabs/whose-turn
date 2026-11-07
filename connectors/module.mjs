@@ -1,5 +1,5 @@
 /** User adapter connector: loads the adapter the workspace config names from the adapters folder in the data directory, checks it against the connector contract, and polls it like any built-in. See docs/mechanisms/connector-contract.md. */
-import { stat } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { adapterProblems, resultProblems, ContractError, KINDS } from '../lib/contract.mjs';
@@ -21,6 +21,22 @@ export const fields = [
 ];
 
 const loaded = new Map();
+const SHIM = '_whose-turn.mjs';
+const BASE_URL = new URL('../lib/adapter.mjs', import.meta.url);
+
+/** The folder of user adapters in a data directory. */
+export const adaptersDirOf = (dataDir) => join(dataDir, 'adapters');
+
+/** Creates the adapters folder and writes `_whose-turn.mjs`, which re-exports this server's `Adapter` so an adapter's import always resolves. */
+export const writeAdapterShim = async (adaptersDir) => {
+  const text = `/** Written by Whose Turn at every start: the base class the adapters in this folder extend. */\nexport { Adapter } from '${BASE_URL.href}';\n`;
+  const file = join(adaptersDir, SHIM);
+  await mkdir(adaptersDir, { recursive: true });
+  if (await readFile(file, 'utf8').catch(() => '') !== text) {
+    await writeFile(file, text);
+  }
+  return file;
+};
 const ADAPTER_NAME = /^[a-z0-9][a-z0-9_-]*$/;
 
 /** The file of the adapter named `name` in `adaptersDir`; a name that is not a plain file name throws. */
@@ -31,12 +47,12 @@ export const adapterFile = (adaptersDir, name) => {
   return join(adaptersDir, `${name}.mjs`);
 };
 
-/** The adapter a module exports: its default Adapter instance, a new one of its default Adapter subclass, else the module itself. */
+/** The adapter a module exports as its default: an Adapter instance, or a new one of an Adapter subclass; null for anything else. */
 const adapterOf = (exported) => {
   if (exported.default instanceof Adapter) {
     return exported.default;
   }
-  return typeof exported.default === 'function' && exported.default.prototype instanceof Adapter ? new exported.default() : exported;
+  return typeof exported.default === 'function' && exported.default.prototype instanceof Adapter ? new exported.default() : null;
 };
 
 /** The adapter at `path`, imported again when the file changes, checked against the contract; a module that is not a connector throws ContractError. */
@@ -50,6 +66,9 @@ export const loadAdapter = async (path) => {
     return known.adapter;
   }
   const adapter = adapterOf(await import(`${pathToFileURL(file).href}?v=${mtimeMs}`));
+  if (!adapter) {
+    throw new ContractError(`Adapter ${path}`, [`its default export must be a subclass of Adapter, imported from './${SHIM}'`]);
+  }
   const problems = adapterProblems(adapter);
   if (problems.length) {
     throw new ContractError(`Adapter ${path}`, problems);
@@ -82,4 +101,22 @@ export const poll = async ({ settings, http, secrets, cache, sinceIso, historyDa
   const secret = () => cachedToken(cache, () => secrets.get(service, String(settings.adapter)));
   cache.adapter = cache.adapter || {};
   return pollAdapter(adapter, { settings, http, cache: cache.adapter, sinceIso, historyDays, keyOf, secret });
+};
+
+/** The config violations of every `module` entry whose adapter in `dataDir`'s adapters folder is missing or breaks the contract, at the entry's `adapter` field. */
+export const adapterViolations = async (rawWorkspaces, dataDir) => {
+  const violations = [];
+  for (const [index, workspace] of rawWorkspaces.entries()) {
+    for (const [position, entry] of (Array.isArray(workspace?.connectors) ? workspace.connectors : []).entries()) {
+      if (entry?.type !== 'module') {
+        continue;
+      }
+      try {
+        await loadAdapter(adapterFile(adaptersDirOf(dataDir), entry.adapter));
+      } catch (error) {
+        violations.push({ field: `workspaces[${index}].connectors[${position}].adapter`, description: `Workspace "${workspace.id}", connector "${entry.id}": ${error.message}` });
+      }
+    }
+  }
+  return violations;
 };
