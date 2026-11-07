@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // To do: the user's own notes, kept by the server per workspace; a ticket key in the text becomes a link.
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, useTemplateRef } from 'vue';
+import { AnimatePresence, M as Motion } from 'motion-v';
+import { fade, leaving, listed } from '@/motion.ts';
 import { snapshot, now, todoAct } from '@/store.ts';
 import type { Todo } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
@@ -9,6 +11,10 @@ import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
 import ExtLink from '@/ui/ExtLink.vue';
 import { useTodosView } from './useTodosView.ts';
+import { useText } from '@/i18n/index.ts';
+
+const t = useText();
+const PENCIL = '\u270E';
 
 interface TextPart {
   text: string;
@@ -62,7 +68,43 @@ const add = async () => {
   }
 };
 const flip = (todo: Todo) => send({ action: todo.done ? 'undo' : 'done', id: todo.id });
-const remove = (todo: Todo) => send({ action: 'delete', id: todo.id });
+const removed = ref<Todo | null>(null);
+const remove = async (todo: Todo) => {
+  if (await send({ action: 'delete', id: todo.id })) {
+    removed.value = todo;
+  }
+};
+const restore = async () => {
+  const todo = removed.value;
+  removed.value = null;
+  if (todo && (await send({ action: 'add', text: todo.text })) && todo.done) {
+    const back = (snapshot.todos || []).find((item) => item.text === todo.text && !item.done);
+    if (back) {
+      await send({ action: 'done', id: back.id });
+    }
+  }
+};
+const editing = ref('');
+const editText = ref('');
+const editBox = useTemplateRef<HTMLInputElement[]>('editBox');
+const startEdit = async (todo: Todo) => {
+  editing.value = todo.id;
+  editText.value = todo.text;
+  await nextTick();
+  editBox.value?.[0]?.focus();
+};
+const cancelEdit = () => {
+  editing.value = '';
+};
+const saveEdit = async (todo: Todo) => {
+  const text = editText.value.trim();
+  if (!text || text === todo.text) {
+    return cancelEdit();
+  }
+  if (await send({ action: 'edit', id: todo.id, text })) {
+    cancelEdit();
+  }
+};
 const view = computed({
   get: () => (showDone.value ? 'done' : 'open'),
   set: (id) => {
@@ -70,37 +112,51 @@ const view = computed({
   },
 });
 const options = computed(() => [
-  { id: 'open', label: 'Open', count: open.value.length },
-  { id: 'done', label: 'Done', count: done.value.length },
+  { id: 'open', label: t('todos.view.open'), count: open.value.length },
+  { id: 'done', label: t('todos.view.done'), count: done.value.length },
 ]);
 </script>
 <template>
   <Island
     id="todo"
-    title="To do"
-    note="Your own notes"
-    tip='Your personal to-dos, kept on this machine. Add here, or ask Claude: "add to my to-do: …". A ticket key like PROJ-123 in the text becomes a link.'
+    :size-key="`${snapshot.workspace.id}:todo`"
+    :title="t('todos.title')"
+    :note="t('todos.note')"
+    :tip="t('todos.tip')"
   >
     <template #head
-      ><Segmented v-model="view" :options="options" label="Show" class="todos__view"
+      ><Segmented v-model="view" :options="options" :label="t('todos.view.label')" class="todos__view"
     /></template>
     <div class="todos__add">
       <input
         v-model="draft"
         class="input todos__input"
         type="text"
-        placeholder="Add a to-do and press Enter"
-        aria-label="New to-do"
+        :placeholder="t('todos.add.placeholder')"
+        :aria-label="t('todos.add.label')"
         autocomplete="off"
         @keydown.enter="add"
       />
-      <button type="button" class="btn btn--tonal" @click="add">Add</button>
+      <button type="button" class="btn btn--tonal" @click="add">{{ t('todos.add.button') }}</button>
     </div>
-    <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
+    <AnimatePresence>
+      <Motion v-if="problem" v-bind="fade" as="p" class="alert alert--inline" role="alert">{{
+        problem
+      }}</Motion>
+    </AnimatePresence>
+    <AnimatePresence>
+      <Motion v-if="removed" v-bind="fade" as="p" class="todos__undo" role="status">
+        {{ t('todos.undo.deleted') }}
+        <button type="button" class="todos__undo-btn" @click="restore">{{ t('todos.undo.button') }}</button>
+      </Motion>
+    </AnimatePresence>
     <ul class="todos__list">
-      <li
+      <AnimatePresence @before-leave="leaving">
+      <Motion
         v-for="{ todo, parts: pieces, meta } in rows"
         :key="todo.id"
+        v-bind="listed"
+        as="li"
         class="todos__item"
         :class="{ 'todos__item--done': todo.done }"
       >
@@ -110,10 +166,23 @@ const options = computed(() => [
           :class="{ 'todos__check--on': todo.done }"
           role="checkbox"
           :aria-checked="!!todo.done"
-          :aria-label="todo.done ? 'Mark not done' : 'Mark done'"
+          :aria-label="todo.done ? t('todos.item.markNotDone') : t('todos.item.markDone')"
           @click="flip(todo)"
         ></button>
-        <span class="todos__text"
+        <input
+          v-if="editing === todo.id"
+          ref="editBox"
+          v-model="editText"
+          class="input todos__edit"
+          type="text"
+          maxlength="500"
+          :aria-label="t('todos.item.edit')"
+          autocomplete="off"
+          @keydown.enter="saveEdit(todo)"
+          @keydown.esc="cancelEdit"
+          @blur="cancelEdit"
+        />
+        <span v-else class="todos__text" @dblclick="startEdit(todo)"
           ><template v-for="(piece, index) in pieces" :key="index"
             ><ExtLink v-if="piece.url !== undefined" :text="piece.text" :url="piece.url" /><template
               v-else
@@ -122,39 +191,43 @@ const options = computed(() => [
           ></span
         >
         <span class="todos__meta">{{ meta }}</span>
-        <button type="button" class="todos__delete" aria-label="Delete to-do" @click="remove(todo)">
+        <button type="button" class="todos__pencil" :aria-label="t('todos.item.edit')" @click="startEdit(todo)">
+          {{ PENCIL }}
+        </button>
+        <button type="button" class="todos__delete" :aria-label="t('todos.item.delete')" @click="remove(todo)">
           ×
         </button>
-      </li>
+      </Motion>
+      </AnimatePresence>
       <span v-if="!rows.length" class="empty todos__empty">{{
-        showDone ? 'Nothing here yet.' : 'Nothing to do. Add one above, or ask Claude.'
+        showDone ? t('todos.empty.done') : t('todos.empty.open')
       }}</span>
     </ul>
   </Island>
 </template>
 <style scoped>
 .todos__view {
-  margin-left: 10px;
+  margin-left: 0.625rem;
 }
 
 .todos__add {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
 }
 
 .todos__input {
   flex: 1;
   min-width: 0;
-  height: 32px;
-  padding: 0 12px;
+  height: 2rem;
+  padding: 0 0.75rem;
   background: rgb(var(--md-state), 0.04);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .todos__list {
-  margin: 0 -20px;
+  margin: 0 -1.25rem;
   padding: 0;
   overflow-y: auto;
   list-style: none;
@@ -162,10 +235,10 @@ const options = computed(() => [
 
 .todos__item {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto 20px;
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto 1.25rem 1.25rem;
   align-items: center;
-  gap: 10px;
-  padding: 7px 20px;
+  gap: 0.625rem;
+  padding: 0.4375rem 1.25rem;
   border-top: 1px solid var(--md-outline-variant);
 }
 
@@ -188,17 +261,17 @@ const options = computed(() => [
 
 .todos__empty {
   display: block;
-  padding: 6px 20px 10px;
+  padding: 0.375rem 1.25rem 0.625rem;
 }
 
 .todos__check {
   box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   border: 2px solid var(--md-outline);
-  border-radius: 5px;
+  border-radius: 0.3125rem;
   cursor: pointer;
 }
 
@@ -209,37 +282,60 @@ const options = computed(() => [
 
 .todos__check--on::after {
   content: '';
-  width: 8px;
-  height: 4px;
+  width: 0.5rem;
+  height: 0.25rem;
   border-bottom: 2px solid var(--md-on-primary);
   border-left: 2px solid var(--md-on-primary);
-  transform: translateY(-1px) rotate(-45deg);
+  transform: translateY(-0.0625rem) rotate(-45deg);
 }
 
 .todos__meta {
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
   white-space: nowrap;
 }
 
+.todos__edit {
+  min-width: 0;
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.todos__undo {
+  margin: 0;
+  padding: 0.25rem 0;
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+}
+
+.todos__undo-btn {
+  color: var(--md-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.todos__pencil,
 .todos__delete {
   color: var(--md-on-surface-variant);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1;
   text-align: center;
   cursor: pointer;
   opacity: 0;
 }
 
+.todos__pencil:focus-visible,
 .todos__delete:focus-visible {
   opacity: 1;
 }
 
+.todos__item:hover .todos__pencil,
 .todos__item:hover .todos__delete {
   opacity: 1;
 }
 
-@media (width >= 901px) {
+@media (width >= 56.3125em) {
   .dashboard--fit .dashboard__todo .todos__list {
     flex: 1 1 auto;
     min-height: 0;

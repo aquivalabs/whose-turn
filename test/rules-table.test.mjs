@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileRules, turnRows } from '../lib/rules.mjs';
 import { DEFAULT_RULES, normaliseWorkspaces } from '../lib/config.mjs';
+import './fixtures/demo-connector.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 import { ticket, pr, comment } from './fixtures/rules.mjs';
 
@@ -93,8 +94,8 @@ test('a bad table is refused with the row and the unknown fact or operator named
   assert.deepEqual(problems, [
     'Workspace "w": rules.table row 2: unknown fact "pr.colour"; GET /api/config lists the facts; the table is ignored.',
     'Workspace "w": rules.table row 3: unknown operator "matches" on "pr.base"; use gt, gte, lt, lte, prefix or present; the table is ignored.',
-    'Workspace "w": rules.table row 4: "ticket.status" is one of backlog, passed, code_review, qa, on_hold, todo, in_progress, done, got "shipped"; the table is ignored.',
-    'Workspace "w": rules.table row 4: "then.whose" is one of you, reviewer, qa, them, hidden, got "boss"; the table is ignored.',
+    'Workspace "w": rules.table row 4: "ticket.status" is one of backlog, passed, code_review, qa, release, on_hold, todo, in_progress, done, got "shipped"; the table is ignored.',
+    'Workspace "w": rules.table row 4: "then.whose" is one of you, reviewer, qa, release, them, hidden, got "boss"; the table is ignored.',
     'Workspace "w": rules.table row 4: unknown fact "{pr.author}" in the text; the table is ignored.',
   ]);
 });
@@ -141,4 +142,48 @@ test('POST /api/config refuses a non-object connector as INVALID_CONFIG naming w
   assert.equal(status, 400);
   assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
   assert.equal(body.error.details[1].field_violations[0].field, 'workspaces[1].connectors[1]');
+});
+
+test('a table whose first catch-all hides every ticket is a warning, not a problem', () => {
+  const { problems, warnings } = normaliseWorkspaces([{ id: 'w', rules: { table: [{ when: {}, then: { whose: 'hidden' } }] } }]);
+  assert.deepEqual(problems, []);
+  assert.deepEqual(warnings, { w: ['rules.table hides every ticket: row 1 matches all of them and hides them'] });
+});
+
+test('a catch-all row before other rows warns that the later rows never apply', () => {
+  const { problems, warnings } = normaliseWorkspaces([{ id: 'w', rules: { table: [{ when: {}, then: yours('Everything') }, { when: { 'pr.open': true }, then: yours('x') }, 'default'] } }]);
+  assert.deepEqual(problems, []);
+  assert.deepEqual(warnings, { w: ['rules.table row 1 matches every ticket, so the 2 row(s) after it never apply'] });
+});
+
+test('a catch-all last, or the default table, raises no warning', () => {
+  const { warnings } = normaliseWorkspaces([
+    { id: 'a', rules: { table: [{ when: { 'pr.open': true }, then: { whose: 'hidden' } }, { when: {}, then: yours('x') }] } },
+    { id: 'b', rules: {} },
+  ]);
+  assert.deepEqual(warnings, {});
+});
+
+test('a hiding table is still saved by POST /api/config', async () => {
+  // Setup
+  const { server, post } = await startTestApi({ saveConfig: async () => {}, reports: {} });
+  try {
+    // Exercise
+    const response = await post('/api/config', { workspaces: [{ id: 'w', rules: { table: [{ when: {}, then: { whose: 'hidden' } }] } }] });
+    // Verify
+    assert.equal(response.status, 200);
+  } finally {
+    server.close();
+  }
+});
+
+test('POST /api/config names the field of an empty id, an unknown enumeration value and a bad key pattern', async () => {
+  const { status, body } = await postConfig([
+    { id: '' },
+    { id: 'b', key_pattern: '(', rules: { backlog_rows: 'maybe' }, connectors: [{ type: 'demo', scenario: 'nope' }] },
+  ]);
+  const fields = body.error.details[1].field_violations.map((violation) => violation.field).sort();
+  assert.equal(status, 400);
+  assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
+  assert.deepEqual(fields, ['workspaces[0].id', 'workspaces[1].connectors[0].scenario', 'workspaces[1].key_pattern', 'workspaces[1].rules.backlog_rows']);
 });

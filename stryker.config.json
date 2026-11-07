@@ -1,0 +1,51 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "reporters": [
+    "html",
+    "clear-text",
+    "progress"
+  ],
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "node --experimental-strip-types --no-warnings --test test/rules.test.mjs test/rules-table.test.mjs test/config.test.mjs test/config-save.test.mjs test/handoff.test.mjs test/update.test.mjs test/web-feed.test.mjs test/web-helpers.test.mjs test/open-moves.test.mjs test/markdown-tokens.test.mjs test/species.test.mjs test/feed-refs.test.mjs test/user-is-you.test.mjs test/workflow-runs.test.mjs"
+  },
+  "mutate": [
+    "lib/rules.mjs",
+    "lib/table.mjs",
+    "lib/facts.mjs",
+    "lib/config.mjs",
+    "lib/handoff.mjs",
+    "lib/update.mjs",
+    "web/src/lib/bem.ts",
+    "web/src/lib/feed.ts",
+    "web/src/lib/icons.ts",
+    "web/src/lib/latest-wins.ts",
+    "web/src/lib/layers.ts",
+    "web/src/lib/live-status.ts",
+    "web/src/lib/markdown-tokens.ts",
+    "web/src/lib/markdown.ts",
+    "web/src/lib/moves.ts",
+    "web/src/lib/problems.ts",
+    "web/src/lib/random.ts",
+    "web/src/lib/settings.ts",
+    "web/src/lib/species.ts",
+    "web/src/lib/time.ts"
+  ],
+  "concurrency": 9,
+  "timeoutMS": 20000,
+  "thresholds": {
+    "high": 90,
+    "low": 80,
+    "break": 80
+  },
+  "tempDirName": ".stryker-tmp",
+  "htmlReporter": {
+    "fileName": ".stryker-tmp/mutation-report.html"
+  },
+  "mutator": {
+    "excludedMutations": [
+      "StringLiteral"
+    ]
+  }
+}

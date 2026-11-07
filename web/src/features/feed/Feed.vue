@@ -1,24 +1,31 @@
 <script setup lang="ts">
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
-import { computed, ref } from 'vue';
-import { snapshot, ui, now, setMarks, tellProblem } from '@/store.ts';
+import { computed, nextTick, ref, watch } from 'vue';
+import { refAutoReset, watchDebounced } from '@vueuse/core';
+import { snapshot, ui, now, setMarks, tellProblem, holdScroller } from '@/store.ts';
 import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
 import type { FeedGroup } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
+import { AnimatePresence, M as Motion } from 'motion-v';
+import { fade, fold } from '@/motion.ts';
 import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
 import FeedItemRow from './FeedItem.vue';
 import ExtLink from '@/ui/ExtLink.vue';
 import AiButton from '@/ui/AiButton.vue';
+import Chevron from '@/ui/Chevron.vue';
+import { useText } from '@/i18n/index.ts';
 import { useFeedState } from './useFeedState.ts';
 const emit = defineEmits<{ open: [item: FeedItem] }>();
+const t = useText();
+const holdPanelScroller = holdScroller('feed');
 const feedState = useFeedState();
-const VIEWS = [
-  { id: 'ticket', label: 'By ticket' },
-  { id: 'flat', label: 'Flat' },
-];
+const views = computed(() => [
+  { id: 'ticket', label: t('feed.views.ticket') },
+  { id: 'flat', label: t('feed.views.flat') },
+]);
 const connectors = computed(() => snapshot.workspace.connectors || []);
 const sources = computed(() =>
   Object.fromEntries(connectors.value.map((connector) => [connector.id, connector])),
@@ -26,7 +33,7 @@ const sources = computed(() =>
 const sourceOf = (id: string): ConnectorSummary => sources.value[id] || { id, type: id, label: id };
 const filters = computed(() =>
   connectors.value.length > 1
-    ? [{ id: 'all', label: 'All' }].concat(
+    ? [{ id: 'all', label: t('feed.filters.all') }].concat(
         connectors.value.map((connector) => ({ id: connector.id, label: connector.label })),
       )
     : [],
@@ -38,7 +45,34 @@ const feedFilter = computed({
     feedState.source = id;
   },
 });
-// marks with seen as a Set, built once per change instead of an array scan per item
+const SEARCH_DEBOUNCE_MS = 150;
+const typed = ref(feedState.query);
+watch(() => feedState.query, (query) => (typed.value = query));
+watchDebounced(typed, (text) => (feedState.query = text), { debounce: SEARCH_DEBOUNCE_MS });
+watch(
+  () => snapshot.workspace.id,
+  () => {
+    feedState.query = '';
+  },
+);
+const FOCUS_MS = 2500;
+const flashed = refAutoReset('', FOCUS_MS);
+watch(
+  () => ui.focusFeed,
+  async (id) => {
+    const item = snapshot.feed.find((candidate) => candidate.id === id);
+    ui.focusFeed = '';
+    if (!item) {
+      return;
+    }
+    feedState.source = 'all';
+    feedState.query = '';
+    feedState.openGroups.add(item.key || item.ref || item.id);
+    flashed.value = id;
+    await nextTick();
+    document.getElementById(`feed-${id}`)?.scrollIntoView({ block: 'center' });
+  },
+);
 const marks = computed(() => ({ base: snapshot.marks.base, seen: new Set(snapshot.marks.seen) }));
 const fresh = (item: FeedItem) => isNew(item, marks.value);
 const newCount = computed(() => snapshot.feed.filter(fresh).length);
@@ -69,61 +103,88 @@ const toggleMember = (members: Set<string>, id: string) => {
   }
 };
 const toggleGroup = (group: FeedGroup) => toggleMember(feedState.openGroups, group.id);
-// ui.open stays in the store, which clears it on a workspace switch; the feed is its only writer.
 const toggleItem = (id: string) => toggleMember(ui.open, id);
 const markSeen = (id: string) => setMarks({ seen: [id] }).then(tellProblem);
 const problem = ref('');
 useClearOnReconnect(() => {
   problem.value = '';
 });
+const cleared = ref<{ base: number; added: string[] } | null>(null);
 const markAll = async () => {
-  problem.value = await setMarks({ seen: snapshot.feed.map((item) => item.id), base: Date.now() });
+  const already = new Set(snapshot.marks.seen);
+  const before = { base: snapshot.marks.base, added: snapshot.feed.map((item) => item.id).filter((id) => !already.has(id)) };
+  problem.value = await setMarks({ all: true });
+  cleared.value = problem.value ? null : before;
+};
+const restoreMarks = async () => {
+  const before = cleared.value;
+  cleared.value = null;
+  if (before) {
+    problem.value = await setMarks({ unseen: before.added, base: before.base });
+  }
 };
 </script>
 <template>
   <Island
     id="feed"
-    title="What changed"
-    note="Newest first, every source"
-    tip="Newest first: comments, reviews, merges and failed checks on your PRs, and ticket changes. Each item opens where it happened."
+    :size-key="`${snapshot.workspace.id}:feed`"
+    :title="t('feed.title')"
+    :note="t('feed.note')"
+    :tip="t('feed.tip')"
     class="feed"
     column
+    resize="width"
   >
     <template #head
-      ><span v-if="newCount" class="feed__new-count">{{ newCount }} new</span></template
+      ><AnimatePresence
+        ><Motion v-if="newCount" v-bind="fade" as="span" class="feed__new-count">{{ t('feed.newCount', { count: newCount }) }}</Motion></AnimatePresence
+      ></template
     >
     <div class="feed__bar">
       <Segmented
         v-if="filters.length"
         v-model="feedFilter"
         :options="filters"
-        label="Feed source"
+        :label="t('feed.filters.sourceLabel')"
       />
-      <Segmented v-model="feedState.view" :options="VIEWS" label="Feed view" />
+      <Segmented v-model="feedState.view" :options="views" :label="t('feed.filters.viewLabel')" />
     </div>
-    <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
+    <AnimatePresence>
+      <Motion v-if="problem" v-bind="fade" as="p" class="alert alert--inline" role="alert">{{
+        problem
+      }}</Motion>
+    </AnimatePresence>
+    <AnimatePresence>
+      <Motion v-if="cleared" v-bind="fade" as="p" class="feed__undo" role="status">
+        {{ t('feed.undo.markedAll') }}
+        <button type="button" class="feed__undo-btn" @click="restoreMarks">{{ t('feed.undo.undo') }}</button>
+      </Motion>
+    </AnimatePresence>
     <div class="feed__search">
       <input
-        v-model.trim="feedState.query"
+        v-model.trim="typed"
         class="input feed__search-input"
         type="search"
-        placeholder="Search the feed: key, author, words…"
-        aria-label="Search the feed"
+        :placeholder="t('feed.search.placeholder')"
+        :aria-label="t('feed.search.label')"
         autocomplete="off"
       />
       <span class="feed__search-count">{{
-        feedState.query ? rows.length + ' of ' + bySource.length : ''
+        feedState.query ? t('feed.search.count', { shown: rows.length, total: bySource.length }) : ''
       }}</span>
-      <button type="button" class="feed__mark-read" @click="markAll">Mark all read</button>
+      <button type="button" class="feed__mark-read" @click="markAll">{{ t('feed.search.markAll') }}</button>
     </div>
     <p v-if="!snapshot.feed.length" class="empty">
-      No changes yet. New comments, reviews and status changes show up here.
+      {{ t('feed.empty') }}
     </p>
-    <ol v-else class="feed__list">
+    <ol v-else :ref="holdPanelScroller" class="feed__list">
       <template v-if="feedState.view === 'ticket'">
-        <li
+        <AnimatePresence :initial="false">
+        <Motion
           v-for="group in groups"
           :key="group.id"
+          v-bind="fade"
+          as="li"
           class="feed__group"
           :class="{
             'feed__group--new': group.unread,
@@ -133,17 +194,10 @@ const markAll = async () => {
         >
           <div
             class="feed__group-head"
-            :title="group.move ? 'Your move on this ticket' : undefined"
+            :title="group.move ? t('feed.group.yourMove') : undefined"
             @click="toggleGroup(group)"
           >
-            <button
-              type="button"
-              class="feed__group-caret"
-              :aria-expanded="group.open"
-              :aria-label="'Collapse or expand ' + group.id"
-            >
-              ›
-            </button>
+            <Chevron :open="group.open" :aria-label="t('feed.group.fold', { id: group.id })" />
             <div class="feed__group-text">
               <div class="feed__group-key">
                 <ExtLink
@@ -159,7 +213,7 @@ const markAll = async () => {
                 <span
                   class="feed__group-count"
                   :class="{ 'feed__group-count--new': group.unread }"
-                  >{{ group.unread ? group.unread + ' new' : group.items.length }}</span
+                  >{{ group.unread ? t('feed.group.unread', { count: group.unread }) : t('feed.group.events', { count: group.items.length }, group.items.length) }}</span
                 >
                 <span class="feed__group-kinds">{{ group.kinds }}</span>
                 <span class="timestamp feed__group-when">{{ group.when }}</span>
@@ -170,68 +224,107 @@ const markAll = async () => {
               :query="{ ws: snapshot.workspace.id, kind: 'thread', ref: group.id }"
             />
           </div>
-          <ul v-if="group.open" class="feed__children">
+          <AnimatePresence :initial="false">
+          <Motion v-if="group.open" v-bind="fold" as="ul" class="feed__children">
+            <AnimatePresence :initial="false">
             <FeedItemRow
               v-for="item in group.items"
               :key="item.id"
               :item="item"
               :source="sourceOf(item.source)"
               :fresh="fresh(item)"
-              :lit="Boolean(group.unread)"
+              :flash="flashed === item.id"
               :expanded="ui.open.has(item.id)"
               @open="emit('open', $event)"
               @toggle="toggleItem"
               @seen="markSeen"
             />
-          </ul>
-        </li>
+            </AnimatePresence>
+          </Motion>
+          </AnimatePresence>
+        </Motion>
+        </AnimatePresence>
       </template>
       <template v-else>
+        <AnimatePresence :initial="false">
         <FeedItemRow
           v-for="item in rows"
           :key="item.id"
           :item="item"
           :source="sourceOf(item.source)"
           :fresh="fresh(item)"
+          :flash="flashed === item.id"
           :expanded="ui.open.has(item.id)"
           @open="emit('open', $event)"
           @toggle="toggleItem"
           @seen="markSeen"
         />
+        </AnimatePresence>
       </template>
     </ol>
   </Island>
 </template>
 <style scoped>
+@media (width <= 93.75em) {
+  .feed :deep(.island__note-text) {
+    display: none;
+  }
+}
+
+.feed__undo {
+  margin: 0 0 0.25rem;
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+}
+
+.feed__undo-btn {
+  color: var(--md-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .feed__bar {
   display: flex;
   flex: none;
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 8px;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
 }
 
 .feed__new-count {
   display: inline-flex;
   align-items: center;
-  height: 22px;
-  padding: 0 9px;
-  border-radius: 999px;
+  height: 1.375rem;
+  padding: 0 0.5625rem;
+  border-radius: 62.4375rem;
   background: var(--new);
   color: var(--new-ink);
   box-shadow: 0 0 12px var(--new-glow);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
+}
+
+.feed.island--strip .feed__new-count {
+  justify-content: center;
+  width: 1.25rem;
+  height: auto;
+  padding: 0.4375rem 0;
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: -0.2em;
+  word-spacing: -0.5em;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
 }
 
 .feed__mark-read {
   flex: none;
-  padding: 4px 8px;
-  border-radius: 999px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 62.4375rem;
   color: var(--md-primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   user-select: none;
@@ -249,29 +342,29 @@ const markAll = async () => {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
 }
 
 .feed__search-input {
   flex: 1;
   min-width: 0;
-  height: 30px;
-  padding: 0 10px;
-  font-size: 13px;
+  height: 1.875rem;
+  padding: 0 0.625rem;
+  font-size: 0.8125rem;
 }
 
 .feed__search-count {
   flex: none;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .feed__list {
   flex: 1 1 auto;
   min-height: 12rem;
-  margin: 0 -20px;
-  padding: 0 0 4px;
+  margin: 0 -1.25rem;
+  padding: 0 0 0.25rem;
   overflow-y: auto;
   list-style: none;
 }
@@ -302,10 +395,10 @@ const markAll = async () => {
 
 .feed__group-head {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
+  gap: 0.75rem;
+  padding: 0.625rem 1.25rem;
   cursor: pointer;
 }
 
@@ -344,8 +437,8 @@ const markAll = async () => {
 .feed__group-key {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  font-size: 14px;
+  gap: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .feed__group-ticket {
@@ -356,7 +449,7 @@ const markAll = async () => {
 .feed__group-sum {
   overflow: hidden;
   color: var(--md-on-surface-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -364,10 +457,10 @@ const markAll = async () => {
 .feed__group-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 2px;
+  gap: 0.5rem;
+  margin-top: 0.125rem;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .feed__group-kinds {
@@ -384,12 +477,12 @@ const markAll = async () => {
   flex: none;
   display: inline-flex;
   align-items: center;
-  height: 18px;
-  padding: 0 7px;
-  border-radius: 999px;
+  height: 1.125rem;
+  padding: 0 0.4375rem;
+  border-radius: 62.4375rem;
   background: var(--md-s-highest);
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
@@ -399,50 +492,29 @@ const markAll = async () => {
 }
 
 .feed__children {
-  margin: 0 0 0 35px;
-  padding: 0 0 4px;
+  margin: 0 0 0 1.9375rem;
+  padding: 0 0 0.25rem;
   border-left: 2px solid var(--md-outline-variant);
   list-style: none;
 }
 
 .feed__children .feed-item {
-  padding-left: 14px;
+  padding-left: 0.875rem;
 }
 
-.feed__group-caret {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--md-s-highest);
-  color: var(--md-on-surface-variant);
-  font-size: 14px;
-  transition: transform 0.15s ease;
-}
-
-.feed__group-caret:focus-visible {
-  outline: var(--focus-ring);
-}
-
-.feed__group--open .feed__group-caret {
-  transform: rotate(90deg);
-}
-
-@media (width >= 901px) {
+@media (width >= 56.3125em) {
   .dashboard--fit .feed__list::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 0.5rem;
+    height: 0.5rem;
   }
 
   .dashboard--fit .feed__list::-webkit-scrollbar-thumb {
-    border-radius: 4px;
+    border-radius: 0.25rem;
     background: var(--md-outline-variant);
   }
 }
 
-@media (width <= 900px) {
+@media (width <= 56.25em) {
   .feed__list {
     max-height: 28rem;
   }

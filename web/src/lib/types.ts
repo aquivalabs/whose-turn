@@ -17,6 +17,8 @@ export interface QuickLink {
   url: string;
 }
 
+export type HiddenMode = 'parked' | 'paused';
+
 export interface Workspace {
   id: string;
   name: string;
@@ -26,7 +28,14 @@ export interface Workspace {
   theme: Theme | null;
   /** The seed the scheme was built from: the configured one, or the one derived from the id. */
   theme_seed?: string;
+  /** False when the workspace turned its backdrop animal off. */
+  backdrop?: boolean;
   open_moves?: number;
+  failing_sources?: number;
+  /** How the workspace is kept out of the rail: parked is checked every 15 minutes, paused not at all; empty when shown. */
+  hidden?: HiddenMode | '';
+  /** A parked workspace came back and its feed line is not seen yet: the rail's dot. */
+  returned?: boolean;
 }
 
 /** One row of "whose turn": the server decided its group, rank and next step. */
@@ -49,6 +58,8 @@ export interface TurnRow {
   next: string;
   why?: string;
   whose?: string;
+  /** Everyone on the PR's review when the row waits on reviewers: still requested, approved or asking for changes. */
+  reviewers?: { name: string; state: '' | 'approved' | 'changes' }[];
   hold_url?: string;
   hold_full?: string;
   pr?: string;
@@ -79,6 +90,26 @@ export interface Marks {
   seen: string[] | Set<string>;
   base: number;
   handled: Record<string, string | null>;
+  /** What a handled mark carries beyond its time: a note, or the outcome and feed event of an automatic one. */
+  info: Record<string, HandledInfo>;
+}
+
+export interface HandledInfo {
+  note?: string;
+  auto?: boolean;
+  outcome?: string;
+  /** The id of the feed item that moved the row. */
+  event?: string;
+  /** What the event carried: who it went to, the status change and a reference to the latest comment. */
+  detail?: {
+    /** The head phrase of the outcome, before the status and comment parts. */
+    what?: string;
+    summary?: string;
+    assignee?: string;
+    status?: string;
+    /** The feed id of the comment; marks saved before 2026-11-04 carry a copy `{author, text}` instead. */
+    comment?: string | { author: string; text: string };
+  };
 }
 
 export interface Todo {
@@ -97,7 +128,7 @@ export interface Health {
   stale: boolean;
   fresh_at: string;
   failing: { source: string; polls: number }[];
-  alerts: { text: string }[];
+  alerts: { id?: string; text: string }[];
 }
 
 /** The four header tiles, counted by the server. */
@@ -115,6 +146,16 @@ export interface Marked {
   counts: Counts;
 }
 
+/** The self-update offer the server reports in /api/state, /api/summary and the stream (RMA-231). */
+export interface UpdateStatus {
+  current: string;
+  latest: string;
+  available: boolean;
+  state: 'idle' | 'installing' | 'restarting' | 'failed';
+  reason?: string;
+  plugin?: { state: 'updated' | 'manual' | 'failed' | 'behind'; copy: string; seen?: string; knows?: string };
+}
+
 export interface Snapshot extends Marked {
   workspaces: Workspace[];
   workspace: Workspace;
@@ -124,14 +165,21 @@ export interface Snapshot extends Marked {
   health: Health;
   problems: string[];
   polled_at: string;
+  update: UpdateStatus;
+  notifications: { desktop: boolean };
 }
 
-/** One message of /api/stream. */
-export interface StreamEvent {
+/** One message of /api/stream: a workspace's poll, the update status when it changes, or whether a report has news (RMA-311). */
+export type Lifecycle = 'quitting' | 'restarting';
+export type StreamEvent = WorkspaceEvent | { update: UpdateStatus } | { report_news: boolean } | { lifecycle: Lifecycle };
+
+export interface WorkspaceEvent {
   ws: string;
   version: number;
   polled_at: string;
   open_moves: number;
+  hidden?: HiddenMode | '';
+  returned?: boolean;
 }
 
 /** One `details[]` entry of the error envelope, by its `@type` (lib/errors.mjs). */
@@ -179,8 +227,14 @@ export interface FieldSpec {
   list?: boolean;
   boolean?: boolean;
   default?: boolean;
+  choices?: string[];
+  min?: number;
+  max?: number;
   hint?: string;
 }
+
+/** The plain words the server sends with each fact, by fact name: the noun, and a boolean's true and false sentence. */
+export type FactWords = Record<string, { name?: string; says?: [string, string] }>;
 
 /** One row of a workspace's rules table. */
 export interface RuleRow {
@@ -198,5 +252,7 @@ export interface FiledReport {
   filed_at: string;
   changed_at?: string;
   unanswered?: boolean;
+  answers_hidden?: boolean;
+  mine?: boolean;
   answers: { by?: string; at: string; text: string }[];
 }

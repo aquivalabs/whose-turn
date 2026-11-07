@@ -49,6 +49,44 @@
         "scripts/check-adapter.mjs"
       ],
       "doc": "docs/mechanisms/connector-contract.md"
+    },
+    {
+      "id": "your-move",
+      "paths": [
+        "web/src/lib/moves.ts",
+        "lib/backoff.mjs"
+      ],
+      "doc": "docs/mechanisms/your-move.md"
+    },
+    {
+      "id": "tooltips",
+      "paths": [
+        "web/src/lib/tooltips.ts"
+      ],
+      "doc": "docs/mechanisms/tooltips.md"
+    },
+    {
+      "id": "motion",
+      "paths": [
+        "web/src/motion.ts",
+        "web/src/motion-features.ts",
+        "web/src/features/your-move/RecentlyDone.vue",
+        "web/src/ui/Island.vue",
+        "web/src/ui/Modal.vue",
+        "web/src/ui/Swap.vue",
+        "web/src/test-motion.ts",
+        "web/src/styles/tokens.css",
+        "web/src/ui/RowScroll.vue"
+      ],
+      "doc": "docs/mechanisms/motion.md"
+    },
+    {
+      "id": "i18n",
+      "paths": [
+        "web/src/i18n/index.ts",
+        "web/src/i18n/en/index.ts"
+      ],
+      "doc": "docs/mechanisms/i18n.md"
     }
   ],
   "surfaceRules": {

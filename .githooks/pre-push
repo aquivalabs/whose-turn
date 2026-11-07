@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -e
+refs=$(cat)
+# docs/adr/0007-release-pipeline.md, amendment RMA-328
+if printf '%s\n' "$refs" | awk '$3 == "refs/heads/release" { found = 1 } END { exit !found }'; then
+  node scripts/skill-knows-release.mjs
+fi
 # Window gate: types, lint, style lint and the test suite in one command (frontend-vue:tooling).
 npm run check
-# Docs gate — blocks a push that leaves a declared mechanism's doc behind.
-# Ignores the ref pairs git passes on stdin: a per-push range would fail a rule the PR satisfies.
-python3 scripts/docs-check.py
-# Secret scan on every push. The full review gate (a fresh /review attestation) is off during the alpha
-# and runs once at the end of a working day instead; AGENTS.md "Gates", RMA-206. RMA-207 turns it back on per PR.
-npx -y -p bladeforge-review-harness@0.3.1 review-gate --secrets-only
+# AGENTS.md § Gates, "Docs follow the docs standard"
+node scripts/docs-check.mjs
+# AGENTS.md § Gates, "/review once at the end of a working day", RMA-206
+printf '%s\n' "$refs" | npx -y -p bladeforge-review-harness@0.3.1 review-gate --secrets-only

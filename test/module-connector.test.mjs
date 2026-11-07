@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtempSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,13 +16,22 @@ const fixture = (name) => fileURLToPath(new URL(`./fixtures/adapters/${name}.mjs
 const script = fileURLToPath(new URL('../scripts/check-adapter.mjs', import.meta.url));
 const secrets = (token) => ({ get: async () => token });
 
+const dataDirWithAdapters = () => {
+  const dataDir = mkdtempSync(join(tmpdir(), 'whose-turn-module-'));
+  mkdirSync(join(dataDir, 'adapters'));
+  for (const name of ['board', 'broken', 'sloppy']) {
+    copyFileSync(fixture(name), join(dataDir, 'adapters', `${name}.mjs`));
+  }
+  return dataDir;
+};
+
 const workspaceWith = (entry, token = 't') => createWorkspace(
   { id: 'w', name: 'Events', key_pattern: 'BRD-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'module', id: 'board', ...entry }] },
-  { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-module-')), historyDays: 3650, secrets: secrets(token), notify: () => {} },
+  { dataDir: dataDirWithAdapters(), historyDays: 3650, secrets: secrets(token), notify: () => {} },
 );
 
-test('a user adapter named by path is loaded, checked and polled through the same path as the built-ins', async () => {
-  const workspace = workspaceWith({ path: fixture('board'), board: 'launch' });
+test('a user adapter named in the adapters folder is loaded, checked and polled through the same path as the built-ins', async () => {
+  const workspace = workspaceWith({ adapter: 'board', board: 'launch' });
   await workspace.poll();
   const snapshot = workspace.snapshot(true);
   assert.deepEqual(snapshot.errors, {});
@@ -32,34 +41,44 @@ test('a user adapter named by path is loaded, checked and polled through the sam
   assert.equal(next['BRD-1:k1'], 'Answer Sam Lead in the ticket');
 });
 
-test('the token reaches the adapter only through secret(), filed under the adapter path; a missing one is the adapter\'s partial error', async () => {
-  const workspace = workspaceWith({ path: fixture('board'), board: 'launch' }, '');
+test('the token reaches the adapter only through secret(), filed under the adapter name; a missing one is the adapter\'s partial error', async () => {
+  const workspace = workspaceWith({ adapter: 'board', board: 'launch' }, '');
   await workspace.poll();
   assert.deepEqual(workspace.snapshot(false).errors, { 'board.auth': 'no token' });
-  const entry = { type: 'module', id: 'board', path: fixture('board') };
-  assert.deepEqual(secretsRequired([entry], { ...entry, path: fixture('sloppy') }), ['token']);
+  const entry = { type: 'module', id: 'board', adapter: 'board' };
+  assert.deepEqual(secretsRequired([entry], { ...entry, adapter: 'sloppy' }), ['token']);
 });
 
 test('a module that is not a connector, or a poll that breaks the shapes, is the entry\'s error with every problem named', async () => {
-  const broken = workspaceWith({ path: fixture('broken') });
+  const broken = workspaceWith({ adapter: 'broken' });
   await broken.poll();
   const [message] = Object.values(broken.snapshot(false).errors);
   assert.match(message, /^ContractError: Adapter .*broken\.mjs does not follow connector contract 1: export const contract = 1 is missing; id must be/);
   assert.match(message, /capability "emails" is unknown/);
 
-  const sloppy = workspaceWith({ path: fixture('sloppy') });
+  const sloppy = workspaceWith({ adapter: 'sloppy' });
   await sloppy.poll();
   assert.match(sloppy.snapshot(false).errors.board, /tickets\[0\]\.status_category is missing; tickets\[0\]\.url must be empty or start with https:\/\/; returns prs but does not declare it/);
 
-  const missing = workspaceWith({ path: fixture('board') });
+  const missing = workspaceWith({ adapter: 'board' });
   await missing.poll();
   assert.equal(missing.snapshot(false).errors.board, 'Error: Adapter board needs board in the connector entry');
   await assert.rejects(moduleConnector.loadAdapter('/nowhere/adapter.mjs'), /No adapter file at \/nowhere\/adapter\.mjs/);
 });
 
+test('an adapter is named by its file name only, so no config can point outside the adapters folder', async () => {
+  assert.equal(moduleConnector.adapterFile('/data/adapters', 'trello'), '/data/adapters/trello.mjs');
+  for (const name of ['../evil', '/tmp/evil', '~/evil', 'Evil', '', undefined]) {
+    assert.throws(() => moduleConnector.adapterFile('/data/adapters', name), /must be lowercase letters, digits/);
+  }
+  const outside = workspaceWith({ adapter: '../board' });
+  await outside.poll();
+  assert.match(outside.snapshot(false).errors.board, /Adapter name "\.\.\/board" must be/);
+});
+
 test('the experimental types are accepted in the config but not offered by the settings catalogue', () => {
   const types = connectorCatalogue().map((connector) => connector.type);
-  assert.deepEqual(types, ['github', 'jira', 'linear', 'demo']);
+  assert.deepEqual(types, ['github', 'jira', 'linear']);
 });
 
 test('check-adapter passes a good adapter with its rows, and fails a bad one with exit 1 and each problem on a line', async () => {

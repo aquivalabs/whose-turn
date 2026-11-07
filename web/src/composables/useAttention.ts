@@ -1,0 +1,34 @@
+// A short wiggle, at most every 12 seconds, while something wants attention; none under prefers-reduced-motion (RMA-311, docs/adr/0002-vueuse-in-the-window.md).
+import { ref, watch, type Ref } from 'vue';
+import { useIntervalFn, useTimeoutFn } from '@vueuse/core';
+import { reduced } from '@/motion.ts';
+
+const WIGGLE_MS = 1200;
+const WIGGLE_EVERY_MS = 12000;
+
+export const useAttention = (active: Ref<boolean>) => {
+  const wiggling = ref(false);
+  const end = useTimeoutFn(() => (wiggling.value = false), WIGGLE_MS, { immediate: false });
+  const wiggle = () => {
+    if (!reduced.value) {
+      wiggling.value = true;
+      end.start();
+    }
+  };
+  const ticker = useIntervalFn(wiggle, WIGGLE_EVERY_MS, { immediate: false });
+  watch(
+    active,
+    (on) => {
+      if (on) {
+        wiggle();
+        ticker.resume();
+      } else {
+        ticker.pause();
+        end.stop();
+        wiggling.value = false;
+      }
+    },
+    { immediate: true },
+  );
+  return wiggling;
+};

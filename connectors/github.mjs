@@ -22,7 +22,6 @@ export const fields = [
 
 export const persistedCache = ['prs', 'asks', 'runStreaks'];
 
-/** `GH_TOKEN` when set (CI, a machine without gh), else the token gh holds. */
 const ghToken = (account, cache) => cachedToken(cache, async () => {
   if (process.env.GH_TOKEN) {
     return process.env.GH_TOKEN;
@@ -39,8 +38,24 @@ const createApi = (http, token) => (path) => {
   return http.fetchJson(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' } });
 };
 
-const checksFor = async (api, repo, sha) => {
-  const runs = (await api(`/repos/${repo}/commits/${sha}/check-runs?per_page=100`)).check_runs || [];
+/** One run per check, the latest attempt: a re-run or a cancelled run replaced by a newer one no longer counts. RMA-382. */
+export const latestRuns = (runs) => {
+  const latest = new Map();
+  for (const checkRun of runs) {
+    const key = `${checkRun.app?.id ?? ''}:${checkRun.name ?? ''}`;
+    const held = latest.get(key);
+    const startedAt = String(checkRun.started_at || '');
+    const heldAt = String(held?.started_at || '');
+    if (!held || startedAt > heldAt || (startedAt === heldAt && (checkRun.id ?? 0) > (held.id ?? 0))) {
+      latest.set(key, checkRun);
+    }
+  }
+  return [...latest.values()];
+};
+
+/** The PR's checks state from its head commit's check runs, judged on each check's latest attempt. */
+export const checksState = (allRuns) => {
+  const runs = latestRuns(allRuns);
   const conclusions = runs.map((checkRun) => checkRun.conclusion || checkRun.status);
   let state = 'passing';
   if (conclusions.some((value) => ['failure', 'timed_out', 'cancelled', 'action_required'].includes(value))) {
@@ -53,6 +68,9 @@ const checksFor = async (api, repo, sha) => {
   const failed = runs.filter((checkRun) => ['failure', 'timed_out'].includes(checkRun.conclusion));
   return { state, failed };
 };
+
+const checksFor = async (api, repo, sha) =>
+  checksState((await api(`/repos/${repo}/commits/${sha}/check-runs?per_page=100`)).check_runs || []);
 
 const reviewDecision = (reviews) => {
   const latest = {};
@@ -68,7 +86,30 @@ const reviewDecision = (reviews) => {
   return values.has('APPROVED') ? 'APPROVED' : '';
 };
 
-/** A PR's reference in the feed: the repository name and the number, so a PR without a ticket still says where it lives (RMA-167). */
+const REVIEWER_STATE = { APPROVED: 'approved', CHANGES_REQUESTED: 'changes' };
+
+// README.md § Sources and polling, RMA-31
+const reviewersOf = (pr, reviews, { me, bots }) => {
+  const listed = [...(pr.requested_reviewers || []).map((user) => user.login), ...(pr.requested_teams || []).map((team) => team.slug)];
+  const latest = new Map();
+  for (const review of reviews) {
+    const login = review.user?.login;
+    if (!login || login === me || login === pr.user?.login || bots.test(login) || listed.includes(login)) {
+      continue;
+    }
+    if (review.state === 'DISMISSED') {
+      latest.delete(login);
+      continue;
+    }
+    const state = REVIEWER_STATE[review.state] || '';
+    if (state || !latest.has(login)) {
+      latest.set(login, state);
+    }
+  }
+  return [...listed.map((name) => ({ name, state: '' })), ...[...latest].map(([name, state]) => ({ name, state }))];
+};
+
+// RMA-167
 const prRef = (repo, number) => `${repo.split('/').pop()}#${number}`;
 
 const failedCheckActivity = (checkRun, { pr, key, title }) => ({ at: checkRun.completed_at || nowIso(), pr, key, title, kind: 'check failed', who: checkRun.name, url: checkRun.html_url, text: '', body: '' });
@@ -105,6 +146,7 @@ const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
   const row = {
     pr: number, key, title: pr.title, base: pr.base.ref, state, review: reviewDecision(reviews), checks: checks.state, merged_at: pr.merged_at || '',
     updated_at: pr.updated_at, url: pr.html_url,
+    reviewers: state === 'OPEN' ? reviewersOf(pr, reviews, { me, bots }) : [],
     last_comment_by: last ? last.who : '', last_comment_at: last ? last.at : '', last_comment_url: last ? last.url : '', last_comment: last ? oneline(last.body, 160) : '',
     unanswered: Boolean(last && state === 'OPEN' && last.state !== 'APPROVED' && last.at > myLast),
   };
@@ -165,7 +207,7 @@ const pollPrs = async (api, context) => {
 const RUN_FAILED = ['failure', 'timed_out', 'startup_failure'];
 const RUN_PASSED = ['success'];
 
-/** A workflow run's reference in the feed and the key of its row: repository name, workflow and branch (RMA-152). */
+// RMA-152
 const runRef = (repo, workflow, branch) => `${repo.split('/').pop()}:${workflow}@${branch}`;
 
 const defaultBranch = async (api, repo, cache) => {
@@ -176,7 +218,6 @@ const defaultBranch = async (api, repo, cache) => {
   return cache.defaultBranch;
 };
 
-/** The completed runs on the default branch, newest first per workflow; pull request runs are left to the PR path. */
 const runsByWorkflow = (listed, branch) => {
   const byWorkflow = new Map();
   const decided = listed.filter((run) => run.head_branch === branch && !String(run.event).startsWith('pull_request') && !(run.pull_requests || []).length
@@ -187,7 +228,6 @@ const runsByWorkflow = (listed, branch) => {
   return byWorkflow;
 };
 
-/** The first failure of the newest unbroken failure streak; a streak longer than the page keeps the start seen on an earlier poll. */
 const streakStart = (runs, ref, cache) => {
   const passedAt = runs.findIndex((run) => RUN_PASSED.includes(run.conclusion));
   const failures = passedAt < 0 ? runs : runs.slice(0, passedAt);
@@ -237,17 +277,6 @@ const buildAsk = async (api, { me, keyOf }, note, repo) => {
   }
   const title = subject.title || '';
   const base = { repo, number, ref: prRef(repo, number), title, key: keyOf(title), url: `https://github.com/${repo}/${subject.type === 'PullRequest' ? 'pull' : 'issues'}/${number}` };
-  if (note.reason === 'review_requested' && subject.type === 'PullRequest') {
-    const pr = await api(`/repos/${repo}/pulls/${number}`);
-    if (pr.state !== 'open') {
-      return null;
-    }
-    const requested = await api(`/repos/${repo}/pulls/${number}/requested_reviewers`);
-    if (!(requested.users || []).some((user) => user.login === me)) {
-      return null;
-    }
-    return { ...base, id: `gha:${note.id}`, kind: 'review requested', who: pr.user.login, at: note.updated_at, text: oneline(title), body: (pr.body || '').slice(0, 6000) };
-  }
   let comment = subject.latest_comment_url ? await api(subject.latest_comment_url) : null;
   const comments = await api(`/repos/${repo}/issues/${number}/comments?per_page=100`);
   if (!comment || !(comment.body || '').includes(`@${me}`)) {
@@ -264,13 +293,29 @@ const buildAsk = async (api, { me, keyOf }, note, repo) => {
   return { ...base, id: `gha:${note.id}`, kind: 'mentioned you', who: comment.user.login, at, url: comment.html_url || base.url, text: oneline(comment.body || ''), body: (comment.body || '').replace(/\r/g, '').slice(0, 6000) };
 };
 
+// RMA-358.
+const pollReviewRequests = async (api, { org, me, keyOf }) => {
+  const query = `is:pr is:open user-review-requested:${me} org:${org}`;
+  const found = (await api(`/search/issues?q=${encodeURIComponent(query)}&per_page=50`)).items || [];
+  return found.map((item) => {
+    const repo = String(item.repository_url || '').split('/repos/')[1] || '';
+    const title = item.title || '';
+    return {
+      repo, number: item.number, ref: prRef(repo, item.number), title, key: keyOf(title), url: item.html_url,
+      id: `gha:review:${repo}#${item.number}`, kind: 'review requested', who: item.user?.login || '', at: item.updated_at,
+      text: oneline(title), body: (item.body || '').slice(0, 6000),
+    };
+  });
+};
+
 const pollAsks = async (api, context) => {
-  const { org, cache } = context;
-  const notes = await api('/notifications?participating=true&all=false&per_page=50');
+  const { org, cache, sinceIso, owns } = context;
+  const reviews = (await pollReviewRequests(api, context)).filter((review) => owns(review.repo));
+  const notes = await api(`/notifications?participating=true&all=true&since=${encodeURIComponent(sinceIso)}&per_page=50`);
   cache.asks = cache.asks || new Map();
   const rows = [];
   const seen = new Set();
-  const relevant = notes.filter((note) => note.repository.full_name.startsWith(`${org}/`) && ['review_requested', 'mention', 'team_mention', 'assign'].includes(note.reason));
+  const relevant = notes.filter((note) => note.repository.full_name.startsWith(`${org}/`) && owns(note.repository.full_name) && ['mention', 'team_mention', 'assign'].includes(note.reason));
   await mapLimit(relevant, 4, async (note) => {
     seen.add(note.id);
     const cached = cache.asks.get(note.id);
@@ -285,13 +330,13 @@ const pollAsks = async (api, context) => {
       cache.asks.delete(noteId);
     }
   }
-  return rows;
+  return [...reviews, ...rows];
 };
 
-export const poll = async ({ settings, http, cache, sinceIso, keyOf }) => {
+export const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () => true }) => {
   const api = createApi(http, await ghToken(settings.account, cache));
   const me = settings.me || (cache.me ??= (await api('/user')).login);
-  const context = { repo: settings.repo, org: settings.org || settings.repo.split('/')[0], me, bots: wordsRegex(settings.bots || ['github-actions', 'dependabot', '[bot]']), keyOf, sinceIso, cache };
+  const context = { repo: settings.repo, org: settings.org || settings.repo.split('/')[0], me, bots: wordsRegex(settings.bots || ['github-actions', 'dependabot', '[bot]']), keyOf, sinceIso, cache, owns };
   const watchRuns = settings.workflow_runs !== false;
   const [prsOutcome, asksOutcome, runsOutcome] = await Promise.allSettled([pollPrs(api, context), pollAsks(api, context), watchRuns ? pollRuns(api, context) : { runs: [], activity: [] }]);
   const errors = {};

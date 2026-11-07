@@ -111,33 +111,13 @@
           "me": "me"
         },
         "module": {
-          "path": "~/adapters/trello.mjs",
+          "adapter": "trello",
           "board": "your-board"
         }
       }
-    },
-    {
-      "id": "demo",
-      "name": "Demo",
-      "key_pattern": "\\bNW-\\d+\\b",
-      "theme": {
-        "seed": "#3d7a5c",
-        "accent": "#c27a2c"
-      },
-      "connectors": [
-        {
-          "type": "demo",
-          "scenario": "northwind",
-          "label": "Demo tracker"
-        }
-      ]
     }
   ],
   "feedback": {
-    "workspace": "your-space",
-    "team": "PROJ",
-    "project": "monitor",
-    "token_service": "whose-turn-feedback",
     "composer": {
       "command": "claude",
       "args": [

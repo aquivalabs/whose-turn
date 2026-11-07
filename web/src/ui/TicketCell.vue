@@ -1,12 +1,13 @@
 <script setup lang="ts">
-// The ticket cell every row starts with: the key as a link and the summary under it.
+// The ticket cell every row starts with: the key as a link and the summary under it; a PR without a ticket links its PR.
 import type { TurnRow } from '@/lib/types.ts';
+import { isPrOnly } from '@/lib/moves.ts';
 import ExtLink from './ExtLink.vue';
 defineProps<{ row: TurnRow }>();
 </script>
 <template>
   <td class="ticket-cell">
-    <ExtLink :text="row.key" :url="row.ticket_url" class="ticket-key" /><span
+    <ExtLink :text="row.key" :url="isPrOnly(row) ? row.pr_url : row.ticket_url" class="ticket-key" /><span
       class="ticket-cell__summary"
       >{{ row.summary }}</span
     >
@@ -16,10 +17,10 @@ defineProps<{ row: TurnRow }>();
 .ticket-cell__summary {
   display: block;
   max-width: 44ch;
-  margin-top: 2px;
+  margin-top: 0.125rem;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   letter-spacing: 0.03em;
 }
 </style>

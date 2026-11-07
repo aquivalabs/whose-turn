@@ -1,5 +1,6 @@
-/** User adapter connector: loads an adapter module from a path in the workspace config, checks it against the connector contract, and polls it like any built-in. The module runs inside the server with its rights. See docs/mechanisms/connector-contract.md. */
+/** User adapter connector: loads the adapter the workspace config names from the adapters folder in the data directory, checks it against the connector contract, and polls it like any built-in. See docs/mechanisms/connector-contract.md. */
 import { stat } from 'node:fs/promises';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { adapterProblems, resultProblems, ContractError, KINDS } from '../lib/contract.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
@@ -10,15 +11,24 @@ const DEFAULT_SERVICE = 'whose-turn-adapter';
 export const id = 'module';
 export const label = 'Your adapter';
 export const experimental = true;
-export const endpointKey = 'path';
+export const endpointKey = 'adapter';
 export const links = () => [];
 export const fields = [
-  { key: 'path', label: 'Adapter file', hint: 'an .mjs module that follows the connector contract; ~ is your home directory', required: true },
-  { key: 'token', label: 'Token', hint: 'optional; stored in the secret store under the adapter path, handed to the adapter as secret()', secret: { account: 'path', service: 'token_service', default: DEFAULT_SERVICE } },
+  { key: 'adapter', label: 'Adapter', hint: 'the name of an .mjs file in the adapters folder of the data directory, without .mjs', required: true },
+  { key: 'token', label: 'Token', hint: 'optional; stored in the secret store under the adapter name, handed to the adapter as secret()', secret: { account: 'adapter', service: 'token_service', default: DEFAULT_SERVICE } },
   { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-adapter' },
 ];
 
 const loaded = new Map();
+const ADAPTER_NAME = /^[a-z0-9][a-z0-9_-]*$/;
+
+/** The file of the adapter named `name` in `adaptersDir`; a name that is not a plain file name throws. */
+export const adapterFile = (adaptersDir, name) => {
+  if (typeof name !== 'string' || !ADAPTER_NAME.test(name)) {
+    throw new Error(`Adapter name ${JSON.stringify(name)} must be lowercase letters, digits, - or _, the file name without .mjs`);
+  }
+  return join(adaptersDir, `${name}.mjs`);
+};
 
 /** The adapter at `path`, imported again when the file changes, checked against the contract; a module that is not a connector throws ContractError. */
 export const loadAdapter = async (path) => {
@@ -57,10 +67,10 @@ export const pollAdapter = async (adapter, context) => {
   return { me: result.me || '', ...data, ticket_base: typeof result.ticket_base === 'string' ? result.ticket_base : '', errors: result.errors || {} };
 };
 
-export const poll = async ({ settings, http, secrets, cache, sinceIso, historyDays, keyOf }) => {
-  const adapter = await loadAdapter(settings.path);
+export const poll = async ({ settings, http, secrets, cache, sinceIso, historyDays, keyOf, adaptersDir }) => {
+  const adapter = await loadAdapter(adapterFile(adaptersDir, settings.adapter));
   const service = settings.token_service || DEFAULT_SERVICE;
-  const secret = () => cachedToken(cache, () => secrets.get(service, String(settings.path)));
+  const secret = () => cachedToken(cache, () => secrets.get(service, String(settings.adapter)));
   cache.adapter = cache.adapter || {};
   return pollAdapter(adapter, { settings, http, cache: cache.adapter, sinceIso, historyDays, keyOf, secret });
 };

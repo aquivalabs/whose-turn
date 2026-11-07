@@ -2,7 +2,6 @@ import { ref, watch } from 'vue';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { SERVER_DOWN } from './lib/problems.ts';
 
-vi.mock('./backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 const reply = (body: unknown) => ({ json: () => Promise.resolve(body) }) as Response;
 const workspaceReply = (id: string) => ({ workspace: { id, name: id.toUpperCase() } });
@@ -34,7 +33,7 @@ test('a marks write applies the reply turn and counts', async () => {
   const counts = { mine: 1, others: 2, failing: 0, done: 3 };
   const fetchStub = vi
     .fn()
-    .mockResolvedValue(reply({ marks: { seen: [], base: 4, handled: {} }, turn, counts }));
+    .mockResolvedValue(reply({ marks: { seen: [], base: 4, handled: {}, info: {} }, turn, counts }));
   vi.stubGlobal('fetch', fetchStub);
 
   const problem = await store.setMarks({ base: 4 });
@@ -57,6 +56,24 @@ test('a refused marks write returns the problem line and changes nothing', async
 
   expect(problem).toBe('Not saved: no such row');
   expect(store.snapshot.counts).toEqual(before);
+});
+
+test('a failing source gets one banner line with its reason and streak', async () => {
+  const store = await freshStore();
+  store.snapshot.workspace.name = 'Home';
+  store.snapshot.errors = { trello: 'Unknown source type "trello"', 'other.part': 'slow' };
+  store.snapshot.health = {
+    ok: false,
+    stale: false,
+    fresh_at: '',
+    failing: [{ source: 'trello', polls: 9 }],
+    alerts: [{ id: 'failing:trello', text: 'Source trello has failed 9 polls in a row' }],
+  };
+
+  expect(store.alerts.value).toEqual([
+    'Source trello: Unknown source type "trello", failed 9 polls in a row',
+    'Home: other.part: slow',
+  ]);
 });
 
 test('switching workspace with the server down leaves the current one alone', async () => {
@@ -109,4 +126,119 @@ test('the reconnect counter advances each time the stream opens, so problem line
   expect(store.ui.live).toBe(true);
   expect(seen).toEqual([1, 2]);
   vi.doUnmock('@vueuse/core');
+});
+
+test('an update message from the stream replaces the update status and loads nothing', async () => {
+  const data = ref<unknown>(null);
+  const fetchStub = vi.fn();
+  vi.stubGlobal('fetch', fetchStub);
+  vi.doMock('@vueuse/core', async (original) => ({
+    ...(await original<object>()),
+    useEventSource: () => ({ status: ref('OPEN'), error: ref(null), data, open: vi.fn() }),
+  }));
+  const store = await freshStore();
+  const update = { current: '1.0.0-alpha.3', latest: '1.0.0-alpha.3', available: false, state: 'idle' };
+  data.value = { update };
+  expect(store.snapshot.update).toEqual(update);
+  expect(fetchStub).not.toHaveBeenCalled();
+  vi.doUnmock('@vueuse/core');
+});
+
+test('a report news message from the stream sets the dot and loads nothing, and an open sheet keeps it calm', async () => {
+  const data = ref<unknown>(null);
+  const fetchStub = vi.fn();
+  vi.stubGlobal('fetch', fetchStub);
+  vi.doMock('@vueuse/core', async (original) => ({
+    ...(await original<object>()),
+    useEventSource: () => ({ status: ref('OPEN'), error: ref(null), data, open: vi.fn() }),
+  }));
+  const store = await freshStore();
+  data.value = { report_news: true };
+  expect(store.ui.reportNews).toBe(true);
+  data.value = { report_news: false };
+  expect(store.ui.reportNews).toBe(false);
+  store.ui.feedback = true;
+  data.value = { report_news: true };
+  expect(store.ui.reportNews).toBe(false);
+  expect(fetchStub).not.toHaveBeenCalled();
+  vi.doUnmock('@vueuse/core');
+});
+
+test('start opens the event stream once the first load has answered', async () => {
+  vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(reply(workspaceReply('w')))));
+  const opened = vi.fn();
+  vi.stubGlobal(
+    'EventSource',
+    vi.fn(function (this: object) {
+      opened();
+      return Object.assign(this, { close: vi.fn(), addEventListener: vi.fn(), readyState: 0 });
+    }),
+  );
+  const store = await freshStore();
+  await store.start();
+  store.connect();
+  expect(opened).toHaveBeenCalledTimes(1);
+});
+
+test('a refused state request for a remembered workspace is retried once without it, and not when none was asked for', async () => {
+  const store = await freshStore();
+  const gone = {
+    error: { message: 'no', details: [{ '@type': 'ErrorInfo', reason: 'NO_SUCH_WORKSPACE', metadata: {} }] },
+  };
+  const fetchStub = vi.fn((url: string) =>
+    Promise.resolve(reply(url.includes('ws=') ? gone : workspaceReply('home'))),
+  );
+  vi.stubGlobal('fetch', fetchStub);
+
+  await store.load('old');
+  expect(store.ui.ws).toBe('home');
+  expect(fetchStub).toHaveBeenCalledTimes(2);
+
+  fetchStub.mockClear();
+  fetchStub.mockResolvedValue(reply(gone));
+  await store.load('');
+  expect(fetchStub).toHaveBeenCalledTimes(1);
+});
+
+test('restoring a workspace posts one hide request with null and reloads the state', async () => {
+  const store = await freshStore();
+  const fetchStub = vi.fn((url: string) =>
+    Promise.resolve(reply(url.startsWith('/api/state') ? workspaceReply('home') : { workspaces: [] })),
+  );
+  vi.stubGlobal('fetch', fetchStub);
+
+  await store.restoreWorkspace('parked-one');
+
+  const [url, init] = fetchStub.mock.calls[0] as unknown as [string, RequestInit];
+  expect(url).toBe('/api/workspaces/hidden');
+  expect(JSON.parse(String(init.body))).toEqual({ id: 'parked-one', hidden: null });
+  expect(fetchStub.mock.calls.some(([target]) => String(target).startsWith('/api/state'))).toBe(true);
+});
+
+test('a lifecycle message sets the state and the status; quitting closes the stream and the window (RMA-425), a disconnect keeps the text, and the next open clears it (RMA-356)', async () => {
+  const data = ref<unknown>(null);
+  const status = ref('OPEN');
+  const error = ref<unknown>(null);
+  const close = vi.fn();
+  vi.stubGlobal('fetch', vi.fn());
+  const closePage = vi.fn();
+  vi.doMock('@vueuse/core', async (original) => ({
+    ...(await original<object>()),
+    useEventSource: () => ({ status, error, data, open: vi.fn(), close }),
+  }));
+  vi.doMock('./lib/page-reload.ts', async (original) => ({ ...(await original<object>()), closePage }));
+  const store = await freshStore();
+  data.value = { lifecycle: 'restarting' };
+  expect([store.ui.lifecycle, store.ui.status]).toEqual(['restarting', 'Restarting the monitor…']);
+  error.value = new Event('error');
+  expect(store.ui.status).toBe('Restarting the monitor…');
+  status.value = 'CONNECTING';
+  status.value = 'OPEN';
+  expect([store.ui.lifecycle, store.ui.status]).toEqual(['', '']);
+  data.value = { lifecycle: 'quitting' };
+  expect([store.ui.lifecycle, store.ui.status]).toEqual(['quitting', 'The monitor is stopped.']);
+  expect(close).toHaveBeenCalledOnce();
+  expect(closePage).toHaveBeenCalledOnce();
+  vi.doUnmock('@vueuse/core');
+  vi.doUnmock('./lib/page-reload.ts');
 });

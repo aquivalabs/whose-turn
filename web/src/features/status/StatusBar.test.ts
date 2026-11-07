@@ -5,6 +5,7 @@ import { ui } from '@/store.ts';
 import { post } from '@/lib/api.ts';
 import StatusBar from './StatusBar.vue';
 
+// The network boundary: post is the only call that leaves the window.
 vi.mock('@/lib/api.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof Api>()),
   post: vi.fn(),

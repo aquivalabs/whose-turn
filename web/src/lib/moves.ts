@@ -1,5 +1,5 @@
 // Your move and Waiting on others: which rows, in which order. Rendering lives in the islands.
-import type { TurnRow } from './types.ts';
+import type { HandledInfo, TurnRow } from './types.ts';
 
 /** The workspace list with one workspace's badge set; the same list when nothing changes. */
 export const withOpenMoves = <T extends { id: string; open_moves?: number }>(
@@ -16,11 +16,12 @@ export interface YourRow {
   handled: boolean;
 }
 
-/** Rows on you, each with the handled flag the server set: by the server's rank (lowest first), then oldest first; the open view lists only open rows and the handled view only handled ones. */
-export const yourRows = (turn: TurnRow[], view: string) => {
+/** The rows of Your move with their handled flag, ordered by rank then age.
+ * Rules: docs/mechanisms/your-move.md. */
+export const yourRows = (turn: TurnRow[], view: string, info: Record<string, HandledInfo> = {}) => {
   const you: YourRow[] = turn
-    .filter((row) => row.group === 'you')
-    .map((row) => ({ row, handled: Boolean(row.handled) }))
+    .filter((row) => row.group === 'you' || (row.handled && info[row.row_id]?.auto))
+    .map((row) => ({ row, handled: row.group !== 'you' || Boolean(row.handled) }))
     .sort(
       (first, second) =>
         first.row.rank - second.row.rank ||
@@ -32,8 +33,8 @@ export const yourRows = (turn: TurnRow[], view: string) => {
   return { rows, open, handled: you.length - open };
 };
 
-/** Tickets that recently left your move: done ones, most recently done first, at most 15. */
 const doneAt = (row: TurnRow) => String(row.status_since || row.updated);
+/** Done tickets, most recently done first, at most 15. */
 export const recentlyDone = (turn: TurnRow[]) =>
   turn
     .filter((row) => row.group === 'done')
@@ -45,15 +46,20 @@ export const waitingRows = (turn: TurnRow[]) =>
     .filter((row) => row.group === 'others')
     .sort((first, second) => String(second.updated).localeCompare(String(first.updated)));
 
+/** Whether a row is a PR with no ticket. */
+export const isPrOnly = (row: TurnRow) => !row.ticket_url && Boolean(row.pr) && row.pr === row.key;
+
+/** Whether any row has a PR of its own to show, so an empty PR column can be left out. */
+export const hasPrColumn = (rows: TurnRow[]) => rows.some((row) => row.pr && !isPrOnly(row));
+
 export const checksTone = (checks: string | undefined) =>
   checks === 'failing' ? 'bad' : checks === 'running' ? 'warn' : checks === 'passing' ? 'ok' : '';
-/** The pill tone of each status group the server sends as status_group; other groups have none. */
-const STATUS_TONES: Record<string, string> = { code_review: 'info', qa: 'info', on_hold: 'warn' };
+const STATUS_TONES: Record<string, string> = { code_review: 'info', qa: 'info', on_hold: 'hold' };
 export const statusTone = (group: string | undefined) => STATUS_TONES[group || ''] || '';
 export const outcomeTone = (outcome: string | undefined) =>
-  (({ open: 'info', done: 'ok', dropped: 'warn' }) as Record<string, string>)[outcome || ''] ||
+  (({ open: 'info', ready: 'ready', done: 'ok', dropped: 'warn' }) as Record<string, string>)[outcome || ''] ||
   'info';
 
-/** How many rows end below the visible bottom of a scroll area by more than the slack, given each row's bottom edge in the same coordinates. */
+/** How many rows end below the visible bottom of a scroll area by more than the slack. */
 export const hiddenBelow = (bottoms: number[], viewBottom: number, slack = 1) =>
   bottoms.filter((bottom) => bottom > viewBottom + slack).length;

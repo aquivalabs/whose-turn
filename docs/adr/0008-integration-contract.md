@@ -1,8 +1,8 @@
-# 0008. Every source is an adapter under one versioned, capability-declared contract; a user adapter is a module named by path
+# 0008. Every source is an adapter under one versioned, capability-declared contract; a user adapter is a module in the adapters folder of the data directory
 
 ## Status
 
-proposed
+accepted (2026-11-07, by the maintainer, with user adapters in one folder of the data directory)
 
 ## Context
 
@@ -27,11 +27,14 @@ source. And for the data: one contract with declared capabilities, or several co
 2. **Capabilities, not several contracts.** Partial support is a shorter `capabilities` list. An
    undeclared kind in a result is an error; a missing declared kind is an empty list.
 3. **Built-in and user adapters go through one mechanism.** The built-ins are the first adapters under
-   the contract. A user adapter is a module named by path in a workspace's connector entry
-   (`{ "type": "module", "path": "~/adapters/trello.mjs" }`), imported, checked at load and polled
-   through the same path as the built-ins.
+   the contract. A user adapter is an `.mjs` file in the folder `adapters/` of the data directory,
+   beside `config.json`, named by its file name in a workspace's connector entry
+   (`{ "type": "module", "adapter": "trello" }`), imported, checked at load and polled the same way
+   as the built-ins. The built-ins stay in the package's `connectors/`, which an update replaces, so a
+   user's files cannot live there; one folder keeps them in one place. The name is a plain file name,
+   so a config write cannot point the server at a file outside that folder.
 4. **A user module is the user's code and runs with the server's rights.** The server does not claim to
-   isolate it. It guards who picks the file and binds a stored token to the module's path. An
+   isolate it. It guards who picks the file and binds a stored token to the adapter's name. An
    out-of-process transport, MCP stdio with one `poll` tool, is reserved for code the user did not
    write, another language, or an adapter that hangs; it is not built until one of those appears.
 5. **New data reaches the rules through core kinds.** An adapter maps its data onto the six kinds; a new

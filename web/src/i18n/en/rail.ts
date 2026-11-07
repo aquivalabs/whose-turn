@@ -1,0 +1,21 @@
+// docs/mechanisms/i18n.md
+export default {
+  workspaces: 'Workspaces',
+  warnMark: '!',
+  sourceFails: 'A source of this workspace fails',
+  returned: 'Back in the rail: something needs you',
+  addWorkspace: 'Add workspace',
+  hiddenCount: '{count} hidden',
+  parked: '{count} parked',
+  paused: '{count} paused',
+  hiddenTip: 'Hidden workspaces: {summary}. Open to bring one back.',
+  whatsNew: "What's new",
+  unseen: 'Unseen changes',
+  settings: 'Monitor settings',
+  power: 'Restart or quit',
+  powerNote: 'Restart reloads the monitor and the window reconnects by itself. Quit stops it until you start it again, from Claude or with a new Claude Code session.',
+  restart: 'Restart',
+  quit: 'Quit',
+  quitQuestion: 'Quit Whose Turn? It stops checking your sources until you start it again.',
+  keepRunning: 'Keep running',
+};

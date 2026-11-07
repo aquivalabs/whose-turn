@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, statSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, statSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { createSecrets } from '../lib/secrets.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const recorder = (reply) => {
   const calls = [];
@@ -15,7 +15,7 @@ const recorder = (reply) => {
 };
 
 const scratch = (t) => {
-  const dir = mkdtempSync(join(tmpdir(), 'wt-secrets-'));
+  const dir = scratchDir('wt-secrets-');
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 };
@@ -31,8 +31,19 @@ test('macOS: Keychain through security', async (t) => {
   await secrets.set('svc', 'me', 'v');
   assert.deepEqual(calls, [
     ['security', ['find-generic-password', '-s', 'svc', '-a', 'me', '-w']],
-    ['security', ['add-generic-password', '-U', '-a', 'me', '-s', 'svc', '-w', 'v']],
+    ['security', ['-i'], 'add-generic-password -U -a "me" -s "svc" -w "v"\n'],
   ]);
+});
+
+test('macOS: the value goes to security on stdin, quoted, and never into argv', async (t) => {
+  const { calls, run } = recorder(() => '');
+  const secrets = createSecrets(scratch(t), { platform: 'darwin', run });
+  await secrets.set('svc', 'me', 'pa"ss\\word');
+  const [file, args, input] = calls[0];
+  assert.equal(file, 'security');
+  assert.deepEqual(args, ['-i']);
+  assert.ok(!args.join(' ').includes('pa'));
+  assert.equal(input, 'add-generic-password -U -a "me" -s "svc" -w "pa\\"ss\\\\word"\n');
 });
 
 test('Linux: libsecret through secret-tool, the value on stdin and never in argv', async (t) => {

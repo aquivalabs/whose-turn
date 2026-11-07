@@ -7,6 +7,7 @@ import { topLayer } from '../web/src/lib/layers.ts';
 import { modifier } from '../web/src/lib/bem.ts';
 import { liveStatus } from '../web/src/lib/live-status.ts';
 import { normaliseForForm, forSaving, pendingSecrets, ruleText, settingsKey } from '../web/src/lib/settings.ts';
+import { FACTS } from '../lib/facts.mjs';
 import { latestWins } from '../web/src/lib/latest-wins.ts';
 import { writeProblem, errorProblem, UNREACHABLE_TEXT, TEXT_KEPT } from '../web/src/lib/problems.ts';
 
@@ -65,6 +66,17 @@ test('your rows go by the server rank, then oldest first, and the open view list
   assert.deepEqual(waitingRows(turn).map((r) => r.row_id), ['PROJ-5']);
 });
 
+test('the handled view keeps a row whose turn passed on while its automatic mark lives, and the open view never lists it', () => {
+  const turn = [
+    { row_id: 'PROJ-1', group: 'others', rank: 3, updated: '2026-11-02', handled: true },
+    { row_id: 'PROJ-2', group: 'others', rank: 3, updated: '2026-11-02', handled: true },
+  ];
+  const info = { 'PROJ-1': { auto: true, outcome: 'Merged' } };
+  assert.deepEqual(yourRows(turn, 'open', info).rows, []);
+  assert.deepEqual(yourRows(turn, 'handled', info).rows.map((item) => item.row.row_id), ['PROJ-1']);
+  assert.equal(yourRows(turn, 'open', info).handled, 1);
+});
+
 test('a feed group carries the your-move bar while any row of its ticket on you is open, not once all are handled or off you', () => {
   const handled = { row_id: 'PROJ-2', key: 'PROJ-2', group: 'you', handled: true };
   const open = { row_id: 'PROJ-2:c1', key: 'PROJ-2', group: 'you', handled: false };
@@ -77,7 +89,7 @@ test('a feed group carries the your-move bar while any row of its ticket on you 
 test('a status pill takes its tone from the status group the server sent, not from the words', () => {
   assert.equal(statusTone('code_review'), 'info');
   assert.equal(statusTone('qa'), 'info');
-  assert.equal(statusTone('on_hold'), 'warn');
+  assert.equal(statusTone('on_hold'), 'hold');
   assert.equal(statusTone('passed'), '');
   assert.equal(statusTone(''), '');
   assert.equal(statusTone(undefined), '');
@@ -136,12 +148,17 @@ test('a rail glyph is the initials of a multi-word name or the first two letters
   assert.deepEqual(['WT', 'AMA', 'X'].map(glyphSize), [14, 11, 17]);
 });
 
-test('a rules-table row reads as when and then texts for the settings sheet', () => {
-  assert.deepEqual(ruleText({ when: { 'ticket.status': ['qa', 'on_hold'], 'pr.base': { prefix: 'release/' }, unanswered_count: { gte: 2 } }, then: { whose: 'you', next: 'Merge it' } }), {
-    when: 'ticket.status in qa, on_hold and pr.base starts with "release/" and unanswered_count ≥ 2', then: 'you: Merge it',
+test('a rules-table row reads as a sentence for the settings sheet', () => {
+  const rule = (row) => ruleText(row, FACTS);
+  assert.deepEqual(rule({ when: { 'ticket.status': 'code_review', 'pr.open': true, 'pr.review': 'approved' }, then: { whose: 'you', next: 'Merge it' } }), {
+    when: 'When the ticket is in review and the PR is open and the PR is approved:', then: 'your move, "Merge it"',
   });
-  assert.deepEqual(ruleText({ when: {}, then: { whose: 'hidden' } }), { when: 'anything else', then: 'hidden' });
-  assert.equal(ruleText({ when: { 'ticket.hold_reason': { present: true } }, then: { whose: 'them', next: 'x' } }).when, 'ticket.hold_reason is present');
+  assert.deepEqual(rule({ when: { 'ticket.status': ['qa', 'on_hold'], 'pr.base': { prefix: 'release/' }, unanswered_count: { gte: 2 } }, then: { whose: 'them', next: 'x' } }), {
+    when: 'When the ticket is in testing or on hold and the PR goes into a branch starting with release/ and at least 2 mentions of you wait for an answer:', then: 'waiting on others, "x"',
+  });
+  assert.deepEqual(rule({ when: {}, then: { whose: 'hidden' } }), { when: 'In every other case:', then: 'not shown' });
+  assert.equal(rule({ when: { 'ticket.hold_reason': { present: true } }, then: { whose: 'them', next: 'On hold: {ticket.hold_reason}' } }).then, 'waiting on others, "On hold: {the hold reason}"');
+  assert.equal(rule({ when: { 'ticket.status': 'qa', 'pr.open': false }, then: { whose: 'qa', next: 'x' } }).when, 'When the ticket is in testing and no PR is open:');
 });
 
 test('a refused write names what was not saved, a network failure the server-down line, a confirmed one nothing', () => {
@@ -160,8 +177,7 @@ test('a refused write names what was not saved, a network failure the server-dow
 
 test('a refused request says what its reason means, not the raw message', () => {
   const envelope = (reason, message = 'raw upstream text') => ({ error: { message, details: [{ '@type': 'ErrorInfo', reason }] } });
-  assert.equal(writeProblem(envelope('NO_WORKSPACE')), 'No workspace configured. Open Settings.');
-  assert.match(writeProblem(envelope('NOT_CONFIGURED')), /^The maintainer's tracker is not connected/);
+  assert.equal(writeProblem(envelope('NO_WORKSPACE')), 'No workspace configured. Add one with + in the rail.');
   assert.equal(writeProblem(envelope('UPSTREAM_FAILED')), 'The tracker did not answer; try again in a minute.');
   assert.equal(writeProblem(envelope('RATE_LIMITED')), 'The source is rate-limited; the monitor backs off.');
   assert.equal(writeProblem(envelope('INTERNAL', 'disk full')), 'The local server failed; see its log.');

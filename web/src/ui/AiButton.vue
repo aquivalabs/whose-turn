@@ -1,21 +1,24 @@
 <script setup lang="ts">
-// The AI button: one sparkle everywhere; it copies the item with its context as text for any assistant.
-import { computed } from 'vue';
-import { refAutoReset } from '@vueuse/core';
+// The AI button: a copy icon with a sparkle badge everywhere; it copies the item with its context as text for any assistant.
+import { computed, ref, watch } from 'vue';
+import { refAutoReset, useClipboard } from '@vueuse/core';
 import { handOffText } from '@/lib/api.ts';
-import { SPARKLE } from '@/lib/icons.ts';
+import { COPY, SPARKLE } from '@/lib/icons.ts';
+import { useText } from '@/i18n/index.ts';
 const props = defineProps<{ query: Record<string, string>; big?: boolean }>();
-const TIPS: Record<string, string> = {
-  '': 'Copy for AI: this with its context as text, ready to paste into Claude or any other assistant',
-  sent: 'Copied',
-  failed: 'Could not copy',
-};
+const t = useText();
+const TIPS = {
+  '': 'common.aiButton.tip',
+  sent: 'common.aiButton.copied',
+  failed: 'common.aiButton.failed',
+} as const;
 const state = refAutoReset<'' | 'sent' | 'failed'>('', 1600);
-const tip = computed(() => TIPS[state.value]);
+const tip = computed(() => t(TIPS[state.value]));
+const button = ref<(HTMLButtonElement & { _tippy?: { setContent: (text: string) => void } }) | null>(null);
+watch(tip, (text) => button.value?._tippy?.setContent(text));
+const { copy: toClipboard } = useClipboard({ legacy: true });
 const copy = () =>
-  handOffText(props.query)
-    .then((text) => navigator.clipboard.writeText(text))
-    .then(
+  toClipboard(() => handOffText(props.query)).then(
       () => {
         state.value = 'sent';
       },
@@ -26,6 +29,7 @@ const copy = () =>
 </script>
 <template>
   <button
+    ref="button"
     type="button"
     class="ai-button"
     :class="{
@@ -33,34 +37,46 @@ const copy = () =>
       'ai-button--sent': state === 'sent',
       'ai-button--failed': state === 'failed',
     }"
-    aria-label="Copy for AI"
+    :aria-label="t('common.aiButton.label')"
     :data-tip="tip"
     @click.stop="copy"
   >
     <svg class="ai-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path :d="COPY" fill="currentColor" />
+    </svg>
+    <svg class="ai-button__badge" viewBox="0 0 24 24" aria-hidden="true">
       <path :d="SPARKLE" fill="currentColor" />
     </svg>
   </button>
 </template>
 <style scoped>
 .ai-button {
+  position: relative;
   display: inline-grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 1.625rem;
+  height: 1.625rem;
   border-radius: 50%;
   cursor: pointer;
   color: var(--md-primary);
   background: rgb(var(--md-state), 0.06);
   vertical-align: middle;
   transition:
-    background 0.12s ease,
-    transform 0.12s ease;
+    background var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
 }
 
 .ai-button__icon {
-  width: 15px;
-  height: 15px;
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+.ai-button__badge {
+  position: absolute;
+  right: -0.1875rem;
+  top: -0.1875rem;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .ai-button:hover {
@@ -84,13 +100,13 @@ const copy = () =>
 }
 
 .ai-button--big {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   background: rgb(var(--glass), 0.7);
 }
 
 .ai-button--big .ai-button__icon {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 </style>

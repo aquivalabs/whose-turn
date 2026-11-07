@@ -1,24 +1,41 @@
 <script setup lang="ts">
-// The rail: one generated icon per workspace, the open-moves badge, drag to reorder, the gear at the bottom.
-// Reorder stays on the platform's drag events: SortableJS would own the DOM order Vue renders from the server (docs/adr/0002-vueuse-in-the-window.md).
-import { computed, ref } from 'vue';
+// docs/adr/0002-vueuse-in-the-window.md, docs/adr/0006-window-layers.md
+import { AnimatePresence, M as Motion } from 'motion-v';
+import { computed, nextTick, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
-import { GEAR, workspaceIconParts } from '@/lib/icons.ts';
+import { GEAR, NEW_RELEASES, PLUS, POWER, workspaceIconParts } from '@/lib/icons.ts';
 import { movedIds } from '@/lib/settings.ts';
 import type { Workspace } from '@/lib/types.ts';
 import { mulberry32 } from '@/lib/random.ts';
-const emit = defineEmits<{ settings: [] }>();
+import { fade, listed } from '@/motion.ts';
+import { useWhatsNew } from '@/composables/useWhatsNew.ts';
+import { useText } from '@/i18n/index.ts';
+import PowerMenu from './PowerMenu.vue';
+const emit = defineEmits<{ settings: []; addWorkspace: []; whatsNew: [] }>();
+const t = useText();
+const { unseen } = useWhatsNew();
 
-// The dots depend on the id only; the colours on the scheme. Two computeds, so a scheme change does not redraw the dots.
+const shown = computed(() => snapshot.workspaces.filter((workspace) => !workspace.hidden));
+const hiddenCount = computed(() => snapshot.workspaces.length - shown.value.length);
+const hiddenLine = computed(() => {
+  const count = (mode: string) => snapshot.workspaces.filter((workspace) => workspace.hidden === mode).length;
+  return [
+    count('parked') ? t('rail.parked', { count: count('parked') }) : '',
+    count('paused') ? t('rail.paused', { count: count('paused') }) : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+});
+
 const parts = computed(() =>
   Object.fromEntries(
-    snapshot.workspaces.map((workspace) => [workspace.id, workspaceIconParts(workspace, mulberry32)]),
+    shown.value.map((workspace) => [workspace.id, workspaceIconParts(workspace, mulberry32)]),
   ),
 );
 const colours = computed(() =>
   Object.fromEntries(
-    snapshot.workspaces.map((workspace) => {
+    shown.value.map((workspace) => {
       const scheme = workspace.theme ? workspace.theme[dark.value ? 'dark' : 'light'] : null;
       return [
         workspace.id,
@@ -32,6 +49,11 @@ const colours = computed(() =>
   ),
 );
 
+const failing = (workspace: Workspace) =>
+  workspace.id === snapshot.workspace.id
+    ? Object.keys(snapshot.errors || {}).length > 0
+    : Boolean(workspace.failing_sources);
+
 const blurAfterMouse = (event: MouseEvent) => {
   if (event.detail > 0) {
     (event.currentTarget as HTMLElement).blur();
@@ -44,6 +66,35 @@ const onSwitch = (event: MouseEvent, id: string) => {
 const onSettings = (event: MouseEvent) => {
   emit('settings');
   blurAfterMouse(event);
+};
+const onAddWorkspace = (event: MouseEvent) => {
+  emit('addWorkspace');
+  blurAfterMouse(event);
+};
+const power = ref<HTMLElement | null>(null);
+const powerOpen = ref(false);
+const onPower = (event: MouseEvent) => {
+  powerOpen.value = !powerOpen.value;
+  blurAfterMouse(event);
+};
+const onWhatsNew = (event: MouseEvent) => {
+  emit('whatsNew');
+  blurAfterMouse(event);
+};
+
+const onKeyMove = async (event: KeyboardEvent, workspace: Workspace) => {
+  const step = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0;
+  const ids = shown.value.map((entry) => entry.id);
+  const at = ids.indexOf(workspace.id);
+  if (!event.altKey || !step || at + step < 0 || at + step >= ids.length) {
+    return;
+  }
+  event.preventDefault();
+  const anchor = event.currentTarget as HTMLElement;
+  ids.splice(at + step, 0, ...ids.splice(at, 1));
+  await reorderWorkspaces(ids);
+  await nextTick();
+  anchor.focus();
 };
 
 const dragged = ref('');
@@ -82,7 +133,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   }
   event.preventDefault();
   const ids = movedIds(
-    snapshot.workspaces.map((entry) => entry.id),
+    shown.value.map((entry) => entry.id),
     dragged.value,
     workspace.id,
     dropBefore(event),
@@ -92,10 +143,13 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 };
 </script>
 <template>
-  <nav class="rail" aria-label="Workspaces">
-    <a
-      v-for="workspace in snapshot.workspaces"
+  <nav class="rail" :class="{ 'rail--open': powerOpen }" :aria-label="t('rail.workspaces')">
+    <AnimatePresence>
+    <Motion
+      v-for="workspace in shown"
       :key="workspace.id"
+      v-bind="listed"
+      as="a"
       class="rail__item"
       :class="{ 'rail__item--dragging': dragged === workspace.id }"
       :data-drop="drop.id === workspace.id ? drop.side : null"
@@ -104,6 +158,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       :aria-selected="workspace.id === snapshot.workspace.id"
       draggable="true"
       @click.prevent="onSwitch($event, workspace.id)"
+      @keydown="onKeyMove($event, workspace)"
       @dragstart="onDragStart($event, workspace)"
       @dragend="onDragEnd"
       @dragover="onDragOver($event, workspace)"
@@ -135,14 +190,69 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
         </text>
       </svg>
       <span class="rail__label">{{ workspace.name }}</span>
+      <span v-if="failing(workspace)" class="rail__warn" :title="t('rail.sourceFails')">{{ t('rail.warnMark') }}</span>
+      <span v-if="workspace.returned" class="rail__dot" :title="t('rail.returned')"></span>
       <span v-if="workspace.open_moves" class="rail__badge">{{ workspace.open_moves }}</span>
+    </Motion>
+    </AnimatePresence>
+    <a
+      class="rail__item"
+      href="#add-workspace"
+      :aria-label="t('rail.addWorkspace')"
+      @click.prevent="onAddWorkspace"
+    >
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
+        <path :d="PLUS" fill="currentColor" />
+      </svg>
+      <span class="rail__label">{{ t('rail.addWorkspace') }}</span>
     </a>
     <span class="rail__spacer"></span>
-    <a class="rail__item" href="#settings" aria-label="Settings" @click.prevent="onSettings">
+    <AnimatePresence>
+      <Motion
+        v-if="hiddenLine"
+        v-bind="fade"
+        as="a"
+        class="rail__item rail__hidden"
+        href="#hidden-workspaces"
+        :aria-label="t('rail.hiddenCount', { count: hiddenCount })"
+        :data-tip="t('rail.hiddenTip', { summary: hiddenLine })"
+        @click.prevent="onSettings"
+      >
+        <span class="rail__hidden-count" aria-hidden="true">{{ hiddenCount }}</span>
+        <span class="rail__label">{{ t('rail.hiddenCount', { count: hiddenCount }) }}</span>
+      </Motion>
+    </AnimatePresence>
+    <a class="rail__item" href="#whats-new" :aria-label="t('rail.whatsNew')" @click.prevent="onWhatsNew">
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
+        <path :d="NEW_RELEASES" fill="currentColor" />
+      </svg>
+      <span class="rail__label">{{ t('rail.whatsNew') }}</span>
+      <span v-if="unseen.length" class="rail__dot" :title="t('rail.unseen')"></span>
+    </a>
+    <a
+      ref="power"
+      class="rail__item"
+      href="#power"
+      :aria-label="t('rail.power')"
+      :aria-expanded="powerOpen"
+      @click.prevent="onPower"
+    >
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
+        <path :d="POWER" fill="currentColor" />
+      </svg>
+      <span class="rail__label">{{ t('rail.power') }}</span>
+    </a>
+    <PowerMenu v-model:open="powerOpen" :anchor="power" />
+    <a
+      class="rail__item"
+      href="#settings"
+      :aria-label="t('rail.settings')"
+      @click.prevent="onSettings"
+    >
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
         <path :d="GEAR" fill="currentColor" />
       </svg>
-      <span class="rail__label">Settings</span>
+      <span class="rail__label">{{ t('rail.settings') }}</span>
     </a>
   </nav>
 </template>
@@ -154,9 +264,9 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 60px;
-  padding: 12px 8px;
+  gap: 0.25rem;
+  width: 3.75rem;
+  padding: 0.75rem 0.5rem;
   overflow: hidden;
   border-right: 1px solid var(--glass-edge);
   background: rgb(var(--glass), 0.72);
@@ -165,13 +275,14 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   font-family: var(--md-font);
   color: var(--md-on-surface);
   transition:
-    width 0.18s ease,
-    box-shadow 0.18s ease;
+    width var(--motion-base) var(--motion-ease),
+    box-shadow var(--motion-base) var(--motion-ease);
 }
 
 .rail:hover,
-.rail:has(:focus-visible) {
-  width: 232px;
+.rail:has(:focus-visible),
+.rail--open {
+  width: 14.5rem;
   box-shadow: 12px 0 32px rgb(0 0 0 / 12%);
 }
 
@@ -183,10 +294,10 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 44px;
-  padding: 0 4px;
-  border-radius: 12px;
+  gap: 0.75rem;
+  height: 2.75rem;
+  padding: 0 0.25rem;
+  border-radius: 0.75rem;
   color: inherit;
   text-decoration: none;
   white-space: nowrap;
@@ -223,17 +334,17 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 .rail__icon {
   flex: none;
   display: block;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
 }
 
 .rail__gear {
   flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   color: var(--md-on-surface-variant);
 }
 
@@ -242,12 +353,18 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   opacity: 0;
-  transition: opacity 0.12s ease;
+  transition: opacity var(--motion-fast) var(--motion-ease);
 }
 
+.rail__hidden .rail__label {
+  color: var(--md-on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.rail--open .rail__label,
 .rail:hover .rail__label,
 .rail:has(:focus-visible) .rail__label {
   opacity: 1;
@@ -255,25 +372,65 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 
 .rail__badge {
   position: absolute;
-  top: 2px;
-  left: 30px;
+  top: 0.125rem;
+  left: 1.875rem;
   box-sizing: border-box;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.3125rem;
+  border-radius: 62.4375rem;
   background: var(--md-primary);
   color: var(--md-on-primary);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 1.125rem;
   text-align: center;
 }
 
+.rail--open .rail__badge,
 .rail:hover .rail__badge,
 .rail:has(:focus-visible) .rail__badge {
   position: static;
   flex: none;
+}
+
+.rail__warn {
+  position: absolute;
+  left: 1.625rem;
+  top: 1.625rem;
+  display: grid;
+  place-items: center;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--md-error);
+  color: var(--md-on-error);
+  font-size: 0.625rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.rail__dot {
+  position: absolute;
+  top: 0.375rem;
+  left: 1.75rem;
+  box-sizing: border-box;
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 2px solid var(--md-surface);
+  border-radius: 50%;
+  background: var(--md-primary);
+}
+
+.rail__hidden-count {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .rail__spacer {

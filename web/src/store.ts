@@ -12,17 +12,18 @@ import {
 } from '@vueuse/core';
 import { getJson, post, reasonOf } from './lib/api.ts';
 import { latestWins } from './lib/latest-wins.ts';
-import { retryWithoutWorkspace } from './lib/load-retry.ts';
+import { closePage } from './lib/page-reload.ts';
 import { withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { topLayer, type Layer } from './lib/layers.ts';
 import { resolveMode, sizeBody } from './lib/window-mode.ts';
 import { SERVER_DOWN, TEXT_KEPT, errorProblem, writeProblem } from './lib/problems.ts';
-import type { ApiError, FeedItem, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
+import type { ApiError, FeedItem, Lifecycle, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
+import { text } from './i18n/index.ts';
 
-// ADR 0002, the storage rows
+// docs/adr/0002-vueuse-in-the-window.md (storage rows)
 const STORED = { writeDefaults: false };
 const lastWorkspace = useLocalStorage('wt-ws', '', STORED);
 const lastMode = useSessionStorage('wt-mode', '', STORED);
@@ -33,33 +34,52 @@ export const snapshot = shallowReactive<Snapshot>({
   workspace: { id: '', name: '', connectors: [], links: [], key_pattern: '', theme: null },
   turn: [],
   feed: [],
-  marks: { seen: [], base: 0, handled: {} },
+  marks: { seen: [], base: 0, handled: {}, info: {} },
   counts: { mine: 0, others: 0, failing: 0, done: 0 },
   todos: [],
   errors: {},
   health: { ok: true, stale: false, fresh_at: '', failing: [], alerts: [] },
   problems: [],
   polled_at: '',
+  update: { current: '', latest: '', available: false, state: 'idle' },
+  notifications: { desktop: true },
 });
+/** Each panel's scroll element, handed over on mount and cleared on unmount, so other islands read it here and not from the DOM. */
+export const scrollers = shallowReactive<Partial<Record<'your_move' | 'waiting' | 'feed', HTMLElement | null>>>({});
+/** The ref callback a panel gives its scroll element, so it lands in `scrollers` under the panel's key. */
+export const holdScroller = (panel: keyof typeof scrollers) => (element: unknown) => {
+  scrollers[panel] = (element as HTMLElement | null) ?? null;
+};
 export const ui = reactive({
   ws: new URLSearchParams(location.search).get('ws') || lastWorkspace.value,
   open: new Set<string>(),
   mode: resolveMode(location.search, lastMode.value),
   live: false,
   reconnects: 0,
-  status: 'Connecting…',
+  lastEventAt: 0,
+  consoleErrors: 0,
+  lifecycle: '' as Lifecycle | '',
+  status: text('core.store.connecting'),
   modal: null as FeedItem | null,
+  note: '',
   feedback: false,
+  reportNews: false,
+  whatsNew: false,
   settings: false,
+  settingsNew: false,
+  monitor: false,
   settingsDirty: false,
   settingsAsk: false,
   settingsAt: '',
+  focusFeed: '',
 });
 
 lastMode.value = ui.mode;
 
 /** A refused write's message: shown beside the live text for a few seconds, then gone. */
 export const notice = refAutoReset('', 6000);
+/** The row just marked handled, for the Undo banner. */
+export const justHandled = refAutoReset('', 8000);
 /** Puts the problem of a write that has no control of its own into the notice; resolves with whether the write went through. */
 export const tellProblem = (outcome: unknown, options?: Parameters<typeof writeProblem>[1]) => {
   const problem = writeProblem(outcome, options);
@@ -67,6 +87,24 @@ export const tellProblem = (outcome: unknown, options?: Parameters<typeof writeP
     notice.value = problem;
   }
   return !problem;
+};
+
+let savingNotifications = false;
+/** Flips desktop notifications for the whole monitor, at once on screen and saved through the server; a refusal puts the old value back and says why. The bell and the monitor settings share it. */
+export const toggleNotifications = async () => {
+  if (savingNotifications) {
+    return;
+  }
+  savingNotifications = true;
+  const before = snapshot.notifications;
+  snapshot.notifications = { desktop: !before.desktop };
+  const settle = (outcome: unknown) => {
+    if (!tellProblem(outcome, { refused: text('core.store.notificationNotSaved') })) {
+      snapshot.notifications = before;
+    }
+  };
+  await post('/api/notifications', { desktop: snapshot.notifications.desktop }).then(settle, settle);
+  savingNotifications = false;
 };
 
 /** An app window reports its size after each resize, so the next one opens the same size. */
@@ -97,46 +135,80 @@ export const themeVariables = computed(() => {
   return theme && theme.light && theme.dark ? theme[dark.value ? 'dark' : 'light'] : {};
 });
 export const counts = computed(() => snapshot.counts);
-export const alerts = computed(() => [
-  ...(snapshot.problems || []),
-  ...snapshot.health.alerts.map((alert) => alert.text),
-  ...Object.entries(snapshot.errors || {}).map(([source, text]) => source + ': ' + text),
-]);
-/** Opens the settings sheet on the current workspace, scrolled to a section when one is named. */
+/** The banner lines: one per source failing past the threshold. */
+export const alerts = computed(() => {
+  const name = snapshot.workspace.name;
+  const prefix = name ? name + ': ' : '';
+  const errors = Object.entries(snapshot.errors || {});
+  const failing = snapshot.health.failing || [];
+  const owner = (key: string) => failing.find(({ source }) => key === source || key.startsWith(source + '.'));
+  const streaks = failing.map(({ source, polls }) => {
+    const reasons = errors.filter(([key]) => owner(key)?.source === source).map(([, text]) => text);
+    return text('core.store.sourceStreak', { source, reasons: reasons.join(', ') || text('core.store.failingWord'), polls });
+  });
+  const failingIds = new Set(failing.map(({ source }) => 'failing:' + source));
+  return [
+    ...(snapshot.problems || []),
+    ...snapshot.health.alerts.filter((alert) => !failingIds.has(alert.id || '')).map((alert) => alert.text),
+    ...streaks,
+    ...errors.filter(([key]) => !owner(key)).map(([source, text]) => prefix + source + ': ' + text),
+  ];
+});
+/** Opens the workspace settings on the current workspace, scrolled to a section when one is named. */
 export const openSettings = (section = '') => {
   ui.settingsAt = section;
+  ui.settingsNew = false;
+  ui.settings = true;
+};
+/** Opens the workspace settings on an empty form for a new workspace. */
+export const openNewWorkspace = () => {
+  ui.settingsAt = '';
+  ui.settingsNew = true;
   ui.settings = true;
 };
 /** The layer on top right now, or null when the window itself is in front. */
 export const currentLayer = computed(() => topLayer(ui));
-/** Closes only the topmost layer; Settings with unsaved edits asks first. */
+/** Closes only the topmost layer; a settings sheet with unsaved edits asks first. */
 export const closeTopLayer = () => {
   const layer = currentLayer.value;
-  if (layer === 'modal') ui.modal = null;
-  if (layer === 'feedback') ui.feedback = false;
-  if (layer !== 'settings') return;
+  if (layer === 'modal') {ui.modal = null;}
+  if (layer === 'note') {ui.note = '';}
+  if (layer === 'feedback') {ui.feedback = false;}
+  if (layer === 'whatsNew') {ui.whatsNew = false;}
+  if (layer !== 'settings' && layer !== 'monitor') {return;}
   if (ui.settingsDirty) {
     ui.settingsAsk = true;
     return;
   }
   ui.settings = false;
+  ui.monitor = false;
 };
 
 const openers = new Map<Layer, Element | null>();
 const rememberOpener = (layer: Layer, isOpen: boolean) => {
-  if (isOpen) openers.set(layer, document.activeElement);
+  if (isOpen) {openers.set(layer, document.activeElement);}
 };
 const returnFocus = (layer: Layer, isOpen: boolean) => {
-  if (isOpen) return;
+  if (isOpen) {return;}
   const opener = openers.get(layer);
   openers.delete(layer);
-  if (opener instanceof HTMLElement) opener.focus();
+  if (opener instanceof HTMLElement) {opener.focus();}
 };
 const layerFlags: Record<Layer, () => boolean> = {
   modal: () => Boolean(ui.modal),
+  note: () => Boolean(ui.note),
   settings: () => ui.settings,
+  monitor: () => ui.monitor,
   feedback: () => ui.feedback,
+  whatsNew: () => ui.whatsNew,
 };
+watch(
+  () => snapshot.turn.some((row) => row.row_id === ui.note),
+  (present) => {
+    if (!present) {ui.note = '';}
+  },
+  { flush: 'sync' },
+);
 Object.entries(layerFlags).forEach(([layer, isOpen]) => {
   watch(isOpen, (open) => rememberOpener(layer as Layer, open), { flush: 'sync' });
   watch(isOpen, (open) => returnFocus(layer as Layer, open), { flush: 'post' });
@@ -156,17 +228,20 @@ export const load = (asked = ui.ws): Promise<Snapshot> => {
         return snapshot;
       }
       if (reply.error) {
-        if (reasonOf(reply.error) !== 'NO_SUCH_WORKSPACE' || !retryWithoutWorkspace(asked)) {
-          ui.status = errorProblem(reply.error, 'Could not load');
+        if (reasonOf(reply.error) !== 'NO_SUCH_WORKSPACE' || !asked) {
+          ui.status = errorProblem(reply.error, text('core.store.couldNotLoad'));
           return snapshot;
         }
+        return load('');
+      }
+      if (asked && reply.workspace.hidden && reply.workspaces.some((entry) => !entry.hidden)) {
         return load('');
       }
       Object.assign(snapshot, reply);
       ui.ws = snapshot.workspace.id;
       ui.status = '';
       showBackdrop({ workspace: snapshot.workspace.id });
-      document.title = 'Whose Turn · ' + snapshot.workspace.name;
+      document.title = text('core.store.pageTitle', { name: snapshot.workspace.name });
       return snapshot;
     },
   );
@@ -176,7 +251,7 @@ export const reload = () => {
   return load();
 };
 
-// ADR 0002, SSE stream
+// docs/adr/0002-vueuse-in-the-window.md (SSE stream)
 const stream = useEventSource<[], StreamEvent>('/api/stream', [], {
   immediate: false,
   autoConnect: false,
@@ -188,6 +263,7 @@ watch(
   (status) => {
     ui.live = status === 'OPEN';
     if (ui.live) {
+      ui.lifecycle = '';
       ui.status = '';
       ui.reconnects++;
     }
@@ -197,8 +273,8 @@ watch(
 watch(
   stream.error,
   (error) => {
-    if (error) {
-      ui.status = 'Disconnected from the local server, retrying…';
+    if (error && !ui.lifecycle) {
+      ui.status = text('core.store.disconnected');
     }
   },
   { flush: 'sync' },
@@ -208,6 +284,28 @@ watch(
   (message) => {
     if (!message) {
       return;
+    }
+    ui.lastEventAt = Date.now();
+    if ('update' in message) {
+      snapshot.update = message.update;
+      return;
+    }
+    if ('lifecycle' in message) {
+      ui.lifecycle = message.lifecycle;
+      ui.status = message.lifecycle === 'restarting' ? text('core.store.restarting') : text('core.store.stopped');
+      if (message.lifecycle === 'quitting') {
+        stream.close();
+        closePage();
+      }
+      return;
+    }
+    if ('report_news' in message) {
+      ui.reportNews = message.report_news && !ui.feedback;
+      return;
+    }
+    const known = snapshot.workspaces.find((entry) => entry.id === message.ws);
+    if (known && ((known.hidden || '') !== (message.hidden || '') || Boolean(known.returned) !== Boolean(message.returned))) {
+      load();
     }
     if (typeof message.open_moves === 'number') {
       snapshot.workspaces = withOpenMoves(snapshot.workspaces, message.ws, message.open_moves);
@@ -227,14 +325,21 @@ watch(
   },
   { flush: 'sync' },
 );
+/** Opens the window's event stream once; a second call while it is open does nothing. */
 export const connect = () => {
-  if (stream.status.value === 'CLOSED') {
+  if (!stream.eventSource.value) {
     stream.open();
   }
 };
+const countError = () => {
+  ui.consoleErrors++;
+};
+
 /** Starts what runs on its own: the clock, the first load and the stream behind it; importing this module does none of it. */
 export const start = () => {
   clock.resume();
+  useEventListener(window, 'error', countError);
+  useEventListener(window, 'unhandledrejection', countError);
   return load().then(connect);
 };
 
@@ -266,7 +371,14 @@ export const switchWorkspace = (id: string) => {
 const postWs = <T>(url: string, body: object) =>
   post<T & { error?: ApiError }>(url, { ws: snapshot.workspace.id, ...body });
 /** Sends one marks change and takes the marks, rows and counts the server recomputed; resolves with the problem line to show next to its control, empty when the server confirmed it. */
-export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen?: string[] }) =>
+export const setMarks = (
+  body: Partial<Pick<Marks, 'base' | 'handled'>> & {
+    all?: true;
+    seen?: string[];
+    unseen?: string[];
+    notes?: Record<string, string>;
+  },
+) =>
   postWs<Pick<Snapshot, 'marks' | 'turn' | 'counts'>>('/api/marks', body).then(
     (reply) => {
       const problem = writeProblem(reply);
@@ -282,6 +394,10 @@ export const setMarks = (body: Partial<Pick<Marks, 'base' | 'handled'>> & { seen
     },
     (failure: Error) => writeProblem(failure),
   );
+/** Asks the feed island to open one item: its group, expanded, scrolled into view. */
+export const showInFeed = (id: string) => {
+  ui.focusFeed = id;
+};
 /** Sends one to-do change; resolves with the problem line to show, empty when the server confirmed it. */
 export const todoAct = (body: { action: string; text?: string; id?: string }) =>
   postWs<Todo[]>('/api/todos', body).then(
@@ -305,44 +421,34 @@ export const reorderWorkspaces = (ids: string[]) =>
     )
     .then(
       (reply) => {
-        if (tellProblem(reply, { refused: 'The order was not saved' })) {
+        if (tellProblem(reply, { refused: text('core.store.orderNotSaved') })) {
           reload();
         }
       },
-      (failure: Error) => tellProblem(failure, { refused: 'The order was not saved' }),
+      (failure: Error) => tellProblem(failure, { refused: text('core.store.orderNotSaved') }),
     );
-/** The workspace the first-run card offers: invented data from the northwind scenario, no account needed. */
-const DEMO_WORKSPACE = {
-  id: 'demo',
-  name: 'Demo',
-  key_pattern: '\\bNW-\\d+\\b',
-  theme: { seed: '#3d7a5c', accent: '#c27a2c' },
-  connectors: [{ type: 'demo', scenario: 'northwind', label: 'Demo tracker' }],
-};
-/** Adds the demo workspace to the config unless one with its id is there, then switches to it. */
-export const tryDemo = () =>
-  getJson<{ workspaces: { id: string }[] }>('/api/config')
-    .then((config) =>
-      config.workspaces.some((workspace) => workspace.id === DEMO_WORKSPACE.id)
-        ? null
-        : post<{ error?: ApiError }>('/api/config', {
-            workspaces: [...config.workspaces, DEMO_WORKSPACE],
-            secrets: [],
-          }),
-    )
-    .then(
-      (reply) => {
-        if (tellProblem(reply, { refused: 'The demo workspace was not added' })) {
-          return switchWorkspace(DEMO_WORKSPACE.id);
-        }
-      },
-      (failure: Error) => tellProblem(failure, { refused: 'The demo workspace was not added' }),
-    );
+/** Brings a parked or paused workspace back into the rail through the server's one hide endpoint. */
+export const restoreWorkspace = (id: string) =>
+  post<{ error?: ApiError }>('/api/workspaces/hidden', { id, hidden: null }).then(
+    (reply) => {
+      if (tellProblem(reply, { refused: text('core.store.workspaceNotRestored') })) {
+        reload();
+      }
+    },
+    (failure: Error) => tellProblem(failure, { refused: text('core.store.workspaceNotRestored') }),
+  );
 export const refresh = () => {
-  ui.status = 'Checking now…';
+  ui.status = text('core.store.checking');
   post('/api/refresh').catch((failure: Error) => {
     ui.status = '';
     tellProblem(failure);
   });
   showBackdrop({ workspace: snapshot.workspace.id, seed: Math.floor(Math.random() * 4294967296) });
 };
+
+/** Stops or restarts the monitor server; the stream then carries the new state to every open window (RMA-356). */
+export const stopServer = (action: 'quit' | 'restart') =>
+  post(`/api/${action}`).then(
+    (reply) => tellProblem(reply, { refused: action === 'quit' ? text('core.store.notStopped') : text('core.store.notRestarted') }),
+    (failure: Error) => tellProblem(failure),
+  );

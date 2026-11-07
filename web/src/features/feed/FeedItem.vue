@@ -1,21 +1,26 @@
 <script setup lang="ts">
 // One feed item: the source badge, the reference, the kind, who, when, and the comment expanded in place with its actions. Expanding and reading are events; the feed applies them.
 import { computed } from 'vue';
+import { M as Motion } from 'motion-v';
+import { fade } from '@/motion.ts';
 import { snapshot, now } from '@/store.ts';
 import { toneOf, hasBody, badgeOf, subjectOf, itemLine } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
 import ExtLink from '@/ui/ExtLink.vue';
 import AiButton from '@/ui/AiButton.vue';
+import Chevron from '@/ui/Chevron.vue';
 import { modifier } from '@/lib/bem.ts';
+import { useText } from '@/i18n/index.ts';
 const props = defineProps<{
   item: FeedItem;
   source: ConnectorSummary;
   fresh: boolean;
-  lit?: boolean;
+  flash?: boolean;
   expanded: boolean;
 }>();
 const emit = defineEmits<{ open: [item: FeedItem]; toggle: [id: string]; seen: [id: string] }>();
+const t = useText();
 const badge = computed(() => badgeOf(props.source));
 const subject = computed(() => subjectOf(props.item));
 const line = computed(() => itemLine(props.item));
@@ -38,30 +43,31 @@ const toggle = () => {
 };
 </script>
 <template>
-  <li
+  <Motion
+    v-bind="fade"
+    :id="'feed-' + item.id"
+    as="li"
     class="feed-item"
-    :class="{ 'feed-item--new': fresh, 'feed-item--lit': lit, 'feed-item--open': open }"
+    :class="{ 'feed-item--new': fresh, 'feed-item--open': open, 'feed-item--flash': flash }"
     @click="seen"
   >
     <span class="feed-item__icon" :class="modifier('feed-item__icon', iconTone)">{{ badge }}</span>
     <div class="feed-item__body">
       <div class="feed-item__top">
+        <Chevron
+          v-if="written"
+          :open="open"
+          :aria-label="open ? t('feed.item.collapse') : t('feed.item.expand')"
+          @click.stop="toggle"
+        />
         <ExtLink :text="item.ref" :url="item.url" />
         <span class="feed-item__kind" :class="{ 'feed-item__kind--bad': tone === 'bad' }">{{
           item.kind
         }}</span>
         <span v-if="item.who" class="feed-item__who">{{ item.who }}</span>
-        <span v-if="item.mention" class="at-you">@you</span>
+        <span v-if="item.mention" class="at-you">{{ t('feed.item.you') }}</span>
         <span class="feed-item__right">
-          <span class="timestamp feed-item__when">{{ when }}</span>
-          <button
-            v-if="written"
-            type="button"
-            class="feed-item__toggle"
-            :aria-label="open ? 'Collapse' : 'Expand'"
-            :aria-expanded="open"
-            @click.stop="toggle"
-          ></button>
+          <span class="timestamp feed-item__when" :data-new="t('feed.item.new')">{{ when }}</span>
         </span>
       </div>
       <template v-if="open">
@@ -69,23 +75,23 @@ const toggle = () => {
         <div class="feed-item__full">{{ item.body }}</div>
         <div class="feed-item__actions">
           <button type="button" class="btn btn--tonal" @click.stop="emit('open', item)">
-            Open formatted
+            {{ t('feed.item.openFormatted') }}
           </button>
           <AiButton :query="{ ws: snapshot.workspace.id, kind: 'feed', ref: item.id }" />
-          <ExtLink :text="'Open in ' + source.label" :url="item.url" class="btn" />
+          <ExtLink :text="t('feed.item.openIn', { source: source.label })" :url="item.url" class="btn" />
         </div>
       </template>
       <span v-else-if="line" class="feed-item__text">{{ line }}</span>
     </div>
-  </li>
+  </Motion>
 </template>
 <style scoped>
 .feed-item {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-columns: 2rem minmax(0, 1fr);
   align-items: start;
-  gap: 12px;
-  padding: 10px 20px;
+  gap: 0.75rem;
+  padding: 0.625rem 1.25rem;
   cursor: default;
 }
 
@@ -104,16 +110,20 @@ const toggle = () => {
     inset 0 0 0 1px var(--new-edge);
 }
 
+.feed-item.feed-item--flash {
+  box-shadow: inset 0 0 0 2px var(--md-primary);
+}
+
 .feed-item__icon {
   flex: none;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background: var(--md-s-highest);
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -135,7 +145,7 @@ const toggle = () => {
 
 .feed-item__body {
   display: grid;
-  gap: 2px;
+  gap: 0.125rem;
   min-width: 0;
 }
 
@@ -143,15 +153,15 @@ const toggle = () => {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 6px;
-  font-size: 14px;
+  gap: 0.375rem;
+  font-size: 0.875rem;
 }
 
 .feed-item__right {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   margin-left: auto;
 }
 
@@ -171,60 +181,24 @@ const toggle = () => {
   display: -webkit-box;
   overflow: hidden;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 0.75rem;
+  line-height: 1rem;
   letter-spacing: 0.03em;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
-.feed-item__toggle {
-  display: inline-grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  margin-left: 2px;
-  border-radius: 50%;
-  color: var(--md-on-surface-variant);
-  font-size: 0;
-  line-height: 1;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.15s ease;
-}
-
-.feed-item__toggle::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid currentcolor;
-  border-bottom: 2px solid currentcolor;
-  transform: translateY(-2px) rotate(45deg);
-}
-
-.feed-item__toggle:hover {
-  background: rgb(var(--md-state), 0.1);
-}
-
-.feed-item__toggle[aria-expanded='true'] {
-  transform: rotate(180deg);
-}
-
-.feed-item__toggle:focus-visible {
-  outline: var(--focus-ring);
-}
-
 .feed-item__full {
   max-height: 16rem;
-  margin-top: 6px;
-  padding: 10px 12px;
+  margin-top: 0.375rem;
+  padding: 0.625rem 0.75rem;
   overflow: auto;
   border: 1px solid var(--glass-edge);
   border-radius: var(--md-r-chip);
   background: rgb(var(--glass), 0.55);
   color: var(--md-on-surface);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -233,39 +207,35 @@ const toggle = () => {
 .feed-item__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
-.feed-item--new .feed-item__kind,
-.feed-item--lit .feed-item__kind {
+.feed-item--new .feed-item__kind {
   color: var(--md-on-surface);
   font-weight: 700;
 }
 
-.feed-item--new .feed-item__text,
-.feed-item--lit .feed-item__text {
+.feed-item--new .feed-item__text {
   color: var(--md-on-surface);
 }
 
-.feed-item--new .feed-item__icon,
-.feed-item--lit .feed-item__icon {
+.feed-item--new .feed-item__icon {
   box-shadow: 0 0 0 2px var(--new);
 }
 
-.feed-item--new .feed-item__when::before,
-.feed-item--lit .feed-item__when::before {
-  content: 'NEW';
+.feed-item--new .feed-item__when::before {
+  content: attr(data-new);
   display: inline-block;
-  margin-right: 6px;
-  padding: 1px 6px;
-  border-radius: 4px;
+  margin-right: 0.375rem;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.25rem;
   background: var(--new);
   color: var(--new-ink);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  vertical-align: 1px;
+  vertical-align: 0.0625rem;
 }
 
 .feed-item:not(.feed-item--new) .feed-item__body {

@@ -1,20 +1,30 @@
 <script setup lang="ts">
-// The scroll area of a table island; when rows end below its bottom, a "+N more" line under it scrolls to the first of them. floor keeps a few rows' height when the island shrinks.
-import { computed, ref } from 'vue';
+// Scroll area of a table island with a "+N more" line for the rows below it.
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useElementSize, useScroll } from '@vueuse/core';
 import { hiddenBelow } from '@/lib/moves.ts';
+import { reduced } from '@/motion.ts';
+import { useText } from '@/i18n/index.ts';
 defineProps<{ floor?: boolean }>();
-// A row cut only through its cell padding and border still reads as shown.
+const emit = defineEmits<{ scroller: [element: HTMLElement | null] }>();
+const t = useText();
 const cellSlack = 13;
 const scroller = ref<HTMLElement | null>(null);
 const content = ref<HTMLElement | null>(null);
+onMounted(() => emit('scroller', scroller.value));
+onBeforeUnmount(() => emit('scroller', null));
 const { y } = useScroll(scroller);
 const { height } = useElementSize(scroller);
 const { height: contentHeight } = useElementSize(content);
-const rows = () => [...(content.value?.querySelector('table')?.tBodies[0]?.rows || [])];
+const head = computed(() => {
+  void contentHeight.value;
+  return content.value?.querySelector('thead') ?? null;
+});
+const { height: headHeight } = useElementSize(head);
+const rows = () => [...(content.value?.querySelector('table')?.tBodies || [])];
 const viewBottom = () => {
-  const el = scroller.value;
-  return el ? el.getBoundingClientRect().top + el.clientTop + el.clientHeight : 0;
+  const box = scroller.value;
+  return box ? box.getBoundingClientRect().top + box.clientTop + box.clientHeight : 0;
 };
 const hidden = computed(() => {
   void [y.value, height.value, contentHeight.value];
@@ -25,32 +35,37 @@ const hidden = computed(() => {
   );
 });
 const reveal = () => {
-  const el = scroller.value;
+  const box = scroller.value;
   const list = rows();
   const first = list[list.length - hidden.value];
-  if (!el || !first) {
+  if (!box || !first) {
     return;
   }
   const head = content.value?.querySelector('thead')?.getBoundingClientRect().bottom;
-  const top = head ?? el.getBoundingClientRect().top;
-  el.scrollBy({ top: first.getBoundingClientRect().top - top, behavior: 'smooth' });
+  const top = head ?? box.getBoundingClientRect().top;
+  box.scrollBy({ top: first.getBoundingClientRect().top - top, behavior: reduced.value ? 'auto' : 'smooth' });
 };
 </script>
 <template>
-  <div ref="scroller" class="row-scroll" :class="{ 'row-scroll--floor': floor }">
+  <div
+    ref="scroller"
+    class="row-scroll"
+    :class="{ 'row-scroll--floor': floor }"
+    :style="{ scrollPaddingTop: headHeight + 'px' }"
+  >
     <div ref="content"><slot /></div>
   </div>
   <button v-if="hidden" type="button" class="row-scroll__more" @click="reveal">
-    +{{ hidden }} more
+    {{ t('common.rowScroll.more', { count: hidden }) }}
   </button>
 </template>
 <style scoped>
 .row-scroll {
   overflow-x: auto;
-  margin: 0 -20px;
+  margin: 0 -1.25rem;
 }
 
-@media (width >= 901px) {
+@media (width >= 56.3125em) {
   .dashboard--fit .dashboard__main .row-scroll {
     flex: 1 1 auto;
     min-height: 0;
@@ -58,12 +73,12 @@ const reveal = () => {
   }
 
   .dashboard--fit .row-scroll::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 0.5rem;
+    height: 0.5rem;
   }
 
   .dashboard--fit .row-scroll::-webkit-scrollbar-thumb {
-    border-radius: 4px;
+    border-radius: 0.25rem;
     background: var(--md-outline-variant);
   }
 }
@@ -75,11 +90,11 @@ const reveal = () => {
 .row-scroll__more {
   flex: none;
   display: block;
-  margin: 0 -20px;
-  padding: 4px 20px 6px;
+  margin: 0 -1.25rem;
+  padding: 0.25rem 1.25rem 0.375rem;
   border-top: 1px solid var(--md-outline-variant);
   color: var(--md-primary);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
 }

@@ -34,3 +34,15 @@ test('poll asks the API for open and recently completed issues of me, with the k
   assert.equal(result.tickets.length, 1);
   await assert.rejects(poll({ settings: { workspace: 'other' }, http, secrets, cache: {} }), /No Linear API key/);
 });
+
+test('poll reads archived issues for Recently done, and only active ones for the open list', async () => {
+  const calls = [];
+  const http = { fetchJson: async (url, options) => { calls.push(options.body); return { data: { viewer, issues: { pageInfo: { hasNextPage: false }, nodes: [] } } }; } };
+  const secrets = { get: async () => 'lin_api_test' };
+  await poll({ settings: { workspace: 'your-space' }, http, secrets, cache: {} });
+  const done = calls.find((body) => body.variables.filter.completedAt);
+  const open = calls.find((body) => !body.variables.filter.completedAt);
+  assert.equal(done.variables.archived, true);
+  assert.equal(open.variables.archived, false);
+  assert.match(done.query, /includeArchived: \$archived/);
+});

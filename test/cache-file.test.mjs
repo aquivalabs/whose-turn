@@ -1,13 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, chmodSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync, readFileSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { openStore } from '../lib/store.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
-const scratch = () => mkdtempSync(join(tmpdir(), 'wt-cache-'));
+const scratch = () => scratchDir('wt-cache-');
 const cachePath = (dir) => join(dir, 'workspaces', 'w', 'cache.json');
 const data = { prs: new Map([[7, { updated_at: 'u1', row: { pr: 7, state: 'OPEN' }, sha: 'abc', activity: [{ at: 'a' }] }]]), asks: new Map([['n1', { updated_at: 'u2', row: null }]]) };
 const secret = { token: 'ghp_secret', tokenAt: 1, me: 'alex', last: { prs: [] } };
@@ -49,7 +49,7 @@ const stubHttp = (calls, numbers) => ({
     const path = url.replace('https://api.github.com', '');
     calls.push(path);
     if (path.startsWith('/search/issues')) {
-      return { items: path.includes('is%3Aopen') ? numbers.map((number) => ({ number, updated_at: `t${number}` })) : [] };
+      return { items: path.includes('is%3Aopen') && !path.includes('review-requested') ? numbers.map((number) => ({ number, updated_at: `t${number}` })) : [] };
     }
     if (path === '/user') {
       return { login: 'alex' };
@@ -84,7 +84,7 @@ const definition = { id: 'w', name: 'W', key_pattern: 'PROJ-\\d+', rules: DEFAUL
 
 const startAndPoll = async (dir, numbers) => {
   const calls = [];
-  const workspace = createWorkspace(definition, { dataDir: dir, historyDays: 14, http: stubHttp(calls, numbers), secrets: { get: async () => '' } });
+  const workspace = createWorkspace(definition, { dataDir: dir, historyDays: 14, http: stubHttp(calls, numbers), secrets: { get: async () => '' }, notify: () => {} });
   await workspace.poll();
   return calls;
 };
@@ -98,9 +98,9 @@ test('a restart with the file re-fetches nothing but the searches and the checks
     const withoutFile = await startAndPoll(scratch(), numbers);
     const searches = (calls) => calls.filter((path) => path.startsWith('/search/issues')).length;
     const details = (calls) => calls.filter((path) => /\/pulls\/\d+$/.test(path)).length;
-    assert.equal(searches(warm), 2);
+    assert.equal(searches(warm), 3);
     assert.equal(details(warm), 0);
-    assert.equal(warm.length, 2 + 1 + 1 + 2 + numbers.length, 'two searches, /user, notifications, the repository and its workflow runs, one checks refresh per open PR');
+    assert.equal(warm.length, 3 + 1 + 1 + 2 + numbers.length, 'three searches (open PRs, updated PRs, review requests), /user, notifications, the repository and its workflow runs, one checks refresh per open PR');
     assert.equal(details(withoutFile), 3);
     assert.ok(withoutFile.length > warm.length && cold.length === withoutFile.length);
   });
@@ -111,7 +111,7 @@ test('a poll that fails to reach any connector leaves the file untouched', async
     const dir = scratch();
     await startAndPoll(dir, [1]);
     const before = readFileSync(cachePath(dir), 'utf8');
-    const workspace = createWorkspace(definition, { dataDir: dir, historyDays: 14, http: { fetchJson: async () => { throw new Error('offline'); } }, secrets: { get: async () => '' } });
+    const workspace = createWorkspace(definition, { dataDir: dir, historyDays: 14, http: { fetchJson: async () => { throw new Error('offline'); } }, secrets: { get: async () => '' }, notify: () => {} });
     await workspace.poll();
     assert.equal(readFileSync(cachePath(dir), 'utf8'), before);
   });

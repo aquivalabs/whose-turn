@@ -1,16 +1,19 @@
 <script setup lang="ts">
 // One settings field drawn from its spec: a checkbox, a colour, a list, a secret, or plain text; the value goes out through v-model and the parent decides how to store it.
 import type { FieldSpec } from '@/lib/types.ts';
+import { useText } from '@/i18n/index.ts';
 const props = withDefaults(
   defineProps<{
     spec: FieldSpec;
     placeholder?: string;
     hint?: string;
+    error?: string;
   }>(),
-  { placeholder: '', hint: '' },
+  { placeholder: '', hint: '', error: '' },
 );
 const emit = defineEmits<{ secret: [key: string, value: string] }>();
 const value = defineModel<string | string[] | boolean>();
+const t = useText();
 const HEX = /^#[0-9a-f]{6}$/i;
 const text = () => String(value.value ?? '');
 const list = () => (value.value as string[] | undefined) || [];
@@ -33,7 +36,7 @@ const setList = (typedText: string) =>
 </script>
 <template>
   <div class="field-row">
-    <label class="field-row__label">{{ spec.label }}{{ spec.required ? ' *' : '' }}</label>
+    <label class="field-row__label">{{ spec.label }}{{ spec.required ? t('settings.field.requiredMark') : '' }}</label>
     <label v-if="spec.boolean" class="field-row__check">
       <input
         type="checkbox"
@@ -42,11 +45,22 @@ const setList = (typedText: string) =>
       />
       {{ hint || spec.hint }}
     </label>
+    <select
+      v-else-if="spec.choices"
+      class="input"
+      :aria-invalid="Boolean(error)"
+      :value="text()"
+      @change="set(typed($event))"
+    >
+      <option v-if="!spec.required && !spec.choices.includes(text())" value="">{{ t('settings.field.defaultChoice') }}</option>
+      <option v-if="text() && !spec.choices.includes(text())" :value="text()">{{ text() }}</option>
+      <option v-for="choice in spec.choices" :key="choice" :value="choice">{{ choice }}</option>
+    </select>
     <input
       v-else-if="spec.secret"
       class="input"
       type="password"
-      placeholder="paste to replace"
+      :placeholder="t('settings.field.pasteToReplace')"
       autocomplete="off"
       @input="emit('secret', spec.key, typed($event))"
     />
@@ -60,66 +74,77 @@ const setList = (typedText: string) =>
       <input
         class="input"
         type="text"
-        placeholder="#rrggbb"
+        :placeholder="t('settings.field.colourPlaceholder')"
         :value="text()"
         @input="set(typed($event))"
       />
-      <button type="button" class="btn" @click="set('')">None</button>
+      <button type="button" class="btn" @click="set('')">{{ t('settings.field.none') }}</button>
     </div>
     <input
       v-else-if="spec.list"
       class="input"
       type="text"
+      :aria-invalid="Boolean(error)"
       :value="list().join(', ')"
       @input="setList(typed($event))"
     />
     <input
       v-else
       class="input"
-      type="text"
+      :type="spec.min === undefined ? 'text' : 'number'"
+      :min="spec.min"
+      :max="spec.max"
+      :aria-invalid="Boolean(error)"
       :placeholder="placeholder"
       :value="text()"
       @input="set(typed($event))"
     />
+    <small v-if="error" class="field-row__error" role="alert">{{ error }}</small>
     <small v-if="!spec.boolean && (hint || spec.hint)" class="field-row__hint">{{ hint || spec.hint }}</small>
   </div>
 </template>
 <style scoped>
 .field-row {
   display: grid;
-  grid-template-columns: 170px minmax(0, 1fr);
+  grid-template-columns: 10.625rem minmax(0, 1fr);
   align-items: center;
-  gap: 4px 14px;
+  gap: 0.25rem 0.875rem;
 }
 
 .field-row__label {
   color: var(--md-on-surface);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .field-row__hint {
   grid-column: 2;
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
+}
+
+.field-row__error {
+  grid-column: 2;
+  color: var(--md-error);
+  font-size: 0.75rem;
 }
 
 .field-row__check {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   color: var(--md-on-surface-variant);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .field-row__colour {
-  width: 44px;
-  height: 30px;
-  padding: 2px;
+  width: 2.75rem;
+  height: 1.875rem;
+  padding: 0.125rem;
 }
 
 .field-row__inline {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 </style>

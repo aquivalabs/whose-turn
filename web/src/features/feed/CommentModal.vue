@@ -1,9 +1,13 @@
 <script setup lang="ts">
 // A comment opened formatted over the dashboard.
+import { AnimatePresence } from 'motion-v';
 import { computed } from 'vue';
 import { snapshot, ui } from '@/store.ts';
 import { safeUrl } from '@/lib/api.ts';
+import { useText } from '@/i18n/index.ts';
+import Modal from '@/ui/Modal.vue';
 import MarkdownView from '@/ui/MarkdownView.vue';
+const t = useText();
 const item = computed(() => ui.modal);
 const title = computed(() =>
   item.value ? [item.value.ref, item.value.kind, item.value.who].filter(Boolean).join(' · ') : '',
@@ -13,28 +17,19 @@ const label = computed(() => {
   const connector = (snapshot.workspace.connectors || []).find(
     (entry) => entry.id === item.value?.source,
   );
-  return 'Open in ' + (connector ? connector.label : item.value?.source);
+  return t('feed.item.openIn', { source: connector ? connector.label : item.value?.source });
 });
 const close = () => {
   ui.modal = null;
 };
 </script>
 <template>
-  <div
-    v-if="item"
-    class="modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="modal-title"
-    @click.self="close"
-  >
-    <div class="modal__card">
-      <div class="modal__head">
-        <h3 id="modal-title" class="modal__title">{{ title }}</h3>
+  <AnimatePresence>
+    <Modal v-if="item" :title="title" label-id="modal-title" flush @close="close">
+      <template #head>
         <a v-if="href" class="btn" :href="href" target="_blank" rel="noopener">{{ label }}</a>
-        <button type="button" class="btn btn--tonal" @click="close">Close</button>
-      </div>
+      </template>
       <MarkdownView :source="item.body || item.text || ''" />
-    </div>
-  </div>
+    </Modal>
+  </AnimatePresence>
 </template>

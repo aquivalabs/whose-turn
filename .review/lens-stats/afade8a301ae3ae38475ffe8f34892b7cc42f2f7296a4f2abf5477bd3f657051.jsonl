@@ -1,0 +1,7 @@
+{"at":"2026-11-04T23:40:56.201Z","hash":"afade8a301ae3ae38475ffe8f34892b7cc42f2f7296a4f2abf5477bd3f657051","round":2,"lens":"craft","verdict":"FAIL","score":5,"findings":5,"unique":5,"refuted":0}
+{"at":"2026-11-04T23:40:56.201Z","hash":"afade8a301ae3ae38475ffe8f34892b7cc42f2f7296a4f2abf5477bd3f657051","round":2,"lens":"architecture","verdict":"PASS","score":10,"findings":0,"unique":0,"refuted":0}
+{"at":"2026-11-04T23:40:56.201Z","hash":"afade8a301ae3ae38475ffe8f34892b7cc42f2f7296a4f2abf5477bd3f657051","round":2,"lens":"tests","verdict":"PASS","score":10,"findings":0,"unique":0,"refuted":0}
+{"at":"2026-11-04T23:40:56.201Z","hash":"afade8a301ae3ae38475ffe8f34892b7cc42f2f7296a4f2abf5477bd3f657051","round":2,"lens":"docs","verdict":"PASS","score":10,"findings":0,"unique":0,"refuted":0}
+{"at":"2026-11-04T23:40:56.201Z","hash":"afade8a301ae3ae38475ffe8f34892b7cc42f2f7296a4f2abf5477bd3f657051","round":2,"lens":"security","verdict":"PASS","score":10,"findings":0,"unique":0,"refuted":0}
+{"at":"2026-11-04T23:40:56.201Z","hash":"afade8a301ae3ae38475ffe8f34892b7cc42f2f7296a4f2abf5477bd3f657051","round":2,"lens":"leak","verdict":"PASS","score":10,"findings":1,"unique":1,"refuted":0}
+{"at":"2026-11-04T23:40:56.201Z","hash":"afade8a301ae3ae38475ffe8f34892b7cc42f2f7296a4f2abf5477bd3f657051","round":2,"lens":"security-scan","verdict":"PASS","score":10,"findings":0,"unique":0,"refuted":0}

@@ -66,10 +66,14 @@ test('a marks write with a wrong shape is refused naming the field, a valid one 
     const wrong = [
       [{ seen: 'abc' }, 'seen'],
       [{ seen: [1] }, 'seen'],
+      [{ unseen: 'abc' }, 'unseen'],
       [{ base: 'x' }, 'base'],
       [{ base: 4102444800000 }, 'base'],
       [{ handled: { 'NW-1': 'soon' } }, 'handled.NW-1'],
       [{ handled: 'yes' }, 'handled'],
+      [{ notes: 'Checked' }, 'notes'],
+      [{ notes: { 'NW-1': 5 } }, 'notes.NW-1'],
+      [{ notes: { 'NW-1': 'x'.repeat(201) } }, 'notes.NW-1'],
     ];
     for (const [body, field] of wrong) {
       // Exercise
@@ -82,7 +86,7 @@ test('a marks write with a wrong shape is refused naming the field, a valid one 
     }
     assert.deepEqual(marks, { seen: [], base: 0, handled: {} });
     // Exercise
-    const ok = await post('/api/marks', { ws: 'w', seen: ['a'], base: Date.now(), handled: { 'NW-1': new Date().toISOString(), 'NW-2': null } });
+    const ok = await post('/api/marks', { ws: 'w', seen: ['a'], base: Date.now(), handled: { 'NW-1': new Date().toISOString(), 'NW-2': null }, notes: { 'NW-1': 'Checked with the customer, nothing to change' } });
     // Verify
     assert.equal(ok.status, 200);
     assert.deepEqual(marks.seen, ['a']);
@@ -147,7 +151,7 @@ test('a request that needs a workspace answers NO_WORKSPACE when none is configu
     assert.equal(handoff.status, 412);
     assert.equal((await handoff.json()).error.details[0].reason, 'NO_WORKSPACE');
     assert.equal(state.status, 200);
-    assert.deepEqual(await state.json(), { workspaces: [], problems: [] });
+    assert.deepEqual(await state.json(), { workspaces: [], problems: [], update: { current: '', latest: '', available: false, state: 'idle' } });
   } finally {
     server.close();
   }
@@ -204,5 +208,87 @@ test('a port in use rejects startApi with one line naming the port and WHOSE_TUR
     });
   } finally {
     holder.close();
+  }
+});
+
+test('a secret with a line break in the value, service or account is refused naming the field and never stored', async () => {
+  // Setup
+  const stored = [];
+  const { server, post } = await startTestApi({ secrets: { set: async (...args) => stored.push(args) } });
+  try {
+    for (const field of ['service', 'account', 'value']) {
+      // Exercise
+      const response = await post('/api/secrets', { service: 'svc', account: 'me', value: 'v', [field]: 'a\nb' });
+      // Verify
+      const error = (await response.json()).error;
+      assert.equal(response.status, 400, field);
+      assert.equal(error.status, 'INVALID_ARGUMENT', field);
+      assert.match(error.details[0].metadata.detail, new RegExp(`^${field} `), field);
+    }
+    assert.deepEqual(stored, []);
+  } finally {
+    server.close();
+  }
+});
+
+test('POST /api/notifications saves the setting and reports it; a missing or non-boolean value is refused', async () => {
+  // Setup
+  const saved = [];
+  const registry = emptyRegistry({ notifications: { desktop: true }, saveNotifications: async (value) => saved.push(value) });
+  const { server, post, get } = await startTestApi({ registry });
+  try {
+    // Exercise
+    const ok = await post('/api/notifications', { desktop: false });
+    const refused = await post('/api/notifications', { desktop: 'off' });
+    const missing = await post('/api/notifications', {});
+    // Verify
+    assert.equal(ok.status, 200);
+    assert.deepEqual(await ok.json(), { notifications: { desktop: true } });
+    assert.deepEqual(saved, [{ desktop: false }]);
+    assert.equal(refused.status, 400);
+    assert.equal(missing.status, 400);
+    assert.deepEqual((await (await get('/api/config')).json()).notifications, { desktop: true });
+  } finally {
+    server.close();
+  }
+});
+
+test('a settings write saves the global keys and answers them; a bad one is refused naming the field and saves nothing', async () => {
+  // Setup
+  const saved = [];
+  const registry = emptyRegistry({ settings: { poll_seconds: 60 }, saveSettings: async (settings) => { saved.push(settings); } });
+  const { server, post, get } = await startTestApi({ registry });
+  try {
+    // Exercise
+    const good = await post('/api/config', { settings: { poll_seconds: 30, failing_polls: 4 } });
+    const bad = await post('/api/config', { settings: { poll_seconds: -1, nope: 1 } });
+    const config = await (await get('/api/config')).json();
+    // Verify
+    assert.equal(good.status, 200);
+    assert.deepEqual(saved, [{ poll_seconds: 30, failing_polls: 4 }]);
+    assert.equal(bad.status, 400);
+    const fields = (await bad.json()).error.details.flatMap((detail) => (detail.fieldViolations || detail.field_violations || []).map((entry) => entry.field));
+    assert.deepEqual(fields, ['settings.poll_seconds', 'settings.nope']);
+    assert.deepEqual(config.settings, { poll_seconds: 60 });
+    assert.deepEqual(Object.keys(config.settings_fields), ['poll_seconds', 'history_days', 'stale_minutes', 'failing_polls']);
+  } finally {
+    server.close();
+  }
+});
+
+test('a POST body over the size cap is refused with BODY_TOO_LARGE, and a normal one still works (RMA-367)', async () => {
+  // Setup
+  const { MAX_BODY_BYTES } = await import('../lib/api.mjs');
+  const { server, post } = await startTestApi();
+  try {
+    // Exercise
+    const response = await post('/api/marks', { ws: 'home', seen: ['x'.repeat(MAX_BODY_BYTES)] });
+    // Verify
+    const body = await response.json();
+    assert.equal(response.status, 413);
+    assert.equal(body.error.details[0].reason, 'BODY_TOO_LARGE');
+    assert.equal((await post('/api/refresh', {})).status, 200);
+  } finally {
+    server.close();
   }
 });

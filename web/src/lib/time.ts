@@ -1,17 +1,18 @@
 // "Ago", age and date texts for rows and the feed, in the window's one locale.
+import { text } from '../i18n/index.ts';
 export const ago = (iso: string) => {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
   if (!isFinite(minutes)) {
     return '';
   }
   if (minutes < 1) {
-    return 'now';
+    return text('core.time.now');
   }
   if (minutes < 60) {
-    return minutes + 'm ago';
+    return text('core.time.minutesAgo', { count: minutes });
   }
   if (minutes < 48 * 60) {
-    return Math.round(minutes / 60) + 'h ago';
+    return text('core.time.hoursAgo', { count: Math.round(minutes / 60) });
   }
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
@@ -28,7 +29,7 @@ export const age = (iso: string | undefined): Age => {
     return { text: '', old: false, hours: 0 };
   }
   return {
-    text: hours < 1 ? '<1h' : hours < 48 ? Math.floor(hours) + 'h' : Math.floor(hours / 24) + 'd',
+    text: hours < 1 ? text('core.time.underAnHour') : hours < 48 ? text('core.time.hours', { count: Math.floor(hours) }) : text('core.time.days', { count: Math.floor(hours / 24) }),
     old: hours >= 24,
     hours,
   };

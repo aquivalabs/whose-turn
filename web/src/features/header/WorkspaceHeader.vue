@@ -1,36 +1,37 @@
 <script setup lang="ts">
-// The workspace header: the name, the counts in words, the copy-workspace sparkle, the quick links, and four tiles; it folds to one line with the counts, like every island.
-import { snapshot, counts } from '@/store.ts';
+import { useTemplateRef } from 'vue';
+import { snapshot, counts, openSettings } from '@/store.ts';
+import { glideThrough } from '@/motion.ts';
+import { GEAR } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
 import ExtLink from '@/ui/ExtLink.vue';
-const { collapsed, toggle } = useFold('header');
+import { useText } from '@/i18n/index.ts';
+const t = useText();
+const { collapsed, toggle: flip } = useFold('header');
+const header = useTemplateRef<HTMLElement>('header');
+const toggle = () => glideThrough(header.value, 'height', flip);
 </script>
 <template>
   <header
     id="summary"
+    ref="header"
     class="island workspace-header"
     :class="{ 'workspace-header--collapsed': collapsed }"
   >
     <div class="workspace-header__title">
-      <h1 class="workspace-header__name">{{ snapshot.workspace.name || 'Whose Turn' }}</h1>
-      <p class="workspace-header__line workspace-header__sentence">
-        <b class="workspace-header__count">{{ counts.mine }}</b> waiting on you,
-        <b class="workspace-header__count">{{ counts.others }}</b> waiting on someone else<span
-          v-if="counts.failing"
-          >, <b class="workspace-header__count">{{ counts.failing }}</b> failing</span
-        >.
-      </p>
+      <h1 class="workspace-header__name">{{ snapshot.workspace.name || t('header.fallbackName') }}</h1>
       <p v-if="collapsed" class="workspace-header__line workspace-header__strip">
-        Your move <b class="workspace-header__count">{{ counts.mine }}</b> · Waiting on others
-        <b class="workspace-header__count">{{ counts.others }}</b> · Failing
-        <b class="workspace-header__count">{{ counts.failing }}</b> · Done
+        {{ t('header.tiles.yourMove') }} <b class="workspace-header__count">{{ counts.mine }}</b> ·
+        {{ t('header.tiles.waitingOnOthers') }}
+        <b class="workspace-header__count">{{ counts.others }}</b> · {{ t('header.strip.failing') }}
+        <b class="workspace-header__count">{{ counts.failing }}</b> · {{ t('header.strip.done') }}
         <b class="workspace-header__count">{{ counts.done }}</b>
       </p>
       <p class="workspace-header__line workspace-header__give">
         <AiButton :query="{ ws: snapshot.workspace.id, kind: 'workspace' }" big /><span
           class="ai-hint"
-          >AI: copy this workspace</span
+          >{{ t('header.copyForAi') }}</span
         >
         <span class="workspace-header__links"
           ><ExtLink
@@ -42,34 +43,50 @@ const { collapsed, toggle } = useFold('header');
         /></span>
       </p>
     </div>
-    <button
-      type="button"
-      class="fold-toggle workspace-header__fold"
-      :class="{ 'fold-toggle--folded': collapsed }"
-      aria-label="Collapse or expand header"
-      data-tip="Fold the header; it stays folded until you open it again"
-      @click.stop="toggle"
-    >
-      ▾
-    </button>
+    <div class="workspace-header__tools">
+      <button
+        type="button"
+        class="fold-toggle workspace-header__settings"
+        :aria-label="t('header.settings')"
+        :data-tip="t('header.settingsTip')"
+        @click.stop="openSettings()"
+      >
+        <svg viewBox="0 0 24 24" class="workspace-header__gear" aria-hidden="true">
+          <path :d="GEAR" fill="currentColor" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="fold-toggle workspace-header__fold"
+        :class="{ 'fold-toggle--folded': collapsed }"
+        :aria-label="t('header.fold')"
+        :data-tip="t('header.foldTip')"
+        @click.stop="toggle"
+      >
+        ▾
+      </button>
+    </div>
     <div class="workspace-header__tiles">
-      <div class="workspace-header__tile workspace-header__tile--you">
-        <span class="workspace-header__tile-label">Your move</span
+      <div
+        class="workspace-header__tile"
+        :class="{ 'workspace-header__tile--you': counts.mine > 0 }"
+      >
+        <span class="workspace-header__tile-label">{{ t('header.tiles.yourMove') }}</span
         ><strong class="workspace-header__tile-value">{{ counts.mine }}</strong>
       </div>
       <div class="workspace-header__tile">
-        <span class="workspace-header__tile-label">Waiting on others</span
+        <span class="workspace-header__tile-label">{{ t('header.tiles.waitingOnOthers') }}</span
         ><strong class="workspace-header__tile-value">{{ counts.others }}</strong>
       </div>
       <div
         class="workspace-header__tile"
         :class="{ 'workspace-header__tile--fail': counts.failing }"
       >
-        <span class="workspace-header__tile-label">Open PRs with failing checks</span
+        <span class="workspace-header__tile-label">{{ t('header.tiles.failing') }}</span
         ><strong class="workspace-header__tile-value">{{ counts.failing }}</strong>
       </div>
       <div class="workspace-header__tile">
-        <span class="workspace-header__tile-label">Done in the last 30 days</span
+        <span class="workspace-header__tile-label">{{ t('header.tiles.done') }}</span
         ><strong class="workspace-header__tile-value">{{ counts.done }}</strong>
       </div>
     </div>
@@ -78,9 +95,9 @@ const { collapsed, toggle } = useFold('header');
 <style scoped>
 .workspace-header {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 32px;
-  gap: 8px;
-  padding: 8px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 2rem;
+  gap: 0.5rem;
+  padding: 0.5rem;
   background: linear-gradient(135deg, var(--blob-1), var(--blob-2));
   color: var(--header-ink, var(--md-on-primary-container));
 }
@@ -94,21 +111,21 @@ const { collapsed, toggle } = useFold('header');
 .workspace-header__title {
   display: grid;
   align-content: center;
-  gap: 4px;
-  padding: 12px 16px;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
 }
 
 .workspace-header__name {
   margin: 0;
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 400;
-  line-height: 36px;
+  line-height: 2.25rem;
   color: var(--md-on-primary-container);
 }
 
 .workspace-header__line {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   opacity: 0.85;
 }
 
@@ -119,29 +136,29 @@ const { collapsed, toggle } = useFold('header');
 
 .workspace-header__give {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  white-space: nowrap;
 }
 
 .workspace-header__links {
   display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-left: 10px;
+  gap: 0.375rem;
 }
 
-/* Only a followed link is a chip; a source link that is not https stays plain text. */
+/* AGENTS.md § Hard rules: only https links are followed. */
 .workspace-header__links a {
   display: inline-flex;
   align-items: center;
-  height: 24px;
-  padding: 0 10px;
+  height: 1.5rem;
+  padding: 0 0.625rem;
   border: 1px solid var(--glass-edge);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   background: rgb(var(--glass), 0.55);
   color: inherit;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
@@ -149,25 +166,38 @@ const { collapsed, toggle } = useFold('header');
   background: rgb(var(--glass), 0.85);
 }
 
-.workspace-header__fold {
+.workspace-header__tools {
   grid-row: 1;
   grid-column: 3;
-  place-self: center center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.workspace-header__fold,
+.workspace-header__settings {
   margin: 0;
   color: inherit;
+}
+
+.workspace-header__gear {
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .workspace-header__tiles {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .workspace-header__tile {
   display: grid;
   align-content: start;
-  gap: 4px;
-  padding: 12px 16px;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--glass-edge);
   border-radius: var(--md-r-card);
   background: rgb(var(--glass), calc(var(--glass-a) + 0.1));
@@ -186,17 +216,17 @@ const { collapsed, toggle } = useFold('header');
 
 .workspace-header__tile-label {
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
-  line-height: 16px;
+  line-height: 1rem;
   letter-spacing: 0.03em;
 }
 
 .workspace-header__tile-value {
-  min-height: 40px;
-  font-size: 32px;
+  min-height: 2.5rem;
+  font-size: 2rem;
   font-weight: 400;
-  line-height: 40px;
+  line-height: 2.5rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -216,44 +246,45 @@ const { collapsed, toggle } = useFold('header');
 }
 
 .workspace-header--collapsed {
-  grid-template-columns: minmax(0, 1fr) 32px;
-  padding: 4px 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.25rem 0.5rem;
 }
 
 .workspace-header--collapsed .workspace-header__title {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 14px;
-  padding: 4px 8px;
+  gap: 0.875rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .workspace-header--collapsed .workspace-header__name {
-  font-size: 18px;
-  line-height: 28px;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
 }
 
 .workspace-header--collapsed .workspace-header__tiles,
-.workspace-header--collapsed .workspace-header__give,
-.workspace-header--collapsed .workspace-header__sentence {
+.workspace-header--collapsed .workspace-header__give {
   display: none;
 }
 
-.workspace-header--collapsed .workspace-header__fold {
+.workspace-header--collapsed .workspace-header__tools {
   grid-column: 2;
+  flex-direction: row;
+  align-items: center;
 }
 
 .workspace-header--collapsed .workspace-header__strip {
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
-@media (width <= 900px) {
+@media (width <= 56.25em) {
   .workspace-header,
   .workspace-header--collapsed {
-    grid-template-columns: minmax(0, 1fr) 32px;
+    grid-template-columns: minmax(0, 1fr) 2rem;
   }
 
-  .workspace-header__fold {
+  .workspace-header__tools {
     grid-column: 2;
   }
 
@@ -262,7 +293,7 @@ const { collapsed, toggle } = useFold('header');
   }
 }
 
-@media (width <= 640px) {
+@media (width <= 40em) {
   .workspace-header__tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

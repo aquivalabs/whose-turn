@@ -1,10 +1,18 @@
 // The local server's API: JSON in, JSON out; a workspace write always names its workspace (RMA-115).
 import type { ApiError, ApiErrorDetail } from './types.ts';
+import { trackApiFailure } from './window-report.ts';
+
+const read = <T>(response: Response): Promise<T> => {
+  if (!response.ok) {
+    trackApiFailure(response.status);
+  }
+  return response.json() as Promise<T>;
+};
 
 /** Resolves with the reply (a refusal is its error envelope); rejects with Error('unreachable') when the server cannot be reached. */
 export const getJson = <T>(url: string): Promise<T> =>
   fetch(url).then(
-    (response) => response.json() as Promise<T>,
+    (response) => read<T>(response),
     () => Promise.reject(new Error('unreachable')),
   );
 /** Resolves with the reply (a refusal is its error envelope); rejects with Error('unreachable') when the server cannot be reached. */
@@ -14,7 +22,7 @@ export const post = <T>(url: string, body?: object): Promise<T> =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {}),
   }).then(
-    (response) => response.json() as Promise<T>,
+    (response) => read<T>(response),
     () => Promise.reject(new Error('unreachable')),
   );
 
@@ -25,6 +33,10 @@ const detailOf = <T extends ApiErrorDetail['@type']>(
   (error.details || []).find(
     (detail): detail is Extract<ApiErrorDetail, { '@type': T }> => detail['@type'] === type,
   );
+
+/** The field violations of a google.rpc.Status error envelope: each names a field path such as workspaces[0].id. */
+export const violationsOf = (error: ApiError): { field: string; description: string }[] =>
+  detailOf(error, 'BadRequest')?.field_violations || [];
 
 /** The field problems of a google.rpc.Status error envelope, or its one message. */
 export const problemsOf = (error: ApiError): string[] => {
@@ -41,8 +53,9 @@ export const reasonOf = (error: ApiError): string => detailOf(error, 'ErrorInfo'
 
 /** The hand-off text of a row, a thread, a feed item or a workspace, for the clipboard. */
 export const handOffText = (query: Record<string, string>): Promise<string> =>
-  fetch('/api/handoff?' + new URLSearchParams(query)).then((response) =>
-    response.ok ? response.text() : Promise.reject(new Error(String(response.status))),
+  fetch('/api/handoff?' + new URLSearchParams(query)).then(
+    (response) => (response.ok ? response.text() : Promise.reject(new Error(String(response.status)))),
+    () => Promise.reject(new Error('unreachable')),
   );
 
 /** Data from the sources is untrusted: only https links are followed. */

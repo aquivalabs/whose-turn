@@ -1,10 +1,14 @@
 import type * as Store from '@/store.ts';
+import { nextTick } from 'vue';
 import { expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { setMarks, ui } from '@/store.ts';
+import { scrollers, setMarks, snapshot, ui } from '@/store.ts';
+import { exits } from '@/test-motion.ts';
+import type { FeedItem } from '@/lib/types.ts';
 import Feed from './Feed.vue';
+import { useFeedState } from './useFeedState.ts';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
+// docs/adr/0006: the store is the seam between islands; the feature's contract is the call it makes there.
 vi.mock('@/store.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof Store>()),
   setMarks: vi.fn(),
@@ -19,4 +23,97 @@ test('a stream reconnect clears the line of a refused Mark all read', async () =
   ui.reconnects++;
 
   await vi.waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+});
+
+test('Mark all read offers Undo, which takes back the ids it marked and the old base', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  snapshot.marks = { seen: ['old'], base: 123, handled: {}, info: {} };
+  snapshot.feed = [
+    { id: 'old', source: 's', at: '2026-11-02T10:00:00Z' },
+    { id: 'fresh', source: 's', at: '2026-11-02T11:00:00Z' },
+  ] as FeedItem[];
+  render(Feed);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark all read' }));
+  expect(setMarks).toHaveBeenLastCalledWith({ all: true });
+  await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+
+  expect(setMarks).toHaveBeenLastCalledWith({ unseen: ['fresh'], base: 123 });
+});
+
+test('the feed search clears when the open workspace changes', async () => {
+  snapshot.workspace = { ...snapshot.workspace, id: 'home' };
+  render(Feed);
+  useFeedState().query = 'NW-137';
+  await nextTick();
+  expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('NW-137');
+
+  snapshot.workspace = { ...snapshot.workspace, id: 'atlas' };
+  await nextTick();
+  await nextTick();
+
+  expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('');
+});
+
+test('typing in the feed search filters 150 ms after the last keystroke, not on every key', async () => {
+  vi.useFakeTimers();
+  try {
+    snapshot.feed = [
+      { id: 'a', source: 's', key: 'NW-1', at: '2026-11-02T10:00:00Z' },
+      { id: 'b', source: 's', key: 'NW-2', at: '2026-11-02T11:00:00Z' },
+    ] as FeedItem[];
+    useFeedState().query = '';
+    render(Feed);
+    const box = screen.getByRole('searchbox') as HTMLInputElement;
+
+    await fireEvent.update(box, 'NW-');
+    await fireEvent.update(box, 'NW-2');
+    vi.advanceTimersByTime(149);
+    expect(useFeedState().query).toBe('');
+
+    vi.advanceTimersByTime(1);
+    expect(useFeedState().query).toBe('NW-2');
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test('the unread count of the folded strip sits in the strip, where it is written top to bottom', async () => {
+  localStorage.setItem('wt-collapsed', JSON.stringify(['feed']));
+  snapshot.marks = { seen: [], base: 0, handled: {}, info: {} };
+  snapshot.feed = [{ id: 'fresh', source: 's', at: '2999-01-01T00:00:00Z' }] as FeedItem[];
+  const { container } = render(Feed);
+
+  await screen.findAllByText('1 new');
+
+  expect(container.querySelector('.island--strip .feed__new-count')?.textContent).toBe('1 new');
+  localStorage.clear();
+});
+
+test('a ticket group folding keeps its events on the page until the exit has played', async () => {
+  snapshot.feed = [{ id: 'a', source: 's', key: 'NW-1', at: '2026-11-02T10:00:00Z' }] as FeedItem[];
+  const state = useFeedState();
+  state.query = '';
+  state.view = 'ticket';
+  state.openGroups.clear();
+  state.openGroups.add('NW-1');
+  exits.hold();
+  const { container } = render(Feed);
+  expect(container.querySelector('.feed__children')).not.toBeNull();
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Fold NW-1' }));
+
+  expect(container.querySelector('.feed__children')).not.toBeNull();
+  exits.release();
+  await vi.waitFor(() => expect(container.querySelector('.feed__children')).toBeNull());
+  state.openGroups.clear();
+});
+
+test('the panel hands its list element to the store and takes it back when it goes', () => {
+  snapshot.feed = [{ id: 'a', source: 's', at: '2026-11-02T10:00:00Z' }] as FeedItem[];
+  const { unmount } = render(Feed);
+
+  expect(scrollers.feed?.classList.contains('feed__list')).toBe(true);
+  unmount();
+  expect(scrollers.feed).toBeNull();
 });

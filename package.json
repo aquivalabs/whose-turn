@@ -1,6 +1,6 @@
 {
   "name": "whose-turn",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-beta.1",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -13,6 +13,7 @@
     "types/",
     "dist/",
     "install.sh",
+    "launch.sh",
     "open.sh",
     "config.example.json",
     "CHANGELOG.md"
@@ -37,34 +38,53 @@
     "lint:style": "stylelint \"web/src/**/*.{vue,css}\"",
     "format": "prettier --write web/src",
     "check": "npm run typecheck && npm run lint && npm run lint:style && npm test && npm run test:web",
-    "test:web": "vitest run"
+    "test:web": "vitest run",
+    "test:e2e": "npm run build && playwright test",
+    "coverage": "npm run coverage:server && npm run coverage:web",
+    "coverage:server": "node --experimental-strip-types --experimental-test-coverage --test-coverage-include=\"lib/**\" --test-coverage-include=\"connectors/**\" --test-coverage-include=\"scripts/**\" --test-coverage-include=server.mjs --test-coverage-include=\"web/src/lib/**\" --test-coverage-lines=90 --test-coverage-branches=87 --test-coverage-functions=90 --test \"test/**/*.test.mjs\"",
+    "coverage:web": "vitest run --coverage",
+    "mutation": "stryker run"
   },
   "bin": {
     "whose-turn": "server.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@intlify/eslint-plugin-vue-i18n": "4.5.1",
+    "@playwright/test": "1.65.0",
+    "@stryker-mutator/core": "^10.1.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/vue": "8.1.0",
     "@types/node": "22.19.19",
     "@vitejs/plugin-vue": "^5.2.0",
+    "@vitest/coverage-v8": "5.1.0",
     "@vue/test-utils": "2.5.1",
     "@vueuse/core": "15.0.0",
     "eslint": "10.13.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-vue": "10.11.1",
     "happy-dom": "21.0.4",
+    "motion-v": "2.9.0",
     "postcss-html": "2.0.0",
     "prettier": "3.9.10",
     "stylelint": "17.16.0",
     "stylelint-config-html": "2.0.0",
     "stylelint-config-standard": "40.0.0",
+    "stylelint-selector-bem-pattern": "5.0.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.2",
     "vite": "^6.0.0",
     "vitest": "5.1.0",
     "vue": "^3.5.0",
     "vue-eslint-parser": "10.4.1",
+    "vue-i18n": "11.4.16",
     "vue-tsc": "3.3.13"
+  },
+  "overrides": {
+    "qs": "^6.16.1",
+    "fast-uri": "^3.1.9",
+    "zod": "^4.6.7",
+    "minimatch": "^11.0.4",
+    "glob": "^14.0.3"
   }
 }

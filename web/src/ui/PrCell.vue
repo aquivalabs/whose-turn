@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The PR cell: the PR as a link with its checks as a pill under it while open, or its state once it is not.
-import { checksTone } from '@/lib/moves.ts';
+import { checksTone, isPrOnly } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
 import type { TurnRow } from '@/lib/types.ts';
 import ExtLink from './ExtLink.vue';
@@ -8,7 +8,7 @@ defineProps<{ row: TurnRow }>();
 </script>
 <template>
   <td>
-    <span v-if="row.pr" class="pr-cell">
+    <span v-if="row.pr && !isPrOnly(row)" class="pr-cell">
       <ExtLink :text="row.pr" :url="row.pr_url" class="pr-cell__link" />
       <span
         v-if="row.pr_state === 'OPEN' && row.checks"
@@ -25,7 +25,7 @@ defineProps<{ row: TurnRow }>();
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .pr-cell__link {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { notify } from '../lib/notify.mjs';
+import { notifier, notify } from '../lib/notify.mjs';
 
 const capture = (platform, title, body) => {
   const calls = [];
@@ -40,4 +40,27 @@ test('title and body are cut to a sane length; other platforms stay silent', () 
   const [[, args]] = capture('linux', 'x'.repeat(500), 'y'.repeat(500));
   assert.deepEqual(args.map((text) => text.length), [120, 240]);
   assert.deepEqual(capture('freebsd', 'T', 'B'), []);
+});
+
+test('the notifications.desktop setting stops notify from firing, and turning it on again fires', () => {
+  const calls = [];
+  let desktop = false;
+  const send = () => notify('T', 'B', { platform: 'linux', run: (...call) => calls.push(call), enabled: desktop });
+  send();
+  assert.deepEqual(calls, []);
+  desktop = true;
+  send();
+  assert.equal(calls.length, 1);
+});
+
+test('notifier reads the setting at each call, so a flip between two calls applies to the second', () => {
+  let desktop = true;
+  const reads = [];
+  const calls = [];
+  const send = notifier(() => { reads.push(desktop); return desktop; }, { platform: 'linux', run: (...call) => calls.push(call) });
+  send('T', 'B');
+  desktop = false;
+  send('T', 'B');
+  assert.deepEqual(reads, [true, false]);
+  assert.deepEqual(calls, [['notify-send', ['T', 'B']]]);
 });

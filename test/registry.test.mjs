@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRegistry } from '../lib/registry.mjs';
+import { askOwner, createRegistry } from '../lib/registry.mjs';
+import { loadConfig, saveNotifications, saveWorkspaces } from '../lib/config.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const fakeWorkspace = (definition) => {
   const listeners = [];
@@ -78,4 +80,54 @@ test('a workspace whose build throws at load is dropped with a problem line and 
   });
   assert.deepEqual(registry.workspaces.map((workspace) => workspace.id), ['a']);
   assert.match(registry.problems[0], /Workspace "b" was dropped: Invalid regular expression/);
+});
+
+test('the real notifications save reloads the registry, so a toggle applies live without a restart', async () => {
+  const dir = scratchDir('wt-registry-');
+  const env = { WHOSE_TURN_DATA: dir };
+  const configFile = loadConfig(env).configFile;
+  const registry = createRegistry({
+    load: () => loadConfig(env),
+    save: (raw) => saveWorkspaces(configFile, raw),
+    saveNotifications: (notifications) => saveNotifications(configFile, notifications),
+    build: (definition) => fakeWorkspace(definition),
+  });
+  assert.equal(registry.notifications.desktop, true);
+  await registry.saveNotifications({ desktop: false });
+  assert.equal(registry.notifications.desktop, false);
+  await registry.saveNotifications({ desktop: true });
+  assert.equal(registry.notifications.desktop, true);
+});
+
+test('a review request belongs to the first shown workspace watching its repository, else the first shown one in its org, else nobody (RMA-378)', () => {
+  // Setup
+  const github = (id, repo, extra = {}) => ({ type: 'github', id, repo, ...extra });
+  const workspaces = [
+    { id: 'tools', connectors: [{ type: 'linear', id: 'lin' }, github('gh', 'acme/tools')] },
+    { id: 'app', connectors: [github('front', 'Acme/App'), github('back', 'acme/app')] },
+    { id: 'parked', connectors: [github('gh', 'acme/infra')] },
+    { id: 'other', connectors: [github('gh', 'zed/site', { org: 'zed' })] },
+  ];
+  const hiddenOf = (id) => (id === 'parked' ? 'parked' : '');
+  // Exercise
+  const owner = (repo) => askOwner(workspaces, hiddenOf, repo);
+  // Verify
+  assert.equal(owner('acme/app'), 'app/front');
+  assert.equal(owner('ACME/tools'), 'tools/gh');
+  assert.equal(owner('acme/infra'), 'tools/gh');
+  assert.equal(owner('zed/docs'), 'other/gh');
+  assert.equal(owner('nobody/repo'), '');
+  assert.equal(askOwner(workspaces, () => '', 'acme/infra'), 'parked/gh');
+});
+
+test('a source whose org does not hold the repository never owns its requests, even when it watches that repository', () => {
+  // Setup
+  const workspaces = [
+    { id: 'quiet', connectors: [{ type: 'github', id: 'gh', repo: 'acme/app', org: 'nobody-here' }] },
+    { id: 'main', connectors: [{ type: 'github', id: 'gh', repo: 'acme/tools' }] },
+  ];
+  // Exercise
+  const owner = askOwner(workspaces, () => '', 'acme/app');
+  // Verify
+  assert.equal(owner, 'main/gh');
 });

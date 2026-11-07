@@ -1,23 +1,32 @@
 <script setup lang="ts">
-// Report: one field in the user's words; the server's composer shapes the issue; the list below shows what this machine filed with the state Linear reports.
-import { ref, watch, nextTick } from 'vue';
-import { refAutoReset } from '@vueuse/core';
-import { snapshot, ui } from '@/store.ts';
+// Report: one field in the user's words; the server's composer shapes the issue and files it with the maintainer's tracker; the list below shows what this machine filed with the state the tracker reports.
+import { AnimatePresence, Motion } from 'motion-v';
+import { computed, ref, watch, nextTick } from 'vue';
+import { scrollers, snapshot, ui } from '@/store.ts';
+import { dark } from '@/scheme.ts';
 import { getJson, post, problemsOf } from '@/lib/api.ts';
 import { SERVER_DOWN, TEXT_KEPT, writeProblem } from '@/lib/problems.ts';
 import type { ApiError, FiledReport } from '@/lib/types.ts';
+import { describeClient } from '@/lib/client-report.ts';
+import { describeWindow, recentApiFailures } from '@/lib/window-report.ts';
+import { fold } from '@/motion.ts';
 import { ago } from '@/lib/time.ts';
 import { outcomeTone } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
+import { useText } from '@/i18n/index.ts';
+import Modal from '@/ui/Modal.vue';
 
 type ReportLine = Pick<
   FiledReport,
-  'id' | 'title' | 'state' | 'outcome' | 'filed_at' | 'changed_at'
+  'id' | 'title' | 'state' | 'outcome' | 'filed_at' | 'changed_at' | 'mine'
 >;
 interface FeedbackList {
-  configured: boolean;
-  project?: string;
   reports?: ReportLine[];
+}
+interface FeedbackPreview {
+  error?: ApiError;
+  preview?: { environment: object; diagnostics: object };
+  preview_token?: string;
 }
 interface FeedbackReply {
   error?: ApiError;
@@ -25,53 +34,72 @@ interface FeedbackReply {
   reports?: ReportLine[];
 }
 
+const t = useText();
 const text = ref('');
 const field = ref<HTMLTextAreaElement | null>(null);
 const sending = ref(false);
 const problems = ref<string[]>([]);
 const done = ref<{ identifier: string; title: string } | null>(null);
-const project = ref('');
-const configured = ref(true);
-const copied = refAutoReset<'' | 'sent' | 'failed'>('', 1600);
 const reports = ref<ReportLine[]>([]);
+const preview = ref<FeedbackPreview['preview'] | null>(null);
+const previewToken = ref('');
+const showPayload = ref(false);
 const reportPage = (id: string) => '/report?id=' + encodeURIComponent(id);
+const describeHere = () => ({
+  client: describeClient({
+    navigator,
+    screen,
+    devicePixelRatio,
+    innerWidth,
+    innerHeight,
+    dark: dark.value,
+    mode: ui.mode,
+  }),
+  window: describeWindow({
+    layers: ui,
+    fontPx: parseFloat(getComputedStyle(document.documentElement).fontSize) || 0,
+    consoleErrors: ui.consoleErrors,
+    reconnects: ui.reconnects,
+    lastEventAt: ui.lastEventAt,
+    now: Date.now(),
+    apiFailures: recentApiFailures(),
+    boxes: { your_move: scrollers.your_move ?? null, waiting: scrollers.waiting ?? null, feed: scrollers.feed ?? null },
+  }),
+});
+const described = ref<ReturnType<typeof describeHere> | null>(null);
+const loadPreview = () => {
+  const here = describeHere();
+  described.value = here;
+  return post<FeedbackPreview>('/api/feedback', { preview: true, from: 'the window', ws: snapshot.workspace.id, ...here }).then(
+    (reply) => {
+      preview.value = reply.preview || null;
+      previewToken.value = reply.preview_token || '';
+    },
+    () => {
+      preview.value = null;
+    },
+  );
+};
 const load = () =>
   getJson<FeedbackList>('/api/feedback').then(
     (list) => {
-      configured.value = list.configured;
-      project.value = list.configured ? 'Linear · ' + list.project : 'not connected';
       reports.value = list.reports || [];
     },
     () => {
-      problems.value = [SERVER_DOWN + '; past reports cannot be loaded.'];
+      problems.value = [t('feedback.problem.pastReports', { down: SERVER_DOWN })];
     },
   );
+const everyone = computed(() => reports.value.some((report) => report.mine !== undefined));
 const close = () => {
   ui.feedback = false;
 };
-const copy = () => {
-  const remark = text.value.trim();
-  if (!remark) {
-    problems.value = ['Write at least one line.'];
-    return;
-  }
-  problems.value = [];
-  navigator.clipboard.writeText(remark).then(
-    () => {
-      copied.value = 'sent';
-    },
-    () => {
-      copied.value = 'failed';
-    },
-  );
-};
 const send = () => {
-  if (!configured.value || sending.value) {
+  if (sending.value) {
     return;
   }
   const remark = text.value.trim();
   if (!remark) {
-    problems.value = ['Write at least one line.'];
+    problems.value = [t('feedback.problem.empty')];
     return;
   }
   sending.value = true;
@@ -79,7 +107,8 @@ const send = () => {
     text: remark,
     from: 'the window',
     ws: snapshot.workspace.id,
-    kind_ref: { kind: 'workspace', ref: snapshot.workspace.id },
+    preview_token: previewToken.value || undefined,
+    ...(described.value ?? describeHere()),
   })
     .then((reply) => {
       sending.value = false;
@@ -93,43 +122,39 @@ const send = () => {
     })
     .catch((failure: Error) => {
       sending.value = false;
-      problems.value = [writeProblem(failure, { refused: 'Not sent', unreachable: TEXT_KEPT })];
+      problems.value = [writeProblem(failure, { refused: t('feedback.problem.notSent'), unreachable: TEXT_KEPT })];
     });
 };
 watch(
   () => ui.feedback,
   (open) => {
     if (open) {
+      ui.reportNews = false;
       problems.value = [];
       done.value = null;
+      showPayload.value = false;
+      described.value = null;
+      loadPreview();
       load().then(() => nextTick(() => field.value?.focus()));
     }
   },
 );
 </script>
 <template>
-  <div
-    v-if="ui.feedback"
-    class="modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="feedback-title"
-    @click.self="close"
-  >
-    <div class="modal__card feedback-sheet__card">
-      <div class="modal__head">
-        <h3 id="feedback-title" class="modal__title">To the Whose Turn backlog</h3>
-        <span class="modal__meta">{{ project }}</span>
-        <button
-          type="button"
-          class="btn btn--tonal"
-          :aria-disabled="!configured || sending"
-          @click="send"
-        >
-          {{ sending ? 'Composing…' : 'Send' }}
+  <AnimatePresence>
+    <Modal
+      v-if="ui.feedback"
+      :title="t('feedback.title')"
+      label-id="feedback-title"
+      flush
+      card-class="feedback-sheet__card"
+      @close="close"
+    >
+      <template #head>
+        <button type="button" class="btn btn--tonal" :aria-disabled="sending" @click="send">
+          {{ sending ? t('feedback.composing') : t('feedback.send') }}
         </button>
-        <button type="button" class="btn" @click="close">Close</button>
-      </div>
+      </template>
       <div v-if="problems.length" class="alert">{{ problems.join('  ·  ') }}</div>
       <div class="sheet-form">
         <textarea
@@ -137,52 +162,54 @@ watch(
           v-model="text"
           class="input feedback-sheet__text"
           rows="5"
-          :placeholder="
-            'Describe the problem or the wish in your own words.' +
-            (configured ? ' Cmd+Enter sends.' : '')
-          "
+          :placeholder="t('feedback.placeholder')"
           autocomplete="off"
           @keydown.meta.enter.prevent="send"
           @keydown.ctrl.enter.prevent="send"
         ></textarea>
-        <p v-if="!configured" class="feedback-sheet__note">
-          The maintainer's tracker is not connected on this machine, so nothing can be sent from
-          here. Copy your remark and pass it on yourself.
-          <button type="button" class="btn" @click="copy">
-            {{
-              copied === 'sent' ? 'Copied' : copied === 'failed' ? 'Could not copy' : 'Copy remark'
-            }}
+        <p class="feedback-sheet__note">
+          {{ t('feedback.note') }}
+          <button
+            v-if="preview"
+            type="button"
+            class="feedback-sheet__payload-toggle"
+            :aria-expanded="showPayload"
+            @click="showPayload = !showPayload"
+          >
+            {{ showPayload ? t('feedback.hidePayload') : t('feedback.showPayload') }}
           </button>
         </p>
-        <p v-else class="feedback-sheet__note">
-          An assistant turns it into a proper issue (title, kind, description) and files it in the
-          Whose Turn backlog with this workspace's summary attached.
-        </p>
+        <AnimatePresence>
+          <Motion v-if="showPayload && preview" v-bind="fold" as="pre" class="feedback-sheet__payload">{{
+            JSON.stringify(preview, null, 2)
+          }}</Motion>
+        </AnimatePresence>
         <p v-if="done" class="empty">
-          Filed as
+          {{ t('feedback.filedAs') }}
           <a :href="reportPage(done.identifier)" target="_blank" rel="noopener">{{
             done.identifier
           }}</a>
           · {{ done.title }}
         </p>
         <div v-if="reports.length" class="feedback-sheet__reports">
-          <h4 class="sheet-form__heading">Your reports</h4>
+          <h4 class="sheet-form__heading">{{ everyone ? t('feedback.allReports') : t('feedback.yourReports') }}</h4>
           <div v-for="report in reports" :key="report.id" class="feedback-sheet__report">
             <a :href="reportPage(report.id)" target="_blank" rel="noopener">{{ report.id }}</a>
             <span class="feedback-sheet__report-title">{{ report.title }}</span>
+            <span v-if="report.mine" class="pill">{{ t('feedback.yours') }}</span>
             <span class="pill" :class="modifier('pill', outcomeTone(report.outcome))">{{
-              report.state || 'filed'
+              report.state || t('feedback.filed')
             }}</span>
             <span class="timestamp">{{ ago(report.changed_at || report.filed_at) }}</span>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </Modal>
+  </AnimatePresence>
 </template>
 <style scoped>
-.feedback-sheet__card {
-  width: min(640px, 100%);
+:deep(.feedback-sheet__card) {
+  width: min(40rem, 100%);
 }
 
 .feedback-sheet__text {
@@ -193,16 +220,36 @@ watch(
 .feedback-sheet__note {
   margin: 0;
   color: var(--md-on-surface-variant);
-  font-size: 12px;
+  font-size: 0.75rem;
+}
+
+.feedback-sheet__payload-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--md-primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.feedback-sheet__payload {
+  max-height: 16rem;
+  margin: 0;
+  overflow: auto;
+  padding: 0.5rem;
+  border-radius: var(--md-r-chip);
+  background: var(--md-s-high);
+  font-size: 0.75rem;
 }
 
 .feedback-sheet__report {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  padding: 4px 0;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
   border-top: 1px solid var(--md-outline-variant);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .feedback-sheet__report-title {

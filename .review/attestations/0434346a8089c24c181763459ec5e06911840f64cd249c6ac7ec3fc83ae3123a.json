@@ -1,0 +1,2141 @@
+{
+  "diffHash": "0434346a8089c24c181763459ec5e06911840f64cd249c6ac7ec3fc83ae3123a",
+  "commitSha": "c796c5bded17dafa6c7560970e432fda8bfd3b36",
+  "perAgent": [
+    {
+      "name": "craft",
+      "dispatched": true,
+      "carried": false,
+      "retried": false,
+      "threshold": 7,
+      "score": 10,
+      "verdict": "PASS",
+      "counts": {
+        "blocker": 0,
+        "major": 0,
+        "minor": 0,
+        "advisory": 1
+      },
+      "findingsTotal": 1,
+      "findingsUnique": 1,
+      "findings": [
+        {
+          "severity": "advisory",
+          "why_this_severity": "Q3: no break; Q4 context: the diff trimmed comments, so the remainder is cosmetic.",
+          "where": "scripts/release-linear.mjs:1-3",
+          "occurrences": 1,
+          "problem": "The usage header's third line runs well past 80 characters. It also restates config-key behaviour (what the defaults are) rather than only naming flags.",
+          "scenario": null,
+          "confidence": "high",
+          "evidence": "Read the added comment lines in review.diff and compared them with the no-code-prose:policy limits. Every other new comment is a pointer, a directive or a doc block of at most three lines.",
+          "disputed": false
+        }
+      ],
+      "claims": [
+        {
+          "path": ".claude/docs.config.json",
+          "disposition": "judged"
+        },
+        {
+          "path": ".githooks/pre-push",
+          "disposition": "judged"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "disposition": "judged"
+        },
+        {
+          "path": "AGENTS.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "README.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/github.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/index.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/adr/0007-release-pipeline.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/adr/0009-motion-in-the-window.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/mechanisms/motion.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/mechanisms/your-move.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/api.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/backoff.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/config.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/errors.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/feedback.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/text.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/update.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/workspace.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/release-linear.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/skill-knows-release.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "server.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/config-save.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/feedback.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/health.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/release-linear.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/server-guards.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/skill-knows-release.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/text.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/update.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/App.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/composables/useFold.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/Feed.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/Feed.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/FeedItem.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/rail/Rail.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/status/StatusBar.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/status/UpdateChip.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/todos/Todos.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.motion.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/NoteModal.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/RecentlyDone.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/YourMove.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/lib/types.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion-features.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/store.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/test-motion.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/test-rows.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/test-setup.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/FieldRow.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Island.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Island.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Modal.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/ResizeHandle.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Swap.vue",
+          "disposition": "judged"
+        }
+      ],
+      "demotions": [],
+      "deferredMajors": [],
+      "deferredMinors": [],
+      "reopensRound": false,
+      "oneLine": "No dead, duplicated or misplaced code and no comment outside the four allowed forms; one advisory on an over-long script header line."
+    },
+    {
+      "name": "architecture",
+      "dispatched": true,
+      "carried": false,
+      "retried": false,
+      "threshold": 8,
+      "score": 10,
+      "verdict": "PASS",
+      "counts": {
+        "blocker": 0,
+        "major": 0,
+        "minor": 0,
+        "advisory": 0
+      },
+      "findingsTotal": 0,
+      "findingsUnique": 0,
+      "findings": [],
+      "claims": [
+        {
+          "path": ".claude/docs.config.json",
+          "disposition": "judged"
+        },
+        {
+          "path": ".githooks/pre-push",
+          "disposition": "judged"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "disposition": "judged"
+        },
+        {
+          "path": "AGENTS.md",
+          "disposition": "declined",
+          "reason": "prose only, no boundary or dependency change"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "disposition": "declined",
+          "reason": "prose only"
+        },
+        {
+          "path": "README.md",
+          "disposition": "declined",
+          "reason": "prose only"
+        },
+        {
+          "path": "connectors/github.mjs",
+          "disposition": "declined",
+          "reason": "comment-only change"
+        },
+        {
+          "path": "connectors/index.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/adr/0007-release-pipeline.md",
+          "disposition": "declined",
+          "reason": "prose only"
+        },
+        {
+          "path": "docs/adr/0009-motion-in-the-window.md",
+          "disposition": "declined",
+          "reason": "prose only"
+        },
+        {
+          "path": "docs/mechanisms/motion.md",
+          "disposition": "declined",
+          "reason": "prose only"
+        },
+        {
+          "path": "docs/mechanisms/your-move.md",
+          "disposition": "declined",
+          "reason": "prose only"
+        },
+        {
+          "path": "lib/api.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/backoff.mjs",
+          "disposition": "declined",
+          "reason": "comment-only change"
+        },
+        {
+          "path": "lib/config.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/errors.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/feedback.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/text.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/update.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/workspace.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/release-linear.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/skill-knows-release.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "server.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/config-save.test.mjs",
+          "disposition": "declined",
+          "reason": "test coverage, not a boundary"
+        },
+        {
+          "path": "test/feedback.test.mjs",
+          "disposition": "declined",
+          "reason": "test coverage, not a boundary"
+        },
+        {
+          "path": "test/health.test.mjs",
+          "disposition": "declined",
+          "reason": "test coverage, not a boundary"
+        },
+        {
+          "path": "test/release-linear.test.mjs",
+          "disposition": "declined",
+          "reason": "test coverage, not a boundary"
+        },
+        {
+          "path": "test/server-guards.test.mjs",
+          "disposition": "declined",
+          "reason": "test coverage, not a boundary"
+        },
+        {
+          "path": "test/skill-knows-release.test.mjs",
+          "disposition": "declined",
+          "reason": "test coverage, not a boundary"
+        },
+        {
+          "path": "test/text.test.mjs",
+          "disposition": "declined",
+          "reason": "test coverage, not a boundary"
+        },
+        {
+          "path": "test/update.test.mjs",
+          "disposition": "declined",
+          "reason": "test coverage, not a boundary. The atlassian.net rule hit at test/release-linear.test.mjs is a your-site placeholder, not mine."
+        },
+        {
+          "path": "web/src/App.vue",
+          "disposition": "declined",
+          "reason": "small wiring change, no boundary crossed"
+        },
+        {
+          "path": "web/src/composables/useFold.ts",
+          "disposition": "declined",
+          "reason": "one-line change, no boundary crossed"
+        },
+        {
+          "path": "web/src/features/feed/Feed.test.ts",
+          "disposition": "declined",
+          "reason": "test"
+        },
+        {
+          "path": "web/src/features/feed/Feed.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/FeedItem.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/rail/Rail.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.test.ts",
+          "disposition": "declined",
+          "reason": "test"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/status/StatusBar.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/status/UpdateChip.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/todos/Todos.vue",
+          "disposition": "declined",
+          "reason": "motion import swap only"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.motion.test.ts",
+          "disposition": "declined",
+          "reason": "test"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.test.ts",
+          "disposition": "declined",
+          "reason": "test"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/NoteModal.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/your-move/RecentlyDone.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/YourMove.vue",
+          "disposition": "declined",
+          "reason": "motion import swap only"
+        },
+        {
+          "path": "web/src/lib/types.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion-features.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/store.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/test-motion.ts",
+          "disposition": "declined",
+          "reason": "test stand-in"
+        },
+        {
+          "path": "web/src/test-rows.ts",
+          "disposition": "declined",
+          "reason": "test fixture"
+        },
+        {
+          "path": "web/src/test-setup.ts",
+          "disposition": "declined",
+          "reason": "test setup"
+        },
+        {
+          "path": "web/src/ui/FieldRow.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Island.test.ts",
+          "disposition": "declined",
+          "reason": "test"
+        },
+        {
+          "path": "web/src/ui/Island.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Modal.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/ResizeHandle.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Swap.vue",
+          "disposition": "judged"
+        }
+      ],
+      "demotions": [],
+      "deferredMajors": [],
+      "deferredMinors": [],
+      "reopensRound": false,
+      "oneLine": "No boundary, dependency-direction or declared-invariant violation found; dependencies point inward, the admin-token host allow-list and secret-refusal sit in the layers that own them. The skills named in the config (meta:solid, meta:reuse-first, error:architecture) were not installed, so their house rules were not applied."
+    },
+    {
+      "name": "tests",
+      "dispatched": true,
+      "carried": false,
+      "retried": false,
+      "threshold": 7,
+      "score": 10,
+      "verdict": "PASS",
+      "counts": {
+        "blocker": 0,
+        "major": 0,
+        "minor": 0,
+        "advisory": 1
+      },
+      "findingsTotal": 1,
+      "findingsUnique": 1,
+      "findings": [
+        {
+          "severity": "advisory",
+          "why_this_severity": "Q3: the break does not write as a failing scenario; the shared Swap logic is exercised through the Waiting motion tests, so only the face-to-face path in UpdateChip is thin.",
+          "where": "web/src/ui/Swap.vue:1",
+          "occurrences": 1,
+          "problem": "Swap has no test of its own. Its empty-to-face and face-to-face paths run only through the Waiting motion tests. UpdateChip's five faces (done, ready, busy, failed, out) change through the same watcher with no dedicated assertion.",
+          "scenario": null,
+          "confidence": "low",
+          "evidence": "The Waiting.motion tests drive list-to-empty and empty-to-list swaps. No test in the diff changes UpdateChip from one non-empty face directly to another. I did not run it.",
+          "disputed": false
+        }
+      ],
+      "claims": [
+        {
+          "path": "lib/api.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/config.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/feedback.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/text.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/update.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/workspace.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/errors.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/backoff.mjs",
+          "disposition": "declined",
+          "reason": "comment-only change"
+        },
+        {
+          "path": "scripts/release-linear.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/skill-knows-release.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "server.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/github.mjs",
+          "disposition": "declined",
+          "reason": "trivial one-line change"
+        },
+        {
+          "path": "connectors/index.mjs",
+          "disposition": "declined",
+          "reason": "exports secretStores, which the secret-refusal tests cover"
+        },
+        {
+          "path": "test/config-save.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/feedback.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/health.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/release-linear.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/server-guards.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/skill-knows-release.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/text.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/update.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Swap.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Island.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Island.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/ResizeHandle.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Modal.vue",
+          "disposition": "declined",
+          "reason": "small markup change covered by the green window suite"
+        },
+        {
+          "path": "web/src/ui/FieldRow.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/status/UpdateChip.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.motion.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/Feed.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/Feed.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion.ts",
+          "disposition": "declined",
+          "reason": "motion config exercised by the motion tests; the suite is green"
+        },
+        {
+          "path": "web/src/test-motion.ts",
+          "disposition": "declined",
+          "reason": "test helper"
+        },
+        {
+          "path": "web/src/test-rows.ts",
+          "disposition": "declined",
+          "reason": "test helper"
+        },
+        {
+          "path": "web/src/test-setup.ts",
+          "disposition": "declined",
+          "reason": "test setup"
+        },
+        {
+          "path": ".claude/docs.config.json",
+          "disposition": "declined",
+          "reason": "config, no logic"
+        },
+        {
+          "path": ".githooks/pre-push",
+          "disposition": "declined",
+          "reason": "hook script with no test-honesty concern"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "disposition": "declined",
+          "reason": "CI config"
+        },
+        {
+          "path": "AGENTS.md",
+          "disposition": "declined",
+          "reason": "docs"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "disposition": "declined",
+          "reason": "docs"
+        },
+        {
+          "path": "README.md",
+          "disposition": "declined",
+          "reason": "docs"
+        },
+        {
+          "path": "docs/adr/0007-release-pipeline.md",
+          "disposition": "declined",
+          "reason": "docs"
+        },
+        {
+          "path": "docs/adr/0009-motion-in-the-window.md",
+          "disposition": "declined",
+          "reason": "docs"
+        },
+        {
+          "path": "docs/mechanisms/motion.md",
+          "disposition": "declined",
+          "reason": "docs"
+        },
+        {
+          "path": "docs/mechanisms/your-move.md",
+          "disposition": "declined",
+          "reason": "docs"
+        },
+        {
+          "path": "web/src/App.vue",
+          "disposition": "declined",
+          "reason": "wiring and markup only"
+        },
+        {
+          "path": "web/src/composables/useFold.ts",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/feed/FeedItem.vue",
+          "disposition": "declined",
+          "reason": "one-line markup change"
+        },
+        {
+          "path": "web/src/features/rail/Rail.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/status/StatusBar.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/todos/Todos.vue",
+          "disposition": "declined",
+          "reason": "markup-only change"
+        },
+        {
+          "path": "web/src/features/your-move/NoteModal.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/your-move/RecentlyDone.vue",
+          "disposition": "declined",
+          "reason": "markup-only change"
+        },
+        {
+          "path": "web/src/features/your-move/YourMove.vue",
+          "disposition": "declined",
+          "reason": "markup-only change"
+        },
+        {
+          "path": "web/src/lib/types.ts",
+          "disposition": "declined",
+          "reason": "type fields only"
+        },
+        {
+          "path": "web/src/motion-features.ts",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/store.ts",
+          "disposition": "declined",
+          "reason": "one-line change"
+        }
+      ],
+      "demotions": [],
+      "deferredMajors": [],
+      "deferredMinors": [],
+      "reopensRound": false,
+      "oneLine": "Every new branch has positive and negative tests and both suites are green; the only note is that Swap has no direct test."
+    },
+    {
+      "name": "docs",
+      "dispatched": true,
+      "carried": false,
+      "retried": false,
+      "threshold": 8,
+      "score": 10,
+      "verdict": "PASS",
+      "counts": {
+        "blocker": 0,
+        "major": 0,
+        "minor": 0,
+        "advisory": 1
+      },
+      "findingsTotal": 1,
+      "findingsUnique": 1,
+      "findings": [
+        {
+          "severity": "advisory",
+          "why_this_severity": "Q3 yields no failing scenario: the amendment directly below the paragraph supplies the current state, so no reader acts on a wrong contract.",
+          "where": "docs/adr/0009-motion-in-the-window.md, Consequences 'Harder' paragraph",
+          "occurrences": 1,
+          "problem": "The paragraph still calls lazy loading of the feature set 'the next step if the size matters', while the RMA-314 amendment in the same file records it as done.",
+          "scenario": null,
+          "confidence": "high",
+          "evidence": "Diff of the ADR: the RMA-314 amendment reports the entry chunk cut from 267.2 kB to 123.7 kB, but the 'Harder' paragraph keeps the future-tense wording.",
+          "disputed": false
+        }
+      ],
+      "claims": [
+        {
+          "path": ".claude/docs.config.json",
+          "disposition": "judged"
+        },
+        {
+          "path": ".githooks/pre-push",
+          "disposition": "judged"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "disposition": "judged"
+        },
+        {
+          "path": "AGENTS.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "README.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/adr/0007-release-pipeline.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/adr/0009-motion-in-the-window.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/mechanisms/motion.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/mechanisms/your-move.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/config.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/update.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/feedback.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/api.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/backoff.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/skill-knows-release.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/release-linear.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion-features.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Island.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Modal.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Swap.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/test-motion.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/RecentlyDone.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/github.mjs",
+          "disposition": "declined",
+          "reason": "No paired doc names this file; README reviewer-list behaviour is documented in the diff."
+        },
+        {
+          "path": "connectors/index.mjs",
+          "disposition": "declined",
+          "reason": "No pairing; no contract change."
+        },
+        {
+          "path": "lib/errors.mjs",
+          "disposition": "declined",
+          "reason": "PINNED reason is documented in README and ADR 0007."
+        },
+        {
+          "path": "lib/text.mjs",
+          "disposition": "declined",
+          "reason": "Internal helper; no paired doc."
+        },
+        {
+          "path": "lib/workspace.mjs",
+          "disposition": "declined",
+          "reason": "Internal refactor; no paired doc moved."
+        },
+        {
+          "path": "server.mjs",
+          "disposition": "declined",
+          "reason": "Routes covered by README API paragraphs updated in the diff."
+        },
+        {
+          "path": "test/config-save.test.mjs",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "test/feedback.test.mjs",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "test/health.test.mjs",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "test/release-linear.test.mjs",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "test/server-guards.test.mjs",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "test/skill-knows-release.test.mjs",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "test/text.test.mjs",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "test/update.test.mjs",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "web/src/App.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/composables/useFold.ts",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/features/feed/Feed.test.ts",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "web/src/features/feed/Feed.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/features/feed/FeedItem.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/features/rail/Rail.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.test.ts",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.vue",
+          "disposition": "declined",
+          "reason": "Range display is covered by README and CHANGELOG."
+        },
+        {
+          "path": "web/src/features/status/StatusBar.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/features/status/UpdateChip.vue",
+          "disposition": "declined",
+          "reason": "Pinned behaviour covered in README and ADR 0007."
+        },
+        {
+          "path": "web/src/features/todos/Todos.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.motion.test.ts",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.test.ts",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/features/your-move/NoteModal.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path; the your-move page gained a note-window section."
+        },
+        {
+          "path": "web/src/features/your-move/YourMove.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/lib/types.ts",
+          "disposition": "declined",
+          "reason": "Type addition (update.pinned) is documented in README."
+        },
+        {
+          "path": "web/src/store.ts",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/test-rows.ts",
+          "disposition": "declined",
+          "reason": "Test helper."
+        },
+        {
+          "path": "web/src/test-setup.ts",
+          "disposition": "declined",
+          "reason": "Test setup."
+        },
+        {
+          "path": "web/src/ui/FieldRow.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path."
+        },
+        {
+          "path": "web/src/ui/Island.test.ts",
+          "disposition": "declined",
+          "reason": "Test file."
+        },
+        {
+          "path": "web/src/ui/ResizeHandle.vue",
+          "disposition": "declined",
+          "reason": "Not a declared mechanism path; behaviour change is in CHANGELOG."
+        }
+      ],
+      "demotions": [],
+      "deferredMajors": [],
+      "deferredMinors": [],
+      "reopensRound": false,
+      "oneLine": "Every paired doc moved with its code (README, ADR 0007/0009, motion and your-move pages, AGENTS.md); one advisory on a stale future-tense sentence in ADR 0009."
+    },
+    {
+      "name": "security",
+      "dispatched": true,
+      "carried": false,
+      "retried": false,
+      "threshold": 9,
+      "score": 10,
+      "verdict": "PASS",
+      "counts": {
+        "blocker": 0,
+        "major": 0,
+        "minor": 0,
+        "advisory": 0
+      },
+      "findingsTotal": 0,
+      "findingsUnique": 0,
+      "findings": [],
+      "claims": [
+        {
+          "path": ".githooks/pre-push",
+          "disposition": "judged"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/index.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/github.mjs",
+          "disposition": "declined",
+          "reason": "comment-only change, no exposure"
+        },
+        {
+          "path": "lib/api.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/config.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/feedback.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/update.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/text.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/workspace.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/errors.mjs",
+          "disposition": "declined",
+          "reason": "adds a static error reason, no exposure"
+        },
+        {
+          "path": "lib/backoff.mjs",
+          "disposition": "declined",
+          "reason": "comment-only change"
+        },
+        {
+          "path": "scripts/release-linear.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/skill-knows-release.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "server.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/feedback.test.mjs",
+          "disposition": "declined",
+          "reason": "tests; dummy tokens only"
+        },
+        {
+          "path": "test/server-guards.test.mjs",
+          "disposition": "declined",
+          "reason": "tests; dummy tokens only"
+        },
+        {
+          "path": "test/config-save.test.mjs",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "test/health.test.mjs",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "test/release-linear.test.mjs",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "test/skill-knows-release.test.mjs",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "test/text.test.mjs",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "test/update.test.mjs",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "web/src/features/status/UpdateChip.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": ".claude/docs.config.json",
+          "disposition": "declined",
+          "reason": "docs config, no secrets"
+        },
+        {
+          "path": "AGENTS.md",
+          "disposition": "declined",
+          "reason": "prose"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "disposition": "declined",
+          "reason": "prose"
+        },
+        {
+          "path": "README.md",
+          "disposition": "declined",
+          "reason": "prose"
+        },
+        {
+          "path": "docs/adr/0007-release-pipeline.md",
+          "disposition": "declined",
+          "reason": "prose"
+        },
+        {
+          "path": "docs/adr/0009-motion-in-the-window.md",
+          "disposition": "declined",
+          "reason": "prose"
+        },
+        {
+          "path": "docs/mechanisms/motion.md",
+          "disposition": "declined",
+          "reason": "prose"
+        },
+        {
+          "path": "docs/mechanisms/your-move.md",
+          "disposition": "declined",
+          "reason": "prose"
+        },
+        {
+          "path": "web/src/App.vue",
+          "disposition": "declined",
+          "reason": "motion/layout only, no untrusted output"
+        },
+        {
+          "path": "web/src/composables/useFold.ts",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/features/feed/Feed.test.ts",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "web/src/features/feed/Feed.vue",
+          "disposition": "declined",
+          "reason": "template changes, no v-html"
+        },
+        {
+          "path": "web/src/features/feed/FeedItem.vue",
+          "disposition": "declined",
+          "reason": "one-line style/motion change"
+        },
+        {
+          "path": "web/src/features/rail/Rail.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.test.ts",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.vue",
+          "disposition": "declined",
+          "reason": "range attributes only"
+        },
+        {
+          "path": "web/src/features/status/StatusBar.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/todos/Todos.vue",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.motion.test.ts",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.test.ts",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.vue",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/features/your-move/NoteModal.vue",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/features/your-move/RecentlyDone.vue",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/features/your-move/YourMove.vue",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/lib/types.ts",
+          "disposition": "declined",
+          "reason": "type additions"
+        },
+        {
+          "path": "web/src/motion-features.ts",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/motion.ts",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/store.ts",
+          "disposition": "declined",
+          "reason": "one-line change"
+        },
+        {
+          "path": "web/src/test-motion.ts",
+          "disposition": "declined",
+          "reason": "test helper"
+        },
+        {
+          "path": "web/src/test-rows.ts",
+          "disposition": "declined",
+          "reason": "test helper"
+        },
+        {
+          "path": "web/src/test-setup.ts",
+          "disposition": "declined",
+          "reason": "test helper"
+        },
+        {
+          "path": "web/src/ui/FieldRow.vue",
+          "disposition": "declined",
+          "reason": "layout only"
+        },
+        {
+          "path": "web/src/ui/Island.test.ts",
+          "disposition": "declined",
+          "reason": "tests"
+        },
+        {
+          "path": "web/src/ui/Island.vue",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/ui/Modal.vue",
+          "disposition": "declined",
+          "reason": "motion only"
+        },
+        {
+          "path": "web/src/ui/ResizeHandle.vue",
+          "disposition": "declined",
+          "reason": "UI interaction only"
+        },
+        {
+          "path": "web/src/ui/Swap.vue",
+          "disposition": "declined",
+          "reason": "motion wrapper only"
+        }
+      ],
+      "demotions": [],
+      "deferredMajors": [],
+      "deferredMinors": [],
+      "reopensRound": false,
+      "oneLine": "No reachable exposure found; the diff narrows it by limiting the admin token to the built-in or allow-listed relay hosts and refusing feedback that contains stored secrets."
+    },
+    {
+      "name": "leak",
+      "dispatched": true,
+      "carried": false,
+      "retried": false,
+      "threshold": 9,
+      "score": 10,
+      "verdict": "PASS",
+      "counts": {
+        "blocker": 0,
+        "major": 0,
+        "minor": 0,
+        "advisory": 0
+      },
+      "findingsTotal": 0,
+      "findingsUnique": 0,
+      "findings": [],
+      "claims": [
+        {
+          "path": ".claude/docs.config.json",
+          "disposition": "judged"
+        },
+        {
+          "path": ".githooks/pre-push",
+          "disposition": "judged"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "disposition": "judged"
+        },
+        {
+          "path": "AGENTS.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "CHANGELOG.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "README.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/github.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/index.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/adr/0007-release-pipeline.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/adr/0009-motion-in-the-window.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/mechanisms/motion.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "docs/mechanisms/your-move.md",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/api.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/backoff.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/config.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/errors.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/feedback.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/text.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/update.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/workspace.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/release-linear.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "scripts/skill-knows-release.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "server.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/config-save.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/feedback.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/health.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/release-linear.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/server-guards.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/skill-knows-release.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/text.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "test/update.test.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/App.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/composables/useFold.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/Feed.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/Feed.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/feed/FeedItem.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/rail/Rail.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/status/StatusBar.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/status/UpdateChip.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/todos/Todos.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.motion.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/NoteModal.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/RecentlyDone.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/features/your-move/YourMove.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/lib/types.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion-features.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/motion.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/store.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/test-motion.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/test-rows.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/test-setup.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/FieldRow.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Island.test.ts",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Island.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Modal.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/ResizeHandle.vue",
+          "disposition": "judged"
+        },
+        {
+          "path": "web/src/ui/Swap.vue",
+          "disposition": "judged"
+        }
+      ],
+      "demotions": [],
+      "deferredMajors": [],
+      "deferredMinors": [],
+      "reopensRound": false,
+      "oneLine": "No real employer, client, person, absolute path or private-system identifier in the diff; fixtures use example.com, relay.invalid and invented names. The cerberus:leak-check skill was not installed, so I judged from the contract file alone."
+    },
+    {
+      "name": "security-scan",
+      "dispatched": true,
+      "carried": false,
+      "retried": false,
+      "threshold": 9,
+      "score": 10,
+      "verdict": "PASS",
+      "counts": {
+        "blocker": 0,
+        "major": 0,
+        "minor": 0,
+        "advisory": 1
+      },
+      "findingsTotal": 1,
+      "findingsUnique": 1,
+      "findings": [
+        {
+          "severity": "advisory",
+          "why_this_severity": "Q3: no break writable. The release object comes only from the user's own config file, and no API route sets it. The key goes only to the fixed api.linear.app host.",
+          "where": "scripts/release-linear.mjs main(), DEFAULTS and defaultsFrom",
+          "problem": "keychain_service and keychain_account from config or flags pick which secret-store entry is read and sent as the Linear Authorization key.",
+          "scenario": null,
+          "confidence": "low",
+          "evidence": "Read the whole of release-linear.mjs from the diff. getKey goes to createSecrets(...).get, and the value goes only to callWith(fetchFn, key) against the hard-coded LINEAR_URL. I did not read lib/api.mjs's config write path in full; the diff shows no `release` key accepted there. The cerberus:security-scan skill was not available (Unknown skill), so I judged from the agent contract alone.",
+          "disputed": false
+        }
+      ],
+      "claims": [
+        {
+          "path": "scripts/skill-knows-release.mjs",
+          "disposition": "judged",
+          "reason": "Read in full. One read-only `gh api` call to a fixed repo path, passed as an argv array with no shell. The base64 is the GitHub contents API encoding, decoded to a version string and compared. No eval, exfiltration or escalation."
+        },
+        {
+          "path": "scripts/release-linear.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": ".githooks/pre-push",
+          "disposition": "judged",
+          "reason": "Reads stdin refs, runs a local node script, and pipes refs to the version-pinned review-gate, which was already there."
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "disposition": "judged",
+          "reason": "Adds one step with GH_TOKEN set to the default github.token and no write scope, running a repo script."
+        },
+        {
+          "path": "lib/feedback.mjs",
+          "disposition": "judged",
+          "reason": "Admin token now goes only to the built-in relay or an allow-listed host. Reports containing stored secrets are refused before anything is sent."
+        },
+        {
+          "path": "lib/api.mjs",
+          "disposition": "judged",
+          "reason": "mentionsSecret compares report text against stored secrets locally and never echoes them."
+        },
+        {
+          "path": "lib/update.mjs",
+          "disposition": "judged",
+          "reason": "Adds a pinned-version guard and removes the 'next session' update prompt. The npm install is still user-triggered."
+        },
+        {
+          "path": "lib/config.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/text.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/workspace.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/errors.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "lib/backoff.mjs",
+          "disposition": "judged",
+          "reason": "Comment only."
+        },
+        {
+          "path": "server.mjs",
+          "disposition": "judged"
+        },
+        {
+          "path": "connectors/index.mjs",
+          "disposition": "judged",
+          "reason": "secretStores only deduplicates (service, account) pairs. It reads nothing."
+        },
+        {
+          "path": "connectors/github.mjs",
+          "disposition": "declined",
+          "reason": "Comment-only change."
+        },
+        {
+          "path": ".claude/docs.config.json",
+          "disposition": "declined",
+          "reason": "Docs config; no executable or secret content."
+        },
+        {
+          "path": "AGENTS.md",
+          "disposition": "declined",
+          "reason": "Docs; scanned for steering text aimed at a reading agent and found none."
+        },
+        {
+          "path": "CHANGELOG.md",
+          "disposition": "declined",
+          "reason": "Docs prose."
+        },
+        {
+          "path": "README.md",
+          "disposition": "declined",
+          "reason": "Docs prose."
+        },
+        {
+          "path": "docs/adr/0007-release-pipeline.md",
+          "disposition": "declined",
+          "reason": "Docs prose; no injection text."
+        },
+        {
+          "path": "docs/adr/0009-motion-in-the-window.md",
+          "disposition": "declined",
+          "reason": "Docs prose."
+        },
+        {
+          "path": "docs/mechanisms/motion.md",
+          "disposition": "declined",
+          "reason": "Docs prose."
+        },
+        {
+          "path": "docs/mechanisms/your-move.md",
+          "disposition": "declined",
+          "reason": "Docs prose."
+        },
+        {
+          "path": "test/config-save.test.mjs",
+          "disposition": "declined",
+          "reason": "Test; dummy values only."
+        },
+        {
+          "path": "test/feedback.test.mjs",
+          "disposition": "declined",
+          "reason": "Test; uses .invalid hosts and dummy tokens."
+        },
+        {
+          "path": "test/health.test.mjs",
+          "disposition": "declined",
+          "reason": "Test."
+        },
+        {
+          "path": "test/release-linear.test.mjs",
+          "disposition": "declined",
+          "reason": "Test with injected fetch and secret lookup; no real network."
+        },
+        {
+          "path": "test/server-guards.test.mjs",
+          "disposition": "declined",
+          "reason": "Test; fake secret values."
+        },
+        {
+          "path": "test/skill-knows-release.test.mjs",
+          "disposition": "declined",
+          "reason": "Test with an injected gh runner."
+        },
+        {
+          "path": "test/text.test.mjs",
+          "disposition": "declined",
+          "reason": "Test."
+        },
+        {
+          "path": "test/update.test.mjs",
+          "disposition": "declined",
+          "reason": "Test."
+        },
+        {
+          "path": "web/src/App.vue",
+          "disposition": "declined",
+          "reason": "UI motion change; no network, secret or exec."
+        },
+        {
+          "path": "web/src/composables/useFold.ts",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/feed/Feed.test.ts",
+          "disposition": "declined",
+          "reason": "UI test."
+        },
+        {
+          "path": "web/src/features/feed/Feed.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/feed/FeedItem.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/rail/Rail.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.test.ts",
+          "disposition": "declined",
+          "reason": "UI test."
+        },
+        {
+          "path": "web/src/features/settings/MonitorSettingsSheet.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/status/StatusBar.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/status/UpdateChip.vue",
+          "disposition": "declined",
+          "reason": "UI only; pinned display."
+        },
+        {
+          "path": "web/src/features/todos/Todos.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.motion.test.ts",
+          "disposition": "declined",
+          "reason": "UI test."
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.test.ts",
+          "disposition": "declined",
+          "reason": "UI test."
+        },
+        {
+          "path": "web/src/features/waiting/Waiting.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/your-move/NoteModal.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/your-move/RecentlyDone.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/features/your-move/YourMove.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/lib/types.ts",
+          "disposition": "declined",
+          "reason": "Types."
+        },
+        {
+          "path": "web/src/motion-features.ts",
+          "disposition": "declined",
+          "reason": "UI motion."
+        },
+        {
+          "path": "web/src/motion.ts",
+          "disposition": "declined",
+          "reason": "UI motion."
+        },
+        {
+          "path": "web/src/store.ts",
+          "disposition": "declined",
+          "reason": "UI state."
+        },
+        {
+          "path": "web/src/test-motion.ts",
+          "disposition": "declined",
+          "reason": "Test helper."
+        },
+        {
+          "path": "web/src/test-rows.ts",
+          "disposition": "declined",
+          "reason": "Test helper."
+        },
+        {
+          "path": "web/src/test-setup.ts",
+          "disposition": "declined",
+          "reason": "Test setup."
+        },
+        {
+          "path": "web/src/ui/FieldRow.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/ui/Island.test.ts",
+          "disposition": "declined",
+          "reason": "UI test."
+        },
+        {
+          "path": "web/src/ui/Island.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/ui/Modal.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/ui/ResizeHandle.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        },
+        {
+          "path": "web/src/ui/Swap.vue",
+          "disposition": "declined",
+          "reason": "UI only."
+        }
+      ],
+      "demotions": [],
+      "deferredMajors": [],
+      "deferredMinors": [],
+      "reopensRound": false,
+      "oneLine": "No unsafe payload: the diff narrows exposure (admin-token host allow-list, stored-secret refusal in reports, no silent update), and the new gh call is read-only and fixed-target. The cerberus:security-scan skill was unavailable, so I judged from the agent contract alone."
+    }
+  ],
+  "overall": "PASS",
+  "timestamp": "2026-11-04T23:42:27.348Z"
+}

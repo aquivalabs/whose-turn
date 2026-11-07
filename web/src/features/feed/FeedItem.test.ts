@@ -1,9 +1,8 @@
-import { expect, test, vi } from 'vitest';
+import { expect, test } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import type { FeedItem } from '@/lib/types.ts';
 import FeedItemRow from './FeedItem.vue';
 
-vi.mock('@/backdrop.ts', () => ({ show: vi.fn(), repaint: vi.fn(), seeded: vi.fn() }));
 
 const item: FeedItem = {
   id: 'c1',
@@ -15,7 +14,7 @@ const item: FeedItem = {
   url: 'https://tracker.example/PROJ-7',
   source: 'tracker',
 };
-const source = { id: 'tracker', type: 'demo', label: 'Tracker' };
+const source = { id: 'tracker', type: 'jira', label: 'Tracker' };
 
 test('expanding a fresh comment asks the feed to toggle it and mark it seen', async () => {
   const { emitted } = render(FeedItemRow, {
@@ -39,4 +38,13 @@ test('a read item asks for nothing when clicked, and shows its body only when ex
   expect(screen.queryByText('please look')).toBeNull();
   await rerender({ item, source, fresh: false, expanded: true });
   expect(screen.getByText('please look')).toBeTruthy();
+});
+
+test('only a fresh item carries the new styling', async () => {
+  const { rerender } = render(FeedItemRow, { props: { item, source, fresh: false, expanded: false } });
+  const row = () => screen.getByText('PROJ-7').closest('li')!;
+
+  expect(row().classList.contains('feed-item--new')).toBe(false);
+  await rerender({ item, source, fresh: true, expanded: false });
+  expect(row().classList.contains('feed-item--new')).toBe(true);
 });

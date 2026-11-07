@@ -4,7 +4,7 @@
 
 The connector contract is what a source must be to reach the dashboard: an ES module with six named
 exports whose `poll` returns normalised lists of the kinds it declared. The built-in connectors in
-`connectors/` and a user's own adapter, named by path in a workspace, follow the same contract and go
+`connectors/` and a user's own adapter, an `.mjs` file in the data directory's `adapters/` folder named in a workspace, follow the same contract and go
 through the same poll path. Contract version **1**. The decision is
 [ADR 0008](../adr/0008-integration-contract.md); the research behind it is
 [the integration-contract plan](../plans/integration-contract.md). RMA-95.
@@ -51,7 +51,7 @@ stored secret is bound to) and `persistedCache` (cache keys holding `Map`s that 
 
 | Key | Meaning |
 |---|---|
-| `settings` | The connector entry from the workspace config: `type`, `id`, the adapter's own fields, and for a module `path` |
+| `settings` | The connector entry from the workspace config: `type`, `id`, the adapter's own fields, and for a module `adapter` |
 | `http` | `fetchJson(url, { headers, method, body, useEtag })`: JSON over HTTPS with ETags kept in memory, a 304 served from the cache, `RateLimited` thrown on 429 or a 403 rate limit |
 | `cache` | An object kept in memory between polls of this entry; a user adapter's cache is not written to disk |
 | `sinceIso`, `historyDays` | The start of the feed window and its length in days |
@@ -100,14 +100,19 @@ request addressed to you is an ask.
 
 ### The `module` type
 
-A workspace entry `{ "type": "module", "id": "board", "path": "~/adapters/trello.mjs", "board": "…" }`.
+A workspace entry `{ "type": "module", "id": "board", "adapter": "trello", "board": "…" }` runs
+`adapters/trello.mjs` from the data directory, beside `config.json`. The user puts the file there; the
+monitor only reads it.
+
+- `adapter` is the file name without `.mjs`: lowercase letters, digits, `-` and `_`. Any other value,
+  a path among them, is the entry's error, so no config can point outside the folder.
 
 - The file is imported at the entry's first poll and again when its modification time changes; the
   check runs on every import. A failed check is the entry's error, and the next poll tries again.
 - The adapter's own required fields must be present in the entry, or the poll fails naming them.
 - The token is entered like any connector secret and stored under the service `token_service`
-  (default `whose-turn-adapter`) and the account `path`. The path is the entry's endpoint, so a config
-  write that points a stored token at another file is refused unless the token comes with it.
+  (default `whose-turn-adapter`) and the account `adapter`. The name is the entry's endpoint, so a config
+  write that points a stored token at another adapter is refused unless the token comes with it.
 - Old module instances stay in memory after a re-import; ESM has no unload.
 
 ### The `file` type

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Recently done: a block under Your move with the last tickets that are done, folded by default; the fold is remembered in the browser.
-import { computed } from 'vue';
+import { computed, useTemplateRef } from 'vue';
 import { useLocalStorage } from '@vueuse/core';
 import { snapshot, now } from '@/store.ts';
 import { recentlyDone, statusTone } from '@/lib/moves.ts';
@@ -8,14 +8,42 @@ import { modifier } from '@/lib/bem.ts';
 import { age, when } from '@/lib/time.ts';
 import TicketCell from '@/ui/TicketCell.vue';
 import AiButton from '@/ui/AiButton.vue';
-// Stored as '1' or '0', as before VueUse, so a choice made earlier still holds.
+import Chevron from '@/ui/Chevron.vue';
+import ResizeHandle from '@/ui/ResizeHandle.vue';
+import { usePanelSize } from '@/composables/usePanelSize.ts';
+import { glideThrough } from '@/motion.ts';
+import { useText } from '@/i18n/index.ts';
+const t = useText();
+const LIST_MAX = 480;
+const { size: listHeight, set: setListHeight } = usePanelSize(
+  () => `${snapshot.workspace.id}:recently-done`,
+);
+const list = useTemplateRef<HTMLElement>('list');
+const scrollerRoom = (element: HTMLElement) => {
+  const scroller = element.closest('.island__body')?.querySelector<HTMLElement>('.row-scroll');
+  return scroller
+    ? Math.max(0, scroller.clientHeight - (parseFloat(getComputedStyle(scroller).minHeight) || 0))
+    : 0;
+};
+const listBounds = () => {
+  const element = list.value as HTMLElement;
+  const first = element.querySelector('tbody > tr');
+  const bottom =
+    (first ?? element).getBoundingClientRect().bottom - element.getBoundingClientRect().top;
+  const padding = parseFloat(getComputedStyle(element).paddingBottom) || 0;
+  return {
+    current: element.offsetHeight,
+    min: Math.ceil(bottom + element.scrollTop + padding),
+    max: Math.min(LIST_MAX, element.offsetHeight + scrollerRoom(element)),
+  };
+};
 const open = useLocalStorage('wt-recent-open', false, {
   writeDefaults: false,
   serializer: { read: (raw) => raw === '1', write: (value) => (value ? '1' : '0') },
 });
-const remember = (event: Event) => {
-  open.value = (event.target as HTMLDetailsElement).open;
-};
+const root = useTemplateRef<HTMLElement>('root');
+// docs/mechanisms/motion.md § A group and Recently done fold on the way out
+const toggle = () => glideThrough(root.value, 'height', () => (open.value = !open.value));
 const rows = computed(() => {
   void now.value;
   return recentlyDone(snapshot.turn).map((row) => ({
@@ -25,18 +53,29 @@ const rows = computed(() => {
 });
 </script>
 <template>
-  <details v-if="rows.length" class="recently-done" :open="open" @toggle="remember">
-    <summary class="recently-done__summary">
-      Recently done <span class="recently-done__count">{{ rows.length }}</span>
+  <details v-if="rows.length" ref="root" class="recently-done" :open="open">
+    <summary class="recently-done__summary" @click.prevent="toggle">
+      <Chevron tag="span" :open="open" />
+      {{ t('yourMove.recentlyDone.title') }} <span class="count">{{ rows.length }}</span>
     </summary>
-    <div class="recently-done__list">
+    <div
+      ref="list"
+      class="recently-done__list"
+      :style="
+        listHeight === null
+          ? undefined
+          : { maxHeight: listHeight + 'px', height: listHeight + 'px' }
+      "
+    >
       <table class="table">
         <thead>
           <tr>
-            <th>Ticket</th>
-            <th>Status</th>
-            <th>Done</th>
-            <th class="table__actions-col"><span class="visually-hidden">Copy for AI</span></th>
+            <th>{{ t('yourMove.recentlyDone.ticket') }}</th>
+            <th>{{ t('yourMove.recentlyDone.status') }}</th>
+            <th>{{ t('yourMove.recentlyDone.done') }}</th>
+            <th class="table__actions-col">
+              <span class="visually-hidden">{{ t('yourMove.recentlyDone.copyForAi') }}</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -48,9 +87,15 @@ const rows = computed(() => {
               }}</span>
             </td>
             <td>
-              <span class="age" :data-tip="'Done ' + when(row.status_since || row.updated)">{{
-                since.text
-              }}</span>
+              <span
+                class="age"
+                :data-tip="
+                  t('yourMove.recentlyDone.doneTip', {
+                    when: when(row.status_since || row.updated),
+                  })
+                "
+                >{{ since.text }}</span
+              >
             </td>
             <td class="table__actions">
               <AiButton
@@ -62,33 +107,44 @@ const rows = computed(() => {
         </tbody>
       </table>
     </div>
+    <ResizeHandle
+      v-if="open"
+      :label="t('yourMove.recentlyDone.resize')"
+      axis="y"
+      top
+      :grow="-1"
+      :bounds="listBounds"
+      @resize="setListHeight"
+      @reset="setListHeight(null)"
+    />
   </details>
 </template>
 <style scoped>
 .recently-done {
+  position: relative;
   display: flex;
   flex: 0 1 auto;
   flex-direction: column;
-  min-height: 33px;
-  margin: 0 -20px;
-  padding: 0 20px;
+  min-height: 2.0625rem;
+  margin: 0 -1.25rem;
+  padding: 0 1.25rem;
   overflow: hidden;
   border-top: 1px solid var(--md-outline-variant);
 }
 
 .recently-done[open] {
-  min-height: 128px;
+  min-height: 8rem;
 }
 
 .recently-done__summary {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 4px;
-  min-height: 40px;
+  gap: 0.25rem;
+  min-height: 2.5rem;
   list-style: none;
   color: var(--md-on-surface-variant);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
 }
@@ -97,41 +153,23 @@ const rows = computed(() => {
   display: none;
 }
 
-.recently-done__summary::before {
-  content: '▾';
-  display: inline-grid;
-  place-items: center;
-  width: 24px;
-  font-size: 18px;
-  transform: rotate(-90deg);
-  transition: transform 0.15s ease;
-}
-
-.recently-done[open] .recently-done__summary::before {
-  transform: none;
-}
-
-.recently-done__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  margin-left: 6px;
-  padding: 0 6px;
-  border-radius: 10px;
-  background: var(--md-s-high);
-  color: var(--md-on-surface-variant);
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .recently-done__list {
   flex: 1 1 auto;
   min-height: 0;
-  max-height: min(30vh, 240px);
-  margin: 0 -20px;
-  padding-bottom: 8px;
+  max-height: min(30vh, 15rem);
+  margin: 0 -1.25rem;
+  padding-bottom: 0.5rem;
   overflow: auto;
+}
+
+.recently-done[open] > .recently-done__list {
+  animation: recently-done-open var(--motion-base) var(--motion-ease);
+}
+
+@keyframes recently-done-open {
+  from {
+    opacity: 0;
+    transform: translateY(-0.375rem);
+  }
 }
 </style>

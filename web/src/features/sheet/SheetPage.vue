@@ -5,7 +5,9 @@ import { speciesNames, posesOf } from '@/lib/species.ts';
 import { registry } from '@/species/index.ts';
 import { dark } from '@/scheme.ts';
 import SpeciesCell from './SpeciesCell.vue';
+import { useText } from '@/i18n/index.ts';
 
+const t = useText();
 const query = new URLSearchParams(location.search);
 const count = ref(Math.min(12, Math.max(1, Number(query.get('seeds')) || 6)));
 const first = ref(Number(query.get('from')) || 1);
@@ -34,20 +36,20 @@ watch(dark, readInk);
 <template>
   <main ref="page" class="app sheet-page">
     <header class="sheet-page__head">
-      <h1 class="sheet-page__title">Species sheet</h1>
+      <h1 class="sheet-page__title">{{ t('sheet.title') }}</h1>
       <label class="sheet-page__field"
-        >Species
+        >{{ t('sheet.species') }}
         <select v-model="only">
-          <option value="">all ({{ names.length }})</option>
+          <option value="">{{ t('sheet.allSpecies', { count: names.length }) }}</option>
           <option v-for="name in names" :key="name" :value="name">{{ name }}</option>
         </select>
       </label>
       <label class="sheet-page__field"
-        >Seeds
+        >{{ t('sheet.seeds') }}
         <input v-model.number="count" class="sheet-page__number" type="number" min="1" max="12"
       /></label>
       <label class="sheet-page__field"
-        >From seed <input v-model.number="first" class="sheet-page__number" type="number" min="0"
+        >{{ t('sheet.fromSeed') }} <input v-model.number="first" class="sheet-page__number" type="number" min="0"
       /></label>
     </header>
     <section v-for="row in rows" :key="row.key" class="sheet-page__row">
@@ -77,46 +79,46 @@ watch(dark, readInk);
   background: var(--md-surface);
   height: auto;
   min-height: 100%;
-  padding: 16px 24px 32px;
+  padding: 1rem 1.5rem 2rem;
   box-sizing: border-box;
 }
 
 .sheet-page__head {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .sheet-page__title {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 500;
-  margin: 0 16px 0 0;
+  margin: 0 1rem 0 0;
 }
 
 .sheet-page__field {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
   color: var(--md-on-surface-variant);
 }
 
 .sheet-page__number {
-  width: 64px;
+  width: 4rem;
 }
 
 .sheet-page__row {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 0.75rem;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .sheet-page__label {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
   display: grid;
@@ -124,12 +126,12 @@ watch(dark, readInk);
 
 .sheet-page__pose {
   font-weight: 400;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--md-on-surface-variant);
 }
 
 .sheet-page__cells {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
 }
 </style>

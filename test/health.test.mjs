@@ -1,12 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DEFAULT_LIMITS, nextFails, assess, transition } from '../lib/health.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { CONNECTORS } from '../connectors/index.mjs';
 import { loadConfig, DEFAULT_RULES } from '../lib/config.mjs';
+import './fixtures/demo-connector.mjs';
+import { scratchDir } from './fixtures/scratch.mjs';
 
 const MINUTE = 60000;
 const base = Date.parse('2026-11-03T10:00:00Z');
@@ -41,7 +42,7 @@ test('an alert is announced once, and its recovery is reported when the last one
 
 test('the config takes the thresholds and refuses a non-positive one', () => {
   const load = (raw) => {
-    const dir = mkdtempSync(join(tmpdir(), 'whose-turn-'));
+    const dir = scratchDir('whose-turn-');
     writeFileSync(join(dir, 'config.json'), JSON.stringify(raw));
     return loadConfig({ WHOSE_TURN_DATA: dir });
   };
@@ -49,7 +50,7 @@ test('the config takes the thresholds and refuses a non-positive one', () => {
   assert.deepEqual(load({ workspaces: [], stale_minutes: 5, failing_polls: 2 }).health, { stale_minutes: 5, failing_polls: 2 });
   const bad = load({ workspaces: [], stale_minutes: 0 });
   assert.equal(bad.health.stale_minutes, 15);
-  assert.match(bad.problems[0], /stale_minutes must be a positive number/);
+  assert.match(bad.problems[0], /stale_minutes must be a number from 1 to 1440; using 15/);
 });
 
 const flaky = (script) => {
@@ -64,7 +65,7 @@ const flaky = (script) => {
   };
 };
 
-const workspace = (script, limits, dir = mkdtempSync(join(tmpdir(), 'whose-turn-'))) => {
+const workspace = (script, limits, dir = scratchDir('whose-turn-')) => {
   flaky(script);
   const sent = [];
   const built = createWorkspace(
@@ -136,7 +137,7 @@ test('the open window is told when a failing streak grows, not only when an aler
 test('every stream message carries the workspace badge count', async () => {
   const built = createWorkspace(
     { id: 'n', name: 'Northwind', key_pattern: 'NW-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'demo', id: 'demo', scenario: 'northwind' }] },
-    { dataDir: mkdtempSync(join(tmpdir(), 'whose-turn-')), historyDays: 14, limits: () => DEFAULT_LIMITS, notify: () => {} },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, limits: () => DEFAULT_LIMITS, notify: () => {} },
   );
   const messages = [];
   built.subscribe((message) => messages.push(message));
@@ -146,4 +147,13 @@ test('every stream message carries the workspace badge count', async () => {
   for (const message of messages) {
     assert.equal(message.open_moves, built.summary().open_moves);
   }
+});
+
+test('a workspace naming a connector type that is not registered reports it as unknown', async () => {
+  const built = createWorkspace(
+    { id: 'u', name: 'Unregistered', key_pattern: 'NW-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'nothing', id: 'nothing' }] },
+    { dataDir: scratchDir('whose-turn-'), historyDays: 14, limits: () => DEFAULT_LIMITS, notify: () => {} },
+  );
+  await built.poll();
+  assert.match(JSON.stringify(built.snapshot()), /Unknown source type \\"nothing\\"/);
 });
