@@ -1,5 +1,5 @@
 /** User adapter connector: loads the adapter the workspace config names from the adapters folder in the data directory, checks it against the connector contract, and polls it like any built-in. See docs/mechanisms/connector-contract.md. */
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { adapterProblems, resultProblems, ContractError, KINDS } from '../lib/contract.mjs';
@@ -10,12 +10,10 @@ import { expandHome } from '../lib/text.mjs';
 const DEFAULT_SERVICE = 'whose-turn-adapter';
 
 export const id = 'module';
-export const label = 'Your adapter';
-export const experimental = true;
+export const label = 'Custom';
 export const endpointKey = 'adapter';
 export const links = () => [];
 export const fields = [
-  { key: 'adapter', label: 'Adapter', hint: 'the name of an .mjs file in the adapters folder of the data directory, without .mjs', required: true },
   { key: 'token', label: 'Token', hint: 'optional; stored in the secret store under the adapter name, handed to the adapter as secret()', secret: { account: 'adapter', service: 'token_service', default: DEFAULT_SERVICE } },
   { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-adapter' },
 ];
@@ -119,4 +117,79 @@ export const adapterViolations = async (rawWorkspaces, dataDir) => {
     }
   }
   return violations;
+};
+
+const CYRILLIC = { '\u0430': 'a', '\u0431': 'b', '\u0432': 'v', '\u0433': 'g', '\u0434': 'd', '\u0435': 'e', '\u0451': 'e', '\u0436': 'zh', '\u0437': 'z', '\u0438': 'i', '\u0439': 'y', '\u043a': 'k', '\u043b': 'l', '\u043c': 'm', '\u043d': 'n', '\u043e': 'o', '\u043f': 'p', '\u0440': 'r', '\u0441': 's', '\u0442': 't', '\u0443': 'u', '\u0444': 'f', '\u0445': 'kh', '\u0446': 'ts', '\u0447': 'ch', '\u0448': 'sh', '\u0449': 'shch', '\u044a': '', '\u044b': 'y', '\u044c': '', '\u044d': 'e', '\u044e': 'yu', '\u044f': 'ya', '\u0456': 'i', '\u0457': 'yi', '\u0454': 'ye', '\u0491': 'g' };
+
+/** The adapter file name made from a name the user typed: Latin, lowercase, words joined by `_`, at most 40 characters; '' when nothing is left. */
+export const adapterNameOf = (name) => String(name || '')
+  .toLowerCase()
+  .replace(/[\u0080-\uffff]/g, (letter) => CYRILLIC[letter] ?? letter.normalize('NFD').replace(/[\u0080-\uffff]/g, ''))
+  .replace(/[^a-z0-9]+/g, '_')
+  .replace(/^_+|_+$/g, '')
+  .slice(0, 40)
+  .replace(/_+$/, '');
+
+const TEMPLATE = (name, label) => {
+  const className = name.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join('').replace(/^(?=\d)/, 'Source');
+  const adapterId = name.replace(/_/g, '-').replace(/^(?=[^a-z])/, 's');
+  return `/** ${label.replace(/\*\//g, '')}: your own source for Whose Turn. Fill in poll(); the contract is docs/mechanisms/connector-contract.md in the whose-turn package. */
+import { Adapter } from './${SHIM}';
+
+export default class ${className} extends Adapter {
+  contract = 1;
+  id = '${adapterId}';
+  label = ${JSON.stringify(label)};
+  capabilities = ['tickets'];
+  fields = [];
+
+  async poll({ settings, http, secret }) {
+    return { me: '', tickets: [] };
+  }
+}
+`;
+};
+
+const moduleEntries = (rawWorkspaces) => rawWorkspaces.flatMap((workspace) => (Array.isArray(workspace?.connectors) ? workspace.connectors : []).filter((entry) => entry?.type === 'module' && typeof entry === 'object'));
+
+/** Gives every `module` entry that has no adapter yet the name made from its label. */
+export const nameAdapterEntries = (rawWorkspaces) => {
+  for (const entry of moduleEntries(rawWorkspaces)) {
+    if (!entry.adapter && adapterNameOf(entry.label)) {
+      entry.adapter = adapterNameOf(entry.label);
+    }
+  }
+};
+
+/** Writes a template into the adapters folder for every `module` entry whose adapter has no file yet; returns the names it wrote. */
+export const writeAdapterTemplates = async (rawWorkspaces, dataDir) => {
+  const written = [];
+  for (const entry of moduleEntries(rawWorkspaces)) {
+    if (typeof entry.adapter !== 'string' || !ADAPTER_NAME.test(entry.adapter)) {
+      continue;
+    }
+    const adaptersDir = adaptersDirOf(dataDir);
+    const file = adapterFile(adaptersDir, entry.adapter);
+    if (!(await stat(file).catch(() => null))) {
+      await writeAdapterShim(adaptersDir);
+      await writeFile(file, TEMPLATE(entry.adapter, String(entry.label || entry.adapter)), { flag: 'wx' });
+      written.push(entry.adapter);
+    }
+  }
+  return written;
+};
+
+/** What the settings sheet needs about each adapter in the folder: its label and fields, or the problem that stops it loading. */
+export const adapterCatalogue = async (dataDir) => {
+  const adaptersDir = adaptersDirOf(dataDir);
+  const names = (await readdir(adaptersDir).catch(() => [])).filter((file) => file.endsWith('.mjs') && !file.startsWith('_')).map((file) => file.slice(0, -4)).filter((name) => ADAPTER_NAME.test(name));
+  const entries = await Promise.all(names.map(async (name) => {
+    try {
+      const adapter = await loadAdapter(adapterFile(adaptersDir, name));
+      return [name, { label: adapter.label, fields: adapter.fields }];
+    } catch (error) {
+      return [name, { problem: error.message }];
+    }
+  }));
+  return Object.fromEntries(entries);
 };

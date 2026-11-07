@@ -27,7 +27,8 @@ const secretBindings = (entry) => (CONNECTORS[entry.type]?.fields || []).filter(
 /** Secret fields of `entry` that must come with a fresh token because their service, account and endpoint triple is not already in the current config. */
 export const secretsRequired = (currentEntries, entry) => {
   const known = new Set(currentEntries.flatMap(secretBindings).map((binding) => `${binding.service}\n${binding.account}\n${binding.endpoint}`));
-  return secretBindings(entry).filter((binding) => !known.has(`${binding.service}\n${binding.account}\n${binding.endpoint}`)).map((binding) => binding.key);
+  const boundToEndpoint = (binding) => binding.account === binding.endpoint;
+  return secretBindings(entry).filter((binding) => !boundToEndpoint(binding) && !known.has(`${binding.service}\n${binding.account}\n${binding.endpoint}`)).map((binding) => binding.key);
 };
 
 /** The distinct service and account pairs under which the entries' secrets are stored. */

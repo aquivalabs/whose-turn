@@ -242,3 +242,50 @@ test('each way of showing the workspace carries its explanation, and Park saves 
   await waitFor(() => expect(sent).toHaveLength(1));
   expect((sent[0].body.workspaces[0] as { hidden?: string }).hidden).toBe('parked');
 });
+
+const withCustom = {
+  ...reply,
+  workspaces: [{ id: 'alpha', name: 'Alpha', connectors: [{ type: 'module', id: 'board', label: 'Team board', adapter: 'team_board' }] }],
+  connectors: [...reply.connectors, { type: 'module', label: 'Custom', fields: [{ key: 'token', label: 'Token', secret: true }] }],
+  adapters: { team_board: { label: 'Team board', fields: [{ key: 'board', label: 'Board id', required: true }] } },
+};
+
+test('+ Add Custom source opens a card with a Name that says a template file is created on save, and sends the label', async () => {
+  // Setup
+  stubServer(withCustom);
+  render(WorkspaceSettingsSheet);
+  ui.settings = true;
+  await screen.findByDisplayValue('Team board');
+  // Exercise
+  await fireEvent.click(screen.getByRole('button', { name: '+ Add Custom source' }));
+  const names = screen.getAllByText('Name *');
+  const input = names[names.length - 1].closest('.field-row')?.querySelector('input') as HTMLInputElement;
+  await fireEvent.update(input, 'Moya doska');
+  await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+  // Verify
+  expect(screen.getByText(/a template file named after this in the adapters folder/)).toBeTruthy();
+  await waitFor(() => expect(sent.length).toBe(1));
+  expect(sent[0].body.workspaces[0]).toMatchObject({ connectors: [{ type: 'module', adapter: 'team_board' }, { type: 'module', label: 'Moya doska' }] });
+});
+
+test('a saved Custom source names its file and shows the fields its adapter declares', async () => {
+  // Setup
+  stubServer({ ...withCustom, adapters: { team_board: { ...withCustom.adapters.team_board } } });
+  render(WorkspaceSettingsSheet);
+  ui.settings = true;
+  // Exercise
+  await screen.findByDisplayValue('Team board');
+  // Verify
+  expect(screen.getByText(/your code lives in adapters\/team_board\.mjs/)).toBeTruthy();
+  expect(screen.getByText('Board id *')).toBeTruthy();
+});
+
+test('a Custom source whose adapter is broken shows the problem under its Name', async () => {
+  // Setup
+  stubServer({ ...withCustom, adapters: { team_board: { problem: 'Adapter team_board.mjs does not follow connector contract 1: poll(context) must be implemented' } } });
+  render(WorkspaceSettingsSheet);
+  // Exercise
+  ui.settings = true;
+  // Verify
+  expect(await screen.findByText(/poll\(context\) must be implemented/)).toBeTruthy();
+});

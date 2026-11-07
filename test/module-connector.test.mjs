@@ -42,12 +42,12 @@ test('a user adapter named in the adapters folder is loaded, checked and polled 
   assert.equal(next['BRD-1:k1'], 'Answer Sam Lead in the ticket');
 });
 
-test('the token reaches the adapter only through secret(), filed under the adapter name; a missing one is the adapter\'s partial error', async () => {
+test('the token reaches the adapter only through secret(), filed under the adapter name, so another name never reaches it; a missing one is the adapter\'s partial error', async () => {
   const workspace = await workspaceWith({ adapter: 'board', board: 'launch' }, '');
   await workspace.poll();
   assert.deepEqual(workspace.snapshot(false).errors, { 'board.auth': 'no token' });
   const entry = { type: 'module', id: 'board', adapter: 'board' };
-  assert.deepEqual(secretsRequired([entry], { ...entry, adapter: 'sloppy' }), ['token']);
+  assert.deepEqual(secretsRequired([entry], { ...entry, adapter: 'sloppy' }), []);
 });
 
 test('a module that is not a connector, or a poll that breaks the shapes, is the entry\'s error with every problem named', async () => {
@@ -118,9 +118,21 @@ test('saving a config checks every module entry: a missing or broken adapter is 
   assert.match(violations[1].description, /No adapter file at .*nowhere\.mjs/);
 });
 
-test('the experimental types are accepted in the config but not offered by the settings catalogue', () => {
+test('a custom source\'s file name is made from its label: Latin, lowercase, words joined by _, at most 40 characters', () => {
+  const cases = [['Team Board 2', 'team_board_2'], ['\u041c\u043e\u044f \u0434\u043e\u0441\u043a\u0430 Trello', 'moya_doska_trello'], ['  Notion: work!! ', 'notion_work'], ['Caf\u00e9 cr\u00e8me', 'cafe_creme'], ['', ''], ['x'.repeat(60), 'x'.repeat(40)]];
+  assert.deepEqual(cases.map(([label]) => moduleConnector.adapterNameOf(label)), cases.map(([, name]) => name));
+});
+
+test('the adapter catalogue lists each adapter\'s label and fields, the problem of a broken one, and skips the shim', async () => {
+  const catalogue = await moduleConnector.adapterCatalogue(await dataDirWithAdapters());
+  assert.deepEqual(Object.keys(catalogue).sort(), ['board', 'broken', 'plain', 'sloppy']);
+  assert.deepEqual(catalogue.board, { label: 'Board', fields: [{ key: 'board', label: 'Board', required: true }] });
+  assert.match(catalogue.broken.problem, /does not follow connector contract 1/);
+});
+
+test('the settings catalogue offers the built-ins and Custom, and leaves out the experimental file type', () => {
   const types = connectorCatalogue().map((connector) => connector.type);
-  assert.deepEqual(types, ['github', 'jira', 'linear']);
+  assert.deepEqual(types, ['github', 'jira', 'linear', 'module']);
 });
 
 test('check-adapter passes a good adapter with its rows, and fails a bad one with exit 1 and each problem on a line', async () => {

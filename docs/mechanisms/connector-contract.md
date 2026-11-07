@@ -12,8 +12,8 @@ through the same poll path. Contract version **1**. The decision is
 **A user adapter runs inside the server with the server's rights**: every token in memory, the secret
 store, the file system, the network. Name only a file you wrote or read in full.
 
-Status of the proof of concept: `file` and `module` are registered as experimental. The config accepts
-them; the settings sheet does not offer them. The built-ins (`github`, `jira`, `linear`) export
+The settings sheet offers the built-ins and `module` as **Custom**; `file` is experimental, accepted by
+the config but not offered. The built-ins (`github`, `jira`, `linear`) export
 `contract` and `capabilities`, and every poll result of theirs is checked: a problem becomes the entry's
 partial error `<id>.contract` while its data still flows, so one odd record never empties a source. The
 window takes a source's feed badge and icon tone from the connector summary, never from its type.
@@ -50,7 +50,7 @@ These members are required:
 
 The base supplies the optional members, which an adapter overrides when it needs them: `links(settings)`
 (quick links for the header, none by default), `persistedCache` (cache keys holding `Map`s that survive a
-restart), `badge` (the feed badge under the type's own name) and `tone` (the feed icon tone). A built-in
+restart), `badge` (the feed badge under the type's own name), `tone` (the feed icon tone) and `experimental` (accepted by the config but not offered in the settings sheet). A built-in
 may also set `endpointKey`, the field a stored secret is bound to.
 
 ### Context
@@ -109,8 +109,16 @@ request addressed to you is an ask.
 ### The `module` type
 
 A workspace entry `{ "type": "module", "id": "board", "adapter": "trello", "board": "…" }` runs
-`adapters/trello.mjs` from the data directory, beside `config.json`. The user puts the file there; the
-monitor only reads it.
+`adapters/trello.mjs` from the data directory, beside `config.json`.
+
+- In the settings sheet, **+ Add Custom source** asks for a **Name** (the entry's `label`). On save an
+  entry without `adapter` gets the name made from its label, in Latin, lowercase, words joined by `_`,
+  at most 40 characters (`adapterNameOf`), and a missing file gets a template that extends `Adapter`
+  with an empty `poll`; the monitor never overwrites an existing file. The user or Claude writes the
+  source into that file.
+- `GET /api/config` carries `adapters`: per file in the folder, its `label` and `fields`, or the
+  `problem` that stops it loading; the sheet shows those fields on the entry's card and the problem
+  under its Name.
 
 - `adapter` is the file name without `.mjs`: lowercase letters, digits, `-` and `_`. Any other value,
   a path among them, is the entry's error, so no config can point outside the folder.
@@ -122,9 +130,10 @@ monitor only reads it.
 - The file is imported at the entry's first poll and again when its modification time changes; the
   check runs on every import. A failed check is the entry's error, and the next poll tries again.
 - The adapter's own required fields must be present in the entry, or the poll fails naming them.
-- The token is entered like any connector secret and stored under the service `token_service`
-  (default `whose-turn-adapter`) and the account `adapter`. The name is the entry's endpoint, so a config
-  write that points a stored token at another adapter is refused unless the token comes with it.
+- The token is optional, entered like any connector secret and stored under the service
+  `token_service` (default `whose-turn-adapter`) and the account `adapter`. The name is both the account
+  and the endpoint, so another name looks up another token: a stored token never follows a renamed
+  entry, and a save does not ask for the token again.
 - Old module instances stay in memory after a re-import; ESM has no unload.
 
 ### The `file` type

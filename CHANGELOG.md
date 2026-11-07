@@ -5,7 +5,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
-- Two experimental source types you can add by hand in `config.json`: `file` reads a local Markdown task list or a JSON list of tickets, and `module` runs your own source written as an `.mjs` file in the `adapters` folder next to `config.json`, as a class that extends `Adapter`. A missing or broken source is refused when you save. Your own source runs with the monitor's full rights, so put there only a file you wrote or read. Check it first with `node scripts/check-adapter.mjs <file>`. RMA-95, RMA-430.
+- Your own sources. In Workspace settings, **+ Add Custom source** asks for a name; on save the monitor creates a template file for it in the `adapters` folder next to `config.json`, and you or Claude write your source there as a class that extends `Adapter`. The settings then show the fields your source asks for. A broken source is refused when you save and its problem shows under its name. Your own source runs with the monitor's full rights, so keep only code you wrote or read there. RMA-95, RMA-430, RMA-431.
+- An experimental `file` source you can add by hand in `config.json` reads a local Markdown task list or a JSON list of tickets. RMA-95.
 
 ### Changed
 - Restart and Quit moved from Monitor settings to a power button near the bottom of the left rail, just above Monitor settings. It opens a small menu: Restart acts at once, Quit asks first. After Quit the app window closes itself; in a browser tab the page stays dimmed behind the stopped notice and no longer takes clicks. RMA-425.

@@ -36,9 +36,15 @@ interface FormFields {
   rules: FieldSpec[];
   statuses: FieldSpec[];
 }
+interface AdapterSpec {
+  label?: string;
+  fields?: FieldSpec[];
+  problem?: string;
+}
 interface ConfigReply {
   workspaces?: StoredWorkspace[];
   connectors?: ConnectorSpec[];
+  adapters?: Record<string, AdapterSpec>;
   fields: FormFields;
   problems?: string[];
   facts?: FactWords;
@@ -55,7 +61,9 @@ const MODES = computed(() => [
 
 const list = ref<RawWorkspace[]>([]);
 const selected = ref(0);
+const CUSTOM_TYPE = 'module';
 const catalogue = ref<ConnectorSpec[]>([]);
+const adapters = ref<Record<string, AdapterSpec>>({});
 const fields = ref<FormFields>({ workspace: [], theme: [], rules: [], statuses: [] });
 const loadedIds = new Map<number, string>();
 const facts = ref<FactWords>({});
@@ -88,6 +96,7 @@ const {
   apply: (reply) => {
     list.value = (reply.workspaces || []).map(normaliseForForm);
     catalogue.value = reply.connectors || [];
+    adapters.value = reply.adapters || {};
     fields.value = reply.fields;
     typed.clear();
     typedCount.value = 0;
@@ -123,6 +132,16 @@ const idHint = computed(() => {
 });
 const ID_SPEC = computed<FieldSpec>(() => ({ key: 'id', label: t('settings.workspace.sourceId') }));
 const LABEL_SPEC = computed<FieldSpec>(() => ({ key: 'label', label: t('settings.workspace.sourceLabel') }));
+const CUSTOM_NAME_SPEC = computed<FieldSpec>(() => ({ key: 'label', label: t('settings.workspace.customName'), required: true }));
+const isCustom = (entry: ConnectorEntry) => entry.type === CUSTOM_TYPE;
+const customHint = (entry: ConnectorEntry) =>
+  typeof entry.adapter === 'string' && entry.adapter
+    ? t('settings.workspace.customFile', { file: `adapters/${entry.adapter}.mjs` })
+    : t('settings.workspace.customFileNew');
+const customError = (entry: ConnectorEntry, index: number) =>
+  errorAt('connectors[' + index + '].adapter') ||
+  (typeof entry.adapter === 'string' && adapters.value[entry.adapter]?.problem) ||
+  '';
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
 const ruleRows = computed(() =>
   ((current.value && tables.value[current.value.id]) || []).map((row) =>
@@ -130,12 +149,15 @@ const ruleRows = computed(() =>
   ),
 );
 const ruleWarnings = computed(() => (current.value && tableWarnings.value[current.value.id]) || []);
-const specOf = (entry: ConnectorEntry): ConnectorSpec =>
-  catalogue.value.find((spec) => spec.type === entry.type) || {
+const specOf = (entry: ConnectorEntry): ConnectorSpec => {
+  const spec = catalogue.value.find((candidate) => candidate.type === entry.type) || {
     type: entry.type,
     label: entry.type,
     fields: [],
   };
+  const own = isCustom(entry) && typeof entry.adapter === 'string' ? adapters.value[entry.adapter]?.fields : undefined;
+  return own ? { ...spec, fields: [...own, ...spec.fields] } : spec;
+};
 const connectorCards = computed(() =>
   (current.value?.connectors || []).map((entry) => ({
     entry,
@@ -282,6 +304,15 @@ const save = () =>
               @update:model-value="setOrDrop(entry, 'id', $event)"
             />
             <FieldRow
+              v-if="isCustom(entry)"
+              :spec="CUSTOM_NAME_SPEC"
+              :hint="customHint(entry)"
+              :error="customError(entry, index)"
+              :model-value="fieldValue(entry, 'label')"
+              @update:model-value="setOrDrop(entry, 'label', $event)"
+            />
+            <FieldRow
+              v-else
               :spec="LABEL_SPEC"
               :placeholder="entrySpec.label"
               :hint="t('settings.workspace.sourceLabelHint')"
