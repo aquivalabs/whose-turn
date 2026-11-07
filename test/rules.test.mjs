@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compileRules, turnRows, feedRows, myMoves, withHandled, turnCounts } from '../lib/rules.mjs';
+import { compileRules, turnRows, feedRows, myMoves, withHandled, turnCounts, ticketEvents } from '../lib/rules.mjs';
 import { holdReason, ticketFacts, runFacts, shortDate, FACTS, statusGroupOrder, statusGroups, chainGroup } from '../lib/facts.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 import { ticket, pr, comment, ask } from './fixtures/rules.mjs';
@@ -121,7 +121,7 @@ test('the counts are the open moves, waiting, failing and done, with handled row
     { row_id: 'b', group: 'others', pr_state: 'OPEN', checks: 'failing' },
     { row_id: 'c', group: 'done' },
   ];
-  const marks = { handled: { 'PROJ-2': '2026-11-02T10:00:00.000Z' } };
+  const marks = { handled: { 'PROJ-2': '2026-11-02T10:00:00Z' } };
   assert.deepEqual(turnCounts(list, marks), { mine: 1, others: 1, failing: 1, done: 1 });
   assert.equal(turnCounts(list, marks).mine, myMoves(list, marks).length);
   assert.equal(turnCounts(list, { handled: {} }).mine, 2);
@@ -458,4 +458,317 @@ test('run facts carry the source, workflow and branch and turn flags into boolea
   assert.deepEqual(facts, { connector: 'github', 'run.failed': true, 'run.workflow': 'ci', 'run.branch': 'main', 'run.mine': false });
   assert.equal(bare.connector, null);
   assert.equal(bare['run.failed'], false);
+});
+
+const compiled = compileRules(DEFAULT_RULES);
+const ago = (days) => new Date(Date.now() - days * 86400000).toISOString();
+const turn = (state, options = {}) => turnRows(state, { me, rules: compiled, ...options });
+const tableRows = (state, table) => turnRows(state, { me, rules: compileRules({ ...DEFAULT_RULES, table }), historyDays: 3650 });
+
+test('automation authors and questions are recognised from the rules, ignoring links and missing values', () => {
+  // Setup
+  const rules = compileRules(DEFAULT_RULES);
+  // Exercise
+  const verdicts = [rules.isAutomation('automation'), rules.isAutomation('sam'), rules.isAutomation(undefined)];
+  const questions = [rules.isQuestion('see https://acme.dev/docs/a?b=1 now'), rules.isQuestion('see https://acme.dev/docs/a?b=1 now?'), rules.isQuestion('can you look')];
+  // Verify
+  assert.deepEqual(verdicts, [true, false, false]);
+  assert.deepEqual(questions, [false, true, true]);
+});
+
+test('an orphan open PR row has blank effects and shows the last comment, but a merged one makes no row', () => {
+  // Setup
+  const open = pr({ key: 'PROJ-9', pr: 9, last_comment_by: 'pat', last_comment: 'looks odd', last_comment_url: 'https://github.com/acme/app/pull/9#c' });
+  const quiet = pr({ key: 'PROJ-8', pr: 8 });
+  const merged = pr({ key: 'PROJ-7', pr: 7, state: 'MERGED' });
+  // Exercise
+  const list = turn({ prs: [open, quiet, merged] }, { historyDays: 3650 });
+  // Verify
+  assert.equal(list.length, 2);
+  assert.equal(list[0].comment, 'pat: looks odd');
+  assert.equal(list[0].comment_url, 'https://github.com/acme/app/pull/9#c');
+  assert.equal(list[1].comment, '');
+  assert.equal(list[0].done, false);
+  assert.equal(list[0].started, false);
+  assert.equal(list[0].pr, '#9');
+  assert.equal(list[0].ticket_url, '');
+});
+
+test('a ticket with a merged PR carries no comment, an open one carries it, and a ticket without a PR carries no PR cells', () => {
+  // Setup
+  const withComment = { last_comment_by: 'pat', last_comment: 'ship it', last_comment_url: 'https://github.com/acme/app/pull/7#c' };
+  // Exercise
+  const merged = only(rows({ tickets: [ticket()], prs: [pr({ ...withComment, state: 'MERGED' })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  const open = only(rows({ tickets: [ticket()], prs: [pr({ ...withComment })] }), (candidate) => candidate.row_id === 'PROJ-1');
+  const silent = only(rows({ tickets: [ticket()], prs: [pr()] }), (candidate) => candidate.row_id === 'PROJ-1');
+  const bare = only(rows({ tickets: [ticket()] }), (candidate) => candidate.row_id === 'PROJ-1');
+  // Verify
+  assert.equal(merged.comment, '');
+  assert.equal(merged.comment_url, '');
+  assert.equal(open.comment, 'pat: ship it');
+  assert.equal(open.comment_url, withComment.last_comment_url);
+  assert.equal(silent.comment, '');
+  assert.equal(bare.pr, '');
+});
+
+test('the PR on a ticket row is the open one, else the newest, and the first when they tie', () => {
+  // Setup
+  const merged = pr({ pr: 1, state: 'MERGED', updated_at: '2026-11-05T00:00:00Z' });
+  const open = pr({ pr: 2, updated_at: '2026-11-01T00:00:00Z' });
+  const newer = pr({ pr: 3, updated_at: '2026-11-03T00:00:00Z' });
+  const older = pr({ pr: 4, updated_at: '2026-11-02T00:00:00Z' });
+  const pick = (list) => only(rows({ tickets: [ticket()], prs: list }), (candidate) => candidate.row_id === 'PROJ-1').pr;
+  // Exercise
+  const results = [
+    pick([merged, open]), pick([open, merged]), pick([merged, pr({ pr: 5, state: 'MERGED', updated_at: '2026-11-01T00:00:00Z' })]),
+    pick([open, newer]), pick([newer, open]), pick([older, newer]), pick([newer, older]), pick([newer, pr({ pr: 6, updated_at: newer.updated_at })]),
+  ];
+  // Verify
+  assert.deepEqual(results, ['#2', '#2', '#1', '#3', '#3', '#3', '#3', '#3']);
+});
+
+test('a merged PR on a ticket is still shown on its row, and a PR with no key makes no orphan row', () => {
+  // Setup
+  const state = { tickets: [ticket()], prs: [pr({ state: 'MERGED' }), pr({ key: '', pr: 12 })] };
+  // Exercise
+  const list = turn(state, { historyDays: 3650 });
+  // Verify
+  assert.equal(list.length, 1);
+  assert.equal(list[0].pr, '#7');
+});
+
+test('mentions: replies close only the asks they name, old comments and automation never open one, and list order does not matter', () => {
+  // Setup
+  const mention = (id, author, at, body = '@Alex Doe please check') => comment({ id, author, at, body });
+  const reply = (id, at, body) => comment({ id, author: 'Alex Doe', at, body });
+  const asked = (state) => turn(state, { historyDays: 14 }).filter((candidate) => candidate.row_id.startsWith('PROJ-1:')).map((candidate) => candidate.row_id);
+  const base = { tickets: [ticket()] };
+  // Exercise
+  const closedOutOfOrder = asked({ ...base, comments: [reply('r', ago(1), '@sam done'), mention('m', 'sam', ago(2))] });
+  const partial = asked({ ...base, comments: [mention('m1', 'sam', ago(3)), mention('m2', 'pat', ago(3)), reply('r', ago(1), '@sam done')] });
+  const stale = asked({ ...base, comments: [mention('old', 'sam', ago(30))] });
+  const bot = asked({ ...base, comments: [mention('bot', 'automation', ago(1))] });
+  const plain = asked({ ...base, comments: [mention('plain', 'sam', ago(1), 'no mention here')] });
+  const firstReply = asked({ ...base, comments: [reply('r', ago(1), 'note to self'), mention('m', 'sam', ago(0.5))] });
+  const unknownSource = asked({ ...base, comments: [comment({ id: 'x', source: 'other', author: 'sam', at: ago(1), body: '@undefined hi' })] });
+  // Verify
+  assert.deepEqual(closedOutOfOrder, []);
+  assert.deepEqual(partial, ['PROJ-1:m2']);
+  assert.deepEqual(stale, []);
+  assert.deepEqual(bot, []);
+  assert.deepEqual(plain, []);
+  assert.deepEqual(firstReply, ['PROJ-1:m']);
+  assert.deepEqual(unknownSource, []);
+});
+
+test('a done ticket gives no mention rows, and a mention-only ticket gives mention rows and no ticket row', () => {
+  // Setup
+  const mention = comment({ at: ago(1) });
+  // Exercise
+  const done = turn({ tickets: [ticket({ status: 'Done', status_category: 'done' })], comments: [mention] }, { historyDays: 14 });
+  const mentionOnly = turn({ tickets: [ticket({ mention_only: true })], comments: [mention] }, { historyDays: 14 });
+  // Verify
+  assert.deepEqual(done.map((candidate) => candidate.row_id), ['PROJ-1']);
+  assert.deepEqual(mentionOnly.map((candidate) => candidate.row_id), ['PROJ-1:c1']);
+});
+
+test('a hold effect links the hold reason only when the ticket has one', () => {
+  // Setup
+  const held = ticket({ status: 'On Hold', status_change: { since: '2026-11-01T12:00:00Z', by: 'Sam Reviewer' } });
+  const why = comment({ at: '2026-11-01T12:01:00Z', body: 'On hold: waiting for the vendor.' });
+  const table = (hold) => [{ when: {}, then: { whose: 'you', next: 'x', hold } }];
+  // Exercise
+  const linked = tableRows({ tickets: [held], comments: [why] }, table(true))[0];
+  const plain = tableRows({ tickets: [held], comments: [why] }, table(false))[0];
+  const noReason = tableRows({ tickets: [ticket()], comments: [why] }, table(true))[0];
+  // Verify
+  assert.equal(linked.hold_url, why.url);
+  assert.match(linked.hold_full, /^Sam Reviewer · /);
+  assert.equal(plain.hold_url, '');
+  assert.equal(plain.hold_full, '');
+  assert.equal(noReason.hold_url, '');
+});
+
+test('a ticket row remembers the later of the ticket and PR activity', () => {
+  // Setup
+  const stamp = (updated, updatedAt) => only(rows({ tickets: [ticket({ updated })], prs: [pr({ updated_at: updatedAt })] }), (candidate) => candidate.row_id === 'PROJ-1').activity_at;
+  // Exercise
+  const prLater = stamp('2026-11-01T10:00:00.000+0000', '2026-11-02T10:00:00Z');
+  const ticketLater = stamp('2026-11-03T10:00:00.000+0000', '2026-11-02T10:00:00Z');
+  const noPr = only(rows({ tickets: [ticket()] }), (candidate) => candidate.row_id === 'PROJ-1').activity_at;
+  // Verify
+  assert.equal(prLater, '2026-11-02T10:00:00Z');
+  assert.equal(ticketLater, '2026-11-03T10:00:00Z');
+  assert.equal(noPr, '2026-11-01T10:00:00Z');
+});
+
+test('a failed run row is titled by its title, else its workflow', () => {
+  // Setup
+  const run = { source: 'github', ref: 'acme/app', streak: 2, workflow: 'ci', title: '', actor: 'alex', at: '2026-11-01T10:00:00Z', url: 'https://github.com/acme/app/actions/runs/1', failed: 1, branch: 'main', mine: 1 };
+  // Exercise
+  const untitled = turn({ runs: [run] })[0];
+  const titled = turn({ runs: [{ ...run, title: 'Nightly build' }] })[0];
+  // Verify
+  assert.equal(untitled.summary, 'ci');
+  assert.equal(titled.summary, 'Nightly build');
+  assert.equal(untitled.row_id, 'run:github:acme/app:2');
+});
+
+test('ask rows read differently for review requests and mentions, and with or without a ticket key', () => {
+  // Setup
+  const context = { historyDays: 3650, ticketUrl: (key) => `https://acme.dev/${key}` };
+  // Exercise
+  const review = turn({ asks: [ask()] }, context)[0];
+  const keyedReview = turn({ asks: [ask({ key: 'PROJ-3', ref: 'app#3' })] }, context)[0];
+  const mentioned = turn({ asks: [ask({ kind: 'mentioned', text: 'ping', key: '' })] }, context)[0];
+  const keyedMention = turn({ asks: [ask({ kind: 'mentioned', text: 'ping', key: 'PROJ-3', ref: 'app#3' })] }, context)[0];
+  // Verify
+  assert.equal(review.next, 'Review this PR');
+  assert.equal(review.status, 'Review requested');
+  assert.equal(review.key, 'other-repo#12');
+  assert.equal(review.comment, '');
+  assert.equal(keyedReview.next, 'Review PR app#3');
+  assert.equal(keyedReview.key, 'PROJ-3');
+  assert.equal(keyedReview.ticket_url, 'https://acme.dev/PROJ-3');
+  assert.equal(mentioned.next, 'Answer Sam Reviewer on this PR');
+  assert.equal(mentioned.status, 'Mentioned');
+  assert.equal(mentioned.comment, 'Sam Reviewer: ping');
+  assert.equal(mentioned.ticket_url, '');
+  assert.equal(keyedMention.next, 'Answer Sam Reviewer on app#3');
+});
+
+test('an orphan PR row has an empty ticket link when no link builder is given', () => {
+  // Exercise
+  const list = turnRows({ prs: [pr({ key: 'PROJ-9' })] }, { me, rules: compiled });
+  // Verify
+  assert.equal(list[0].ticket_url, '');
+});
+
+test('an empty feed state gives an empty feed, and old comments are left out', () => {
+  // Setup
+  const old = comment({ at: ago(30) });
+  const fresh = comment({ id: 'c2', at: ago(1) });
+  // Exercise
+  const empty = feedRows({}, { me, rules: compiled });
+  const feed = feedRows({ comments: [old, fresh] }, { me, rules: compiled, historyDays: 14 });
+  // Verify
+  assert.deepEqual(empty, []);
+  assert.deepEqual(feed.map((item) => item.id), ['comment:jira:c2']);
+});
+
+test('feed comments flag mentions of you only from others and not automation, and activity falls back to its text as body', () => {
+  // Setup
+  const activity = [{ source: 'github', pr: 'app#1', key: 'PROJ-1', title: 't', kind: 'review', who: 'alex', text: 'approved', url: 'https://github.com/acme/app/pull/1', at: ago(1) }];
+  const comments = [
+    comment({ id: 'a', at: ago(1), author: 'Sam Reviewer' }),
+    comment({ id: 'b', at: ago(1), author: 'Alex Doe' }),
+    comment({ id: 'c', at: ago(1), author: 'automation' }),
+    comment({ id: 'd', at: ago(1), author: 'Sam Reviewer', body: 'nothing for you' }),
+    comment({ id: 'e', at: ago(1), source: 'other', author: 'Sam Reviewer', body: '@undefined hi' }),
+  ];
+  // Exercise
+  const feed = feedRows({ activity, comments }, { me, rules: compiled, historyDays: 14 });
+  const flags = Object.fromEntries(feed.filter((item) => item.kind === 'comment').map((item) => [item.id.split(':')[2], item.mention]));
+  const act = feed.find((item) => item.id.startsWith('act:'));
+  // Verify
+  assert.deepEqual(flags, { a: true, b: false, c: false, d: false, e: false });
+  assert.equal(act.body, 'approved');
+  assert.equal(act.who, 'you');
+  assert.equal(feed.find((item) => item.id === 'comment:jira:b').who, 'you');
+});
+
+test('a feed item for an activity with its own body keeps it', () => {
+  // Setup
+  const activity = [{ source: 'github', pr: 'app#1', key: 'PROJ-1', kind: 'review', who: 'sam', text: 'short', body: 'long body', url: 'u', at: ago(1) }];
+  // Exercise
+  const [item] = feedRows({ activity }, { me, rules: compiled });
+  // Verify
+  assert.equal(item.body, 'long body');
+});
+
+test('recorded events and notes reach the feed, with both sides of a reassignment read as you for your own name', () => {
+  // Setup
+  const events = [
+    { at: ago(2), source: 'jira', key: 'PROJ-1', kind: 'reassigned', text: ' Alex Doe  →  Sam Reviewer ', url: 'u' },
+    { at: ago(3), source: 'jira', key: 'PROJ-1', kind: 'status', text: 'Alex Doe → Sam Reviewer', url: 'u' },
+  ];
+  const notes = [{ id: 'note:1', at: ago(1), source: 'jira', key: 'PROJ-1', text: 'call back', url: 'u' }];
+  // Exercise
+  const feed = feedRows({ events, notes }, { me, rules: compiled });
+  // Verify
+  assert.equal(feed[0].id, 'note:1');
+  assert.equal(feed[0].kind, 'note');
+  assert.equal(feed[0].who, 'you');
+  assert.equal(feed[0].body, 'call back');
+  assert.equal(feed[1].text, 'you → Sam Reviewer');
+  assert.equal(feed[1].id, `event:PROJ-1:${events[0].at}:reassigned`);
+  assert.equal(feed[2].text, 'Alex Doe → Sam Reviewer');
+});
+
+test('a touched ticket is listed unless an event or comment within five minutes explains it', () => {
+  // Setup
+  const at = '2026-11-01T10:00:00.000Z';
+  const touched = (extra) => feedRows({ tickets: [ticket({ updated: at })], ...extra }, { me, rules: compiled, historyDays: 3650 }).filter((item) => item.kind === 'touched');
+  const shifted = (seconds) => new Date(new Date(at).getTime() + seconds * 1000).toISOString();
+  // Exercise
+  const alone = touched({});
+  const nearComment = touched({ comments: [comment({ at: shifted(299) })] });
+  const farComment = touched({ comments: [comment({ at: shifted(301) })] });
+  const earlyComment = touched({ comments: [comment({ at: shifted(-299) })] });
+  const nearEvent = touched({ events: [{ at: shifted(10), source: 'jira', key: 'PROJ-1', kind: 'status', text: 'a → b', url: 'u' }] });
+  const otherKey = touched({ comments: [comment({ key: 'PROJ-2', at })] });
+  const mentionOnly = feedRows({ tickets: [ticket({ updated: at, mention_only: true })] }, { me, rules: compiled }).filter((item) => item.kind === 'touched');
+  // Verify
+  assert.equal(alone.length, 1);
+  assert.equal(alone[0].text, 'now In Progress, with you');
+  assert.match(alone[0].id, /^ticket:jira:PROJ-1:/);
+  assert.equal(nearComment.length, 0);
+  assert.equal(farComment.length, 1);
+  assert.equal(earlyComment.length, 0);
+  assert.equal(nearEvent.length, 0);
+  assert.equal(otherKey.length, 1);
+  assert.equal(mentionOnly.length, 0);
+});
+
+test('a row is handled from the mark time on, and not after newer activity', () => {
+  // Setup
+  const marks = { handled: { 'PROJ-1': '2026-11-01T10:00:00.000Z' } };
+  const rowAt = (activityAt) => ({ row_id: 'PROJ-1', group: 'you', activity_at: activityAt });
+  // Exercise
+  const flags = ['2026-11-01T09:00:00.000Z', '2026-11-01T10:00:00.000Z', '2026-11-01T10:00:00.001Z'].map((at) => withHandled([rowAt(at)], marks)[0].handled);
+  // Verify
+  assert.deepEqual(flags, [true, true, false]);
+});
+
+test('the header counts split rows by group, failing checks need an open PR, and handled moves leave the mine count', () => {
+  // Setup
+  const list = [
+    { row_id: 'a', group: 'you', pr_state: 'OPEN', checks: 'failing' },
+    { row_id: 'b', group: 'you', pr_state: 'MERGED', checks: 'failing' },
+    { row_id: 'c', group: 'others', pr_state: 'OPEN', checks: 'passing' },
+    { row_id: 'd', group: 'done', pr_state: 'OPEN', checks: 'failing' },
+    { row_id: 'e', group: 'others' },
+  ];
+  // Exercise
+  const counts = turnCounts(list, { handled: { b: '9999' } });
+  // Verify
+  assert.deepEqual(counts, { mine: 1, others: 2, failing: 2, done: 1 });
+});
+
+test('ticket events record status and assignee changes of tickets present before and after, and nothing for new ones', () => {
+  // Setup
+  const before = [ticket({ key: 'PROJ-1' }), ticket({ key: 'PROJ-2' }), ticket({ key: 'PROJ-3' })];
+  const after = [
+    ticket({ key: 'PROJ-1', status: 'Code Review' }),
+    ticket({ key: 'PROJ-2', assignee: 'Sam Reviewer' }),
+    ticket({ key: 'PROJ-3' }),
+    ticket({ key: 'PROJ-4', status: 'Done' }),
+  ];
+  // Exercise
+  const events = ticketEvents(before, after);
+  // Verify
+  assert.equal(events.length, 2);
+  assert.deepEqual({ ...events[0], at: 'x' }, { at: 'x', source: 'jira', key: 'PROJ-1', kind: 'status', text: 'In Progress → Code Review', url: after[0].url });
+  assert.deepEqual({ ...events[1], at: 'x' }, { at: 'x', source: 'jira', key: 'PROJ-2', kind: 'reassigned', text: 'Alex Doe → Sam Reviewer', url: after[1].url });
+  assert.match(events[0].at, /^\d{4}-\d{2}-\d{2}T/);
 });
