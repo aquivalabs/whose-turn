@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { chmodSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CHANNEL, PLUGIN_UPDATE, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin, compareVersions, noUpdates, VERSION } from '../lib/update.mjs';
+import { CHANNEL, PLUGIN_COPY, createUpdater, findClaude, installedRoot, pinnedVersion, probeAgent, quitServer, restartServer, runsInstalled, updatePlugin, compareVersions, noUpdates, VERSION } from '../lib/update.mjs';
 import { startTestApi } from './fixtures/api.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
@@ -338,7 +338,7 @@ test('after the install the plugin result rides in the status of the restarted s
   // Verify
   assert.deepEqual(calls, ['plugin']);
   assert.equal(updating.status().plugin, undefined);
-  assert.deepEqual(make('1.0.0-alpha.3').status().plugin, { state: 'updated', copy: PLUGIN_UPDATE });
+  assert.deepEqual(make('1.0.0-alpha.3').status().plugin, { state: 'updated', copy: PLUGIN_COPY });
   assert.equal(make('1.0.0-alpha.4').status().plugin, undefined);
 });
 

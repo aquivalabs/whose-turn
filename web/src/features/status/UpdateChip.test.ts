@@ -200,7 +200,7 @@ test('a newer monitor version wins over the plugin chip, and no plugin result sh
   const { container } = render(UpdateChip);
 
   expect(await screen.findByRole('button', { name: '1.0.0-alpha.3 is out · Update' })).toBeTruthy();
-  expect(container.textContent).not.toContain('Claude skill');
+  expect(container.textContent).not.toContain('Update Claude plugin');
 });
 
 test('a plugin whose skill does not know this monitor shows a calm Update Claude plugin chip (RMA-350, RMA-432)', async () => {

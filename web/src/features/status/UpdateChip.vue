@@ -29,7 +29,7 @@ const restarting = computed(
 const pluginFace = computed(() => {
   const state = update.value.plugin?.state;
   if (state === 'updated') {
-    return { hint: t('status.update.pluginReloadHint'), failed: false };
+    return { hint: t('status.update.pluginUpdateHint'), failed: false };
   }
   if (state === 'behind') {
     return { hint: t('status.update.pluginBehindHint', { current: update.value.current }), failed: false };
