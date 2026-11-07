@@ -356,7 +356,7 @@ test('/api/state offers the command to copy, and POST /api/update/plugin-copied 
     const { update } = await (await get('/api/state')).json();
     const copied = await (await post('/api/update/plugin-copied', {})).json();
     // Verify
-    assert.deepEqual(update.plugin, { state: 'failed', copy: 'claude plugin update whose-turn@bladeforge' });
+    assert.deepEqual(update.plugin, { state: 'failed', copy: '/reload-plugins --force' });
     assert.equal(copied.update.plugin, undefined);
     assert.equal(announced.at(-1).plugin, undefined);
     assert.equal(make().status().plugin, undefined);
@@ -449,7 +449,7 @@ test('a plugin whose skill knows an older monitor shows as behind until its comm
   const old = updater.status().plugin;
   // Verify
   assert.equal(unseen, undefined);
-  assert.deepEqual(behind, { state: 'behind', copy: 'claude plugin update whose-turn@bladeforge', seen: '1.0.14', knows: '1.0.0-alpha.14' });
+  assert.deepEqual(behind, { state: 'behind', copy: '/reload-plugins --force', seen: '1.0.14', knows: '1.0.0-alpha.14' });
   assert.equal(copied, undefined);
   assert.equal(current, undefined);
   assert.equal(old, undefined);

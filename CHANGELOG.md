@@ -2,6 +2,11 @@
 
 What changed for you in each version of Whose Turn. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/). The window shows this list under What's new; the ids at the end of an entry are ours and the window leaves them out.
 
+## [Unreleased]
+
+### Fixed
+- The Claude skill chip always copies `/reload-plugins --force`, which you paste into your Claude session and which works at once. It no longer offers a terminal command that did nothing when pasted into Claude. RMA-424.
+
 ## [1.0.0-beta.1] - 2026-11-07
 
 ### Important

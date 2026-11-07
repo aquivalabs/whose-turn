@@ -28,9 +28,8 @@ export default {
     pluginTitle: 'Copies {copy}: {hint}',
     pluginReload: 'Reload Claude skill · Copy',
     pluginReloadHint: 'paste it in your Claude session to load the updated skill',
-    pluginUpdate: 'Update Claude skill · Copy',
-    pluginUpdateHint: 'run it in a terminal, then reload plugins in your Claude session',
-    pluginBehindHint: 'your Claude plugin does not know monitor {current} yet; run it in a terminal, then reload plugins in your Claude session',
+    pluginFailedHint: 'the monitor could not update the Claude plugin; paste it in your Claude session, and if nothing changes ask Claude to update the whose-turn plugin',
+    pluginBehindHint: 'a Claude session still runs a plugin that does not know monitor {current}; paste it in that session to load the new one',
   },
   notifications: {
     on: 'Notifications on',

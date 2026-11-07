@@ -154,15 +154,15 @@ test('after a plugin update the chip copies the text the server chose, says Copi
   expect(snapshot.update.plugin).toBeUndefined();
 });
 
-test.each(['manual', 'failed'] as const)('a %s plugin update shows the Update Claude skill chip, which copies the command', async (state) => {
+test.each(['manual', 'failed'] as const)('a %s plugin update shows the same Reload Claude skill chip in the error colour, copying /reload-plugins --force (RMA-424)', async (state) => {
   const write = clipboard();
-  withPlugin(state, 'claude plugin update whose-turn@bladeforge');
+  withPlugin(state, '/reload-plugins --force');
   vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });
   render(UpdateChip);
 
-  await fireEvent.click(await screen.findByRole('button', { name: 'Update Claude skill · Copy' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Reload Claude skill · Copy' }));
 
-  expect(await copiedText(write)).toBe('claude plugin update whose-turn@bladeforge');
+  expect(await copiedText(write)).toBe('/reload-plugins --force');
 });
 
 test('a copy refused by the clipboard and by the fallback says so and leaves the chip for the server to keep', async () => {
@@ -196,19 +196,19 @@ test.each([
 });
 
 test('a newer monitor version wins over the plugin chip, and no plugin result shows nothing', async () => {
-  snapshot.update = offer({ plugin: { state: 'manual', copy: 'claude plugin update whose-turn@bladeforge' } });
+  snapshot.update = offer({ plugin: { state: 'manual', copy: '/reload-plugins --force' } });
   const { container } = render(UpdateChip);
 
   expect(await screen.findByRole('button', { name: '1.0.0-alpha.3 is out · Update' })).toBeTruthy();
   expect(container.textContent).not.toContain('Claude skill');
 });
 
-test('a plugin whose skill does not know this monitor shows a calm Update Claude skill chip (RMA-350)', async () => {
+test('a plugin whose skill does not know this monitor shows a calm Reload Claude skill chip (RMA-350, RMA-424)', async () => {
   clipboard();
-  snapshot.update = offer({ available: false, latest: '1.0.0-alpha.2', plugin: { state: 'behind', copy: 'claude plugin update whose-turn@bladeforge', seen: '1.0.12', knows: '1.0.0-alpha.1' } });
+  snapshot.update = offer({ available: false, latest: '1.0.0-alpha.2', plugin: { state: 'behind', copy: '/reload-plugins --force', seen: '1.0.12', knows: '1.0.0-alpha.1' } });
   render(UpdateChip);
 
-  const chip = await screen.findByRole('button', { name: 'Update Claude skill · Copy' });
+  const chip = await screen.findByRole('button', { name: 'Reload Claude skill · Copy' });
 
   expect(chip.className).not.toContain('update-chip--failed');
   expect(chip.getAttribute('data-tip') || chip.getAttribute('title') || '').toContain('does not know monitor');

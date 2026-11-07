@@ -28,6 +28,8 @@ A tag `vX.Y.Z` on `main` runs `.github/workflows/release.yml`: it checks that th
 
 **Amendment, 2026-11-07 (RMA-416).** `findClaude` reads only the absolute entries of `PATH`; an empty or relative entry such as `.` or `bin` is skipped, so a `claude` in whatever directory the server runs from never runs. Every other location, `PATH` and the four install folders above, is trusted as the user's own shell trusts it when they type `claude`: a process able to plant a binary there already runs as the user. The same lookup serves the report composer in `lib/compose.mjs`.
 
+**Amendment, 2026-11-07 (RMA-424).** The chip copies `/reload-plugins --force` in every state: `updated`, `manual`, `failed` and `behind`. The terminal command `claude plugin update whose-turn@bladeforge` is no longer offered, because pasted into Claude it does nothing by itself, and after a monitor update the plugin on disk is usually current already: what is left is the reload in each open session. `manual` and `failed` keep the error colour, and their hint says to ask Claude to update the plugin if the reload changes nothing.
+
 ## Consequences
 
 Easier: one command installs server, window and skill on a clean machine; a version bump is one tag. Harder: a release needs the package's trusted publisher on npm to name this repository and `release.yml` (OIDC, so no token lives in the repository; RMA-235) and a version bump in `package.json` before the tag (the workflow refuses a mismatch; until RMA-217 also in `.claude-plugin/plugin.json`); during the alpha the BladeForge entry follows the `alpha` dist-tag, so every alpha publish reaches users on their next plugin update. Impossible: a user building the window on their machine.
