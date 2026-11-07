@@ -114,7 +114,9 @@ A workspace entry `{ "type": "module", "id": "board", "adapter": "trello", "boar
 - In the settings sheet, **+ Add Custom source** asks for a **Name** (the entry's `label`). On save an
   entry without `adapter` gets the name made from its label, in Latin, lowercase, words joined by `_`,
   at most 40 characters (`adapterNameOf`), and a missing file gets a template that extends `Adapter`
-  with an empty `poll`; the monitor never overwrites an existing file. The user or Claude writes the
+  with an empty `poll`; the monitor never overwrites an existing file. The label reaches the template only
+  as the `label` string literal, written with `JSON.stringify`; the header comment is fixed text, so no
+  label can close it and become code. The user or Claude writes the
   source into that file.
 - `GET /api/config` carries `adapters`: per adapter a `module` entry of the config names, its `label`
   and `fields`, or the `problem` that stops it loading; a file in the folder that no entry names is
