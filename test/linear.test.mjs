@@ -46,3 +46,13 @@ test('poll reads archived issues for Recently done, and only active ones for the
   assert.equal(open.variables.archived, false);
   assert.match(done.query, /includeArchived: \$archived/);
 });
+
+test('a Duplicate issue is closed: the open list leaves it out and a stray one counts as done', async () => {
+  const calls = [];
+  const http = { fetchJson: async (url, options) => { calls.push(options.body.variables.filter); return { data: { viewer, issues: { pageInfo: { hasNextPage: false }, nodes: [] } } }; } };
+  await linear.poll({ settings: { workspace: 'your-space' }, http, secrets: { get: async () => 'lin_api_test' }, cache: {} });
+  const open = calls.find((filter) => !filter.completedAt);
+  assert.deepEqual(open.state.type.nin, ['completed', 'canceled', 'duplicate']);
+  const { tickets } = normalise([issue({ state: { name: 'Duplicate', type: 'duplicate' } })], viewer);
+  assert.equal(tickets[0].status_category, 'done');
+});

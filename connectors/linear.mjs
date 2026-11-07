@@ -29,7 +29,7 @@ query Mine($filter: IssueFilter!, $after: String, $archived: Boolean) {
   }
 }`;
 
-const CATEGORY = { completed: 'done', canceled: 'done', started: 'indeterminate', backlog: 'new', unstarted: 'new', triage: 'new' };
+const CATEGORY = { completed: 'done', canceled: 'done', duplicate: 'done', started: 'indeterminate', backlog: 'new', unstarted: 'new', triage: 'new' };
 
 const mentionText = (body) => String(body || '').replace(/\[@?([^\]]+)\]\(https:\/\/linear\.app\/[^)]*\/profiles\/[^)]*\)/g, '@$1');
 
@@ -47,7 +47,7 @@ const buildFilter = (settings, done) => {
   if (done) {
     filter.completedAt = { gte: new Date(Date.now() - 30 * 86400000).toISOString() };
   } else {
-    filter.state = { type: { nin: ['completed', 'canceled'] } };
+    filter.state = { type: { nin: ['completed', 'canceled', 'duplicate'] } };
   }
   if (settings.team) {
     filter.team = { key: { eq: settings.team } };
