@@ -5,8 +5,10 @@ import { cachedToken } from '../lib/token-cache.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-linear';
 
+export const contract = 1;
 export const id = 'linear';
 export const label = 'Linear';
+export const capabilities = ['tickets', 'comments'];
 export const links = (settings) => (settings.workspace ? [{ label: 'Linear', url: `https://linear.app/${settings.workspace}${settings.team ? `/team/${settings.team}` : ''}` }] : []);
 export const fields = [
   { key: 'workspace', label: 'Workspace slug', hint: 'the part after linear.app/ in your issue links', required: true },

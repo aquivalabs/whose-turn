@@ -11,6 +11,8 @@ export interface ConnectorSummary {
   id: string;
   type: string;
   label: string;
+  badge?: string;
+  tone?: string;
 }
 export interface QuickLink {
   label: string;

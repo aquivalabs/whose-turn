@@ -13,9 +13,10 @@ through the same poll path. Contract version **1**. The decision is
 store, the file system, the network. Name only a file you wrote or read in full.
 
 Status of the proof of concept: `file` and `module` are registered as experimental. The config accepts
-them; the settings sheet does not offer them. The four built-ins (`github`, `jira`, `linear`, `demo`)
-follow the shapes but do not yet export `contract` and `capabilities`, and their results are not
-checked; that is stage 1 of the plan.
+them; the settings sheet does not offer them. The built-ins (`github`, `jira`, `linear`) export
+`contract` and `capabilities`, and every poll result of theirs is checked: a problem becomes the entry's
+partial error `<id>.contract` while its data still flows, so one odd record never empties a source. The
+window takes a source's feed badge and icon tone from the connector summary, never from its type.
 
 ## Where it lives
 

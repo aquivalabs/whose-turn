@@ -77,6 +77,5 @@ export const subjectOf = (item: FeedItem) =>
 export const itemLine = (item: FeedItem) =>
   [subjectOf(item), item.text === item.title ? '' : item.text].filter(Boolean).join(' · ');
 
-/** The source badge: GH for a GitHub connector under its own name, else the initials of the connector's label, as the rail does for workspaces (RMA-137, RMA-167). */
-export const badgeOf = (source: ConnectorSummary) =>
-  source.type === 'github' && source.label === 'GitHub' ? 'GH' : glyphOf(source.label);
+/** The source badge: the badge the connector's type declares, else the initials of the connector's label, as the rail does for workspaces (RMA-137, RMA-167, RMA-429). */
+export const badgeOf = (source: ConnectorSummary) => source.badge || glyphOf(source.label);

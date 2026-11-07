@@ -37,7 +37,7 @@ test('a PR item without a ticket carries its title into the group head and its o
   assert.equal(subjectOf({ ...items[0], ref: 'PROJ-1' }), '');
   assert.equal(itemLine({ ...items[0], ref: 'PROJ-1' }), 'please look');
   assert.equal(matchesQuery(pr, 'rainy'), true);
-  assert.deepEqual([{ type: 'github', label: 'GitHub' }, { type: 'github', label: 'work' }, { type: 'demo', label: 'tracker' }, { type: 'demo', label: 'Demo code' }].map((source) => badgeOf({ id: 'x', ...source })), ['GH', 'WO', 'TR', 'DC']);
+  assert.deepEqual([{ type: 'github', label: 'GitHub', badge: 'GH' }, { type: 'github', label: 'work', badge: '' }, { type: 'demo', label: 'tracker' }, { type: 'demo', label: 'Demo code' }].map((source) => badgeOf({ id: 'x', ...source })), ['GH', 'WO', 'TR', 'DC']);
 });
 
 test('a group head names the first two distinct kinds and counts the rest as +n', () => {

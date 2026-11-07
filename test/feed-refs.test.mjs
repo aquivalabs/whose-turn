@@ -15,6 +15,13 @@ test('two connectors of one type are told apart by their label or id; a lone one
   assert.deepEqual(summaries.map((summary) => summary.label), ['tracker', 'Demo code', 'GitHub']);
 });
 
+test('a summary carries the badge and icon tone its connector type declares, and the badge only under the type\'s own name', () => {
+  const lone = connectorSummaries([{ id: 'github', type: 'github' }, { id: 'jira', type: 'jira' }]);
+  assert.deepEqual(lone.map(({ badge, tone }) => [badge, tone]), [['GH', ''], ['', 'jira']]);
+  const [named] = connectorSummaries([{ id: 'work', type: 'github', label: 'work' }]);
+  assert.deepEqual([named.badge, named.tone], ['', '']);
+});
+
 const pr = { number: 7, title: 'Faster start-up', state: 'closed', merged_at: '2026-11-02T10:00:00Z', updated_at: '2026-11-02T10:00:00Z', html_url: 'https://github.com/acme/app/pull/7', head: { sha: 's1' }, base: { ref: 'main' } };
 const responses = {
   '/search/issues': { items: [{ number: 7, updated_at: pr.updated_at }] },

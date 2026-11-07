@@ -8,8 +8,12 @@ import { cachedToken } from '../lib/token-cache.mjs';
 const run = promisify(execFile);
 const API = 'https://api.github.com';
 
+export const contract = 1;
 export const id = 'github';
 export const label = 'GitHub';
+export const capabilities = ['prs', 'asks', 'runs', 'activity'];
+export const badge = 'GH';
+export const tone = '';
 export const links = (settings) => (settings.repo ? [{ label: 'GitHub', url: `https://github.com/${settings.repo}` }] : []);
 export const fields = [
   { key: 'repo', label: 'Repository', hint: 'owner/name whose PRs are yours', required: true },

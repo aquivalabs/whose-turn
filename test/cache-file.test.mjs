@@ -42,14 +42,14 @@ test('a corrupt file is ignored and the next save overwrites it', () => {
   assert.equal(openStore(dir, 'w').loadCache('github').prs.size, 1);
 });
 
-const pull = (number) => ({ number, title: `PROJ-${number} change`, state: 'open', merged_at: null, updated_at: `t${number}`, html_url: `https://github.com/o/r/pull/${number}`, base: { ref: 'main' }, head: { sha: `sha${number}` } });
+const pull = (number) => ({ number, title: `PROJ-${number} change`, state: 'open', merged_at: null, updated_at: `2026-11-0${number}T10:00:00Z`, html_url: `https://github.com/o/r/pull/${number}`, base: { ref: 'main' }, head: { sha: `sha${number}` } });
 
 const stubHttp = (calls, numbers) => ({
   fetchJson: async (url) => {
     const path = url.replace('https://api.github.com', '');
     calls.push(path);
     if (path.startsWith('/search/issues')) {
-      return { items: path.includes('is%3Aopen') && !path.includes('review-requested') ? numbers.map((number) => ({ number, updated_at: `t${number}` })) : [] };
+      return { items: path.includes('is%3Aopen') && !path.includes('review-requested') ? numbers.map((number) => ({ number, updated_at: `2026-11-0${number}T10:00:00Z` })) : [] };
     }
     if (path === '/user') {
       return { login: 'alex' };

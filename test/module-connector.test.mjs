@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as moduleConnector from '../connectors/module.mjs';
-import { connectorCatalogue, secretsRequired } from '../connectors/index.mjs';
+import { CONNECTORS, connectorCatalogue, secretsRequired } from '../connectors/index.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 
@@ -74,6 +74,22 @@ test('an adapter is named by its file name only, so no config can point outside 
   const outside = workspaceWith({ adapter: '../board' });
   await outside.poll();
   assert.match(outside.snapshot(false).errors.board, /Adapter name "\.\.\/board" must be/);
+});
+
+test('a built-in whose poll breaks the contract gets a partial error naming the problems, and its data still flows', async () => {
+  CONNECTORS.broken_builtin = { contract: 1, id: 'broken_builtin', label: 'Broken', capabilities: ['tickets'], fields: [], poll: async () => ({ me: 'me', tickets: [{ key: 'BRD-1' }], prs: [] }) };
+  try {
+    const workspace = createWorkspace(
+      { id: 'w', name: 'Events', key_pattern: 'BRD-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'broken_builtin', id: 'bad' }] },
+      { dataDir: dataDirWithAdapters(), historyDays: 3650, secrets: secrets('t'), notify: () => {} },
+    );
+    await workspace.poll();
+    const snapshot = workspace.snapshot(true);
+    assert.match(snapshot.errors['bad.contract'], /^Broken does not follow connector contract 1: .*returns prs but does not declare it/);
+    assert.deepEqual(snapshot.tickets.map((ticket) => ticket.key), ['BRD-1']);
+  } finally {
+    delete CONNECTORS.broken_builtin;
+  }
 });
 
 test('the experimental types are accepted in the config but not offered by the settings catalogue', () => {

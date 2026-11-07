@@ -7,10 +7,12 @@ import * as module from './module.mjs';
 
 export const CONNECTORS = { github, jira, linear, file, module };
 
-/** What a workspace calls each of its connectors: the entry's own label, else its id when another entry has the same type, else the type's label (RMA-167). */
+/** What a workspace calls each of its connectors: the entry's own label, else its id when another entry has the same type, else the type's label (RMA-167); with the feed badge and icon tone its type declares (RMA-429). */
 export const connectorSummaries = (entries) => entries.map((entry) => {
   const shared = entries.some((other) => other !== entry && other.type === entry.type);
-  return { id: entry.id, type: entry.type, label: entry.label || (shared ? entry.id : CONNECTORS[entry.type]?.label || entry.type) };
+  const connector = CONNECTORS[entry.type];
+  const label = entry.label || (shared ? entry.id : connector?.label || entry.type);
+  return { id: entry.id, type: entry.type, label, badge: connector?.badge && label === connector.label ? connector.badge : '', tone: connector?.tone ?? 'jira' };
 });
 
 /** The settings form lists the supported types; an experimental one (RMA-95) is accepted in the config but not offered. */

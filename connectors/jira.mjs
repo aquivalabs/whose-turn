@@ -4,8 +4,10 @@ import { cachedToken } from '../lib/token-cache.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-jira';
 
+export const contract = 1;
 export const id = 'jira';
 export const label = 'Jira';
+export const capabilities = ['tickets', 'comments'];
 export const links = (settings) => (settings.base ? [{ label: 'Jira', url: String(settings.base).replace(/\/$/, '') }] : []);
 export const endpointKey = 'base';
 export const fields = [

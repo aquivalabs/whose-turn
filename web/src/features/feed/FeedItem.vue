@@ -25,7 +25,7 @@ const badge = computed(() => badgeOf(props.source));
 const subject = computed(() => subjectOf(props.item));
 const line = computed(() => itemLine(props.item));
 const tone = computed(() => toneOf(props.item.kind));
-const iconTone = computed(() => tone.value || (props.source.type === 'github' ? '' : 'jira'));
+const iconTone = computed(() => tone.value || (props.source.tone ?? 'jira'));
 const written = computed(() => hasBody(props.item));
 const open = computed(() => written.value && props.expanded);
 const when = computed(() => {
