@@ -4,13 +4,14 @@ import { AnimatePresence, M as Motion } from 'motion-v';
 import { computed, nextTick, ref } from 'vue';
 import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
-import { GEAR, NEW_RELEASES, PLUS, workspaceIconParts } from '@/lib/icons.ts';
+import { GEAR, NEW_RELEASES, PLUS, POWER, workspaceIconParts } from '@/lib/icons.ts';
 import { movedIds } from '@/lib/settings.ts';
 import type { Workspace } from '@/lib/types.ts';
 import { mulberry32 } from '@/lib/random.ts';
 import { fade, listed } from '@/motion.ts';
 import { useWhatsNew } from '@/composables/useWhatsNew.ts';
 import { useText } from '@/i18n/index.ts';
+import PowerMenu from './PowerMenu.vue';
 const emit = defineEmits<{ settings: []; addWorkspace: []; whatsNew: [] }>();
 const t = useText();
 const { unseen } = useWhatsNew();
@@ -68,6 +69,12 @@ const onSettings = (event: MouseEvent) => {
 };
 const onAddWorkspace = (event: MouseEvent) => {
   emit('addWorkspace');
+  blurAfterMouse(event);
+};
+const power = ref<HTMLElement | null>(null);
+const powerOpen = ref(false);
+const onPower = (event: MouseEvent) => {
+  powerOpen.value = !powerOpen.value;
   blurAfterMouse(event);
 };
 const onWhatsNew = (event: MouseEvent) => {
@@ -136,7 +143,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 };
 </script>
 <template>
-  <nav class="rail" :aria-label="t('rail.workspaces')">
+  <nav class="rail" :class="{ 'rail--open': powerOpen }" :aria-label="t('rail.workspaces')">
     <AnimatePresence>
     <Motion
       v-for="workspace in shown"
@@ -233,6 +240,20 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       </svg>
       <span class="rail__label">{{ t('rail.settings') }}</span>
     </a>
+    <a
+      ref="power"
+      class="rail__item"
+      href="#power"
+      :aria-label="t('rail.power')"
+      :aria-expanded="powerOpen"
+      @click.prevent="onPower"
+    >
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
+        <path :d="POWER" fill="currentColor" />
+      </svg>
+      <span class="rail__label">{{ t('rail.power') }}</span>
+    </a>
+    <PowerMenu v-model:open="powerOpen" :anchor="power" />
   </nav>
 </template>
 <style scoped>
@@ -259,7 +280,8 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
 }
 
 .rail:hover,
-.rail:has(:focus-visible) {
+.rail:has(:focus-visible),
+.rail--open {
   width: 14.5rem;
   box-shadow: 12px 0 32px rgb(0 0 0 / 12%);
 }
@@ -342,6 +364,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   font-size: 0.75rem;
 }
 
+.rail--open .rail__label,
 .rail:hover .rail__label,
 .rail:has(:focus-visible) .rail__label {
   opacity: 1;
@@ -364,6 +387,7 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   text-align: center;
 }
 
+.rail--open .rail__badge,
 .rail:hover .rail__badge,
 .rail:has(:focus-visible) .rail__badge {
   position: static;

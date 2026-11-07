@@ -33,13 +33,6 @@ export default {
     restore: 'Restore',
     restoreLabel: 'Restore {name}',
     restoreTip: 'Show it in the list again and check it every minute.',
-    lifecycleHeading: 'The monitor',
-    lifecycleNote:
-      'Restart reloads the monitor and the window reconnects by itself. Quit stops it until you start it again, from Claude or with a new Claude Code session.',
-    restart: 'Restart',
-    quit: 'Quit',
-    quitQuestion: 'Quit Whose Turn? It stops checking your sources until you start it again.',
-    keepRunning: 'Keep running',
     configFile: 'Config file',
   },
   workspace: {

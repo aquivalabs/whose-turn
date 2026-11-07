@@ -176,28 +176,6 @@ test('parked and paused workspaces are listed with their mode, and Restore asks 
   snapshot.workspaces = [];
 });
 
-test('Restart asks the server to restart at once (RMA-356)', async () => {
-  stubServer({ lifecycle: 'restarting' });
-  await openFromRail();
-
-  await fireEvent.click(screen.getByRole('button', { name: 'Restart' }));
-  await waitFor(() => expect(sent.map((call) => call.url)).toEqual(['/api/restart']));
-});
-
-test('Quit asks first and stops only on Quit (RMA-356)', async () => {
-  stubServer({ lifecycle: 'quitting' });
-  await openFromRail();
-
-  await fireEvent.click(screen.getByRole('button', { name: 'Quit' }));
-  expect(await screen.findByText(/Quit Whose Turn\?/)).toBeTruthy();
-  await fireEvent.click(screen.getByRole('button', { name: 'Keep running' }));
-  expect(sent).toEqual([]);
-  await fireEvent.click(screen.getByRole('button', { name: 'Quit' }));
-  const bar = (await screen.findByText(/Quit Whose Turn\?/)).parentElement as HTMLElement;
-  await fireEvent.click(within(bar).getByRole('button', { name: 'Quit' }));
-  await waitFor(() => expect(sent.map((call) => call.url)).toEqual(['/api/quit']));
-});
-
 test('once the monitor is quit the window says it is stopped and how to start it again (RMA-356)', async () => {
   stubServer();
   render(App);

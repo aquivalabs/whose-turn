@@ -12,4 +12,10 @@ export default {
   whatsNew: "What's new",
   unseen: 'Unseen changes',
   settings: 'Monitor settings',
+  power: 'Restart or quit',
+  powerNote: 'Restart reloads the monitor and the window reconnects by itself. Quit stops it until you start it again, from Claude or with a new Claude Code session.',
+  restart: 'Restart',
+  quit: 'Quit',
+  quitQuestion: 'Quit Whose Turn? It stops checking your sources until you start it again.',
+  keepRunning: 'Keep running',
 };

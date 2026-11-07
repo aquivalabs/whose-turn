@@ -2,7 +2,7 @@
 // Monitor settings: what belongs to the whole monitor and not to one workspace; notifications save at once like the bell, the four numbers save with Save, and the server validates them.
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { computed, ref } from 'vue';
-import { snapshot, ui, reload, restoreWorkspace, stopServer, toggleNotifications } from '@/store.ts';
+import { snapshot, ui, reload, restoreWorkspace, toggleNotifications } from '@/store.ts';
 import { listed } from '@/motion.ts';
 import type { FieldSpec } from '@/lib/types.ts';
 import { useText } from '@/i18n/index.ts';
@@ -23,7 +23,7 @@ const specs = ref<FieldSpec[]>([]);
 const configFile = ref('');
 const loadedKey = ref('');
 const hiddenWorkspaces = computed(() => snapshot.workspaces.filter((workspace) => workspace.hidden));
-const { ask, requestClose, answer, confirm, problems, fieldErrors, unloaded, dirty, save: saveTo } = useConfigSheet<ConfigReply>({
+const { ask, requestClose, answer, problems, fieldErrors, unloaded, dirty, save: saveTo } = useConfigSheet<ConfigReply>({
   isOpen: () => ui.monitor,
   close: () => {
     ui.monitor = false;
@@ -45,14 +45,6 @@ const { ask, requestClose, answer, confirm, problems, fieldErrors, unloaded, dir
     configFile.value = reply.config_file || '';
   },
 });
-const close = () => {
-  ui.monitor = false;
-};
-const restart = () => stopServer('restart').then(close);
-const askQuit = () =>
-  confirm(t('settings.monitor.quitQuestion'), t('settings.monitor.quit'), t('settings.monitor.keepRunning'), () => {
-    void stopServer('quit').then(close);
-  });
 const save = () =>
   saveTo({ settings: Object.fromEntries(Object.entries(draft.value).map(([key, text]) => [key, Number(text)])) }, () => {
     ui.monitor = false;
@@ -118,14 +110,6 @@ const save = () =>
             </Motion>
           </AnimatePresence>
         </template>
-        <h4 class="sheet-form__heading">{{ t('settings.monitor.lifecycleHeading') }}</h4>
-        <p class="monitor-settings-sheet__note">
-          {{ t('settings.monitor.lifecycleNote') }}
-        </p>
-        <div class="monitor-settings-sheet__lifecycle">
-          <button type="button" class="btn" @click="restart">{{ t('settings.monitor.restart') }}</button>
-          <button type="button" class="btn btn--danger" @click="askQuit">{{ t('settings.monitor.quit') }}</button>
-        </div>
         <h4 class="sheet-form__heading">{{ t('settings.monitor.configFile') }}</h4>
         <p class="monitor-settings-sheet__file">{{ configFile }}</p>
       </div>
@@ -133,11 +117,6 @@ const save = () =>
   </AnimatePresence>
 </template>
 <style scoped>
-.monitor-settings-sheet__lifecycle {
-  display: flex;
-  gap: 0.5rem;
-}
-
 .monitor-settings-sheet__switch {
   display: flex;
   align-items: center;
