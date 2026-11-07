@@ -21,5 +21,5 @@ test('an Adapter subclass that does not implement poll is refused, and its poll 
   const lazy = new Lazy();
   assert.deepEqual(adapterProblems(lazy), ['poll(context) must be implemented; the base Adapter only refuses']);
   await assert.rejects(lazy.poll({}), /Lazy does not implement poll\(context\)/);
-  assert.deepEqual([lazy.links({}), lazy.fields, lazy.persistedCache, lazy.badge, lazy.tone], [[], [], [], '', 'jira']);
+  assert.deepEqual([lazy.links({}), lazy.fields, lazy.persistedCache, lazy.badge, lazy.tone, lazy.experimental, lazy.reportable], [[], [], [], '', '', false, true]);
 });

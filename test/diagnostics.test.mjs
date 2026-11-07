@@ -1,5 +1,6 @@
 import { mock, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { fakeSource } from './fixtures/fake-source.mjs';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bucket, buildDiagnostics, channelOf, failureCode, fitForRelay, openFailureLog, sourceType } from '../lib/diagnostics.mjs';
@@ -163,7 +164,7 @@ test('fitting for the relay drops bad keys and values, cuts lists to ten and key
 test('a workspace reports its facts: attempt and success times, current failure codes, and row counts', async () => {
   process.env.GH_TOKEN = 'stub';
   const recorded = [];
-  CONNECTORS.diagflaky = { id: 'diagflaky', poll: async () => { throw Object.assign(new Error('pat@acme said no'), { upstreamStatus: 401 }); } };
+  CONNECTORS.diagflaky = fakeSource({ id: 'diagflaky', poll: async () => { throw Object.assign(new Error('pat@acme said no'), { upstreamStatus: 401 }); } });
   const built = createWorkspace(
     { id: 'n', name: 'Northwind', key_pattern: 'NW-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'demo', id: 'demo', scenario: 'northwind' }, { type: 'diagflaky', id: 'mine' }, { type: 'github', id: 'gh', workflow_runs: false, repos: [] }] },
     { dataDir: scratchDir('whose-turn-'), historyDays: 14, limits: () => DEFAULT_LIMITS, notify: () => {}, http: { fetchJson: async () => { throw Object.assign(new Error('x'), { upstreamStatus: 503 }); } }, secrets: { get: async () => 'token' }, onFailure: (type, code) => recorded.push(`${type}:${code}`) },

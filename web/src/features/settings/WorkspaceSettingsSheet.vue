@@ -134,13 +134,14 @@ const ID_SPEC = computed<FieldSpec>(() => ({ key: 'id', label: t('settings.works
 const LABEL_SPEC = computed<FieldSpec>(() => ({ key: 'label', label: t('settings.workspace.sourceLabel') }));
 const CUSTOM_NAME_SPEC = computed<FieldSpec>(() => ({ key: 'label', label: t('settings.workspace.customName'), required: true }));
 const isCustom = (entry: ConnectorEntry) => entry.type === CUSTOM_TYPE;
+const adapterName = (entry: ConnectorEntry) => (typeof entry.adapter === 'string' ? entry.adapter : '');
 const customHint = (entry: ConnectorEntry) =>
-  typeof entry.adapter === 'string' && entry.adapter
-    ? t('settings.workspace.customFile', { file: `adapters/${entry.adapter}.mjs` })
+  adapterName(entry)
+    ? t('settings.workspace.customFile', { file: `adapters/${adapterName(entry)}.mjs` })
     : t('settings.workspace.customFileNew');
 const customError = (entry: ConnectorEntry, index: number) =>
   errorAt('connectors[' + index + '].adapter') ||
-  (typeof entry.adapter === 'string' && adapters.value[entry.adapter]?.problem) ||
+  adapters.value[adapterName(entry)]?.problem ||
   '';
 const current = computed(() => list.value[selected.value] as RawWorkspace | undefined);
 const ruleRows = computed(() =>
@@ -155,7 +156,7 @@ const specOf = (entry: ConnectorEntry): ConnectorSpec => {
     label: entry.type,
     fields: [],
   };
-  const own = isCustom(entry) && typeof entry.adapter === 'string' ? adapters.value[entry.adapter]?.fields : undefined;
+  const own = isCustom(entry) ? adapters.value[adapterName(entry)]?.fields : undefined;
   return own ? { ...spec, fields: [...own, ...spec.fields] } : spec;
 };
 const connectorCards = computed(() =>

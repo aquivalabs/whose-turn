@@ -1,6 +1,8 @@
 /** Test fixture, never shipped: registers itself as `demo` on import. Three invented projects with every state the rules know, timestamps relative to now, and a little life on later polls. No network. */
 import { toIsoUtc } from '../../lib/text.mjs';
 import { CONNECTORS } from '../../connectors/index.mjs';
+import { Adapter } from '../../lib/adapter.mjs';
+import { KINDS } from '../../lib/contract.mjs';
 
 export const id = 'demo';
 export const label = 'Demo';
@@ -146,4 +148,21 @@ export const poll = async ({ settings, cache }) => {
   return { ...data, ticket_base: SITE, errors: {} };
 };
 
-CONNECTORS.demo = { id, label, links, fields, poll };
+/** The demo source as a contract 1 adapter, registered only where a test or the demo server imports this file. */
+class Demo extends Adapter {
+  contract = 1;
+  id = id;
+  label = label;
+  capabilities = [...KINDS];
+  fields = fields;
+
+  links() {
+    return links();
+  }
+
+  poll(context) {
+    return poll(context);
+  }
+}
+
+CONNECTORS.demo = new Demo();

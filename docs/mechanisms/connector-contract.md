@@ -50,7 +50,7 @@ These members are required:
 
 The base supplies the optional members, which an adapter overrides when it needs them: `links(settings)`
 (quick links for the header, none by default), `persistedCache` (cache keys holding `Map`s that survive a
-restart), `badge` (the feed badge under the type's own name), `tone` (the feed icon tone) and `experimental` (accepted by the config but not offered in the settings sheet). A built-in
+restart), `badge` (the feed badge under the type's own name), `tone` (the feed icon tone, neutral by default; Jira and Linear set `jira`), `experimental` (accepted by the config but not offered in the settings sheet) and `reportable` (a report may name the type; `file` and the user's own sources report as `other`). A built-in
 may also set `endpointKey`, the field a stored secret is bound to.
 
 ### Context
@@ -109,7 +109,9 @@ request addressed to you is an ask.
 ### The `module` type
 
 A workspace entry `{ "type": "module", "id": "board", "adapter": "trello", "board": "…" }` runs
-`adapters/trello.mjs` from the data directory, beside `config.json`.
+`adapters/trello.mjs` from the data directory, beside `config.json`. The `module` type is itself an
+`Adapter` (`CustomSource` in `connectors/module.mjs`): its `poll` loads the named adapter and polls it
+through `pollAdapter`, which refuses a result that breaks the contract.
 
 - In the settings sheet, **+ Add Custom source** asks for a **Name** (the entry's `label`). On save an
   entry without `adapter` gets the name made from its label, in Latin, lowercase, words joined by `_`,
@@ -134,7 +136,7 @@ A workspace entry `{ "type": "module", "id": "board", "adapter": "trello", "boar
   check runs on every import. A failed check is the entry's error, and the next poll tries again.
 - The adapter's own required fields must be present in the entry, or the poll fails naming them.
 - The token is optional, entered like any connector secret and stored under the service
-  `token_service` (default `whose-turn-adapter`) and the account `adapter`. The name is both the account
+  `token_service` (default `whose-turn-adapter`) and the account `adapter`; the field declares `followsEndpoint`, so the redirect guard of ADR 0014 skips it. The name is both the account
   and the endpoint, so another name looks up another token: a stored token never follows a renamed
   entry, and a save does not ask for the token again.
 - Old module instances stay in memory after a re-import; ESM has no unload.

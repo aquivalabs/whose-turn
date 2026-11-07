@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { fakeSource } from './fixtures/fake-source.mjs';
 import { DEFAULT_RULES, GLOBAL_SETTINGS, settingsViolations } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { CONNECTORS, secretsRequired } from '../connectors/index.mjs';
@@ -9,12 +10,12 @@ import { scratchDir } from './fixtures/scratch.mjs';
 
 const HOUR = 3600 * 1000;
 const script = { activity: [] };
-CONNECTORS.guarded = {
+CONNECTORS.guarded = fakeSource({
   id: 'guarded',
   label: 'Guarded',
   fields: [],
   poll: async () => ({ tickets: [], prs: [], comments: [], activity: structuredClone(script.activity), asks: [], runs: [], me: 'Alex Doe' }),
-};
+});
 const event = (id, at) => ({ at: new Date(at).toISOString(), pr: `o/r#${id}`, key: '', title: `PR ${id}`, kind: 'comment', who: 'Sam', url: `https://example.com/pull/${id}`, text: 'comment', body: 'comment' });
 const openWorkspace = async () => {
   const workspace = createWorkspace(

@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { fakeSource } from './fixtures/fake-source.mjs';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DEFAULT_RULES, loadConfig, saveWorkspaces, normaliseWorkspaces } from '../lib/config.mjs';
@@ -13,7 +14,7 @@ import { scratchDir } from './fixtures/scratch.mjs';
 const ME = 'Alex Doe';
 const script = { tickets: [], polls: 0 };
 
-CONNECTORS.parkable = {
+CONNECTORS.parkable = fakeSource({
   id: 'parkable',
   label: 'Parkable',
   fields: [],
@@ -21,7 +22,7 @@ CONNECTORS.parkable = {
     script.polls += 1;
     return { tickets: structuredClone(script.tickets), prs: [], comments: [], activity: [], asks: [], runs: [], me: ME };
   },
-};
+});
 
 const ticket = (key, assignee = ME) => ({
   key, summary: `Fix ${key}`, status: 'In Progress', status_category: 'indeterminate', assignee,

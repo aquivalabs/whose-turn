@@ -117,6 +117,7 @@ class Linear extends Adapter {
   label = 'Linear';
   capabilities = ['tickets', 'comments'];
   fields = FIELDS;
+  tone = 'jira';
 
   links(settings) {
     return settings.workspace ? [{ label: 'Linear', url: `https://linear.app/${settings.workspace}${settings.team ? `/team/${settings.team}` : ''}` }] : [];

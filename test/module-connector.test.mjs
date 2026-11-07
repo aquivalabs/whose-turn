@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { fakeSource } from './fixtures/fake-source.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { copyFileSync, mkdtempSync, statSync } from 'node:fs';
@@ -78,7 +79,7 @@ test('an adapter is named by its file name only, so no config can point outside 
 });
 
 test('a built-in whose poll breaks the contract gets a partial error naming the problems, and its data still flows', async () => {
-  CONNECTORS.broken_builtin = { contract: 1, id: 'broken_builtin', label: 'Broken', capabilities: ['tickets'], fields: [], poll: async () => ({ me: 'me', tickets: [{ key: 'BRD-1' }], prs: [] }) };
+  CONNECTORS.broken_builtin = fakeSource({ contract: 1, id: 'broken_builtin', label: 'Broken', capabilities: ['tickets'], fields: [], poll: async () => ({ me: 'me', tickets: [{ key: 'BRD-1' }], prs: [] }) });
   try {
     const workspace = createWorkspace(
       { id: 'w', name: 'Events', key_pattern: 'BRD-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'broken_builtin', id: 'bad' }] },

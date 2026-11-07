@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { fakeSource } from './fixtures/fake-source.mjs';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DEFAULT_LIMITS, nextFails, assess, transition } from '../lib/health.mjs';
@@ -54,7 +55,7 @@ test('the config takes the thresholds and refuses a non-positive one', () => {
 });
 
 const flaky = (script) => {
-  CONNECTORS.flaky = {
+  CONNECTORS.flaky = fakeSource({
     id: 'flaky',
     poll: async () => {
       if (script.fail) {
@@ -62,7 +63,7 @@ const flaky = (script) => {
       }
       return { tickets: [], comments: [], prs: [], activity: [], asks: [], me: 'pat' };
     },
-  };
+  });
 };
 
 const workspace = (script, limits, dir = scratchDir('whose-turn-')) => {

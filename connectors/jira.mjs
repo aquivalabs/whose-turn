@@ -172,6 +172,7 @@ class Jira extends Adapter {
   capabilities = ['tickets', 'comments'];
   fields = FIELDS;
   endpointKey = 'base';
+  tone = 'jira';
 
   links(settings) {
     return settings.base ? [{ label: 'Jira', url: String(settings.base).replace(/\/$/, '') }] : [];

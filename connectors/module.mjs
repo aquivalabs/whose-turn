@@ -9,12 +9,8 @@ import { expandHome } from '../lib/text.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-adapter';
 
-export const id = 'module';
-export const label = 'Custom';
-export const endpointKey = 'adapter';
-export const links = () => [];
-export const fields = [
-  { key: 'token', label: 'Token', hint: 'optional; stored in the secret store under the adapter name, handed to the adapter as secret()', secret: { account: 'adapter', service: 'token_service', default: DEFAULT_SERVICE } },
+const FIELDS = [
+  { key: 'token', label: 'Token', hint: 'optional; stored in the secret store under the adapter name, handed to the adapter as secret()', secret: { account: 'adapter', service: 'token_service', default: DEFAULT_SERVICE, followsEndpoint: true } },
   { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-adapter' },
 ];
 
@@ -37,9 +33,12 @@ export const writeAdapterShim = async (adaptersDir) => {
 };
 const ADAPTER_NAME = /^[a-z0-9][a-z0-9_-]*$/;
 
+/** Whether `name` can name an adapter file: lowercase letters, digits, `-` and `_`, no path. */
+export const isAdapterName = (name) => typeof name === 'string' && ADAPTER_NAME.test(name);
+
 /** The file of the adapter named `name` in `adaptersDir`; a name that is not a plain file name throws. */
 export const adapterFile = (adaptersDir, name) => {
-  if (typeof name !== 'string' || !ADAPTER_NAME.test(name)) {
+  if (!isAdapterName(name)) {
     throw new Error(`Adapter name ${JSON.stringify(name)} must be lowercase letters, digits, - or _, the file name without .mjs`);
   }
   return join(adaptersDir, `${name}.mjs`);
@@ -93,30 +92,36 @@ export const pollAdapter = async (adapter, context) => {
   return { me: result.me || '', ...data, ticket_base: typeof result.ticket_base === 'string' ? result.ticket_base : '', errors: result.errors || {} };
 };
 
-export const poll = async ({ settings, http, secrets, cache, sinceIso, historyDays, keyOf, adaptersDir }) => {
-  const adapter = await loadAdapter(adapterFile(adaptersDir, settings.adapter));
-  const service = settings.token_service || DEFAULT_SERVICE;
-  const secret = () => cachedToken(cache, () => secrets.get(service, String(settings.adapter)));
-  cache.adapter = cache.adapter || {};
-  return pollAdapter(adapter, { settings, http, cache: cache.adapter, sinceIso, historyDays, keyOf, secret });
-};
+/** The user's own source: polls the adapter its entry names in the adapters folder, through the same contract as the built-ins. */
+class CustomSource extends Adapter {
+  contract = 1;
+  id = 'module';
+  label = 'Custom';
+  capabilities = [...KINDS];
+  fields = FIELDS;
+  endpointKey = 'adapter';
+  reportable = false;
+
+  /**
+   * @param {any} context the poll context, with the secret store and the adapters folder
+   * @returns {Promise<import('../types/connector.js').PollResult>}
+   */
+  async poll({ settings, http, secrets, cache, sinceIso, historyDays, keyOf, adaptersDir }) {
+    const adapter = await loadAdapter(adapterFile(adaptersDir, settings.adapter));
+    const service = settings.token_service || DEFAULT_SERVICE;
+    const secret = () => cachedToken(cache, () => secrets.get(service, String(settings.adapter)));
+    cache.adapter = cache.adapter || {};
+    return pollAdapter(adapter, { settings, http, cache: cache.adapter, sinceIso, historyDays, keyOf, secret });
+  }
+}
+
+export default new CustomSource();
 
 /** The config violations of every `module` entry whose adapter in `dataDir`'s adapters folder is missing or breaks the contract, at the entry's `adapter` field. */
 export const adapterViolations = async (rawWorkspaces, dataDir) => {
-  const violations = [];
-  for (const [index, workspace] of rawWorkspaces.entries()) {
-    for (const [position, entry] of (Array.isArray(workspace?.connectors) ? workspace.connectors : []).entries()) {
-      if (entry?.type !== 'module') {
-        continue;
-      }
-      try {
-        await loadAdapter(adapterFile(adaptersDirOf(dataDir), entry.adapter));
-      } catch (error) {
-        violations.push({ field: `workspaces[${index}].connectors[${position}].adapter`, description: `Workspace "${workspace.id}", connector "${entry.id}": ${error.message}` });
-      }
-    }
-  }
-  return violations;
+  const checks = rawWorkspaces.flatMap((workspace, index) => (Array.isArray(workspace?.connectors) ? workspace.connectors : []).map((entry, position) => ({ workspace, entry, index, position }))).filter(({ entry }) => entry?.type === 'module');
+  const outcomes = await Promise.all(checks.map(({ entry }) => loadAdapter(adapterFile(adaptersDirOf(dataDir), entry.adapter)).then(() => null, (error) => error)));
+  return checks.flatMap(({ workspace, entry, index, position }, at) => (outcomes[at] ? [{ field: `workspaces[${index}].connectors[${position}].adapter`, description: `Workspace "${workspace.id}", connector "${entry.id}": ${outcomes[at].message}` }] : []));
 };
 
 const CYRILLIC = { '\u0430': 'a', '\u0431': 'b', '\u0432': 'v', '\u0433': 'g', '\u0434': 'd', '\u0435': 'e', '\u0451': 'e', '\u0436': 'zh', '\u0437': 'z', '\u0438': 'i', '\u0439': 'y', '\u043a': 'k', '\u043b': 'l', '\u043c': 'm', '\u043d': 'n', '\u043e': 'o', '\u043f': 'p', '\u0440': 'r', '\u0441': 's', '\u0442': 't', '\u0443': 'u', '\u0444': 'f', '\u0445': 'kh', '\u0446': 'ts', '\u0447': 'ch', '\u0448': 'sh', '\u0449': 'shch', '\u044a': '', '\u044b': 'y', '\u044c': '', '\u044d': 'e', '\u044e': 'yu', '\u044f': 'ya', '\u0456': 'i', '\u0457': 'yi', '\u0454': 'ye', '\u0491': 'g' };
@@ -150,7 +155,7 @@ export default class ${className} extends Adapter {
 `;
 };
 
-const moduleEntries = (rawWorkspaces) => rawWorkspaces.flatMap((workspace) => (Array.isArray(workspace?.connectors) ? workspace.connectors : []).filter((entry) => entry?.type === 'module' && typeof entry === 'object'));
+const moduleEntries = (rawWorkspaces) => rawWorkspaces.flatMap((workspace) => (Array.isArray(workspace?.connectors) ? workspace.connectors : []).filter((entry) => entry?.type === 'module'));
 
 /** Gives every `module` entry that has no adapter yet the name made from its label. */
 export const nameAdapterEntries = (rawWorkspaces) => {
@@ -163,26 +168,25 @@ export const nameAdapterEntries = (rawWorkspaces) => {
 
 /** Writes a template into the adapters folder for every `module` entry whose adapter has no file yet; returns the names it wrote. */
 export const writeAdapterTemplates = async (rawWorkspaces, dataDir) => {
-  const written = [];
-  for (const entry of moduleEntries(rawWorkspaces)) {
-    if (typeof entry.adapter !== 'string' || !ADAPTER_NAME.test(entry.adapter)) {
-      continue;
-    }
-    const adaptersDir = adaptersDirOf(dataDir);
-    const file = adapterFile(adaptersDir, entry.adapter);
-    if (!(await stat(file).catch(() => null))) {
-      await writeAdapterShim(adaptersDir);
-      await writeFile(file, TEMPLATE(entry.adapter, String(entry.label || entry.adapter)), { flag: 'wx' });
-      written.push(entry.adapter);
+  const adaptersDir = adaptersDirOf(dataDir);
+  const labels = new Map(moduleEntries(rawWorkspaces).filter((entry) => isAdapterName(entry.adapter)).map((entry) => [entry.adapter, String(entry.label || entry.adapter)]));
+  const missing = [];
+  for (const [name, label] of labels) {
+    if (!(await stat(adapterFile(adaptersDir, name)).catch(() => null))) {
+      missing.push([name, label]);
     }
   }
-  return written;
+  if (missing.length) {
+    await writeAdapterShim(adaptersDir);
+  }
+  await Promise.all(missing.map(([name, label]) => writeFile(adapterFile(adaptersDir, name), TEMPLATE(name, label), { flag: 'wx' })));
+  return missing.map(([name]) => name);
 };
 
 /** What the settings sheet needs about each adapter a `module` entry of the config names: its label and fields, or the problem that stops it loading; a file no entry names is never run. */
 export const adapterCatalogue = async (dataDir, rawWorkspaces) => {
   const adaptersDir = adaptersDirOf(dataDir);
-  const names = [...new Set(moduleEntries(rawWorkspaces).map((entry) => entry.adapter).filter((name) => typeof name === 'string' && ADAPTER_NAME.test(name)))];
+  const names = [...new Set(moduleEntries(rawWorkspaces).map((entry) => entry.adapter).filter(isAdapterName))];
   const entries = await Promise.all(names.map(async (name) => {
     try {
       const adapter = await loadAdapter(adapterFile(adaptersDir, name));

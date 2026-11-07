@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { fakeSource } from './fixtures/fake-source.mjs';
 import { DEFAULT_RULES } from '../lib/config.mjs';
 import { createWorkspace } from '../lib/workspace.mjs';
 import { CONNECTORS } from '../connectors/index.mjs';
@@ -10,12 +11,12 @@ import { scratchDir } from './fixtures/scratch.mjs';
 const ME = 'Alex Doe';
 const script = { tickets: [], prs: [] };
 
-CONNECTORS.scripted = {
+CONNECTORS.scripted = fakeSource({
   id: 'scripted',
   label: 'Scripted',
   fields: [],
   poll: async () => ({ tickets: structuredClone(script.tickets), prs: structuredClone(script.prs), comments: [], activity: [], asks: [], runs: [], me: ME }),
-};
+});
 
 const ticket = (status, assignee) => ({
   key: 'PROJ-1', summary: 'Fix the export', status, status_category: 'indeterminate', assignee,

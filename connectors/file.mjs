@@ -100,6 +100,7 @@ class LocalFile extends Adapter {
   fields = FIELDS;
   persistedCache = ['seen'];
   experimental = true;
+  reportable = false;
 
   poll(context) {
     return poll(context);

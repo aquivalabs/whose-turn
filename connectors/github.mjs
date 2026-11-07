@@ -365,7 +365,6 @@ class GitHub extends Adapter {
   fields = FIELDS;
   persistedCache = ['prs', 'asks', 'runStreaks'];
   badge = 'GH';
-  tone = '';
 
   links(settings) {
     return settings.repo ? [{ label: 'GitHub', url: `https://github.com/${settings.repo}` }] : [];
