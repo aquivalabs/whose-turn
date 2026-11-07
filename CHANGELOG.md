@@ -4,6 +4,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.0.0-beta.3] - 2026-11-07
+
 ### Fixed
 - A Linear issue closed as Duplicate no longer stays in Your move as work to continue. RMA-427.
 - When Claude marks a failed CI run Handled by the name it sees, the run now leaves Your move; a mark for a row that does not exist is refused instead of being kept for nothing. RMA-428.
