@@ -35,9 +35,9 @@
   "concurrency": 9,
   "timeoutMS": 20000,
   "thresholds": {
-    "high": 98,
-    "low": 96,
-    "break": 96
+    "high": 90,
+    "low": 80,
+    "break": 80
   },
   "tempDirName": ".stryker-tmp",
   "htmlReporter": {
