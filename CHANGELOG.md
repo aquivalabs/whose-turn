@@ -4,6 +4,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.0.0-beta.2] - 2026-11-07
+
 ### Added
 - Your own sources. In Workspace settings, **+ Add Custom source** asks for a name; on save the monitor creates a template file for it in the `adapters` folder next to `config.json`, and you or Claude write your source there as a class that extends `Adapter`. The settings then show the fields your source asks for. A broken source is refused when you save and its problem shows under its name. Your own source runs with the monitor's full rights, so keep only code you wrote or read there. RMA-95, RMA-430, RMA-431.
 - An experimental `file` source you can add by hand in `config.json` reads a local Markdown task list or a JSON list of tickets. RMA-95.
