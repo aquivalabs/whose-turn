@@ -140,6 +140,7 @@ test('fitting for the relay drops bad keys and values, cuts lists to ten and key
 });
 
 test('a workspace reports its facts: attempt and success times, current failure codes, and row counts', async () => {
+  process.env.GH_TOKEN = 'stub';
   const recorded = [];
   CONNECTORS.diagflaky = { id: 'diagflaky', poll: async () => { throw Object.assign(new Error('pat@acme said no'), { upstreamStatus: 401 }); } };
   const built = createWorkspace(
