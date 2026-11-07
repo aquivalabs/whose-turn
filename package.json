@@ -16,6 +16,8 @@
     "launch.sh",
     "open.sh",
     "config.example.json",
+    "scripts/check-adapter.mjs",
+    "docs/mechanisms/connector-contract.md",
     "CHANGELOG.md"
   ],
   "publishConfig": {

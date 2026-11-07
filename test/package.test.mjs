@@ -11,13 +11,17 @@ const packed = () => {
   return files.map((f) => f.path);
 };
 
-test('the published package carries the server and the window, and neither the plugin nor the workbench', () => {
+test('the published package carries the server, the window and what an adapter author needs, and neither the plugin nor the workbench', () => {
   const paths = packed();
   const has = (prefix) => paths.some((p) => p === prefix || p.startsWith(`${prefix}/`));
   for (const required of ['server.mjs', 'lib', 'connectors', ...(existsSync(new URL('dist', root)) ? ['dist'] : []), 'install.sh', 'launch.sh', 'open.sh', 'config.example.json', 'README.md', 'LICENSE', 'CHANGELOG.md']) {
     assert.ok(has(required), `${required} is in the package`);
   }
-  for (const absent of ['bin', 'hooks', 'commands', 'skills', '.claude-plugin', 'web', 'test', 'scripts', 'docs', '.users-files', '.github', '.githooks', '.claude', '.review', 'vite.config.mjs', 'vitest.config.ts', 'package-lock.json', 'AGENTS.md', 'CLAUDE.md']) {
+  for (const required of ['scripts/check-adapter.mjs', 'docs/mechanisms/connector-contract.md', 'types/connector.d.ts']) {
+    assert.ok(paths.includes(required), `${required}, what an adapter author needs, is in the package`);
+  }
+  assert.deepEqual(paths.filter((p) => p.startsWith('scripts/') || p.startsWith('docs/')).sort(), ['docs/mechanisms/connector-contract.md', 'scripts/check-adapter.mjs']);
+  for (const absent of ['bin', 'hooks', 'commands', 'skills', '.claude-plugin', 'web', 'test', '.users-files', '.github', '.githooks', '.claude', '.review', 'vite.config.mjs', 'vitest.config.ts', 'package-lock.json', 'AGENTS.md', 'CLAUDE.md']) {
     assert.ok(!has(absent), `${absent} stays out of the package`);
   }
 });

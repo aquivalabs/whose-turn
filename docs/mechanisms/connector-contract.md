@@ -202,7 +202,12 @@ node scripts/check-adapter.mjs <adapter.mjs> [--settings '{"board":"…"}'] [--n
 It imports the file, checks the exports, runs one poll with the server's HTTP client and the token from
 `WHOSE_TURN_ADAPTER_TOKEN`, checks the result and prints the rows the default rules make of it. Exit 0
 passes, 1 is a contract or poll problem with one line per problem on stderr, 2 is a usage error. It
-accepts a built-in too: `connectors/file.mjs` passes, the other four report the two exports they lack.
+accepts a built-in too, and every built-in passes.
+
+The package ships the script and this page, so an installed monitor has them at
+`<data>/app/node_modules/whose-turn/scripts/check-adapter.mjs` and
+`<data>/app/node_modules/whose-turn/docs/mechanisms/connector-contract.md`, where `<data>` is the folder
+of `config_file` in `GET /api/config`.
 
 ### Versioning
 
