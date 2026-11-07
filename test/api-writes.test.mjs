@@ -64,7 +64,7 @@ test('a config with no workspace is refused and nothing is saved', async () => {
 test('a marks write with a wrong shape is refused naming the field, a valid one lands', async () => {
   // Setup
   const marks = { seen: [], base: 0, handled: {} };
-  const workspace = { id: 'w', updateMarks: (body) => Object.assign(marks, body) };
+  const workspace = { id: 'w', rowIdOf: (id) => id, updateMarks: (body) => Object.assign(marks, body) };
   const { server, post } = await startTestApi({ registry: emptyRegistry({ workspaces: [workspace] }) });
   try {
     const wrong = [
@@ -353,6 +353,31 @@ test('a new custom source gets its file name from its label and a template in th
     assert.equal(savedConfigs[0][0].connectors[0].adapter, 'team_board_2');
     assert.match(readFileSync(join(adaptersDirOf(dataDir), 'team_board_2.mjs'), 'utf8'), /export default class TeamBoard2 extends Adapter \{/);
     assert.deepEqual(config.adapters.team_board_2, { label: 'Team Board 2', fields: [] });
+  } finally {
+    server.close();
+  }
+});
+
+test('a Handled mark may name a row by its key, and a mark that names no row is refused instead of kept for nothing', async () => {
+  // Setup
+  const sent = [];
+  const rows = [{ row_id: 'run:gh:acme/app:ci@main:3', key: 'acme/app:ci@main' }, { row_id: 'NW-1', key: 'NW-1' }];
+  const rowIdOf = (id) => rows.find((row) => row.row_id === id)?.row_id || (rows.filter((row) => row.key === id).length === 1 ? rows.find((row) => row.key === id).row_id : null);
+  const workspace = { id: 'w', rowIdOf, updateMarks: (body) => { sent.push(body); return {}; } };
+  const { server, post } = await startTestApi({ registry: emptyRegistry({ workspaces: [workspace] }) });
+  try {
+    // Exercise
+    const byKey = await post('/api/marks', { ws: 'w', handled: { 'acme/app:ci@main': '2026-11-07T10:00:00Z' }, notes: { 'acme/app:ci@main': 'Re-ran, green' } });
+    const unknown = await post('/api/marks', { ws: 'w', handled: { 'NW-404': '2026-11-07T10:00:00Z' } });
+    const undoGone = await post('/api/marks', { ws: 'w', handled: { 'NW-404': null } });
+    // Verify
+    assert.equal(byKey.status, 200);
+    assert.deepEqual(sent[0].handled, { 'run:gh:acme/app:ci@main:3': '2026-11-07T10:00:00Z' });
+    assert.deepEqual(sent[0].notes, { 'run:gh:acme/app:ci@main:3': 'Re-ran, green' });
+    assert.equal(unknown.status, 400);
+    assert.match((await unknown.json()).error.details[0].metadata.detail, /no row "NW-404" in this workspace/);
+    assert.equal(undoGone.status, 200);
+    assert.equal(sent.length, 2);
   } finally {
     server.close();
   }

@@ -43,6 +43,17 @@ test('a user adapter named in the adapters folder is loaded, checked and polled 
   assert.equal(next['BRD-1:k1'], 'Answer Sam Lead in the ticket');
 });
 
+test('a mark names a row by its row_id, or by a key only one row carries', async () => {
+  const workspace = await workspaceWith({ adapter: 'board', board: 'launch' });
+  await workspace.poll();
+  const turn = workspace.snapshot(true).turn;
+  const comment = turn.find((row) => row.row_id === 'BRD-1:k1');
+  assert.equal(workspace.rowIdOf('BRD-1'), 'BRD-1');
+  assert.equal(workspace.rowIdOf('BRD-1:k1'), 'BRD-1:k1');
+  assert.equal(comment.key, 'BRD-1');
+  assert.equal(workspace.rowIdOf('BRD-404'), null);
+});
+
 test('the token reaches the adapter only through secret(), filed under the adapter name, so another name never reaches it; a missing one is the adapter\'s partial error', async () => {
   const workspace = await workspaceWith({ adapter: 'board', board: 'launch' }, '');
   await workspace.poll();
