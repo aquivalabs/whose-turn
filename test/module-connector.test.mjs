@@ -54,6 +54,24 @@ test('a mark names a row by its row_id, or by a key only one row carries', async
   assert.equal(workspace.rowIdOf('BRD-404'), null);
 });
 
+test('a key carried by one run row resolves to that row, and a key two rows share resolves to none', async () => {
+  const run = (ref, streak) => ({ id: `${ref}-${streak}`, ref, streak, workflow: 'ci', branch: 'main', failed: 1, mine: 1, actor: 'alex', title: '', url: `https://ci.example/${ref}/${streak}`, at: '2026-11-07T10:00:00Z' });
+  CONNECTORS.runs_only = fakeSource({ id: 'runs_only', poll: async () => ({ me: 'alex', runs: [run('acme/app:ci@main', 3), run('acme/web:ci@main', 1), run('acme/web:ci@main', 2)] }) });
+  try {
+    const workspace = createWorkspace(
+      { id: 'w', name: 'Runs', key_pattern: 'BRD-\\d+', rules: DEFAULT_RULES, connectors: [{ type: 'runs_only', id: 'ci' }] },
+      { dataDir: await dataDirWithAdapters(), historyDays: 3650, secrets: secrets('t'), notify: () => {} },
+    );
+    await workspace.poll();
+    const runRows = workspace.snapshot(true).turn.filter((row) => row.row_id.startsWith('run:'));
+    assert.equal(runRows.length, 3);
+    assert.equal(workspace.rowIdOf('acme/app:ci@main'), 'run:ci:acme/app:ci@main:3');
+    assert.equal(workspace.rowIdOf('acme/web:ci@main'), null);
+  } finally {
+    delete CONNECTORS.runs_only;
+  }
+});
+
 test('the token reaches the adapter only through secret(), filed under the adapter name, so another name never reaches it; a missing one is the adapter\'s partial error', async () => {
   const workspace = await workspaceWith({ adapter: 'board', board: 'launch' }, '');
   await workspace.poll();
