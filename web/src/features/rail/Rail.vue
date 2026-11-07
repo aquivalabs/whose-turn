@@ -230,17 +230,6 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       <span v-if="unseen.length" class="rail__dot" :title="t('rail.unseen')"></span>
     </a>
     <a
-      class="rail__item"
-      href="#settings"
-      :aria-label="t('rail.settings')"
-      @click.prevent="onSettings"
-    >
-      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
-        <path :d="GEAR" fill="currentColor" />
-      </svg>
-      <span class="rail__label">{{ t('rail.settings') }}</span>
-    </a>
-    <a
       ref="power"
       class="rail__item"
       href="#power"
@@ -254,6 +243,17 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       <span class="rail__label">{{ t('rail.power') }}</span>
     </a>
     <PowerMenu v-model:open="powerOpen" :anchor="power" />
+    <a
+      class="rail__item"
+      href="#settings"
+      :aria-label="t('rail.settings')"
+      @click.prevent="onSettings"
+    >
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
+        <path :d="GEAR" fill="currentColor" />
+      </svg>
+      <span class="rail__label">{{ t('rail.settings') }}</span>
+    </a>
   </nav>
 </template>
 <style scoped>
