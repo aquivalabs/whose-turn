@@ -319,6 +319,25 @@ test('a config whose custom source is broken is refused at its adapter field, an
   }
 });
 
+test('a custom source\'s label reaches its template only as a string literal, so no label can turn into code', async () => {
+  // Setup
+  const dataDir = scratchDir('api-adapters');
+  const label = '**// globalThis.pwned = 1; /* "\'`${x}`\n';
+  const { server, post } = await startTestApi({ dataDir, saveConfig: async () => {} });
+  try {
+    // Exercise
+    const response = await post('/api/config', { workspaces: [{ id: 'w', name: 'W', connectors: [{ type: 'module', id: 'mine', label, adapter: 'evil_label' }] }] });
+    const template = readFileSync(join(adaptersDirOf(dataDir), 'evil_label.mjs'), 'utf8');
+    // Verify
+    assert.equal(response.status, 200);
+    assert.equal(globalThis.pwned, undefined);
+    assert.equal(template.split('\n')[0].includes('pwned'), false);
+    assert.ok(template.includes(`label = ${JSON.stringify(label)};`));
+  } finally {
+    server.close();
+  }
+});
+
 test('a new custom source gets its file name from its label and a template in the adapters folder, then saves', async () => {
   // Setup
   const savedConfigs = [];

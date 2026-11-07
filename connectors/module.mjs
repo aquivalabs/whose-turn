@@ -133,7 +133,7 @@ export const adapterNameOf = (name) => String(name || '')
 const TEMPLATE = (name, label) => {
   const className = name.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join('').replace(/^(?=\d)/, 'Source');
   const adapterId = name.replace(/_/g, '-').replace(/^(?=[^a-z])/, 's');
-  return `/** ${label.replace(/\*\//g, '')}: your own source for Whose Turn. Fill in poll(); the contract is docs/mechanisms/connector-contract.md in the whose-turn package. */
+  return `/** Your own source for Whose Turn. Fill in poll(); the contract is docs/mechanisms/connector-contract.md in the whose-turn package. */
 import { Adapter } from './${SHIM}';
 
 export default class ${className} extends Adapter {
