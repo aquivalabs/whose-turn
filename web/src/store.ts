@@ -12,6 +12,7 @@ import {
 } from '@vueuse/core';
 import { getJson, post, reasonOf } from './lib/api.ts';
 import { latestWins } from './lib/latest-wins.ts';
+import { closePage } from './lib/page-reload.ts';
 import { withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { topLayer, type Layer } from './lib/layers.ts';
@@ -294,6 +295,7 @@ watch(
       ui.status = message.lifecycle === 'restarting' ? text('core.store.restarting') : text('core.store.stopped');
       if (message.lifecycle === 'quitting') {
         stream.close();
+        closePage();
       }
       return;
     }

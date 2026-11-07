@@ -5,7 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Changed
-- Restart and Quit moved from Monitor settings to a power button near the bottom of the left rail, just above Monitor settings. It opens a small menu: Restart acts at once, Quit asks first. RMA-425.
+- Restart and Quit moved from Monitor settings to a power button near the bottom of the left rail, just above Monitor settings. It opens a small menu: Restart acts at once, Quit asks first. After Quit the app window closes itself; in a browser tab the page stays dimmed behind the stopped notice and no longer takes clicks. RMA-425.
 
 ### Fixed
 - The Claude skill chip always copies `/reload-plugins --force`, which you paste into your Claude session and which works at once. It no longer offers a terminal command that did nothing when pasted into Claude. RMA-424.

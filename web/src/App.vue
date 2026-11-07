@@ -49,7 +49,7 @@ const layoutStyle = computed(() =>
 );
 const { collapsed: feedFolded } = useFold('feed');
 const whatsNew = useWhatsNew();
-const covered = computed(() => currentLayer.value !== null);
+const covered = computed(() => currentLayer.value !== null || ui.lifecycle === 'quitting');
 useDialogFocus(covered);
 useShortcuts(covered);
 watch(themeVariables, repaint, { flush: 'post' });

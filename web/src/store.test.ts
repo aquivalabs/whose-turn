@@ -215,16 +215,18 @@ test('restoring a workspace posts one hide request with null and reloads the sta
   expect(fetchStub.mock.calls.some(([target]) => String(target).startsWith('/api/state'))).toBe(true);
 });
 
-test('a lifecycle message sets the state and the status; quitting closes the stream, a disconnect keeps the text, and the next open clears it (RMA-356)', async () => {
+test('a lifecycle message sets the state and the status; quitting closes the stream and the window (RMA-425), a disconnect keeps the text, and the next open clears it (RMA-356)', async () => {
   const data = ref<unknown>(null);
   const status = ref('OPEN');
   const error = ref<unknown>(null);
   const close = vi.fn();
   vi.stubGlobal('fetch', vi.fn());
+  const closePage = vi.fn();
   vi.doMock('@vueuse/core', async (original) => ({
     ...(await original<object>()),
     useEventSource: () => ({ status, error, data, open: vi.fn(), close }),
   }));
+  vi.doMock('./lib/page-reload.ts', async (original) => ({ ...(await original<object>()), closePage }));
   const store = await freshStore();
   data.value = { lifecycle: 'restarting' };
   expect([store.ui.lifecycle, store.ui.status]).toEqual(['restarting', 'Restarting the monitor…']);
@@ -236,5 +238,7 @@ test('a lifecycle message sets the state and the status; quitting closes the str
   data.value = { lifecycle: 'quitting' };
   expect([store.ui.lifecycle, store.ui.status]).toEqual(['quitting', 'The monitor is stopped.']);
   expect(close).toHaveBeenCalledOnce();
+  expect(closePage).toHaveBeenCalledOnce();
   vi.doUnmock('@vueuse/core');
+  vi.doUnmock('./lib/page-reload.ts');
 });

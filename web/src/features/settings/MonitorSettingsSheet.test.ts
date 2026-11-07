@@ -176,12 +176,13 @@ test('parked and paused workspaces are listed with their mode, and Restore asks 
   snapshot.workspaces = [];
 });
 
-test('once the monitor is quit the window says it is stopped and how to start it again (RMA-356)', async () => {
+test('once the monitor is quit the window says it is stopped and how to start it again, and the dashboard behind it no longer takes clicks (RMA-356, RMA-425)', async () => {
   stubServer();
   render(App);
   ui.lifecycle = 'quitting';
 
   expect(await screen.findByText('Whose Turn is stopped')).toBeTruthy();
   expect(screen.getByText(/ask Claude to start the monitor/)).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Refresh now' }).closest('[inert]')).toBeTruthy();
   ui.lifecycle = '';
 });
