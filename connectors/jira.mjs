@@ -1,6 +1,7 @@
 /** Jira Cloud connector: your tickets by JQL with all comments (ADF turned into text) and the changelog entry for the current status. Token from the secret store. */
 import { toIsoUtc, mapLimit } from '../lib/text.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
+import { STATUS_CATEGORIES } from '../lib/contract.mjs';
 import { Adapter } from '../lib/adapter.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-jira';
@@ -14,11 +15,8 @@ const FIELDS = [
   { key: 'mentions', label: 'Mentions on other tickets', hint: 'also show a ticket that mentions you in a comment though it was never yours, as one Answer row in Your move; on unless set to false', boolean: true, default: true },
 ];
 
-/** @type {Array<import('../types/connector.js').Ticket['status_category']>} */
-const CATEGORIES = ['new', 'indeterminate', 'done'];
-
 /** @type {(key: string) => import('../types/connector.js').Ticket['status_category']} */
-const categoryOf = (key) => CATEGORIES.find((category) => category === key) || 'indeterminate';
+const categoryOf = (key) => /** @type {Array<import('../types/connector.js').Ticket['status_category']>} */ (STATUS_CATEGORIES).find((category) => category === key) || 'indeterminate';
 
 const SIMPLE_MARKS = { code: '`', strong: '**' };
 

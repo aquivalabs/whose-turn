@@ -15,7 +15,8 @@ store, the file system, the network. Name only a file you wrote or read in full.
 The settings sheet offers the built-ins and `module` as **Custom**; `file` is experimental, accepted by
 the config but not offered. The built-ins (`github`, `jira`, `linear`) export
 `contract` and `capabilities`, and every poll result of theirs is checked: a problem becomes the entry's
-partial error `<id>.contract` while its data still flows, so one odd record never empties a source. The
+partial error `<id>.contract` while its data still flows, so one odd record never empties a source, and it
+does not count as a failing poll, so it raises no failing-source alert (RMA-435). The
 window takes a source's feed badge and icon tone from the connector summary, never from its type.
 
 ## Where it lives
