@@ -4,24 +4,26 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
-### Changed
-- A failed update now shows its reason next to Retry, and a failed Claude plugin update says it failed instead of looking like a plain offer. RMA-438.
-- When a source is failing, Waiting on others, What changed and the numbers at the top say there is no data instead of showing an empty list or a zero. RMA-437.
-
-### Fixed
-- A ticket on hold that is assigned to you now reads "on hold" in the With column of Waiting on others, not "you". RMA-449.
 ### Added
 - Every to-do has a Copy for AI button, like the rows of the other lists. RMA-443.
-- Clicking elsewhere while editing a to-do now saves your change instead of throwing it away; Escape still cancels. RMA-443.
-- Deleting several to-dos in a row keeps an Undo for each of them, not only the last one. RMA-443.
-- Highlighted labels now have their own violet colour instead of the olive of a passing check, and status pills, age chips, counts and label chips share one size. RMA-441.
 - A Help entry at the bottom of the left rail, also opened with `?`, lists the keyboard shortcuts and links to the README. RMA-447.
+
+### Changed
+- Checkboxes and radio buttons take the workspace's colour instead of the system blue, the Handled chip matches the other chips, and the feed search shows its whole hint at 1280 wide. RMA-450.
+- A failed update now shows its reason next to Retry, and a failed Claude plugin update says it failed instead of looking like a plain offer. RMA-438.
+- When a source is failing, Waiting on others, What changed and the numbers at the top say there is no data instead of showing an empty list or a zero. RMA-437.
+- Highlighted labels now have their own violet colour instead of the olive of a passing check, and status pills, age chips, counts and label chips share one size. RMA-441.
 - What's new has its own gift icon in the rail instead of the circle with an exclamation mark that marks a failing source. RMA-447.
 - **Mark handled** now marks the row at once, with Undo; no window opens, so marking several rows is quick. Add a note afterwards with **Add note** on the handled row. The note window has **Save note** and **Cancel**, Escape only closes it, and it asks before throwing away text you typed. RMA-442.
 - Rows the monitor marked itself (a ticket passed on) now carry an **auto** chip with a hint, an Undo like your own marks, and no struck-through Next step. RMA-442.
 - A Custom source whose file does not load now shows its problem as a line on its card, in plain words with the file name only, instead of a red error under its Name. The hints on the Custom card speak of your source and your code. RMA-440.
 - Workspace settings: the status lists, the release branch prefix and the four "Next step when" fields show what applies when they are empty, and each says what it does. Seed colour says what it colours, Stale after says it raises the alert in the status bar and the banner, and the Linear field reads "Linear workspace (from the URL)". The "Whose turn" table now names release statuses in words and writes each outcome as "your move: Merge it". RMA-445.
 - In Monitor settings the desktop notifications switch now waits for Save like the other fields, and counts as an unsaved change until you save. RMA-446.
+
+### Fixed
+- Clicking elsewhere while editing a to-do now saves your change instead of throwing it away; Escape still cancels. RMA-443.
+- Deleting several to-dos in a row keeps an Undo for each of them, not only the last one. RMA-443.
+- A ticket on hold that is assigned to you now reads "on hold" in the With column of Waiting on others, not "you". RMA-449.
 - A saved workspace's id is shown as plain text that cannot be edited, so renaming it can no longer cut it off from its to-dos and marks. You still choose the id when you create a workspace. RMA-444.
 - The status line no longer wraps on a 1280-pixel-wide window when the update chip shows; Copy for AI, Open as app and Notifications show as icons there, with their words on hover. RMA-439.
 - When the monitor is stopped, does not come back after a restart, or does not answer when the window opens, the window dims everything evenly behind one centred notice that says so, with Reload or Retry. A stopped monitor that starts again is noticed and announced. RMA-436.

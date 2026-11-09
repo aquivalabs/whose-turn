@@ -18,7 +18,7 @@ export default {
     undo: 'Undo',
   },
   search: {
-    placeholder: 'Search the feed: key, author, words…',
+    placeholder: 'Key, author or words…',
     label: 'Search the feed',
     count: '{shown} of {total}',
     markAll: 'Mark all read',
