@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Fixed
+- The status line no longer wraps on a 1280-pixel-wide window when the update chip shows; Copy for AI, Open as app and Notifications show as icons there, with their words on hover. RMA-439.
 - When the monitor is stopped, does not come back after a restart, or does not answer when the window opens, the window dims everything evenly behind one centred notice that says so, with Reload or Retry. A stopped monitor that starts again is noticed and announced. RMA-436.
 - "Opened in the app window" now goes away after a few seconds, and a refresh the monitor refuses shows the reason instead of staying on "Checking now…". RMA-436.
 
