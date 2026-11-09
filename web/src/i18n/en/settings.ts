@@ -63,7 +63,7 @@ export default {
       'The rows in force, top to bottom: the first one that fits decides. Read-only here: ask Claude to change them.',
     tableEmpty: 'Save the workspace to see its rows.',
     deleteWorkspace: 'Delete workspace',
-    renameHint: 'Its to-dos and marks stay under the old id "{was}"; they do not follow the rename.',
+    idFixedHint: 'fixed once the workspace is saved, because its to-dos and marks are kept under it; to change it, create a new workspace',
     seedDerived: 'empty: {seed}, derived from the workspace id',
     seedEmpty: 'empty derives one from the workspace id',
     deleteQuestion: 'Delete {name}? Its to-dos and marks stay on disk.',

@@ -22,6 +22,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - A Custom source whose file does not load now shows its problem as a line on its card, in plain words with the file name only, instead of a red error under its Name. The hints on the Custom card speak of your source and your code. RMA-440.
 - Workspace settings: the status lists, the release branch prefix and the four "Next step when" fields show what applies when they are empty, and each says what it does. Seed colour says what it colours, Stale after says it raises the alert in the status bar and the banner, and the Linear field reads "Linear workspace (from the URL)". The "Whose turn" table now names release statuses in words and writes each outcome as "your move: Merge it". RMA-445.
 - In Monitor settings the desktop notifications switch now waits for Save like the other fields, and counts as an unsaved change until you save. RMA-446.
+- A saved workspace's id is shown as plain text that cannot be edited, so renaming it can no longer cut it off from its to-dos and marks. You still choose the id when you create a workspace. RMA-444.
 
 ## [1.0.0-beta.5] - 2026-11-09
 

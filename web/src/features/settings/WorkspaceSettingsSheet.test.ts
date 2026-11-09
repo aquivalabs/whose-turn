@@ -291,3 +291,21 @@ test('a Custom source whose file is broken shows the problem as a line on its ca
   expect(line.closest('.field-row')).toBeNull();
   expect(document.querySelector('.field-row__error')).toBeNull();
 });
+
+test('a saved workspace shows its id as fixed text with a hint', async () => {
+  await openSheet();
+
+  expect(screen.queryByDisplayValue('alpha')).toBeNull();
+  expect(screen.getByText('alpha')).toBeTruthy();
+  expect(screen.getByText(/fixed once the workspace is saved/)).toBeTruthy();
+});
+
+test('a new workspace has an editable id', async () => {
+  stubServer();
+  render(WorkspaceSettingsSheet);
+  ui.settingsNew = true;
+  ui.settings = true;
+
+  await screen.findByText('New workspace');
+  await waitFor(() => expect(screen.getByText('Id *').closest('.field-row')?.querySelector('input')).not.toBeNull());
+});
