@@ -219,7 +219,7 @@ test('the rule sentences use the words the server sends with each fact', async (
   await screen.findByDisplayValue('Alpha');
 
   expect(screen.getByText('When the deploy region is given:')).toBeTruthy();
-  expect(screen.getByText('your move, "Check {the deploy region}"')).toBeTruthy();
+  expect(screen.getByText('your move: Check {the deploy region}')).toBeTruthy();
 });
 
 test('each way of showing the workspace carries its explanation, and Park saves hidden: parked', async () => {

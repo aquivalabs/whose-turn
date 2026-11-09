@@ -121,6 +121,7 @@ export const movedIds = (ids: string[], dragged: string, target: string, before:
 const STATUS_KEYS: Record<string, TextKey> = {
   backlog: 'core.rules.status.backlog',
   passed: 'core.rules.status.passed',
+  release: 'core.rules.status.release',
   code_review: 'core.rules.status.codeReview',
   qa: 'core.rules.status.qa',
   on_hold: 'core.rules.status.onHold',

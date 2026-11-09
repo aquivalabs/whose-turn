@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Workspace settings: the status lists, the release branch prefix and the four "Next step when" fields show what applies when they are empty, and each says what it does. Seed colour says what it colours, Stale after says it raises the alert in the status bar and the banner, and the Linear field reads "Linear workspace (from the URL)". The "Whose turn" table now names release statuses in words and writes each outcome as "your move: Merge it". RMA-445.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed

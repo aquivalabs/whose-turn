@@ -85,6 +85,7 @@ const setList = (typedText: string) =>
       class="input"
       type="text"
       :aria-invalid="Boolean(error)"
+      :placeholder="placeholder || spec.placeholder"
       :value="list().join(', ')"
       @input="setList(typed($event))"
     />
@@ -95,7 +96,7 @@ const setList = (typedText: string) =>
       :min="spec.min"
       :max="spec.max"
       :aria-invalid="Boolean(error)"
-      :placeholder="placeholder"
+      :placeholder="placeholder || spec.placeholder"
       :value="text()"
       @input="set(typed($event))"
     />

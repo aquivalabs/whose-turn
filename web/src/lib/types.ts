@@ -237,6 +237,7 @@ export interface FieldSpec {
   min?: number;
   max?: number;
   hint?: string;
+  placeholder?: string;
 }
 
 /** The plain words the server sends with each fact, by fact name: the noun, and a boolean's true and false sentence. */

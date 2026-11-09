@@ -437,3 +437,9 @@ test('an object-shaped connectors map becomes a list, and non-objects in a list 
   assert.deepEqual(workspaces[0].connectors.map((entry) => entry.id), ['github', 'jira']);
   assert.deepEqual(workspaces[1].connectors.map((entry) => entry.id), ['github']);
 });
+
+test('every rule field with a default offers it as the placeholder, so an empty field shows what applies', () => {
+  const withDefault = WORKSPACE_FIELDS.rules.filter((field) => field.key in DEFAULT_RULES && field.key !== 'backlog_rows' && !Array.isArray(DEFAULT_RULES[field.key]));
+  assert.deepEqual(withDefault.map((field) => field.placeholder), withDefault.map((field) => DEFAULT_RULES[field.key]));
+  assert.deepEqual(WORKSPACE_FIELDS.statuses.map((field) => field.placeholder), WORKSPACE_FIELDS.statuses.map((field) => DEFAULT_RULES.statuses[field.key].join(', ')));
+});

@@ -151,13 +151,14 @@ test('a rail glyph is the initials of a multi-word name or the first two letters
 test('a rules-table row reads as a sentence for the settings sheet', () => {
   const rule = (row) => ruleText(row, FACTS);
   assert.deepEqual(rule({ when: { 'ticket.status': 'code_review', 'pr.open': true, 'pr.review': 'approved' }, then: { whose: 'you', next: 'Merge it' } }), {
-    when: 'When the ticket is in review and the PR is open and the PR is approved:', then: 'your move, "Merge it"',
+    when: 'When the ticket is in review and the PR is open and the PR is approved:', then: 'your move: Merge it',
   });
   assert.deepEqual(rule({ when: { 'ticket.status': ['qa', 'on_hold'], 'pr.base': { prefix: 'release/' }, unanswered_count: { gte: 2 } }, then: { whose: 'them', next: 'x' } }), {
-    when: 'When the ticket is in testing or on hold and the PR goes into a branch starting with release/ and at least 2 mentions of you wait for an answer:', then: 'waiting on others, "x"',
+    when: 'When the ticket is in testing or on hold and the PR goes into a branch starting with release/ and at least 2 mentions of you wait for an answer:', then: 'waiting on others: x',
   });
+  assert.match(rule({ when: { 'ticket.status': 'release' }, then: { whose: 'them', next: 'x' } }).when, /^When the ticket is waiting for a release:/);
   assert.deepEqual(rule({ when: {}, then: { whose: 'hidden' } }), { when: 'In every other case:', then: 'not shown' });
-  assert.equal(rule({ when: { 'ticket.hold_reason': { present: true } }, then: { whose: 'them', next: 'On hold: {ticket.hold_reason}' } }).then, 'waiting on others, "On hold: {the hold reason}"');
+  assert.equal(rule({ when: { 'ticket.hold_reason': { present: true } }, then: { whose: 'them', next: 'On hold: {ticket.hold_reason}' } }).then, 'waiting on others: On hold: {the hold reason}');
   assert.equal(rule({ when: { 'ticket.status': 'qa', 'pr.open': false }, then: { whose: 'qa', next: 'x' } }).when, 'When the ticket is in testing and no PR is open:');
 });
 
