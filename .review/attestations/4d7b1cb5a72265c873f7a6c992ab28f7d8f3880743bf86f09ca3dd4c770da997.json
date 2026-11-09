@@ -1,0 +1,36 @@
+{
+  "diffHash": "4d7b1cb5a72265c873f7a6c992ab28f7d8f3880743bf86f09ca3dd4c770da997",
+  "commitSha": "dcedc837604dc98e058b1a873ced90bbde0f9ba2",
+  "perAgent": {
+    "craft": {
+      "score": 10,
+      "verdict": "PASS"
+    },
+    "architecture": {
+      "score": 10,
+      "verdict": "PASS"
+    },
+    "tests": {
+      "score": 10,
+      "verdict": "PASS"
+    },
+    "docs": {
+      "score": 10,
+      "verdict": "PASS"
+    },
+    "security": {
+      "score": 10,
+      "verdict": "PASS"
+    },
+    "leak": {
+      "score": 10,
+      "verdict": "PASS"
+    },
+    "security-scan": {
+      "score": 10,
+      "verdict": "PASS"
+    }
+  },
+  "overall": "PASS",
+  "timestamp": "2026-11-09T12:54:51.230Z"
+}
