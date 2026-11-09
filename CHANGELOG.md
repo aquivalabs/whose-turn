@@ -4,6 +4,12 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+- A Help entry at the bottom of the left rail, also opened with `?`, lists the keyboard shortcuts and links to the README. RMA-447.
+
+### Changed
+- What's new has its own gift icon in the rail instead of the circle with an exclamation mark that marks a failing source. RMA-447.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed

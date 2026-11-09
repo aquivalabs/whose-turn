@@ -11,6 +11,7 @@ export default {
   hiddenTip: 'Hidden workspaces: {summary}. Open to bring one back.',
   whatsNew: "What's new",
   unseen: 'Unseen changes',
+  help: 'Help and shortcuts',
   settings: 'Monitor settings',
   power: 'Restart or quit',
   powerNote: 'Restart reloads the monitor and the window reconnects by itself. Quit stops it until you start it again, from Claude or with a new Claude Code session.',

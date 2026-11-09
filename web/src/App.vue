@@ -35,6 +35,7 @@ import NoteModal from './features/your-move/NoteModal.vue';
 import FeedbackSheet from './features/feedback/FeedbackSheet.vue';
 import WorkspaceSettingsSheet from './features/settings/WorkspaceSettingsSheet.vue';
 import MonitorSettingsSheet from './features/settings/MonitorSettingsSheet.vue';
+import HelpSheet from './features/help/HelpSheet.vue';
 import WhatsNewSheet from './features/whats-new/WhatsNewSheet.vue';
 import StoppedNotice from './features/lifecycle/StoppedNotice.vue';
 import { useWhatsNew } from './composables/useWhatsNew.ts';
@@ -122,6 +123,7 @@ onMounted(() => {
         <WorkspaceSettingsSheet />
         <MonitorSettingsSheet />
         <WhatsNewSheet />
+        <HelpSheet />
         <StoppedNotice />
         <CommentModal />
         <NoteModal />

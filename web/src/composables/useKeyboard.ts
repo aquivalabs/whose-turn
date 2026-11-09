@@ -1,5 +1,6 @@
 import { watch, nextTick, type Ref } from 'vue';
 import { onKeyStroke } from '@vueuse/core';
+import { ui } from '@/store.ts';
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 const TYPING = 'input, textarea, select, [contenteditable]';
@@ -56,15 +57,21 @@ export const useDialogFocus = (covered: Ref<boolean>) => {
 const SHORTCUTS: Record<string, string> = {
   '/': '.feed__search-input',
   t: '.todos__input',
+  '?': '',
 };
 
-/** "/" focuses the feed search and "t" the to-do field, unless a field or a dialog has the keyboard. */
+/** "/" focuses the feed search, "t" the to-do field and "?" opens Help, unless a field or a dialog has the keyboard. */
 export const useShortcuts = (covered: Ref<boolean>) =>
   onKeyStroke(
     Object.keys(SHORTCUTS),
     (event) => {
       const target = event.target as HTMLElement | null;
-      if (covered.value || event.metaKey || event.ctrlKey || event.altKey || target?.closest(TYPING)) {
+      if (covered.value || event.metaKey || event.ctrlKey || event.altKey || target?.closest?.(TYPING)) {
+        return;
+      }
+      if (event.key === '?') {
+        event.preventDefault();
+        ui.help = true;
         return;
       }
       const field = document.querySelector<HTMLElement>(SHORTCUTS[event.key]);
