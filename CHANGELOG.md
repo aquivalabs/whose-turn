@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- A Custom source whose file does not load now shows its problem as a line on its card, in plain words with the file name only, instead of a red error under its Name. The hints on the Custom card speak of your source and your code. RMA-440.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed

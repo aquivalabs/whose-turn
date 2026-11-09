@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Workspace settings: one workspace's form (or an empty one for a new workspace), drawn from the catalogues the server sends; the server validates, stores secrets, writes config.json and reloads.
-import { AnimatePresence } from 'motion-v';
+import { AnimatePresence, M as Motion } from 'motion-v';
+import { fade } from '@/motion.ts';
 import { ref, computed, nextTick, useTemplateRef } from 'vue';
 import { snapshot, ui, reload, switchWorkspace } from '@/store.ts';
 import {
@@ -139,7 +140,7 @@ const customHint = (entry: ConnectorEntry) =>
   adapterName(entry)
     ? t('settings.workspace.customFile', { file: `adapters/${adapterName(entry)}.mjs` })
     : t('settings.workspace.customFileNew');
-const customError = (entry: ConnectorEntry, index: number) =>
+const customProblem = (entry: ConnectorEntry, index: number) =>
   errorAt('connectors[' + index + '].adapter') ||
   adapters.value[adapterName(entry)]?.problem ||
   '';
@@ -304,11 +305,20 @@ const save = () =>
               :model-value="fieldValue(entry, 'id')"
               @update:model-value="setOrDrop(entry, 'id', $event)"
             />
+            <AnimatePresence>
+              <Motion
+                v-if="isCustom(entry) && customProblem(entry, index)"
+                v-bind="fade"
+                class="workspace-settings-sheet__problem"
+                role="alert"
+              >
+                {{ customProblem(entry, index) }}
+              </Motion>
+            </AnimatePresence>
             <FieldRow
               v-if="isCustom(entry)"
               :spec="CUSTOM_NAME_SPEC"
               :hint="customHint(entry)"
-              :error="customError(entry, index)"
               :model-value="fieldValue(entry, 'label')"
               @update:model-value="setOrDrop(entry, 'label', $event)"
             />
@@ -396,6 +406,14 @@ const save = () =>
   display: flex;
   align-items: center;
   gap: 0.625rem;
+}
+
+.workspace-settings-sheet__problem {
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.5rem;
+  background: var(--md-warn-container);
+  color: var(--md-on-warn-container);
+  font-size: 0.8125rem;
 }
 
 .workspace-settings-sheet__connector-name {
