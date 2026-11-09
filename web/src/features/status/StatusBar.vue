@@ -2,7 +2,7 @@
 // The line above the dashboard in three groups: the live dot, the last check and Refresh on the left; the update chip in the centre; Copy for AI, the app/tab switch, notifications and Report on the right (RMA-343).
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { refAutoReset } from '@vueuse/core';
 import { snapshot, ui, now, notice, refresh, tellProblem } from '@/store.ts';
 import { post } from '@/lib/api.ts';
@@ -29,7 +29,7 @@ const verdict = computed(() => {
 });
 const OPEN_COOLDOWN_MS = 5000;
 const opening = refAutoReset(false, OPEN_COOLDOWN_MS);
-const opened = ref(false);
+const opened = refAutoReset(false, OPEN_COOLDOWN_MS);
 const status = computed(() =>
   opened.value ? t('status.bar.openedInApp') : ui.status || verdict.value.text,
 );

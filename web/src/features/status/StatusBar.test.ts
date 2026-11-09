@@ -38,6 +38,7 @@ test('Open as app turns to Opening, ignores a second click, then returns after t
 
   expect(button.textContent).toBe('Open as app');
   expect(button.getAttribute('aria-disabled')).toBe('false');
+  expect(screen.queryByText('Opened in the app window. You can close this tab.')).toBeNull();
 });
 
 test('a refused open shows the refusal and not the opened line', async () => {

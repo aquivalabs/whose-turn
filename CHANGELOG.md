@@ -4,6 +4,10 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- When the monitor is stopped, does not come back after a restart, or does not answer when the window opens, the window dims everything evenly behind one centred notice that says so, with Reload or Retry. A stopped monitor that starts again is noticed and announced. RMA-436.
+- "Opened in the app window" now goes away after a few seconds, and a refresh the monitor refuses shows the reason instead of staying on "Checking now…". RMA-436.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed

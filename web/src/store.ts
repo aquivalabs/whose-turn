@@ -6,13 +6,14 @@ import {
   useEventListener,
   useEventSource,
   useIntervalFn,
+  useTimeoutFn,
   useLocalStorage,
   useNow,
   useSessionStorage,
 } from '@vueuse/core';
 import { getJson, post, reasonOf } from './lib/api.ts';
 import { latestWins } from './lib/latest-wins.ts';
-import { closePage } from './lib/page-reload.ts';
+import { closePage, reloadPage } from './lib/page-reload.ts';
 import { withOpenMoves } from './lib/moves.ts';
 import { orderWorkspaces } from './lib/settings.ts';
 import { topLayer, type Layer } from './lib/layers.ts';
@@ -27,6 +28,11 @@ import { text } from './i18n/index.ts';
 const STORED = { writeDefaults: false };
 const lastWorkspace = useLocalStorage('wt-ws', '', STORED);
 const lastMode = useSessionStorage('wt-mode', '', STORED);
+
+/** What the window shows over the dashboard when the monitor is not there: the restart never came back, the first load got no answer, or a stopped monitor answers again. */
+export type Trouble = 'lost' | 'unanswered' | 'back';
+const RESTART_GIVE_UP_MS = 60000;
+const RECOVERY_POLL_MS = 5000;
 
 /** The server's snapshot; every load replaces it wholesale and nothing mutates it in place. */
 export const snapshot = shallowReactive<Snapshot>({
@@ -58,7 +64,7 @@ export const ui = reactive({
   reconnects: 0,
   lastEventAt: 0,
   consoleErrors: 0,
-  lifecycle: '' as Lifecycle | '',
+  lifecycle: '' as Lifecycle | Trouble | '',
   status: text('core.store.connecting'),
   modal: null as FeedItem | null,
   note: '',
@@ -251,6 +257,31 @@ export const reload = () => {
   return load();
 };
 
+const restartClock = useTimeoutFn(
+  () => {
+    if (ui.lifecycle === 'restarting') {
+      ui.lifecycle = 'lost';
+      ui.status = text('core.store.restartLost');
+    }
+  },
+  RESTART_GIVE_UP_MS,
+  { immediate: false },
+);
+const recovery = useIntervalFn(
+  () =>
+    getJson('/api/summary').then(() => {
+      if (ui.lifecycle === 'quitting' || ui.lifecycle === 'lost') {
+        ui.lifecycle = 'back';
+        ui.status = text('core.store.back');
+      }
+    }, () => {}),
+  RECOVERY_POLL_MS,
+  { immediate: false },
+);
+watch(() => ui.lifecycle === 'quitting' || ui.lifecycle === 'lost', (waiting) => (waiting ? recovery.resume() : recovery.pause()), {
+  flush: 'sync',
+});
+
 // docs/adr/0002-vueuse-in-the-window.md (SSE stream)
 const stream = useEventSource<[], StreamEvent>('/api/stream', [], {
   immediate: false,
@@ -263,6 +294,7 @@ watch(
   (status) => {
     ui.live = status === 'OPEN';
     if (ui.live) {
+      restartClock.stop();
       ui.lifecycle = '';
       ui.status = '';
       ui.reconnects++;
@@ -293,6 +325,9 @@ watch(
     if ('lifecycle' in message) {
       ui.lifecycle = message.lifecycle;
       ui.status = message.lifecycle === 'restarting' ? text('core.store.restarting') : text('core.store.stopped');
+      if (message.lifecycle === 'restarting') {
+        restartClock.start();
+      }
       if (message.lifecycle === 'quitting') {
         stream.close();
         closePage();
@@ -340,8 +375,25 @@ export const start = () => {
   clock.resume();
   useEventListener(window, 'error', countError);
   useEventListener(window, 'unhandledrejection', countError);
-  return load().then(connect);
+  return firstLoad();
 };
+const firstLoad = () =>
+  load().then(
+    () => (snapshot.workspace.id ? connect() : unanswered()),
+    unanswered,
+  );
+const unanswered = () => {
+  ui.lifecycle = 'unanswered';
+  ui.status = text('core.store.unanswered');
+};
+/** Asks again after the first load got no answer. */
+export const retry = () => {
+  ui.lifecycle = '';
+  ui.status = text('core.store.connecting');
+  return firstLoad();
+};
+/** Reloads the page, for the notice's Reload action. */
+export const reloadWindow = reloadPage;
 
 /** Switches only when the server answers with the workspace; with the server down the click is ignored and the notice says why. */
 export const switchWorkspace = (id: string) => {
@@ -439,10 +491,12 @@ export const restoreWorkspace = (id: string) =>
   );
 export const refresh = () => {
   ui.status = text('core.store.checking');
-  post('/api/refresh').catch((failure: Error) => {
-    ui.status = '';
-    tellProblem(failure);
-  });
+  const settle = (outcome: unknown) => {
+    if (!tellProblem(outcome)) {
+      ui.status = '';
+    }
+  };
+  post('/api/refresh').then(settle, settle);
   showBackdrop({ workspace: snapshot.workspace.id, seed: Math.floor(Math.random() * 4294967296) });
 };
 
