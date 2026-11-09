@@ -124,12 +124,8 @@ const {
   },
 });
 const errorAt = (path: string) => fieldErrors.value[`workspaces[${selected.value}].${path}`] || '';
-const idHint = computed(() => {
-  const was = current.value && loadedIds.get(uidOf(current.value));
-  return was && current.value && was !== current.value.id
-    ? t('settings.workspace.renameHint', { was })
-    : '';
-});
+const idIsFixed = computed(() => Boolean(current.value && loadedIds.has(uidOf(current.value))));
+const idHint = computed(() => (idIsFixed.value ? t('settings.workspace.idFixedHint') : ''));
 const ID_SPEC = computed<FieldSpec>(() => ({ key: 'id', label: t('settings.workspace.sourceId') }));
 const LABEL_SPEC = computed<FieldSpec>(() => ({ key: 'label', label: t('settings.workspace.sourceLabel') }));
 const CUSTOM_NAME_SPEC = computed<FieldSpec>(() => ({ key: 'label', label: t('settings.workspace.customName'), required: true }));
@@ -259,6 +255,7 @@ const save = () =>
             :key="spec.key"
             :spec="spec"
             :hint="spec.key === 'id' ? idHint : ''"
+            :fixed="spec.key === 'id' && idIsFixed"
             :error="errorAt(spec.key)"
             :model-value="fieldValue(current, spec.key)"
             @update:model-value="setWorkspaceField(current, spec.key, $event)"

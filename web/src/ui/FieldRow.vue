@@ -8,8 +8,9 @@ const props = withDefaults(
     placeholder?: string;
     hint?: string;
     error?: string;
+    fixed?: boolean;
   }>(),
-  { placeholder: '', hint: '', error: '' },
+  { placeholder: '', hint: '', error: '', fixed: false },
 );
 const emit = defineEmits<{ secret: [key: string, value: string] }>();
 const value = defineModel<string | string[] | boolean>();
@@ -37,7 +38,8 @@ const setList = (typedText: string) =>
 <template>
   <div class="field-row">
     <label class="field-row__label">{{ spec.label }}{{ spec.required ? t('settings.field.requiredMark') : '' }}</label>
-    <label v-if="spec.boolean" class="field-row__check">
+    <span v-if="fixed" class="field-row__fixed">{{ text() }}</span>
+    <label v-else-if="spec.boolean" class="field-row__check">
       <input
         type="checkbox"
         :checked="checked()"
@@ -134,6 +136,13 @@ const setList = (typedText: string) =>
   gap: 0.5rem;
   color: var(--md-on-surface-variant);
   font-size: 0.6875rem;
+}
+
+.field-row__fixed {
+  color: var(--md-on-surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
 }
 
 .field-row__colour {

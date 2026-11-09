@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- A saved workspace's id is shown as plain text that cannot be edited, so renaming it can no longer cut it off from its to-dos and marks. You still choose the id when you create a workspace. RMA-444.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed
