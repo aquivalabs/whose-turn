@@ -10,8 +10,7 @@ defineProps<{ row: TurnRow }>();
   <td class="ticket-cell">
     <span class="ticket-cell__head"
       ><ExtLink :text="row.key" :url="isPrOnly(row) ? row.pr_url : row.ticket_url" class="ticket-key" /><LabelChips
-        v-if="row.labels?.length"
-        :labels="row.labels"
+        :labels="row.labels || []"
         :badges="row.badges"
     /></span
     ><span class="ticket-cell__summary">{{ row.summary }}</span>

@@ -786,3 +786,14 @@ test('a row shows the labels of its ticket and its PR once each, the highlighted
   assert.deepEqual(row.badges, ['user report']);
   assert.deepEqual([plain.labels, plain.badges], [[], []]);
 });
+
+test('a PR whose ticket is not among yours still shows its labels, highlighted ones first (RMA-434)', () => {
+  // Setup
+  const rules = compileRules({ ...DEFAULT_RULES, highlight_labels: ['user report'] });
+  const pr = { key: 'PROJ-9', source: 'github', pr: 9, title: 'PROJ-9 docs', base: 'main', state: 'OPEN', review: '', checks: 'passing', merged_at: '', updated_at: '2026-11-09T09:00:00Z', url: 'https://g.example/9', last_comment_by: '', last_comment_at: '', last_comment_url: '', last_comment: '', unanswered: false, labels: ['docs', 'User report', 'docs', ''] };
+  // Exercise
+  const [row] = turnRows({ prs: [pr] }, { me: { github: 'alex' }, rules });
+  // Verify
+  assert.equal(row.status, 'Not in your ticket list');
+  assert.deepEqual([row.labels, row.badges], [['User report', 'docs'], ['User report']]);
+});

@@ -367,3 +367,13 @@ test('a thread item with neither body nor text lists only its time and kind', ()
   // Verify
   assert.equal(lines[3], '- 2026-11-01 10:00 · updated');
 });
+
+test('a hand-off names a row\'s highlighted labels beside its key and lists all its labels (RMA-434)', () => {
+  const labelled = { ...source, turn: [{ ...source.turn[0], labels: ['User report', 'bug'], badges: ['User report'] }, source.turn[1]] };
+  const rowText = renderHandOff('row', buildHandOff('row', 'PROJ-1', labelled));
+  assert.match(rowText, /^## PROJ-1 \[User report\] · Export button$/m);
+  assert.match(rowText, /^Labels: User report, bug$/m);
+  const workspaceText = renderHandOff('workspace', buildHandOff('workspace', 'w', { ...labelled, moves: [labelled.turn[0]] }));
+  assert.match(workspaceText, /^- PROJ-1 \[User report\] · Export button → Pick it up$/m);
+  assert.doesNotMatch(renderHandOff('row', buildHandOff('row', 'PROJ-1', source)), /Labels:|\[/);
+});

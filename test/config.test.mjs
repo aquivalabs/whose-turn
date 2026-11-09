@@ -112,6 +112,11 @@ test('automation_authors must be a list of strings', () => {
   assert.match(problemsOf({ rules: { automation_authors: [1] } })[0], /rules\.automation_authors/);
 });
 
+test('highlight_labels must be a list of strings (RMA-434)', () => {
+  assert.match(problemsOf({ rules: { highlight_labels: 'User report' } })[0], /rules\.highlight_labels must be a list of strings/);
+  assert.deepEqual(problemsOf({ rules: { highlight_labels: ['User report'] } }), []);
+});
+
 test('question_words must be a list of strings', () => {
   assert.match(problemsOf({ rules: { question_words: { a: 1 } } })[0], /rules\.question_words must be a list of strings/);
 });
