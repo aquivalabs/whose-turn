@@ -194,7 +194,8 @@ const undoHandled = () => {
                 <button
                   type="button"
                   class="your-move__mark"
-                  :class="{ 'your-move__mark--plain': item.handled }"
+                  :class="item.handled ? 'your-move__mark--plain' : 'your-move__mark--icon'"
+                  :data-tip="item.handled ? undefined : t('yourMove.row.handled')"
                   :aria-label="
                     item.handled
                       ? t(item.auto ? 'yourMove.row.undoAuto' : 'yourMove.row.moveBack', {
@@ -204,7 +205,7 @@ const undoHandled = () => {
                   "
                   @click.stop="mark(item)"
                 >
-                  {{ item.handled ? t('yourMove.row.undo') : t('yourMove.row.handled') }}
+                  <template v-if="item.handled">{{ t('yourMove.row.undo') }}</template>
                 </button>
               </td>
             </tr>
@@ -357,6 +358,12 @@ const undoHandled = () => {
   border-bottom: 2px solid currentcolor;
   border-left: 2px solid currentcolor;
   transform: translateY(-0.125rem) rotate(-45deg);
+}
+
+.your-move__mark--icon {
+  justify-content: center;
+  width: 1.875rem;
+  padding: 0;
 }
 
 .your-move__mark--plain::before {

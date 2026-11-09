@@ -318,3 +318,10 @@ test('the panel hands its scroll element to the store and takes it back when it 
   unmount();
   expect(scrollers.your_move).toBeNull();
 });
+
+test('Mark handled on an open row is a check icon whose words show as its hint', async () => {
+  render(YourMove);
+  const button = await screen.findByRole('button', { name: 'Mark handled: NW-1' });
+  expect(button.textContent?.trim()).toBe('');
+  expect(button.dataset.tip).toBe('Mark handled');
+});
