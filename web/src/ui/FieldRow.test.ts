@@ -39,3 +39,11 @@ test('unticking a default-on checkbox sends false and ticking it again sends not
 
   expect(emitted()['update:modelValue']).toEqual([[false], [undefined]]);
 });
+
+test('a field shows its default as the placeholder when it is empty, a list as well as a text', () => {
+  render(FieldRow, { props: { spec: { key: 'qa', label: 'Testing', list: true, placeholder: 'in qa, testing' }, modelValue: [] } });
+  render(FieldRow, { props: { spec: { key: 'next', label: 'Next', placeholder: 'Merge it' }, modelValue: '' } });
+
+  expect(screen.getByPlaceholderText('in qa, testing')).toBeTruthy();
+  expect(screen.getByPlaceholderText('Merge it')).toBeTruthy();
+});

@@ -41,6 +41,7 @@ export default {
     status: {
       backlog: 'in the backlog',
       passed: 'passed',
+      release: 'waiting for a release',
       codeReview: 'in review',
       qa: 'in testing',
       onHold: 'on hold',
@@ -84,7 +85,7 @@ export default {
     when: 'When {conditions}:',
     otherwise: 'In every other case:',
     notShown: 'not shown',
-    outcome: '{whose}, "{next}"',
+    outcome: '{whose}: {next}',
   },
   time: {
     now: 'now',

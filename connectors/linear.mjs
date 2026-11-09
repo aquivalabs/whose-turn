@@ -7,7 +7,7 @@ import { Adapter } from '../lib/adapter.mjs';
 const DEFAULT_SERVICE = 'whose-turn-linear';
 
 const FIELDS = [
-  { key: 'workspace', label: 'Workspace slug', hint: 'the part after linear.app/ in your issue links', required: true },
+  { key: 'workspace', label: 'Linear workspace (from the URL)', hint: 'the part after linear.app/ in your issue links', required: true },
   { key: 'api_key', label: 'API key', hint: 'a personal API key, stored in the secret store, never in the config', secret: { account: 'workspace', service: 'token_service', default: DEFAULT_SERVICE } },
   { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-linear' },
   { key: 'team', label: 'Team key', hint: 'only issues of this team, for example TEAM; empty for all' },
