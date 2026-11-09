@@ -74,3 +74,13 @@ test('a ticket carries its Jira labels, and the search asks for them (RMA-434)',
   assert.deepEqual(result.tickets.map((ticket) => ticket.labels), [['frontend', 'p1'], []]);
   assert.ok(asked.every((fields) => fields.includes('labels')));
 });
+
+test('a status in Jira\'s No Category, key "undefined", counts as in progress and passes the contract (RMA-435)', async () => {
+  const odd = issue('PROJ-4', 'Alex Doe');
+  odd.fields.status = { name: 'Triage', statusCategory: { key: 'undefined' } };
+  const { http } = fakeJira({ held: [odd] });
+  const result = await pollWith(http, { mentions: false });
+  assert.equal(result.tickets[0].status_category, 'indeterminate');
+  const { resultProblems } = await import('../lib/contract.mjs');
+  assert.deepEqual(resultProblems(result, ['tickets', 'comments']), []);
+});

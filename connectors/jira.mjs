@@ -14,6 +14,12 @@ const FIELDS = [
   { key: 'mentions', label: 'Mentions on other tickets', hint: 'also show a ticket that mentions you in a comment though it was never yours, as one Answer row in Your move; on unless set to false', boolean: true, default: true },
 ];
 
+/** @type {Array<import('../types/connector.js').Ticket['status_category']>} */
+const CATEGORIES = ['new', 'indeterminate', 'done'];
+
+/** @type {(key: string) => import('../types/connector.js').Ticket['status_category']} */
+const categoryOf = (key) => CATEGORIES.find((category) => category === key) || 'indeterminate';
+
 const SIMPLE_MARKS = { code: '`', strong: '**' };
 
 export const adfToText = (node, meId, meName) => {
@@ -140,7 +146,7 @@ const poll = async ({ settings, http, secrets, cache, historyDays }) => {
     const fields = issue.fields;
     const url = `${base}/browse/${issue.key}`;
     tickets.push({
-      key: issue.key, summary: fields.summary || '', status: (fields.status || {}).name || '', status_category: ((fields.status || {}).statusCategory || {}).key || '',
+      key: issue.key, summary: fields.summary || '', status: (fields.status || {}).name || '', status_category: categoryOf(((fields.status || {}).statusCategory || {}).key),
       assignee: (fields.assignee || {}).displayName || 'Unassigned', updated: fields.updated || '', url,
       labels: fields.labels || [],
       ...(held.has(issue.key) ? {} : { mention_only: true }),

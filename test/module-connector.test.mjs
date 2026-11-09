@@ -107,7 +107,7 @@ test('an adapter is named by its file name only, so no config can point outside 
   assert.match(outside.snapshot(false).errors.board, /Adapter name "\.\.\/board" must be/);
 });
 
-test('a built-in whose poll breaks the contract gets a partial error naming the problems, and its data still flows', async () => {
+test('a built-in whose poll breaks the contract gets a partial error naming the problems, its data still flows, and it never counts as a failing poll (RMA-435)', async () => {
   CONNECTORS.broken_builtin = fakeSource({ contract: 1, id: 'broken_builtin', label: 'Broken', capabilities: ['tickets'], fields: [], poll: async () => ({ me: 'me', tickets: [{ key: 'BRD-1' }], prs: [] }) });
   try {
     const workspace = createWorkspace(
@@ -118,6 +118,9 @@ test('a built-in whose poll breaks the contract gets a partial error naming the 
     const snapshot = workspace.snapshot(true);
     assert.match(snapshot.errors['bad.contract'], /^Broken does not follow connector contract 1: .*returns prs but does not declare it/);
     assert.deepEqual(snapshot.tickets.map((ticket) => ticket.key), ['BRD-1']);
+    await workspace.poll();
+    assert.deepEqual(workspace.store.state.fails, {});
+    assert.deepEqual(workspace.snapshot(false).health.failing, []);
   } finally {
     delete CONNECTORS.broken_builtin;
   }

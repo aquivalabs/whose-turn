@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- A Jira status in No Category no longer shows the Jira source as failing every poll; such a ticket counts as in progress. RMA-435.
+
 ## [1.0.0-beta.4] - 2026-11-09
 
 ### Added
