@@ -63,6 +63,8 @@ export const ui = reactive({
   status: text('core.store.connecting'),
   modal: null as FeedItem | null,
   note: '',
+  noteDirty: false,
+  noteAsk: false,
   feedback: false,
   reportNews: false,
   whatsNew: false,
@@ -175,11 +177,17 @@ export const openNewWorkspace = () => {
 };
 /** The layer on top right now, or null when the window itself is in front. */
 export const currentLayer = computed(() => topLayer(ui));
-/** Closes only the topmost layer; a settings sheet with unsaved edits asks first. */
+/** Closes only the topmost layer; a settings sheet or a note with unsaved edits asks first. */
 export const closeTopLayer = () => {
   const layer = currentLayer.value;
   if (layer === 'modal') {ui.modal = null;}
-  if (layer === 'note') {ui.note = '';}
+  if (layer === 'note') {
+    if (ui.noteDirty) {
+      ui.noteAsk = true;
+      return;
+    }
+    ui.note = '';
+  }
   if (layer === 'feedback') {ui.feedback = false;}
   if (layer === 'whatsNew') {ui.whatsNew = false;}
   if (layer === 'help') {ui.help = false;}

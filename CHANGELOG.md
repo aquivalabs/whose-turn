@@ -17,6 +17,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - Highlighted labels now have their own violet colour instead of the olive of a passing check, and status pills, age chips, counts and label chips share one size. RMA-441.
 - A Help entry at the bottom of the left rail, also opened with `?`, lists the keyboard shortcuts and links to the README. RMA-447.
 - What's new has its own gift icon in the rail instead of the circle with an exclamation mark that marks a failing source. RMA-447.
+- **Mark handled** now marks the row at once, with Undo; no window opens, so marking several rows is quick. Add a note afterwards with **Add note** on the handled row. The note window has **Save note** and **Cancel**, Escape only closes it, and it asks before throwing away text you typed. RMA-442.
+- Rows the monitor marked itself (a ticket passed on) now carry an **auto** chip with a hint, an Undo like your own marks, and no struck-through Next step. RMA-442.
 
 ## [1.0.0-beta.5] - 2026-11-09
 

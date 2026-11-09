@@ -60,17 +60,14 @@ const markedAt = (item: YourRow) =>
   });
 const mark = async (item: YourRow) => {
   const id = item.row.row_id;
-  if (!item.handled) {
-    ui.note = id;
-    return;
-  }
-  const problem = await setMarks({ handled: { [id]: null } });
+  const handling = !item.handled;
+  const problem = await setMarks({ handled: { [id]: handling ? new Date().toISOString() : null } });
   if (problem) {
     problems.set(id, problem);
-  } else {
-    problems.delete(id);
-    justHandled.value = '';
+    return;
   }
+  problems.delete(id);
+  justHandled.value = handling ? id : '';
 };
 const undoHandled = () => {
   const id = justHandled.value;
@@ -120,6 +117,7 @@ const undoHandled = () => {
               class="your-move__row"
               :class="{
                 'your-move__row--handled': item.handled,
+                'your-move__row--auto': item.auto,
                 'your-move__row--lined': item.lined,
               }"
             >
@@ -145,14 +143,16 @@ const undoHandled = () => {
                     {{ t('yourMove.row.why') }}
                   </button>
                   <span
-                    v-if="item.handled && !item.auto"
+                    v-if="item.handled"
                     class="handled-chip"
                     :data-tip="
-                      t('yourMove.row.handledTip', {
-                        ago: ago(snapshot.marks.handled[item.row.row_id] || ''),
-                      })
+                      item.auto
+                        ? t('yourMove.row.autoTip')
+                        : t('yourMove.row.handledTip', {
+                            ago: ago(snapshot.marks.handled[item.row.row_id] || ''),
+                          })
                     "
-                    >{{ t('yourMove.row.handledChip') }}</span
+                    >{{ item.auto ? t('yourMove.row.autoChip') : t('yourMove.row.handledChip') }}</span
                   >
                 </span>
                 <AnimatePresence>
@@ -185,13 +185,23 @@ const undoHandled = () => {
                   :query="{ ws: snapshot.workspace.id, kind: 'row', ref: item.row.row_id }"
                 />
                 <button
-                  v-if="!item.auto"
+                  v-if="item.handled && !item.lined"
+                  type="button"
+                  class="your-move__mark your-move__mark--plain"
+                  :aria-label="t('yourMove.row.addNoteLabel', { key: item.row.key })"
+                  @click.stop="ui.note = item.row.row_id"
+                >
+                  {{ t('yourMove.row.addNote') }}
+                </button>
+                <button
                   type="button"
                   class="your-move__mark"
-                  :class="{ 'your-move__mark--undo': item.handled }"
+                  :class="{ 'your-move__mark--plain': item.handled }"
                   :aria-label="
                     item.handled
-                      ? t('yourMove.row.moveBack', { key: item.row.key })
+                      ? t(item.auto ? 'yourMove.row.undoAuto' : 'yourMove.row.moveBack', {
+                          key: item.row.key,
+                        })
                       : t('yourMove.row.markHandled', { key: item.row.key })
                   "
                   @click.stop="mark(item)"
@@ -351,7 +361,7 @@ const undoHandled = () => {
   transform: translateY(-0.125rem) rotate(-45deg);
 }
 
-.your-move__mark--undo::before {
+.your-move__mark--plain::before {
   display: none;
 }
 
@@ -375,7 +385,7 @@ const undoHandled = () => {
   opacity: 0.55;
 }
 
-.your-move__row--handled .your-move__next {
+.your-move__row--handled:not(.your-move__row--auto) .your-move__next {
   text-decoration: line-through;
   text-decoration-color: var(--md-outline);
 }
