@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue';
 import { computed } from 'vue';
-import { snapshot, counts, openSettings, sourcesDown, allSourcesDown } from '@/store.ts';
+import { snapshot, counts, openSettings, noDataText, allSourcesDown } from '@/store.ts';
 import { glideThrough } from '@/motion.ts';
 import { GEAR } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
@@ -11,11 +11,7 @@ import { useText } from '@/i18n/index.ts';
 const t = useText();
 const DASH = '—';
 const shown = (value: number) => (allSourcesDown.value ? DASH : value);
-const dashTip = computed(() =>
-  sourcesDown.value.length
-    ? t('header.noData', { names: sourcesDown.value.join(', ') }, sourcesDown.value.length)
-    : undefined,
-);
+const dashTip = computed(() => noDataText('header.noData') || undefined);
 const { collapsed, toggle: flip } = useFold('header');
 const header = useTemplateRef<HTMLElement>('header');
 const toggle = () => glideThrough(header.value, 'height', flip);

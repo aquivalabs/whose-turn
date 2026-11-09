@@ -14,6 +14,7 @@ import {
   openSettings,
   openNewWorkspace,
   reportWindowSize,
+  UNREACHABLE,
 } from './store.ts';
 import { repaint } from './backdrop.ts';
 import { dark } from './scheme.ts';
@@ -50,7 +51,7 @@ const layoutStyle = computed(() =>
 );
 const { collapsed: feedFolded } = useFold('feed');
 const whatsNew = useWhatsNew();
-const unreachable = computed(() => ['quitting', 'lost', 'unanswered', 'back'].includes(ui.lifecycle));
+const unreachable = computed(() => (UNREACHABLE as readonly string[]).includes(ui.lifecycle));
 const covered = computed(() => currentLayer.value !== null || unreachable.value);
 useDialogFocus(covered);
 useShortcuts(covered);

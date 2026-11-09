@@ -3,11 +3,10 @@
 import { computed } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { rise } from '@/motion.ts';
-import { retry, reloadWindow, ui } from '@/store.ts';
+import { retry, reloadWindow, ui, UNREACHABLE } from '@/store.ts';
 import { useText } from '@/i18n/index.ts';
 const t = useText();
-const KINDS = ['quitting', 'lost', 'unanswered', 'back'] as const;
-const kind = computed(() => KINDS.find((name) => name === ui.lifecycle));
+const kind = computed(() => UNREACHABLE.find((name) => name === ui.lifecycle));
 </script>
 <template>
   <AnimatePresence>

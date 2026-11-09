@@ -23,7 +23,7 @@ import type { ApiError, FeedItem, Lifecycle, Marks, Snapshot, StreamEvent, Todo 
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
 import { liveStatus } from './lib/live-status.ts';
-import { text } from './i18n/index.ts';
+import { text, type TextKey } from './i18n/index.ts';
 
 // docs/adr/0002-vueuse-in-the-window.md (storage rows)
 const STORED = { writeDefaults: false };
@@ -32,6 +32,8 @@ const lastMode = useSessionStorage('wt-mode', '', STORED);
 
 /** What the window shows over the dashboard when the monitor is not there: the restart never came back, the first load got no answer, or a stopped monitor answers again. */
 export type Trouble = 'lost' | 'unanswered' | 'back';
+/** Every state in which the monitor is not there and StoppedNotice covers the dashboard. */
+export const UNREACHABLE = ['quitting', 'lost', 'unanswered', 'back'] as const;
 const RESTART_GIVE_UP_MS = 60000;
 const RECOVERY_POLL_MS = 5000;
 
@@ -145,10 +147,18 @@ export const themeVariables = computed(() => {
   return theme && theme.light && theme.dark ? theme[dark.value ? 'dark' : 'light'] : {};
 });
 export const counts = computed(() => snapshot.counts);
-/** The sources named in the verdict when every source of the open workspace is failing; empty when data is flowing. */
-export const sourcesDown = computed(() => liveStatus(snapshot.health, snapshot.polled_at, snapshot.workspace.connectors.length, ui.live).failing);
+/** The live verdict for the open workspace: the dot, the status text and which sources are failing. */
+export const liveVerdict = computed(() => {
+  void now.value;
+  return liveStatus(snapshot.health, snapshot.polled_at, snapshot.workspace.connectors.length, ui.live);
+});
+/** The failing sources of the open workspace; empty when data is flowing. */
+export const sourcesDown = computed(() => liveVerdict.value.failing);
 /** True when every source of the workspace is failing, so no count can be trusted. */
-export const allSourcesDown = computed(() => liveStatus(snapshot.health, snapshot.polled_at, snapshot.workspace.connectors.length, ui.live).noData);
+export const allSourcesDown = computed(() => liveVerdict.value.noData);
+/** The no-data text under `key` naming the failing sources, or '' when none fails. */
+export const noDataText = (key: TextKey) =>
+  sourcesDown.value.length ? text(key, { names: sourcesDown.value.join(', ') }, sourcesDown.value.length) : '';
 /** The banner lines: one per source failing past the threshold. */
 export const alerts = computed(() => {
   const name = snapshot.workspace.name;
@@ -283,10 +293,11 @@ const restartClock = useTimeoutFn(
   RESTART_GIVE_UP_MS,
   { immediate: false },
 );
+const awaitingReturn = computed(() => ui.lifecycle === 'quitting' || ui.lifecycle === 'lost');
 const recovery = useIntervalFn(
   () =>
     getJson('/api/summary').then(() => {
-      if (ui.lifecycle === 'quitting' || ui.lifecycle === 'lost') {
+      if (awaitingReturn.value) {
         ui.lifecycle = 'back';
         ui.status = text('core.store.back');
       }
@@ -294,7 +305,7 @@ const recovery = useIntervalFn(
   RECOVERY_POLL_MS,
   { immediate: false },
 );
-watch(() => ui.lifecycle === 'quitting' || ui.lifecycle === 'lost', (waiting) => (waiting ? recovery.resume() : recovery.pause()), {
+watch(awaitingReturn, (waiting) => (waiting ? recovery.resume() : recovery.pause()), {
   flush: 'sync',
 });
 

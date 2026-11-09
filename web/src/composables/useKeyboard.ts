@@ -57,13 +57,12 @@ export const useDialogFocus = (covered: Ref<boolean>) => {
 const SHORTCUTS: Record<string, string> = {
   '/': '.feed__search-input',
   t: '.todos__input',
-  '?': '',
 };
 
 /** "/" focuses the feed search, "t" the to-do field and "?" opens Help, unless a field or a dialog has the keyboard. */
 export const useShortcuts = (covered: Ref<boolean>) =>
   onKeyStroke(
-    Object.keys(SHORTCUTS),
+    [...Object.keys(SHORTCUTS), '?'],
     (event) => {
       const target = event.target as HTMLElement | null;
       if (covered.value || event.metaKey || event.ctrlKey || event.altKey || target?.closest?.(TYPING)) {

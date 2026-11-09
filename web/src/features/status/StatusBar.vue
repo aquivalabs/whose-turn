@@ -4,11 +4,10 @@ import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { computed } from 'vue';
 import { refAutoReset, useMediaQuery } from '@vueuse/core';
-import { snapshot, ui, now, notice, refresh, tellProblem } from '@/store.ts';
+import { ui, notice, refresh, tellProblem, liveVerdict } from '@/store.ts';
 import { post } from '@/lib/api.ts';
 import { tabUrl } from '@/lib/window-mode.ts';
 import { writeProblem } from '@/lib/problems.ts';
-import { liveStatus } from '@/lib/live-status.ts';
 import { BUG, OPEN_IN_NEW } from '@/lib/icons.ts';
 import { useAttention } from '@/composables/useAttention.ts';
 import AiButton from '@/ui/AiButton.vue';
@@ -18,15 +17,7 @@ import { useText } from '@/i18n/index.ts';
 const emit = defineEmits<{ report: [] }>();
 const t = useText();
 const wiggling = useAttention(computed(() => ui.reportNews));
-const verdict = computed(() => {
-  void now.value;
-  return liveStatus(
-    snapshot.health,
-    snapshot.polled_at,
-    snapshot.workspace.connectors.length,
-    ui.live,
-  );
-});
+const verdict = liveVerdict;
 const OPEN_COOLDOWN_MS = 5000;
 const COMPACT_QUERY = '(width <= 80em)';
 const opening = refAutoReset(false, OPEN_COOLDOWN_MS);
@@ -36,7 +27,7 @@ const status = computed(() =>
 );
 const compact = useMediaQuery(COMPACT_QUERY);
 const openLabel = computed(() => (opening.value ? t('status.bar.opening') : t('status.bar.openAsApp')));
-const tellOpen =(outcome: unknown) =>
+const tellOpen = (outcome: unknown) =>
   tellProblem(outcome, { refused: t('status.bar.appNotOpened') });
 const openAsApp = () => {
   if (opening.value) {

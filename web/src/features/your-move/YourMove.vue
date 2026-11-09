@@ -2,7 +2,7 @@
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed, reactive } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
-import { snapshot, ui, now, setMarks, justHandled, holdScroller, sourcesDown } from '@/store.ts';
+import { snapshot, ui, now, setMarks, justHandled, holdScroller, noDataText } from '@/store.ts';
 import { yourRows, hasPrColumn } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
 import { age, ago, when } from '@/lib/time.ts';
@@ -47,9 +47,7 @@ const emptyText = computed(() => {
   if (moveView.value === 'handled') {
     return t('yourMove.empty.nothingHandled');
   }
-  return sourcesDown.value.length
-    ? t('yourMove.empty.noData', { names: sourcesDown.value.join(', ') }, sourcesDown.value.length)
-    : t('yourMove.empty.nothingWaiting');
+  return noDataText('yourMove.empty.noData') || t('yourMove.empty.nothingWaiting');
 });
 const problems = reactive(new Map<string, string>());
 useClearOnReconnect(() => problems.clear());
