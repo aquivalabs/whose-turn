@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue';
-import { snapshot, counts, openSettings } from '@/store.ts';
+import { computed } from 'vue';
+import { snapshot, counts, openSettings, sourcesDown } from '@/store.ts';
 import { glideThrough } from '@/motion.ts';
 import { GEAR } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
@@ -8,6 +9,13 @@ import AiButton from '@/ui/AiButton.vue';
 import ExtLink from '@/ui/ExtLink.vue';
 import { useText } from '@/i18n/index.ts';
 const t = useText();
+const DASH = '—';
+const shown = (value: number) => (sourcesDown.value.length ? DASH : value);
+const dashTip = computed(() =>
+  sourcesDown.value.length
+    ? t('header.noData', { names: sourcesDown.value.join(', ') }, sourcesDown.value.length)
+    : undefined,
+);
 const { collapsed, toggle: flip } = useFold('header');
 const header = useTemplateRef<HTMLElement>('header');
 const toggle = () => glideThrough(header.value, 'height', flip);
@@ -22,11 +30,11 @@ const toggle = () => glideThrough(header.value, 'height', flip);
     <div class="workspace-header__title">
       <h1 class="workspace-header__name">{{ snapshot.workspace.name || t('header.fallbackName') }}</h1>
       <p v-if="collapsed" class="workspace-header__line workspace-header__strip">
-        {{ t('header.tiles.yourMove') }} <b class="workspace-header__count">{{ counts.mine }}</b> ·
+        {{ t('header.tiles.yourMove') }} <b class="workspace-header__count">{{ shown(counts.mine) }}</b> ·
         {{ t('header.tiles.waitingOnOthers') }}
-        <b class="workspace-header__count">{{ counts.others }}</b> · {{ t('header.strip.failing') }}
+        <b class="workspace-header__count">{{ shown(counts.others) }}</b> · {{ t('header.strip.failing') }}
         <b class="workspace-header__count">{{ counts.failing }}</b> · {{ t('header.strip.done') }}
-        <b class="workspace-header__count">{{ counts.done }}</b>
+        <b class="workspace-header__count">{{ shown(counts.done) }}</b>
       </p>
       <p class="workspace-header__line workspace-header__give">
         <AiButton :query="{ ws: snapshot.workspace.id, kind: 'workspace' }" big /><span
@@ -69,14 +77,14 @@ const toggle = () => glideThrough(header.value, 'height', flip);
     <div class="workspace-header__tiles">
       <div
         class="workspace-header__tile"
-        :class="{ 'workspace-header__tile--you': counts.mine > 0 }"
+        :class="{ 'workspace-header__tile--you': counts.mine > 0 && !sourcesDown.length }"
       >
         <span class="workspace-header__tile-label">{{ t('header.tiles.yourMove') }}</span
-        ><strong class="workspace-header__tile-value">{{ counts.mine }}</strong>
+        ><strong class="workspace-header__tile-value" :data-tip="dashTip">{{ shown(counts.mine) }}</strong>
       </div>
       <div class="workspace-header__tile">
         <span class="workspace-header__tile-label">{{ t('header.tiles.waitingOnOthers') }}</span
-        ><strong class="workspace-header__tile-value">{{ counts.others }}</strong>
+        ><strong class="workspace-header__tile-value" :data-tip="dashTip">{{ shown(counts.others) }}</strong>
       </div>
       <div
         class="workspace-header__tile"
@@ -87,7 +95,7 @@ const toggle = () => glideThrough(header.value, 'height', flip);
       </div>
       <div class="workspace-header__tile">
         <span class="workspace-header__tile-label">{{ t('header.tiles.done') }}</span
-        ><strong class="workspace-header__tile-value">{{ counts.done }}</strong>
+        ><strong class="workspace-header__tile-value" :data-tip="dashTip">{{ shown(counts.done) }}</strong>
       </div>
     </div>
   </header>

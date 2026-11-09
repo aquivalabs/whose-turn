@@ -21,6 +21,7 @@ import { SERVER_DOWN, TEXT_KEPT, errorProblem, writeProblem } from './lib/proble
 import type { ApiError, FeedItem, Lifecycle, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
 import { show as showBackdrop } from './backdrop.ts';
 import { dark } from './scheme.ts';
+import { liveStatus } from './lib/live-status.ts';
 import { text } from './i18n/index.ts';
 
 // docs/adr/0002-vueuse-in-the-window.md (storage rows)
@@ -135,6 +136,11 @@ export const themeVariables = computed(() => {
   return theme && theme.light && theme.dark ? theme[dark.value ? 'dark' : 'light'] : {};
 });
 export const counts = computed(() => snapshot.counts);
+/** The sources named in the verdict when every source of the open workspace is failing; empty when data is flowing. */
+export const sourcesDown = computed(() => {
+  const status = liveStatus(snapshot.health, snapshot.polled_at, snapshot.workspace.connectors.length, ui.live);
+  return status.noData ? status.failing : [];
+});
 /** The banner lines: one per source failing past the threshold. */
 export const alerts = computed(() => {
   const name = snapshot.workspace.name;

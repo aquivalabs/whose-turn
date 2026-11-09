@@ -6,6 +6,10 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ### Changed
 - A failed update now shows its reason next to Retry, and a failed Claude plugin update says it failed instead of looking like a plain offer. RMA-438.
+- When a source is failing, Waiting on others, What changed and the numbers at the top say there is no data instead of showing an empty list or a zero. RMA-437.
+
+### Fixed
+- A ticket on hold that is assigned to you now reads "on hold" in the With column of Waiting on others, not "you". RMA-449.
 
 ## [1.0.0-beta.5] - 2026-11-09
 
