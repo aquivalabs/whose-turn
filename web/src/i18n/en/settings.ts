@@ -25,7 +25,7 @@ export default {
     title: 'Monitor settings',
     notifications: 'Notifications',
     notificationsSwitch:
-      'Desktop notifications for every workspace; saved as you click, like the bell in the status bar',
+      'Desktop notifications for every workspace; the bell in the status bar switches the same setting',
     polling: 'Polling and health',
     hiddenHeading: 'Parked and paused workspaces',
     hiddenNote:

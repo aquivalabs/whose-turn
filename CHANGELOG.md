@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- In Monitor settings the desktop notifications switch now waits for Save like the other fields, and counts as an unsaved change until you save. RMA-446.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed
