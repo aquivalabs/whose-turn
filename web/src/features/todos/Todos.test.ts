@@ -179,3 +179,66 @@ test('a delete the server refuses shows the line and offers no Undo', async () =
   unmount();
   snapshot.todos = [];
 });
+
+test('clicking elsewhere saves a changed edit instead of dropping it', async () => {
+  vi.mocked(todoAct).mockReset();
+  vi.mocked(todoAct).mockResolvedValue('');
+  one();
+  const { unmount } = render(Todos);
+  await fireEvent.dblClick(await screen.findByText('call the vendor'));
+  const box = await screen.findByRole('textbox', { name: 'Edit to-do' });
+
+  await fireEvent.update(box, 'call the supplier');
+  await fireEvent.blur(box);
+
+  expect(todoAct).toHaveBeenCalledWith({ action: 'edit', id: 't1', text: 'call the supplier' });
+  unmount();
+  snapshot.todos = [];
+});
+
+test('Escape followed by the blur it causes saves nothing', async () => {
+  vi.mocked(todoAct).mockReset();
+  one();
+  const { unmount } = render(Todos);
+  await fireEvent.dblClick(await screen.findByText('call the vendor'));
+  const box = await screen.findByRole('textbox', { name: 'Edit to-do' });
+
+  await fireEvent.update(box, 'something else');
+  await fireEvent.keyDown(box, { key: 'Escape' });
+  await fireEvent.blur(box);
+
+  expect(todoAct).not.toHaveBeenCalled();
+  unmount();
+  snapshot.todos = [];
+});
+
+test('two deletions keep two Undos, the latest restored first', async () => {
+  vi.mocked(todoAct).mockReset();
+  vi.mocked(todoAct).mockResolvedValue('');
+  snapshot.todos = [
+    { id: 't1', text: 'first', created: '2026-11-02T10:00:00Z', done: null },
+    { id: 't2', text: 'second', created: '2026-11-02T10:01:00Z', done: null },
+  ];
+  const { unmount } = render(Todos);
+  const buttons = await screen.findAllByRole('button', { name: 'Delete to-do' });
+  await fireEvent.click(buttons[0]);
+  await fireEvent.click((await screen.findAllByRole('button', { name: 'Delete to-do' }))[1]);
+
+  expect((await screen.findByRole('status')).textContent).toContain('2 to-dos deleted');
+  await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+  expect(todoAct).toHaveBeenLastCalledWith({ action: 'add', text: 'second' });
+  await vi.waitFor(() => expect(screen.getByRole('status').textContent).toContain('To-do deleted.'));
+  await fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(todoAct).toHaveBeenLastCalledWith({ action: 'add', text: 'first' });
+  unmount();
+  snapshot.todos = [];
+});
+
+test('every to-do row has a Copy for AI button', async () => {
+  one();
+  const { unmount } = render(Todos);
+
+  expect((await screen.findAllByRole('button', { name: /AI/i })).length).toBe(1);
+  unmount();
+  snapshot.todos = [];
+});
