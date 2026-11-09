@@ -146,10 +146,9 @@ export const themeVariables = computed(() => {
 });
 export const counts = computed(() => snapshot.counts);
 /** The sources named in the verdict when every source of the open workspace is failing; empty when data is flowing. */
-export const sourcesDown = computed(() => {
-  const status = liveStatus(snapshot.health, snapshot.polled_at, snapshot.workspace.connectors.length, ui.live);
-  return status.noData ? status.failing : [];
-});
+export const sourcesDown = computed(() => liveStatus(snapshot.health, snapshot.polled_at, snapshot.workspace.connectors.length, ui.live).failing);
+/** True when every source of the workspace is failing, so no count can be trusted. */
+export const allSourcesDown = computed(() => liveStatus(snapshot.health, snapshot.polled_at, snapshot.workspace.connectors.length, ui.live).noData);
 /** The banner lines: one per source failing past the threshold. */
 export const alerts = computed(() => {
   const name = snapshot.workspace.name;

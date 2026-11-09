@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue';
 import { computed } from 'vue';
-import { snapshot, counts, openSettings, sourcesDown } from '@/store.ts';
+import { snapshot, counts, openSettings, sourcesDown, allSourcesDown } from '@/store.ts';
 import { glideThrough } from '@/motion.ts';
 import { GEAR } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
@@ -10,7 +10,7 @@ import ExtLink from '@/ui/ExtLink.vue';
 import { useText } from '@/i18n/index.ts';
 const t = useText();
 const DASH = '—';
-const shown = (value: number) => (sourcesDown.value.length ? DASH : value);
+const shown = (value: number) => (allSourcesDown.value ? DASH : value);
 const dashTip = computed(() =>
   sourcesDown.value.length
     ? t('header.noData', { names: sourcesDown.value.join(', ') }, sourcesDown.value.length)
@@ -77,7 +77,7 @@ const toggle = () => glideThrough(header.value, 'height', flip);
     <div class="workspace-header__tiles">
       <div
         class="workspace-header__tile"
-        :class="{ 'workspace-header__tile--you': counts.mine > 0 && !sourcesDown.length }"
+        :class="{ 'workspace-header__tile--you': counts.mine > 0 && !allSourcesDown }"
       >
         <span class="workspace-header__tile-label">{{ t('header.tiles.yourMove') }}</span
         ><strong class="workspace-header__tile-value" :data-tip="dashTip">{{ shown(counts.mine) }}</strong>

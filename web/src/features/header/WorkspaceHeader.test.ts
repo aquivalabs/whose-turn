@@ -24,3 +24,14 @@ test('with every source failing the tiles show a dash and Waiting on others and 
   expect(render(Waiting).container.textContent).toContain('No data: jira is failing');
   expect(render(Feed).container.textContent).toContain('No data: jira is failing');
 });
+
+test('with one of two sources failing the tiles keep their counts and the empty panels name the failing source', () => {
+  snapshot.workspace.connectors = [{ id: 'jira', type: 'jira', label: 'Jira' }, { id: 'github', type: 'github', label: 'GitHub' }];
+  snapshot.health = { ok: false, stale: false, fresh_at: '', failing: [{ source: 'jira', polls: 3 }], alerts: [] };
+  snapshot.counts = { mine: 2, others: 0, failing: 0, done: 1 };
+  const header = render(WorkspaceHeader);
+  const values = [...header.container.querySelectorAll('.workspace-header__tile-value')].map((node) => node.textContent);
+  expect(values.slice(0, 2)).toEqual(['2', '0']);
+  expect(render(Waiting).container.textContent).toContain('No data: jira is failing');
+  expect(render(Feed).container.textContent).toContain('No data: jira is failing');
+});
