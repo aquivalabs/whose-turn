@@ -124,7 +124,8 @@ through `pollAdapter`, which refuses a result that breaks the contract.
 - `GET /api/config` carries `adapters`: per adapter a `module` entry of the config names, its `label`
   and `fields`, or the `problem` that stops it loading; a file in the folder that no entry names is
   never imported, so its code never runs; the sheet shows those fields on the entry's card and the problem
-  under its Name.
+  as a warning line on the card. A `problem` and a save-time violation are plain text that names the file
+  only (`board.mjs does not follow the source contract: …`), never the data directory's path (RMA-440).
 
 - `adapter` is the file name without `.mjs`: lowercase letters, digits, `-` and `_`. Any other value,
   a path among them, is the entry's error, so no config can point outside the folder.

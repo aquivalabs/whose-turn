@@ -10,7 +10,7 @@ The window's movement: panels fold, rows slide in and out, dialogs fade, all thr
 
 | File | Role |
 |---|---|
-| `web/src/styles/tokens.css` | `--motion-fast` 320 ms, `--motion-base` 480 ms, `--motion-slow` 640 ms, `--motion-ease` `cubic-bezier(0.33, 1, 0.68, 1)`; 0 ms under reduced motion |
+| `web/src/styles/tokens.css` (its `--motion-*` tokens; the chip size and label colour tokens there belong to the window's look, RMA-441) | `--motion-fast` 320 ms, `--motion-base` 480 ms, `--motion-slow` 640 ms, `--motion-ease` `cubic-bezier(0.33, 1, 0.68, 1)`; 0 ms under reduced motion |
 | `web/src/motion.ts` | the same numbers for JavaScript, the presets `fade`, `rise`, `listed`, `fold`, the spring, `glideThrough` and the `leaving` marker |
 | `web/src/motion-features.ts` | the only door to the heavy part of `motion-v` (the feature set and `animate`), imported lazily |
 | `web/src/features/your-move/RecentlyDone.vue` | the Recently done block: its fold glides |
