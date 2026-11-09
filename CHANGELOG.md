@@ -4,6 +4,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.0.0-beta.4] - 2026-11-09
+
 ### Added
 - Rows show their labels from Linear, Jira and GitHub pull requests in one line beside the ticket key; labels that do not fit fold into +N, and pointing at them shows them all. Labels you list in a workspace's **Highlighted labels**, such as `User report`, come first in the accent colour, so reports from users stand out even among the rows on you. RMA-434.
 
