@@ -23,6 +23,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - Workspace settings: the status lists, the release branch prefix and the four "Next step when" fields show what applies when they are empty, and each says what it does. Seed colour says what it colours, Stale after says it raises the alert in the status bar and the banner, and the Linear field reads "Linear workspace (from the URL)". The "Whose turn" table now names release statuses in words and writes each outcome as "your move: Merge it". RMA-445.
 - In Monitor settings the desktop notifications switch now waits for Save like the other fields, and counts as an unsaved change until you save. RMA-446.
 - A saved workspace's id is shown as plain text that cannot be edited, so renaming it can no longer cut it off from its to-dos and marks. You still choose the id when you create a workspace. RMA-444.
+- The status line no longer wraps on a 1280-pixel-wide window when the update chip shows; Copy for AI, Open as app and Notifications show as icons there, with their words on hover. RMA-439.
+- When the monitor is stopped, does not come back after a restart, or does not answer when the window opens, the window dims everything evenly behind one centred notice that says so, with Reload or Retry. A stopped monitor that starts again is noticed and announced. RMA-436.
+- "Opened in the app window" now goes away after a few seconds, and a refresh the monitor refuses shows the reason instead of staying on "Checking now…". RMA-436.
 
 ## [1.0.0-beta.5] - 2026-11-09
 

@@ -2,14 +2,14 @@
 // The line above the dashboard in three groups: the live dot, the last check and Refresh on the left; the update chip in the centre; Copy for AI, the app/tab switch, notifications and Report on the right (RMA-343).
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
-import { computed, ref } from 'vue';
-import { refAutoReset } from '@vueuse/core';
+import { computed } from 'vue';
+import { refAutoReset, useMediaQuery } from '@vueuse/core';
 import { snapshot, ui, now, notice, refresh, tellProblem } from '@/store.ts';
 import { post } from '@/lib/api.ts';
 import { tabUrl } from '@/lib/window-mode.ts';
 import { writeProblem } from '@/lib/problems.ts';
 import { liveStatus } from '@/lib/live-status.ts';
-import { BUG } from '@/lib/icons.ts';
+import { BUG, OPEN_IN_NEW } from '@/lib/icons.ts';
 import { useAttention } from '@/composables/useAttention.ts';
 import AiButton from '@/ui/AiButton.vue';
 import UpdateChip from './UpdateChip.vue';
@@ -28,12 +28,15 @@ const verdict = computed(() => {
   );
 });
 const OPEN_COOLDOWN_MS = 5000;
+const COMPACT_QUERY = '(width <= 80em)';
 const opening = refAutoReset(false, OPEN_COOLDOWN_MS);
-const opened = ref(false);
+const opened = refAutoReset(false, OPEN_COOLDOWN_MS);
 const status = computed(() =>
   opened.value ? t('status.bar.openedInApp') : ui.status || verdict.value.text,
 );
-const tellOpen = (outcome: unknown) =>
+const compact = useMediaQuery(COMPACT_QUERY);
+const openLabel = computed(() => (opening.value ? t('status.bar.opening') : t('status.bar.openAsApp')));
+const tellOpen =(outcome: unknown) =>
   tellProblem(outcome, { refused: t('status.bar.appNotOpened') });
 const openAsApp = () => {
   if (opening.value) {
@@ -71,26 +74,34 @@ const openAsApp = () => {
       <UpdateChip />
     </div>
     <div class="status-bar__group status-bar__actions">
-      <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint">{{
+      <AiButton :query="{ all: '1' }" /><span class="ai-hint status-bar__ai-hint status-bar__label">{{
         t('status.bar.copyForAi')
       }}</span>
       <a
         v-if="ui.mode === 'app'"
-        class="btn status-bar__btn"
+        class="btn status-bar__btn status-bar__open"
         :href="tabUrl(ui.ws)"
         target="_blank"
         rel="noopener"
-        >{{ t('status.bar.openInBrowser') }}</a
+        :aria-label="t('status.bar.openInBrowser')"
+        :data-tip="compact ? t('status.bar.openInBrowser') : undefined"
+        ><svg class="status-bar__icon status-bar__open-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path :d="OPEN_IN_NEW" fill="currentColor" /></svg
+        ><span class="status-bar__label">{{ t('status.bar.openInBrowser') }}</span></a
       >
       <button
         v-else
         type="button"
-        class="btn status-bar__btn"
+        class="btn status-bar__btn status-bar__open"
         :class="{ 'status-bar__btn--busy': opening }"
         :aria-disabled="opening"
+        :aria-label="openLabel"
+        :data-tip="compact ? openLabel : undefined"
         @click="openAsApp"
       >
-        {{ opening ? t('status.bar.opening') : t('status.bar.openAsApp') }}
+        <svg class="status-bar__icon status-bar__open-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path :d="OPEN_IN_NEW" fill="currentColor" /></svg
+        ><span class="status-bar__label">{{ openLabel }}</span>
       </button>
       <NotificationsToggle />
       <button
@@ -125,6 +136,32 @@ const openAsApp = () => {
   font-family: var(--md-font);
   font-size: 0.75rem;
   color: var(--md-on-surface-variant);
+}
+
+.status-bar__open-icon {
+  display: none;
+}
+
+.status-bar__btn,
+.status-bar__actions {
+  white-space: nowrap;
+}
+
+@media (width <= 80em) {
+  .status-bar__label {
+    display: none;
+  }
+
+  .status-bar__open-icon {
+    display: block;
+  }
+
+  .status-bar__open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.5rem;
+  }
 }
 
 .status-bar__group {

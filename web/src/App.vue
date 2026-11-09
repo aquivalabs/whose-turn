@@ -50,7 +50,8 @@ const layoutStyle = computed(() =>
 );
 const { collapsed: feedFolded } = useFold('feed');
 const whatsNew = useWhatsNew();
-const covered = computed(() => currentLayer.value !== null || ui.lifecycle === 'quitting');
+const unreachable = computed(() => ['quitting', 'lost', 'unanswered', 'back'].includes(ui.lifecycle));
+const covered = computed(() => currentLayer.value !== null || unreachable.value);
 useDialogFocus(covered);
 useShortcuts(covered);
 watch(themeVariables, repaint, { flush: 'post' });
@@ -84,7 +85,7 @@ onMounted(() => {
 <template>
   <LazyMotion :features="loadFeatures">
   <MotionConfig reduced-motion="user" :skip-animations="reduced">
-  <div class="app" :style="themeVariables">
+  <div class="app" :class="{ 'app--dimmed': unreachable }" :style="themeVariables">
     <Rail
       :inert="covered"
       @settings="ui.monitor = true"
@@ -124,16 +125,24 @@ onMounted(() => {
         <MonitorSettingsSheet />
         <WhatsNewSheet />
         <HelpSheet />
-        <StoppedNotice />
         <CommentModal />
         <NoteModal />
       </div>
     </div>
+    <StoppedNotice />
   </div>
   </MotionConfig>
   </LazyMotion>
 </template>
 <style scoped>
+.app > :not(.stopped-notice) {
+  transition: opacity var(--motion-base) var(--motion-ease);
+}
+
+.app--dimmed > :not(.stopped-notice) {
+  opacity: 0.35;
+}
+
 .app__shell {
   box-sizing: border-box;
   display: flex;
