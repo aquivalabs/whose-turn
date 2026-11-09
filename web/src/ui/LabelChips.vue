@@ -67,17 +67,18 @@ useResizeObserver(line, fit);
 
 .label-chips__chip {
   flex: none;
-  padding: 0 0.375rem;
-  border-radius: var(--md-r-chip);
+  height: var(--chip-height);
+  padding: 0 var(--chip-pad-x);
+  border-radius: var(--chip-radius);
   background: var(--md-s-highest);
   color: var(--md-on-surface-variant);
-  font-size: 0.6875rem;
-  line-height: 1.125rem;
+  font-size: var(--chip-font-size);
+  line-height: var(--chip-height);
 }
 
 .label-chips__chip--badge {
-  background: var(--md-tertiary-container);
-  color: var(--md-on-tertiary-container);
+  background: var(--md-label-container);
+  color: var(--md-on-label-container);
   font-weight: 600;
 }
 

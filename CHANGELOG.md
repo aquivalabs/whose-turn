@@ -14,6 +14,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - Every to-do has a Copy for AI button, like the rows of the other lists. RMA-443.
 - Clicking elsewhere while editing a to-do now saves your change instead of throwing it away; Escape still cancels. RMA-443.
 - Deleting several to-dos in a row keeps an Undo for each of them, not only the last one. RMA-443.
+- Highlighted labels now have their own violet colour instead of the olive of a passing check, and status pills, age chips, counts and label chips share one size. RMA-441.
 
 ## [1.0.0-beta.5] - 2026-11-09
 

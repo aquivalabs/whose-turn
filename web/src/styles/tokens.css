@@ -46,6 +46,8 @@
   --md-on-secondary-container: #131c2b;
   --md-tertiary-container: #c8f0ec;
   --md-on-tertiary-container: #00201e;
+  --md-label-container: #e6deff;
+  --md-on-label-container: #271a63;
   --md-warn-container: #ffdea6;
   --md-on-warn-container: #271900;
   --md-error: #ba1a1a;
@@ -73,6 +75,10 @@
   --md-font: roboto, inter, -apple-system, blinkmacsystemfont, 'Segoe UI', system-ui, sans-serif;
   --md-r-card: 0.75rem;
   --md-r-chip: 0.5rem;
+  --chip-height: 1.25rem;
+  --chip-font-size: 0.6875rem;
+  --chip-radius: 0.375rem;
+  --chip-pad-x: 0.5rem;
   --new: #5cc8f0;
   --new-bg: rgb(92 200 240 / 17%);
   --new-ink: #04222e;
@@ -97,6 +103,8 @@
     --md-on-secondary-container: #dae2f9;
     --md-tertiary-container: #1f504c;
     --md-on-tertiary-container: #b4efe9;
+    --md-label-container: #43396f;
+    --md-on-label-container: #e9e1ff;
     --md-warn-container: #5c4300;
     --md-on-warn-container: #ffdea6;
     --md-error: #ffb4ab;
