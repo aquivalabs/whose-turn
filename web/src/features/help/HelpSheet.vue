@@ -39,23 +39,20 @@ const rows = [
 }
 
 .help-sheet__list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+  align-items: center;
   margin: 0;
 }
 
 .help-sheet__row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  display: contents;
 }
 
 .help-sheet__keys {
-  flex: none;
   display: flex;
   gap: 0.25rem;
-  min-width: 7rem;
 }
 
 .help-sheet__key {
