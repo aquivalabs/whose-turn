@@ -145,7 +145,7 @@ const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
     reviewers: state === 'OPEN' ? reviewersOf(pr, reviews, { me, bots }) : [],
     last_comment_by: last ? last.who : '', last_comment_at: last ? last.at : '', last_comment_url: last ? last.url : '', last_comment: last ? oneline(last.body, 160) : '',
     unanswered: Boolean(last && state === 'OPEN' && last.state !== 'APPROVED' && last.at > myLast),
-    labels: (pr.labels || []).map((label) => label.name).filter(Boolean),
+    labels: (pr.labels || []).map((label) => label.name),
   };
   const activity = people.filter((item) => item.at >= sinceIso).map((item) => ({
     ...subject, at: item.at, kind: item.kind, who: item.who === me ? 'you' : item.who, url: item.url, text: oneline(item.body), body: item.body.replace(/\r/g, '').slice(0, 6000),

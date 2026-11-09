@@ -10,23 +10,24 @@ const t = useText();
 const line = useTemplateRef<HTMLElement>('line');
 const shown = ref(props.labels.length);
 const widths = ref<number[]>([]);
-const MORE_WIDTH = 32;
-const GAP = 4;
 
 const isBadge = (label: string) => (props.badges || []).includes(label);
 const hidden = computed(() => props.labels.length - shown.value);
 const tip = computed(() => (hidden.value > 0 ? t('common.labels.all', { labels: props.labels.join(', ') }) : undefined));
 
 const fit = () => {
+  const style = line.value ? getComputedStyle(line.value) : null;
+  const gap = parseFloat(style?.columnGap || '') || 0;
+  const more = 3 * (parseFloat(style?.fontSize || '') || 0);
   const room = line.value?.clientWidth || 0;
   let used = 0;
   let count = 0;
   for (const [index, width] of widths.value.entries()) {
-    const reserve = index < widths.value.length - 1 ? MORE_WIDTH + GAP : 0;
+    const reserve = index < widths.value.length - 1 ? more + gap : 0;
     if (used + width + reserve > room && count > 0) {
       break;
     }
-    used += width + GAP;
+    used += width + gap;
     count += 1;
   }
   shown.value = count;

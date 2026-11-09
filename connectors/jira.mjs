@@ -142,7 +142,7 @@ const poll = async ({ settings, http, secrets, cache, historyDays }) => {
     tickets.push({
       key: issue.key, summary: fields.summary || '', status: (fields.status || {}).name || '', status_category: ((fields.status || {}).statusCategory || {}).key || '',
       assignee: (fields.assignee || {}).displayName || 'Unassigned', updated: fields.updated || '', url,
-      labels: (fields.labels || []).filter((label) => typeof label === 'string'),
+      labels: fields.labels || [],
       ...(held.has(issue.key) ? {} : { mention_only: true }),
     });
     for (const comment of ((fields.comment || {}).comments || [])) {

@@ -6,6 +6,7 @@ import LabelChips from './LabelChips.vue';
 const layout = (lineWidth: number, chipWidth: number) => {
   vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(lineWidth);
   vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(chipWidth);
+  vi.spyOn(window, 'getComputedStyle').mockReturnValue({ columnGap: '4px', fontSize: '11px' } as CSSStyleDeclaration);
 };
 
 afterEach(() => {
@@ -28,7 +29,7 @@ test('every label shows when the line has room, the highlighted one in the accen
 
 test('labels that do not fit the line fold into +N, and hovering the line names every label', async () => {
   // Setup
-  layout(120, 40);
+  layout(125, 40);
   // Exercise
   const { container } = render(LabelChips, { props: { labels: ['User report', 'bug', 'p1', 'frontend'], badges: ['User report'] } });
   await nextTick();

@@ -93,7 +93,7 @@ export const normalise = (issues, viewer) => {
       key: issue.identifier, summary: issue.title, status: issue.state?.name || '', status_category: CATEGORY[issue.state?.type] || 'indeterminate',
       assignee: issue.assignee?.displayName || issue.assignee?.name || 'Unassigned', updated: issue.updatedAt, url: issue.url,
       status_change: issue.state?.type === 'completed' ? null : stateEntered(issue),
-      labels: (issue.labels?.nodes || []).map((label) => label.name).filter(Boolean),
+      labels: (issue.labels?.nodes || []).map((label) => label.name),
     });
     for (const comment of issue.comments?.nodes || []) {
       comments.push({ id: comment.id, key: issue.identifier, at: toIsoUtc(comment.createdAt), author: comment.user?.displayName || comment.user?.name || '', body: mentionText(comment.body), url: comment.url || issue.url });
