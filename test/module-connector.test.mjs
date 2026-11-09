@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fakeSource } from './fixtures/fake-source.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { copyFileSync, mkdtempSync, statSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -150,6 +150,16 @@ test('saving a config checks every module entry: a missing or broken adapter is 
   assert.match(violations[0].description, /^Workspace "w", connector "bad": broken\.mjs does not follow the source contract: /);
   assert.equal(violations[1].description, 'Workspace "w", connector "gone": nowhere.mjs is not in the adapters folder yet');
   assert.ok(violations.every((violation) => !violation.description.includes(dataDir)));
+});
+
+test('an adapter that cannot be loaded is a violation naming the file and the first line of the error, without the folder', async () => {
+  const dataDir = await dataDirWithAdapters();
+  writeFileSync(join(dataDir, 'adapters', 'typo.mjs'), 'export default {\n');
+  const workspaces = [{ id: 'w', connectors: [{ type: 'module', id: 'typo', adapter: 'typo' }] }];
+  const [violation] = await moduleConnector.adapterViolations(workspaces, dataDir);
+  assert.match(violation.description, /^Workspace "w", connector "typo": typo\.mjs cannot be loaded: \S/);
+  assert.ok(!violation.description.includes(dataDir));
+  assert.ok(!violation.description.includes('\n'));
 });
 
 test('a custom source\'s file name is made from its label: Latin, lowercase, words joined by _, at most 40 characters', () => {
