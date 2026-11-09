@@ -1,22 +1,23 @@
 <script setup lang="ts">
-// What a handled row carries: the outcome of a pass-on and the note. docs/mechanisms/your-move.md § The note window
+// What a handled row carries: the outcome of a pass-on and the note, edited after the mark. docs/mechanisms/your-move.md § The note window
 import { AnimatePresence } from 'motion-v';
 import { computed, nextTick, ref, watch } from 'vue';
-import { snapshot, ui, setMarks, showInFeed, justHandled } from '@/store.ts';
+import { snapshot, ui, setMarks, showInFeed, closeTopLayer } from '@/store.ts';
 import { when } from '@/lib/time.ts';
 import Modal from '@/ui/Modal.vue';
 import { useText } from '@/i18n/index.ts';
 const t = useText();
 const row = computed(() => snapshot.turn.find((item) => item.row_id === ui.note));
 const info = computed(() => snapshot.marks.info[ui.note]);
-const pending = computed(() => row.value?.group === 'you' && !row.value.handled);
 const kept = computed(() => info.value?.note || '');
 const text = ref('');
 const problem = ref('');
 const field = ref<HTMLTextAreaElement | null>(null);
+const typed = () => text.value.replace(/\s+/g, ' ').trim();
 watch(
   () => ui.note,
   async (id) => {
+    ui.noteAsk = false;
     if (!id) {
       return;
     }
@@ -27,34 +28,27 @@ watch(
   },
   { immediate: true, flush: 'post' },
 );
+watch(
+  () => Boolean(ui.note) && typed() !== kept.value,
+  (dirty) => {
+    ui.noteDirty = dirty;
+  },
+  { immediate: true },
+);
 const close = () => {
   ui.note = '';
 };
-const commit = async (note: string) => {
-  const id = ui.note;
-  const marking = pending.value;
-  problem.value = await setMarks(
-    marking
-      ? { handled: { [id]: new Date().toISOString() }, ...(note && { notes: { [id]: note } }) }
-      : { notes: { [id]: note } },
-  );
-  if (problem.value) {
-    return;
-  }
-  if (marking) {
-    justHandled.value = id;
-  }
-  close();
-};
-const save = () => {
-  const note = text.value.replace(/\s+/g, ' ').trim();
-  if (!pending.value && note === kept.value) {
+const save = async () => {
+  const note = typed();
+  if (note === kept.value) {
     close();
     return;
   }
-  return commit(note);
+  problem.value = await setMarks({ notes: { [ui.note]: note } });
+  if (!problem.value) {
+    close();
+  }
 };
-const skip = () => (pending.value ? commit('') : close());
 const openInFeed = () => {
   const event = info.value?.event || '';
   close();
@@ -81,7 +75,7 @@ const happened = computed(() => detail.value?.what || info.value?.outcome || '')
           : t('yourMove.note.titleHandled', { key: row.key })
       "
       label-id="note-title"
-      @close="close"
+      @close="closeTopLayer"
     >
       <template v-if="info?.auto" #head>
         <button v-if="info.event" type="button" class="btn" @click="openInFeed">
@@ -128,9 +122,16 @@ const happened = computed(() => detail.value?.what || info.value?.outcome || '')
         @keydown.enter.prevent="save"
       />
       <p v-if="problem" class="alert alert--inline" role="alert">{{ problem }}</p>
+      <p v-if="ui.noteAsk" class="alert alert--inline" role="alertdialog">
+        {{ t('yourMove.note.discardAsk') }}
+        <button type="button" class="btn" @click="close">{{ t('yourMove.note.discard') }}</button>
+        <button type="button" class="btn" @click="ui.noteAsk = false">
+          {{ t('yourMove.note.keepEditing') }}
+        </button>
+      </p>
       <template #footer>
-        <button type="button" class="btn" @click="skip">
-          {{ kept && !pending ? t('yourMove.note.cancel') : t('yourMove.note.skip') }}
+        <button type="button" class="btn" @click="closeTopLayer">
+          {{ t('yourMove.note.cancel') }}
         </button>
         <button type="button" class="btn btn--tonal" @click="save">
           {{ t('yourMove.note.save') }}

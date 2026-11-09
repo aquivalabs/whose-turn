@@ -11,7 +11,7 @@ window already has. RMA-258.
 | File | Role |
 |---|---|
 | `web/src/lib/moves.ts` | `yourRows`, the open and handled lists and their counts; the other row filters of the dashboard; `outcomeTone`, the pill tone of a report outcome (`open`, `ready`, `done`, `dropped`) |
-| `web/src/features/your-move/YourMove.vue` | Renders the list and sends the Handled mark |
+| `web/src/features/your-move/YourMove.vue` | Renders the list and sends the handled mark |
 
 ## How it behaves
 
@@ -19,16 +19,24 @@ window already has. RMA-258.
   row whose turn passed on stays under Handled while that mark lives.
 - A row is handled when its group is not `you`, or when the server set the handled flag on it.
 - Rows are ordered by the server's rank, lowest first, then oldest first.
-- The open view lists only open rows and the handled view only handled ones. Handled on an open row
-  opens the note window first and writes nothing; Save sends the handled flag and the note in one marks
-  write, Skip sends the flag alone, and closing the window sends nothing, so the row never changes view
-  while the note is typed.
+- The open view lists only open rows and the handled view only handled ones. Mark handled on an open row
+  writes the handled flag at once, with no window, and offers Undo for a moment; marking several rows in a
+  row is one click each.
+- A handled row the user marked carries a `handled` chip and an Undo. A handled row the monitor marked
+  itself (a ticket passed on, `auto: true` in the mark's info) carries an `auto` chip with a hint saying why
+  and an Undo that removes the mark; its Next step text is not struck through.
 - A review request lives while you are a requested reviewer of an open PR, read or not (RMA-358).
 - The counts are of the whole list, not of the view: `open` and `handled`.
 
 ## The note window
 
-`NoteModal.vue` shows the full outcome of a pass-on and the note, opened by Handled or by the row's outcome line. Handled on an open row writes nothing until Save or Skip (see How it behaves).
+`NoteModal.vue` shows the full outcome of a pass-on and the note of a handled row. It opens from Add note on a
+handled row, or from the row's note or outcome line, and only ever writes the note.
+
+- Save note sends the note alone; Cancel closes without writing. Neither changes the row's mark.
+- Escape and the Close button act like Cancel. When text was typed, they first ask whether to discard it
+  (`ui.noteAsk`, set by `closeTopLayer` while `ui.noteDirty`), and the note stays open until the user
+  answers.
 
 ## Parked workspaces
 

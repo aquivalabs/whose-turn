@@ -1,7 +1,7 @@
 import type * as Store from '@/store.ts';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { scrollers, setMarks, showInFeed, snapshot, ui } from '@/store.ts';
+import { closeTopLayer, justHandled, scrollers, setMarks, showInFeed, snapshot, ui } from '@/store.ts';
 import { turnRow as row } from '@/test-rows.ts';
 import YourMove from './YourMove.vue';
 import NoteModal from './NoteModal.vue';
@@ -21,6 +21,10 @@ beforeEach(() => {
   snapshot.marks = { seen: [], base: 0, handled: {}, info: {} };
   useMoveView().value = 'open';
   ui.note = '';
+  ui.noteDirty = false;
+  justHandled.value = '';
+  ui.noteAsk = false;
+  vi.mocked(setMarks).mockReset();
 });
 
 test('the PR and Last comment columns are left out while every row is empty in them', async () => {
@@ -50,70 +54,138 @@ test('a PR row without a ticket links the PR from the ticket column and leaves t
   expect(screen.queryByRole('columnheader', { name: 'PR' })).toBeNull();
 });
 
-test('Handled writes nothing until the note window is answered', async () => {
-  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+const MOUNT = { components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' };
 
-  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
-
-  await screen.findByRole('dialog');
-  expect(setMarks).not.toHaveBeenCalled();
-});
-
-test('closing the note window of an open row writes nothing', async () => {
-  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
-  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
-  await screen.findByRole('dialog');
-
-  ui.note = '';
-
-  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-  expect(setMarks).not.toHaveBeenCalled();
-});
-
-test('no note input shows before Handled', async () => {
-  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
-  await screen.findByText('Review nw-1');
-
-  expect(screen.queryByLabelText('Note for NW-1')).toBeNull();
-});
-
-test('Handled opens the note modal with the field focused', async () => {
+test('Mark handled writes the mark at once, opens no window and offers Undo', async () => {
   vi.mocked(setMarks).mockResolvedValue('');
-  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
+  render(MOUNT);
 
-  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark handled: NW-1' }));
 
-  const field = await screen.findByLabelText(/Note/);
-  expect(screen.getByRole('dialog')).toBeTruthy();
-  await vi.waitFor(() => expect(document.activeElement).toBe(field));
-});
-
-test('Save stores the note and closes the modal', async () => {
-  vi.mocked(setMarks).mockResolvedValue('');
-  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
-
-  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
-  await fireEvent.update(await screen.findByLabelText(/Note/), 'Checked with the customer, nothing to change');
-  await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-  expect(setMarks).toHaveBeenCalledTimes(1);
-  expect(setMarks).toHaveBeenCalledWith({
-    handled: { 'nw-1': expect.any(String) },
-    notes: { 'nw-1': 'Checked with the customer, nothing to change' },
-  });
-  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-});
-
-test('Skip closes the modal and leaves the row handled with no note', async () => {
-  vi.mocked(setMarks).mockResolvedValue('');
-  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
-
-  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
-  await fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
-
-  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   expect(setMarks).toHaveBeenCalledTimes(1);
   expect(setMarks).toHaveBeenCalledWith({ handled: { 'nw-1': expect.any(String) } });
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(await screen.findByRole('button', { name: 'Undo' })).toBeTruthy();
+});
+
+test('marking two rows in a row takes two clicks and no window', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  snapshot.turn = [row('nw-1', false), row('nw-3', false)];
+  render(MOUNT);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark handled: NW-1' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark handled: NW-3' }));
+
+  expect(setMarks).toHaveBeenCalledTimes(2);
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+test('a refused mark shows the problem on the row and no Undo', async () => {
+  vi.mocked(setMarks).mockResolvedValue('The local server is not answering.');
+  render(MOUNT);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark handled: NW-1' }));
+
+  expect((await screen.findByRole('alert')).textContent).toContain('not answering');
+  expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+});
+
+test('Undo moves the row back', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  render(MOUNT);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Mark handled: NW-1' }));
+  await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+
+  expect(setMarks).toHaveBeenLastCalledWith({ handled: { 'nw-1': null } });
+});
+
+test('a handled row offers Add note, which opens the editor with the field focused', async () => {
+  useMoveView().value = 'handled';
+  render(MOUNT);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Add a note: NW-2' }));
+
+  const field = await screen.findByLabelText(/Note \(optional\)/);
+  await vi.waitFor(() => expect(document.activeElement).toBe(field));
+  expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+});
+
+test('Save note writes only the note and closes the editor', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  useMoveView().value = 'handled';
+  render(MOUNT);
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Add a note: NW-2' }));
+  await fireEvent.update(await screen.findByLabelText(/Note \(optional\)/), 'Checked with the customer, nothing to change');
+  await fireEvent.click(screen.getByRole('button', { name: 'Save note' }));
+
+  expect(setMarks).toHaveBeenCalledTimes(1);
+  expect(setMarks).toHaveBeenCalledWith({ notes: { 'nw-2': 'Checked with the customer, nothing to change' } });
+  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+});
+
+test('Cancel with nothing typed closes the editor and writes nothing', async () => {
+  useMoveView().value = 'handled';
+  render(MOUNT);
+  await fireEvent.click(await screen.findByRole('button', { name: 'Add a note: NW-2' }));
+
+  await fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(setMarks).not.toHaveBeenCalled();
+});
+
+test('Escape over a typed note asks first and keeps the row handled; Discard then closes', async () => {
+  useMoveView().value = 'handled';
+  render(MOUNT);
+  await fireEvent.click(await screen.findByRole('button', { name: 'Add a note: NW-2' }));
+  await fireEvent.update(await screen.findByLabelText(/Note \(optional\)/), 'half a thought');
+
+  closeTopLayer();
+
+  expect(await screen.findByText('Discard the note you typed?')).toBeTruthy();
+  expect(screen.getByRole('dialog')).toBeTruthy();
+  await fireEvent.click(screen.getByRole('button', { name: 'Discard' }));
+  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(setMarks).not.toHaveBeenCalled();
+});
+
+test('Escape over an untouched note closes it at once', async () => {
+  useMoveView().value = 'handled';
+  render(MOUNT);
+  await fireEvent.click(await screen.findByRole('button', { name: 'Add a note: NW-2' }));
+  await screen.findByRole('dialog');
+
+  closeTopLayer();
+
+  await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+});
+
+test('a refused note keeps the editor open with the problem', async () => {
+  vi.mocked(setMarks).mockResolvedValue('The local server is not answering.');
+  useMoveView().value = 'handled';
+  render(MOUNT);
+  await fireEvent.click(await screen.findByRole('button', { name: 'Add a note: NW-2' }));
+  await fireEvent.update(await screen.findByLabelText(/Note \(optional\)/), 'x');
+  await fireEvent.click(screen.getByRole('button', { name: 'Save note' }));
+
+  expect((await screen.findByRole('alert')).textContent).toContain('not answering');
+  expect(screen.getByRole('dialog')).toBeTruthy();
+});
+
+test('an automatic mark shows an auto chip, an Undo, and an unstruck next step', async () => {
+  vi.mocked(setMarks).mockResolvedValue('');
+  snapshot.turn = [{ ...row('nw-4', true), group: 'others', next: 'Testing' }];
+  snapshot.marks.info = { 'nw-4': { auto: true, outcome: 'Passed to Sam', event: 'e' } };
+  useMoveView().value = 'handled';
+  const { container } = render(MOUNT);
+
+  expect((await screen.findByText('auto')).getAttribute('data-tip')).toContain('marked this itself');
+  expect(container.querySelector('.your-move__row--auto')).not.toBeNull();
+  await fireEvent.click(screen.getByRole('button', { name: 'Remove the automatic mark: NW-4' }));
+
+  expect(setMarks).toHaveBeenCalledWith({ handled: { 'nw-4': null } });
 });
 
 test('a manual mark with a note shows the note on its own line with the time', async () => {
@@ -132,7 +204,7 @@ test('a manual mark with a note shows the note on its own line with the time', a
   const line = await screen.findByRole('button', { name: /Checked with the customer, nothing to change/ });
   await fireEvent.click(line);
 
-  expect(((await screen.findByLabelText(/Note/)) as HTMLTextAreaElement).value).toBe(
+  expect(((await screen.findByLabelText(/Note \(optional\)/)) as HTMLTextAreaElement).value).toBe(
     'Checked with the customer, nothing to change',
   );
   expect(container.querySelector('.your-move__time')?.textContent).toMatch(/^\d\d:\d\d$/);
@@ -226,16 +298,6 @@ test('the Handled view lists the handled rows and not the open ones', async () =
   expect(screen.queryByText('Review nw-1')).toBeNull();
 });
 
-test('a refused Handled keeps the note window open with the problem', async () => {
-  vi.mocked(setMarks).mockResolvedValue('The local server is not answering.');
-  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
-  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
-  await fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
-
-  expect((await screen.findByRole('alert')).textContent).toContain('not answering');
-  expect(screen.getByRole('dialog')).toBeTruthy();
-});
-
 test('a stream reconnect clears the problem lines of refused rows', async () => {
   vi.mocked(setMarks).mockResolvedValue('The local server is not answering.');
   useMoveView().value = 'handled';
@@ -246,17 +308,6 @@ test('a stream reconnect clears the problem lines of refused rows', async () => 
   ui.reconnects++;
 
   await vi.waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
-});
-
-test('Handled offers Undo for a moment, and Undo moves the row back', async () => {
-  vi.mocked(setMarks).mockResolvedValue('');
-  render({ components: { YourMove, NoteModal }, template: '<YourMove /><NoteModal />' });
-
-  await fireEvent.click(await screen.findByRole('button', { name: 'Mark as handled: NW-1' }));
-  await fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
-  await fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
-
-  expect(setMarks).toHaveBeenLastCalledWith({ handled: { 'nw-1': null } });
 });
 
 test('the panel hands its scroll element to the store and takes it back when it goes', async () => {
