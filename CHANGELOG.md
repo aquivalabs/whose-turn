@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Highlighted labels now have their own violet colour instead of the olive of a passing check, and status pills, age chips, counts and label chips share one size. RMA-441.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed

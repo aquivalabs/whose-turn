@@ -9,7 +9,7 @@ import './fixtures/demo-connector.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
 const STYLESHEET = readFileSync(new URL('../web/src/styles/tokens.css', import.meta.url), 'utf8');
-const KEPT_FROM_STYLESHEET = /warn|font|-r-|^--glass-/;
+const KEPT_FROM_STYLESHEET = /warn|label|font|-r-|^--glass-/;
 
 const schemeVariables = () => {
   const names = [...new Set([...STYLESHEET.matchAll(/(--(?:md-|glass|blob-)[\w-]*)\s*:/g)].map((match) => match[1]))].filter((name) => !KEPT_FROM_STYLESHEET.test(name));
