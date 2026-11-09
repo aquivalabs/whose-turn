@@ -312,7 +312,7 @@ test('a config whose custom source is broken is refused at its adapter field, an
     assert.equal(response.status, 400);
     assert.equal(body.error.details[0].reason, 'INVALID_CONFIG');
     assert.equal(body.error.details[1].field_violations[0].field, 'workspaces[0].connectors[0].adapter');
-    assert.match(body.error.details[1].field_violations[0].description, /does not follow connector contract 1/);
+    assert.match(body.error.details[1].field_violations[0].description, /does not follow the source contract/);
     assert.equal(saved, 0);
   } finally {
     server.close();

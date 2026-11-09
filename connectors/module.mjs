@@ -129,8 +129,10 @@ const plainProblem = (error, name, adaptersDir) => {
 /** The config violations of every `module` entry whose adapter in `dataDir`'s adapters folder is missing or breaks the contract, at the entry's `adapter` field. */
 export const adapterViolations = async (rawWorkspaces, dataDir) => {
   const checks = rawWorkspaces.flatMap((workspace, index) => (Array.isArray(workspace?.connectors) ? workspace.connectors : []).map((entry, position) => ({ workspace, entry, index, position }))).filter(({ entry }) => entry?.type === 'module');
-  const adaptersDir = adaptersDirOf(dataDir);
-  const outcomes = await Promise.all(checks.map(({ entry }) => loadAdapter(adapterFile(adaptersDir, entry.adapter)).then(() => null, (error) => plainProblem(error, entry.adapter, adaptersDir))));
+  const outcomes = await Promise.all(checks.map(({ entry }) => {
+    const adaptersDir = adaptersDirOf(dataDir);
+    return loadAdapter(adapterFile(adaptersDir, entry.adapter)).then(() => null, (error) => plainProblem(error, entry.adapter, adaptersDir));
+  }));
   return checks.flatMap(({ workspace, entry, index, position }, at) => (outcomes[at] ? [{ field: `workspaces[${index}].connectors[${position}].adapter`, description: `Workspace "${workspace.id}", connector "${entry.id}": ${outcomes[at]}` }] : []));
 };
 
