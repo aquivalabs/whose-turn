@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- A failed update now shows its reason next to Retry, and a failed Claude plugin update says it failed instead of looking like a plain offer. RMA-438.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed

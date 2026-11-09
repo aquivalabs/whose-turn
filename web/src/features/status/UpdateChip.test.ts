@@ -99,9 +99,11 @@ test('a failed install offers a retry with npm message as the tooltip', async ()
   snapshot.update = offer({ state: 'failed', reason: 'npm error code ETARGET' });
   render(UpdateChip);
 
-  const retry = screen.getByRole('button', { name: 'Update failed · Retry' });
+  const retry = screen.getByRole('button', { name: /^Update failed · Retry/ });
 
   expect(retry.getAttribute('title')).toBe('npm error code ETARGET');
+  expect(retry.textContent).toContain('npm error code ETARGET');
+  expect(retry.className).toContain('update-chip--failed');
 });
 
 test('a refused update returns to the offer', async () => {
@@ -154,7 +156,20 @@ test('after a plugin update the chip copies the text the server chose, says Copi
   expect(snapshot.update.plugin).toBeUndefined();
 });
 
-test.each(['manual', 'failed'] as const)('a %s plugin update shows the same Update Claude plugin chip in the error colour, copying /plugin marketplace update bladeforge (RMA-432)', async (state) => {
+test('a plugin update that failed says so in its label and the error look, and still copies the command', async () => {
+  const write = clipboard();
+  withPlugin('failed', '/plugin marketplace update bladeforge');
+  vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });
+  render(UpdateChip);
+
+  const chip = await screen.findByRole('button', { name: 'Claude plugin update failed · Copy' });
+  await fireEvent.click(chip);
+
+  expect(chip.className).toContain('update-chip--failed');
+  expect(await copiedText(write)).toBe('/plugin marketplace update bladeforge');
+});
+
+test.each(['manual'] as const)('a %s plugin update shows the same Update Claude plugin chip in the error colour, copying /plugin marketplace update bladeforge (RMA-432)', async (state) => {
   const write = clipboard();
   withPlugin(state, '/plugin marketplace update bladeforge');
   vi.mocked(post).mockResolvedValue({ update: offer({ available: false, latest: '1.0.0-alpha.2' }) });

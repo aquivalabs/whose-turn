@@ -22,6 +22,7 @@ const slow = ref(false);
 const updatedTo = refAutoReset('', UPDATED_SHOWN_MS);
 const copied = refAutoReset(false, COPIED_SHOWN_MS);
 const update = computed(() => snapshot.update);
+const plugin = computed(() => update.value.plugin);
 const { copy } = useClipboard({ legacy: true });
 const restarting = computed(
   () => update.value.state === 'restarting' || (Boolean(target.value) && !ui.live),
@@ -192,7 +193,8 @@ const onReload = () => {
       :title="update.reason"
       @click="onUpdate"
     >
-      {{ t('status.update.failed') }}
+      {{ t('status.update.failed')
+      }}<span v-if="update.reason" class="update-chip__reason">{{ update.reason }}</span>
     </Motion>
     <Motion
       v-else-if="shown === 'plugin'"
@@ -206,7 +208,7 @@ const onReload = () => {
       "
       @click="onCopyPlugin"
     >
-      {{ t('status.update.pluginUpdate') }}
+      {{ plugin?.state === 'failed' ? t('status.update.pluginFailed') : t('status.update.pluginUpdate') }}
     </Motion>
     <Motion
       v-else-if="shown === 'copied'"
@@ -259,6 +261,14 @@ const onReload = () => {
 .update-chip--failed {
   color: var(--md-on-error-container);
   background: var(--md-error-container);
+}
+
+.update-chip__reason {
+  min-width: 0;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
 }
 
 .update-chip__spinner {
