@@ -2,9 +2,9 @@
 // docs/adr/0002-vueuse-in-the-window.md, docs/adr/0006-window-layers.md
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { computed, nextTick, ref } from 'vue';
-import { snapshot, switchWorkspace, reorderWorkspaces } from '@/store.ts';
+import { snapshot, ui, switchWorkspace, reorderWorkspaces } from '@/store.ts';
 import { dark } from '@/scheme.ts';
-import { GEAR, NEW_RELEASES, PLUS, POWER, workspaceIconParts } from '@/lib/icons.ts';
+import { GEAR, GIFT, HELP, PLUS, POWER, workspaceIconParts } from '@/lib/icons.ts';
 import { movedIds } from '@/lib/settings.ts';
 import type { Workspace } from '@/lib/types.ts';
 import { mulberry32 } from '@/lib/random.ts';
@@ -75,6 +75,10 @@ const power = ref<HTMLElement | null>(null);
 const powerOpen = ref(false);
 const onPower = (event: MouseEvent) => {
   powerOpen.value = !powerOpen.value;
+  blurAfterMouse(event);
+};
+const onHelp = (event: MouseEvent) => {
+  ui.help = true;
   blurAfterMouse(event);
 };
 const onWhatsNew = (event: MouseEvent) => {
@@ -224,10 +228,16 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
     </AnimatePresence>
     <a class="rail__item" href="#whats-new" :aria-label="t('rail.whatsNew')" @click.prevent="onWhatsNew">
       <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
-        <path :d="NEW_RELEASES" fill="currentColor" />
+        <path :d="GIFT" fill="currentColor" />
       </svg>
       <span class="rail__label">{{ t('rail.whatsNew') }}</span>
       <span v-if="unseen.length" class="rail__dot" :title="t('rail.unseen')"></span>
+    </a>
+    <a class="rail__item" href="#help" :aria-label="t('rail.help')" @click.prevent="onHelp">
+      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
+        <path :d="HELP" fill="currentColor" />
+      </svg>
+      <span class="rail__label">{{ t('rail.help') }}</span>
     </a>
     <a
       ref="power"

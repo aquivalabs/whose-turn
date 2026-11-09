@@ -66,6 +66,7 @@ export const ui = reactive({
   feedback: false,
   reportNews: false,
   whatsNew: false,
+  help: false,
   settings: false,
   settingsNew: false,
   monitor: false,
@@ -181,6 +182,7 @@ export const closeTopLayer = () => {
   if (layer === 'note') {ui.note = '';}
   if (layer === 'feedback') {ui.feedback = false;}
   if (layer === 'whatsNew') {ui.whatsNew = false;}
+  if (layer === 'help') {ui.help = false;}
   if (layer !== 'settings' && layer !== 'monitor') {return;}
   if (ui.settingsDirty) {
     ui.settingsAsk = true;
@@ -207,6 +209,7 @@ const layerFlags: Record<Layer, () => boolean> = {
   monitor: () => ui.monitor,
   feedback: () => ui.feedback,
   whatsNew: () => ui.whatsNew,
+  help: () => ui.help,
 };
 watch(
   () => snapshot.turn.some((row) => row.row_id === ui.note),
