@@ -306,6 +306,12 @@ test('without a status change the newest comment that says on hold is the reason
   assert.equal(holdReason(comments, { key: 'PROJ-123', status: 'On Hold', status_change: { by: 'sam' } }).text, 'We are on hold until Friday.');
 });
 
+test('a held ticket assigned to you waits on others and its With cell reads on hold, not you', () => {
+  const held = only(rows({ tickets: [ticket({ status: 'On Hold', assignee: 'Alex Doe' })], prs: [] }), (candidate) => candidate.row_id === 'PROJ-1');
+  assert.equal(held.group, 'others');
+  assert.equal(held.whose, 'on hold');
+});
+
 test('the hold reason strips a leading mention, the on hold label, images, bold and code marks, and keeps one sentence', () => {
   // Setup
   const at = '2026-11-01T12:05:00Z';

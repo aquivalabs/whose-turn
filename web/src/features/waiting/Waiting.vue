@@ -3,7 +3,7 @@
 import { computed } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { fade, leaving, listed } from '@/motion.ts';
-import { snapshot, now, holdScroller } from '@/store.ts';
+import { snapshot, now, holdScroller, sourcesDown } from '@/store.ts';
 import { waitingRows, statusTone, hasPrColumn } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
 import { age, when } from '@/lib/time.ts';
@@ -47,7 +47,7 @@ const note = computed(() =>
       ><span v-if="rows.length" class="count">{{ rows.length }}</span></template
     >
     <Swap v-slot="{ face }" :face="rows.length ? 'list' : 'empty'">
-    <Motion v-if="face === 'empty'" key="empty" v-bind="fade" as="p" class="empty">{{ t('waiting.empty') }}</Motion>
+    <Motion v-if="face === 'empty'" key="empty" v-bind="fade" as="p" class="empty">{{ sourcesDown.length ? t('waiting.noData', { names: sourcesDown.join(', ') }, sourcesDown.length) : t('waiting.empty') }}</Motion>
     <Motion v-else-if="face === 'list'" key="list" v-bind="fade" class="island__fade">
     <RowScroll @scroller="holdPanelScroller">
       <table class="table waiting__table">

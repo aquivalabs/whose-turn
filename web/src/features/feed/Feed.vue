@@ -2,7 +2,7 @@
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
 import { computed, nextTick, ref, watch } from 'vue';
 import { refAutoReset, watchDebounced } from '@vueuse/core';
-import { snapshot, ui, now, setMarks, tellProblem, holdScroller } from '@/store.ts';
+import { snapshot, ui, now, setMarks, tellProblem, holdScroller, sourcesDown } from '@/store.ts';
 import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
 import type { FeedGroup } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
@@ -175,7 +175,7 @@ const restoreMarks = async () => {
       <button type="button" class="feed__mark-read" @click="markAll">{{ t('feed.search.markAll') }}</button>
     </div>
     <p v-if="!snapshot.feed.length" class="empty">
-      {{ t('feed.empty') }}
+      {{ sourcesDown.length ? t('feed.noData', { names: sourcesDown.join(', ') }, sourcesDown.length) : t('feed.empty') }}
     </p>
     <ol v-else :ref="holdPanelScroller" class="feed__list">
       <template v-if="feedState.view === 'ticket'">

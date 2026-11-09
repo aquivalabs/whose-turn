@@ -2,11 +2,10 @@
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed, reactive } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
-import { snapshot, ui, now, setMarks, justHandled, holdScroller } from '@/store.ts';
+import { snapshot, ui, now, setMarks, justHandled, holdScroller, sourcesDown } from '@/store.ts';
 import { yourRows, hasPrColumn } from '@/lib/moves.ts';
 import type { YourRow } from '@/lib/moves.ts';
 import { age, ago, when } from '@/lib/time.ts';
-import { liveStatus } from '@/lib/live-status.ts';
 import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
@@ -48,14 +47,8 @@ const emptyText = computed(() => {
   if (moveView.value === 'handled') {
     return t('yourMove.empty.nothingHandled');
   }
-  const { noData, failing } = liveStatus(
-    snapshot.health,
-    snapshot.polled_at,
-    snapshot.workspace.connectors.length,
-    ui.live,
-  );
-  return noData
-    ? t('yourMove.empty.noData', { names: failing.join(', ') }, failing.length)
+  return sourcesDown.value.length
+    ? t('yourMove.empty.noData', { names: sourcesDown.value.join(', ') }, sourcesDown.value.length)
     : t('yourMove.empty.nothingWaiting');
 });
 const problems = reactive(new Map<string, string>());

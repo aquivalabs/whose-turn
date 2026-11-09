@@ -120,6 +120,8 @@ A row that leaves "your move" for "others" in a poll gets an automatic Handled m
 
 Every ticket row carries `labels`, the label names of its ticket and of its PR once each, and `badges`, the ones named in the workspace's `rules.highlight_labels` (matched without regard to case); `labels` lists the badges first. Connectors pass label names as the tracker gives them; empty names and repeats are dropped here, in one place. A PR row without a ticket takes its PR's labels. The labels play no part in `whose`; the table decides without them (RMA-434).
 
+A ticket on hold that is assigned to you waits on others, and its `With` cell reads `on hold` and not `you`: the hold is the reason it is not yours now (RMA-449).
+
 The user's own name is shown as `you` wherever a person appears: the `With` cell, feed items and comment authors (`youOr` in `lib/rules.mjs`), including the names in a reassignment event; the Handled trace reads that feed text instead of mapping names itself.
 
 ### The default table and workspace tables

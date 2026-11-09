@@ -23,6 +23,8 @@ export default {
     count: '{shown} of {total}',
     markAll: 'Mark all read',
   },
+  noData:
+    'No data: {names} is failing. Check the workspace settings. | No data: {names} are failing. Check the workspace settings.',
   empty: 'No changes yet. New comments, reviews and status changes show up here.',
   group: {
     yourMove: 'Your move on this ticket',

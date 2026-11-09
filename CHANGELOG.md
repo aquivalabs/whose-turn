@@ -4,6 +4,12 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Changed
+- When a source is failing, Waiting on others, What changed and the numbers at the top say there is no data instead of showing an empty list or a zero. RMA-437.
+
+### Fixed
+- A ticket on hold that is assigned to you now reads "on hold" in the With column of Waiting on others, not "you". RMA-449.
+
 ## [1.0.0-beta.5] - 2026-11-09
 
 ### Fixed

@@ -6,6 +6,8 @@ export default {
   settingsTip: "Workspace settings: this workspace's name and links, its look, sources and rules",
   fold: 'Fold the header',
   foldTip: 'Fold the header; it stays folded until you open it again',
+  noData:
+    'No data: {names} is failing. Check the workspace settings. | No data: {names} are failing. Check the workspace settings.',
   tiles: {
     yourMove: 'Your move',
     waitingOnOthers: 'Waiting on others',
