@@ -147,8 +147,9 @@ test('saving a config checks every module entry: a missing or broken adapter is 
   const workspaces = [{ id: 'w', connectors: [{ type: 'github', id: 'gh' }, { type: 'module', id: 'ok', adapter: 'board' }, { type: 'module', id: 'bad', adapter: 'broken' }, { type: 'module', id: 'gone', adapter: 'nowhere' }] }];
   const violations = await moduleConnector.adapterViolations(workspaces, dataDir);
   assert.deepEqual(violations.map((violation) => violation.field), ['workspaces[0].connectors[2].adapter', 'workspaces[0].connectors[3].adapter']);
-  assert.match(violations[0].description, /^Workspace "w", connector "bad": Adapter .*broken\.mjs does not follow connector contract 1/);
-  assert.match(violations[1].description, /No adapter file at .*nowhere\.mjs/);
+  assert.match(violations[0].description, /^Workspace "w", connector "bad": broken\.mjs does not follow the source contract: /);
+  assert.equal(violations[1].description, 'Workspace "w", connector "gone": nowhere.mjs is not in the adapters folder yet');
+  assert.ok(violations.every((violation) => !violation.description.includes(dataDir)));
 });
 
 test('a custom source\'s file name is made from its label: Latin, lowercase, words joined by _, at most 40 characters', () => {
@@ -161,7 +162,8 @@ test('the adapter catalogue loads only the adapters the config names, with their
   const catalogue = await moduleConnector.adapterCatalogue(await dataDirWithAdapters(), workspaces);
   assert.deepEqual(Object.keys(catalogue).sort(), ['board', 'broken']);
   assert.deepEqual(catalogue.board, { label: 'Board', fields: [{ key: 'board', label: 'Board', required: true }] });
-  assert.match(catalogue.broken.problem, /does not follow connector contract 1/);
+  assert.match(catalogue.broken.problem, /^broken\.mjs does not follow the source contract: /);
+  assert.ok(!catalogue.broken.problem.includes('/'));
 });
 
 test('the settings catalogue offers the built-ins and Custom, and leaves out the experimental file type', () => {

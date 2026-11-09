@@ -263,7 +263,7 @@ test('+ Add Custom source opens a card with a Name that says a template file is 
   await fireEvent.update(input, 'Moya doska');
   await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
   // Verify
-  expect(screen.getByText(/a template file named after this in the adapters folder/)).toBeTruthy();
+  expect(screen.getByText(/a starter file for your code is created in the adapters folder/)).toBeTruthy();
   await waitFor(() => expect(sent.length).toBe(1));
   expect(sent[0].body.workspaces[0]).toMatchObject({ connectors: [{ type: 'module', adapter: 'team_board' }, { type: 'module', label: 'Moya doska' }] });
 });
@@ -280,12 +280,14 @@ test('a saved Custom source names its file and shows the fields its adapter decl
   expect(screen.getByText('Board id *')).toBeTruthy();
 });
 
-test('a Custom source whose adapter is broken shows the problem under its Name', async () => {
+test('a Custom source whose file is broken shows the problem as a line on its card, not as an error on Name', async () => {
   // Setup
-  stubServer({ ...withCustom, adapters: { team_board: { problem: 'Adapter team_board.mjs does not follow connector contract 1: poll(context) must be implemented' } } });
+  stubServer({ ...withCustom, adapters: { team_board: { problem: 'team_board.mjs does not follow the source contract: poll(context) must be implemented' } } });
   render(WorkspaceSettingsSheet);
   // Exercise
   ui.settings = true;
   // Verify
-  expect(await screen.findByText(/poll\(context\) must be implemented/)).toBeTruthy();
+  const line = await screen.findByText(/team_board\.mjs does not follow the source contract/);
+  expect(line.closest('.field-row')).toBeNull();
+  expect(document.querySelector('.field-row__error')).toBeNull();
 });

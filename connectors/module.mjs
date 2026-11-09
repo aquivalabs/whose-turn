@@ -10,8 +10,8 @@ import { expandHome } from '../lib/text.mjs';
 const DEFAULT_SERVICE = 'whose-turn-adapter';
 
 const FIELDS = [
-  { key: 'token', label: 'Token', hint: 'optional; stored in the secret store under the adapter name, handed to the adapter as secret()', secret: { account: 'adapter', service: 'token_service', default: DEFAULT_SERVICE, followsEndpoint: true } },
-  { key: 'token_service', label: 'Secret entry', hint: 'name of the secret-store entry; default whose-turn-adapter' },
+  { key: 'token', label: 'Token', hint: 'optional; kept safely on this computer and handed to your code when it asks for the token', secret: { account: 'adapter', service: 'token_service', default: DEFAULT_SERVICE, followsEndpoint: true } },
+  { key: 'token_service', label: 'Token name', hint: 'optional; the name the token is kept under, whose-turn-adapter when empty' },
 ];
 
 const loaded = new Map();
@@ -117,11 +117,23 @@ class CustomSource extends Adapter {
 
 export default new CustomSource();
 
+/** The reason a source's file does not load, in the window's words: the file name only, no folder path, no stack. */
+const plainProblem = (error, name, adaptersDir) => {
+  const clean = (text) => text.replaceAll(`${pathToFileURL(adaptersDir).href}/`, '').replaceAll(`${adaptersDir}/`, '').split('\n')[0];
+  if (error instanceof ContractError) {
+    return `${name}.mjs does not follow the source contract: ${error.problems.map(clean).join('; ')}`;
+  }
+  return error.message.startsWith('No adapter file') ? `${name}.mjs is not in the adapters folder yet` : `${name}.mjs cannot be loaded: ${clean(error.message)}`;
+};
+
 /** The config violations of every `module` entry whose adapter in `dataDir`'s adapters folder is missing or breaks the contract, at the entry's `adapter` field. */
 export const adapterViolations = async (rawWorkspaces, dataDir) => {
   const checks = rawWorkspaces.flatMap((workspace, index) => (Array.isArray(workspace?.connectors) ? workspace.connectors : []).map((entry, position) => ({ workspace, entry, index, position }))).filter(({ entry }) => entry?.type === 'module');
-  const outcomes = await Promise.all(checks.map(({ entry }) => loadAdapter(adapterFile(adaptersDirOf(dataDir), entry.adapter)).then(() => null, (error) => error)));
-  return checks.flatMap(({ workspace, entry, index, position }, at) => (outcomes[at] ? [{ field: `workspaces[${index}].connectors[${position}].adapter`, description: `Workspace "${workspace.id}", connector "${entry.id}": ${outcomes[at].message}` }] : []));
+  const outcomes = await Promise.all(checks.map(({ entry }) => {
+    const adaptersDir = adaptersDirOf(dataDir);
+    return loadAdapter(adapterFile(adaptersDir, entry.adapter)).then(() => null, (error) => plainProblem(error, entry.adapter, adaptersDir));
+  }));
+  return checks.flatMap(({ workspace, entry, index, position }, at) => (outcomes[at] ? [{ field: `workspaces[${index}].connectors[${position}].adapter`, description: `Workspace "${workspace.id}", connector "${entry.id}": ${outcomes[at]}` }] : []));
 };
 
 const CYRILLIC = { '\u0430': 'a', '\u0431': 'b', '\u0432': 'v', '\u0433': 'g', '\u0434': 'd', '\u0435': 'e', '\u0451': 'e', '\u0436': 'zh', '\u0437': 'z', '\u0438': 'i', '\u0439': 'y', '\u043a': 'k', '\u043b': 'l', '\u043c': 'm', '\u043d': 'n', '\u043e': 'o', '\u043f': 'p', '\u0440': 'r', '\u0441': 's', '\u0442': 't', '\u0443': 'u', '\u0444': 'f', '\u0445': 'kh', '\u0446': 'ts', '\u0447': 'ch', '\u0448': 'sh', '\u0449': 'shch', '\u044a': '', '\u044b': 'y', '\u044c': '', '\u044d': 'e', '\u044e': 'yu', '\u044f': 'ya', '\u0456': 'i', '\u0457': 'yi', '\u0454': 'ye', '\u0491': 'g' };
@@ -192,7 +204,7 @@ export const adapterCatalogue = async (dataDir, rawWorkspaces) => {
       const adapter = await loadAdapter(adapterFile(adaptersDir, name));
       return [name, { label: adapter.label, fields: adapter.fields }];
     } catch (error) {
-      return [name, { problem: error.message }];
+      return [name, { problem: plainProblem(error, name, adaptersDir) }];
     }
   }));
   return Object.fromEntries(entries);
