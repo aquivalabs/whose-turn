@@ -27,9 +27,9 @@ export default {
     copyNotRecorded: 'The copy was not recorded',
     pluginTitle: 'Copies {copy}: {hint}',
     pluginUpdate: 'Update Claude plugin · Copy',
-    pluginUpdateHint: 'paste it in your Claude session to update the whose-turn plugin, then run /reload-plugins',
-    pluginFailedHint: 'the monitor could not update the Claude plugin; paste it in your Claude session, then run /reload-plugins',
-    pluginBehindHint: 'a Claude session still runs a plugin that does not know monitor {current}; paste it in that session, then run /reload-plugins',
+    pluginUpdateHint: 'paste it in your Claude session to update the whose-turn plugin, then run /reload-plugins --force',
+    pluginFailedHint: 'the monitor could not update the Claude plugin; paste it in your Claude session, then run /reload-plugins --force',
+    pluginBehindHint: 'a Claude session still runs a plugin that does not know monitor {current}; paste it in that session, then run /reload-plugins --force',
   },
   notifications: {
     on: 'Notifications on',
