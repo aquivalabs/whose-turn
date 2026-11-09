@@ -181,7 +181,7 @@ test('the editable workspace fields keep their keys, flags and choices', () => {
   assert.deepEqual(sections, {
     workspace: [['id', 'required=true'], ['name'], ['key_pattern'], ['links', 'list=true']],
     theme: [['seed', 'colour=true'], ['accent', 'colour=true'], ['backdrop', 'boolean=true', 'default=true']],
-    rules: [['approved_next'], ['approved_release_next'], ['release_branch_prefix'], ['passed_next'], ['merged_next'], ['automation_authors', 'list=true'], ['backlog_rows']],
+    rules: [['approved_next'], ['approved_release_next'], ['release_branch_prefix'], ['passed_next'], ['merged_next'], ['automation_authors', 'list=true'], ['highlight_labels', 'list=true'], ['backlog_rows']],
     statuses: ['code_review', 'qa', 'passed', 'release', 'on_hold', 'backlog'].map((key) => [key, 'list=true']),
   });
   assert.deepEqual(WORKSPACE_FIELDS.rules.at(-1).choices, ['hide', 'list']);

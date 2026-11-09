@@ -63,3 +63,14 @@ test('a failed mention query keeps the main tickets and names the part that fail
   assert.deepEqual(result.tickets.map((ticket) => ticket.key), ['PROJ-1']);
   assert.match(result.errors.mentions, /HTTP 400/);
 });
+
+test('a ticket carries its Jira labels, and the search asks for them (RMA-434)', async () => {
+  const labelled = issue('PROJ-2', 'Alex Doe');
+  labelled.fields.labels = ['frontend', 'p1'];
+  const { http } = fakeJira({ held: [labelled, issue('PROJ-3', 'Alex Doe')] });
+  const asked = [];
+  const spy = { fetchJson: async (url, options = {}) => { if (options.body?.fields) { asked.push(options.body.fields); } return http.fetchJson(url, options); } };
+  const result = await pollWith(spy, { mentions: false });
+  assert.deepEqual(result.tickets.map((ticket) => ticket.labels), [['frontend', 'p1'], []]);
+  assert.ok(asked.every((fields) => fields.includes('labels')));
+});

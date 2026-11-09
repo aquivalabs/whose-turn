@@ -22,6 +22,7 @@ query Mine($filter: IssueFilter!, $after: String, $archived: Boolean) {
     nodes {
       id identifier title url updatedAt completedAt
       state { name type }
+      labels { nodes { name } }
       assignee { id name displayName }
       comments(first: 50) { nodes { id body createdAt url user { id name displayName } } }
       history(first: 25) { nodes { createdAt toState { name } actor { name displayName } } }
@@ -92,6 +93,7 @@ export const normalise = (issues, viewer) => {
       key: issue.identifier, summary: issue.title, status: issue.state?.name || '', status_category: CATEGORY[issue.state?.type] || 'indeterminate',
       assignee: issue.assignee?.displayName || issue.assignee?.name || 'Unassigned', updated: issue.updatedAt, url: issue.url,
       status_change: issue.state?.type === 'completed' ? null : stateEntered(issue),
+      labels: (issue.labels?.nodes || []).map((label) => label.name).filter(Boolean),
     });
     for (const comment of issue.comments?.nodes || []) {
       comments.push({ id: comment.id, key: issue.identifier, at: toIsoUtc(comment.createdAt), author: comment.user?.displayName || comment.user?.name || '', body: mentionText(comment.body), url: comment.url || issue.url });

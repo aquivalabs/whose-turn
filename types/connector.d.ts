@@ -40,6 +40,8 @@ export interface Ticket {
   url: HttpsUrl;
   /** When and by whom the item entered its current status, when the source knows. */
   status_change?: { since: IsoTime; by: string } | null;
+  /** The ticket's label names in the tracker; rows show them, the workspace's highlighted ones first. */
+  labels?: string[];
 }
 
 /** A comment on a ticket; an `@<me>` in its body is a mention of you. */
@@ -71,6 +73,8 @@ export interface PullRequest {
   last_comment: string;
   /** Someone else commented after your last comment and it is not an approval. */
   unanswered: boolean;
+  /** The PR's label names; a ticket row shows them with its own. */
+  labels?: string[];
 }
 
 /** One feed line about a change request or a run: a comment, a review, a merge, a failed check. */

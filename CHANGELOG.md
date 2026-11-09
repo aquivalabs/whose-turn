@@ -4,6 +4,9 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+- Rows show their labels from Linear, Jira and GitHub pull requests in one line beside the ticket key; labels that do not fit fold into +N, and pointing at them shows them all. Labels you list in a workspace's **Highlighted labels**, such as `User report`, come first in the accent colour, so reports from users stand out even among the rows on you. RMA-434.
+
 ### Fixed
 - The Claude plugin chip now reads "Update Claude plugin · Copy" and copies `/plugin marketplace update bladeforge`, which fetches the new plugin from inside your Claude session; run `/reload-plugins` after it. RMA-432.
 

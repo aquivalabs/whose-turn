@@ -56,3 +56,12 @@ test('a Duplicate issue is closed: the open list leaves it out and a stray one c
   const { tickets } = normalise([issue({ state: { name: 'Duplicate', type: 'duplicate' } })], viewer);
   assert.equal(tickets[0].status_category, 'done');
 });
+
+test('an issue carries its Linear label names, and the query asks for them (RMA-434)', async () => {
+  const { tickets } = normalise([issue({ labels: { nodes: [{ name: 'User report' }, { name: 'Bug' }] } }), issue({ id: 'i3', identifier: 'PROJ-8' })], viewer);
+  assert.deepEqual(tickets.map((ticket) => ticket.labels), [['User report', 'Bug'], []]);
+  const queries = [];
+  const http = { fetchJson: async (url, options) => { queries.push(options.body.query); return { data: { viewer, issues: { pageInfo: { hasNextPage: false }, nodes: [] } } }; } };
+  await linear.poll({ settings: { workspace: 'your-space' }, http, secrets: { get: async () => 'lin_api_test' }, cache: {} });
+  assert.match(queries[0], /labels \{ nodes \{ name \} \}/);
+});

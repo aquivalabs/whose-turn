@@ -126,7 +126,7 @@ const poll = async ({ settings, http, secrets, cache, historyDays }) => {
   const meId = cache.me.accountId;
   const meName = cache.me.displayName || 'me';
   const jql = settings.jql || '(assignee = currentUser() AND statusCategory != Done) OR (assignee was currentUser() AND updated >= -30d) ORDER BY updated DESC';
-  const search = (query) => api('/rest/api/3/search/jql', { jql: query, maxResults: 100, fields: ['summary', 'status', 'assignee', 'updated', 'comment'] });
+  const search = (query) => api('/rest/api/3/search/jql', { jql: query, maxResults: 100, fields: ['summary', 'status', 'assignee', 'updated', 'comment', 'labels'] });
   const mentionQuery = settings.mentions === false ? '' : mentionsJql(meId, historyDays);
   const errors = /** @type {Record<string, string>} */ ({});
   const [result, mentioned] = await Promise.all([
@@ -142,6 +142,7 @@ const poll = async ({ settings, http, secrets, cache, historyDays }) => {
     tickets.push({
       key: issue.key, summary: fields.summary || '', status: (fields.status || {}).name || '', status_category: ((fields.status || {}).statusCategory || {}).key || '',
       assignee: (fields.assignee || {}).displayName || 'Unassigned', updated: fields.updated || '', url,
+      labels: (fields.labels || []).filter((label) => typeof label === 'string'),
       ...(held.has(issue.key) ? {} : { mention_only: true }),
     });
     for (const comment of ((fields.comment || {}).comments || [])) {

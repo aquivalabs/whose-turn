@@ -772,3 +772,17 @@ test('ticket events record status and assignee changes of tickets present before
   assert.deepEqual({ ...events[1], at: 'x' }, { at: 'x', source: 'jira', key: 'PROJ-2', kind: 'reassigned', text: 'Alex Doe → Sam Reviewer', url: after[1].url });
   assert.match(events[0].at, /^\d{4}-\d{2}-\d{2}T/);
 });
+
+test('a row shows the labels of its ticket and its PR once each, the highlighted ones first and also as badges (RMA-434)', () => {
+  // Setup
+  const rules = compileRules({ ...DEFAULT_RULES, highlight_labels: ['User report'] });
+  const ticket = { key: 'PROJ-1', source: 'jira', summary: 'Checkout', status: 'In Progress', status_category: 'indeterminate', assignee: 'Alex', updated: '2026-11-09T09:00:00Z', url: 'https://t.example/PROJ-1', labels: ['bug', 'user report'] };
+  const pr = { key: 'PROJ-1', source: 'github', pr: 7, title: 'PROJ-1 fix', base: 'main', state: 'OPEN', review: '', checks: 'passing', merged_at: '', updated_at: '2026-11-09T09:00:00Z', url: 'https://g.example/7', last_comment_by: '', last_comment_at: '', last_comment_url: '', last_comment: '', unanswered: false, labels: ['bug', 'frontend'] };
+  // Exercise
+  const [row] = turnRows({ tickets: [ticket], prs: [pr] }, { me: { jira: 'Alex', github: 'alex' }, rules });
+  const [plain] = turnRows({ tickets: [{ ...ticket, labels: undefined }] }, { me: { jira: 'Alex' }, rules });
+  // Verify
+  assert.deepEqual(row.labels, ['user report', 'bug', 'frontend']);
+  assert.deepEqual(row.badges, ['user report']);
+  assert.deepEqual([plain.labels, plain.badges], [[], []]);
+});

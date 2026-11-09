@@ -70,6 +70,10 @@ export interface TurnRow {
   checks?: string;
   comment?: string;
   comment_url?: string;
+  /** The tracker labels of the row's ticket and PR, the highlighted ones first. */
+  labels?: string[];
+  /** The labels the workspace highlights, which the row shows in the accent colour. */
+  badges?: string[];
 }
 
 export interface FeedItem {

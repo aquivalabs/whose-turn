@@ -5,7 +5,7 @@ import { scratchDir } from './scratch.mjs';
 import './demo-connector.mjs';
 
 const dataDir = scratchDir('wt-e2e-');
-const workspaces = ['northwind', 'atlas'].map((scenario) => ({ id: scenario, name: scenario, connectors: [{ type: 'demo', scenario }] }));
+const workspaces = ['northwind', 'atlas'].map((scenario) => ({ id: scenario, name: scenario, connectors: [{ type: 'demo', scenario }], rules: { highlight_labels: ['User report'] } }));
 writeFileSync(join(dataDir, 'config.json'), JSON.stringify({ workspaces }));
 process.env.WHOSE_TURN_DATA = dataDir;
 process.env.WHOSE_TURN_PORT ||= '8799';

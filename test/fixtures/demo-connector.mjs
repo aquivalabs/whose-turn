@@ -38,10 +38,10 @@ const northwind = (polls) => {
   const me = 'Alex Doe';
   const tickets = [
     ticket('NW-142', 'Rounds: due dates differ between locales', 'Passed', 'indeterminate', me, 1, 1, 'Sam Tester'),
-    ticket('NW-151', 'Export to CSV loses the header row on retry', 'In Progress', 'indeterminate', me, 3, 30),
+    { ...ticket('NW-151', 'Export to CSV loses the header row on retry', 'In Progress', 'indeterminate', me, 3, 30), labels: ['User report', 'bug', 'export', 'p1'] },
     ticket('NW-137', 'Login page: remember the last used organisation', polls >= 3 ? 'Ready for QA' : 'Code Review', 'indeterminate', polls >= 3 ? 'Sam Tester' : me, polls >= 3 ? 0.1 : 20, polls >= 3 ? 0.1 : 26, polls >= 3 ? me : undefined),
-    ticket('NW-171', 'Spike: search index on Postgres', 'In Progress', 'indeterminate', me, 9, 9),
-    ticket('NW-129', 'Audit log keeps the deleted user name', 'Ready for QA', 'indeterminate', 'Sam Tester', 30, 29, me),
+    { ...ticket('NW-171', 'Spike: search index on Postgres', 'In Progress', 'indeterminate', me, 9, 9), labels: ['spike'] },
+    { ...ticket('NW-129', 'Audit log keeps the deleted user name', 'Ready for QA', 'indeterminate', 'Sam Tester', 30, 29, me), labels: ['User report', 'privacy'] },
     ticket('NW-118', 'Nightly report email arrives twice', 'In QA', 'indeterminate', 'Sam Tester', 80, 79, me),
     ticket('NW-104', 'Invoice PDF: wrong currency symbol for CHF', 'On Hold', 'indeterminate', me, 120, 118, 'Pat Owner'),
     ticket('NW-160', 'Import wizard for legacy spreadsheets', 'Backlog', 'new', 'Unassigned', 200),

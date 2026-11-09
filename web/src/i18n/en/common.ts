@@ -6,6 +6,10 @@ export default {
   modal: {
     close: 'Close',
   },
+  labels: {
+    more: '+{count}',
+    all: 'Labels: {labels}',
+  },
   aiButton: {
     label: 'Copy for AI',
     tip: 'Copy for AI: this with its context as text, ready to paste into Claude or any other assistant',

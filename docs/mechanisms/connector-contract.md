@@ -82,9 +82,9 @@ is an ISO date-time:
 
 | Kind | Fields |
 |---|---|
-| `tickets` | `key`, `summary`, `status`, `status_category` (`new`, `indeterminate`, `done`), `assignee`, `updated` (time), `url`, `status_change` (optional, `{ since, by }` or `null`) |
+| `tickets` | `key`, `summary`, `status`, `status_category` (`new`, `indeterminate`, `done`), `assignee`, `updated` (time), `url`, `status_change` (optional, `{ since, by }` or `null`), `labels` (optional list of strings) |
 | `comments` | `id` (string or number), `key` (the ticket's), `at` (time), `author`, `body`, `url` |
-| `prs` | `pr` (number), `key`, `title`, `base`, `state` (`OPEN`, `CLOSED`, `MERGED`), `review` (`''`, `APPROVED`, `CHANGES_REQUESTED`), `checks` (`passing`, `failing`, `running`, `none`), `merged_at`, `updated_at` (time), `url`, `last_comment_by`, `last_comment_at`, `last_comment_url`, `last_comment`, `unanswered` (boolean) |
+| `prs` | `pr` (number), `key`, `title`, `base`, `state` (`OPEN`, `CLOSED`, `MERGED`), `review` (`''`, `APPROVED`, `CHANGES_REQUESTED`), `checks` (`passing`, `failing`, `running`, `none`), `merged_at`, `updated_at` (time), `url`, `last_comment_by`, `last_comment_at`, `last_comment_url`, `last_comment`, `unanswered` (boolean), `labels` (optional list of strings) |
 | `activity` | `at` (time), `pr` (the feed reference), `key`, `title` (optional), `kind`, `who`, `url`, `text`, `body` (optional) |
 | `asks` | `id`, `ref`, `title`, `key`, `kind` (`review requested`, `mentioned you`), `who`, `at` (time), `url`, `text`, `body` |
 | `runs` | `id`, `ref` (stable per pipeline), `workflow`, `branch`, `failed`, `mine` (booleans), `actor`, `title`, `url`, `at` (time), `streak` (the first failure's id) |

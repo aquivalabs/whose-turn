@@ -40,6 +40,16 @@ test('a GitHub PR without a ticket reaches the feed as repo#number with its titl
   assert.deepEqual(result.activity.map((item) => [item.pr, item.title, item.kind]), [['app#7', 'Faster start-up', 'merged'], ['app#7', 'Faster start-up', 'comment']]);
 });
 
+test('a GitHub PR carries its label names (RMA-434)', async () => {
+  responses['/repos/acme/app/pulls/7'] = { ...pr, labels: [{ name: 'frontend' }, { name: 'p1' }] };
+  try {
+    const result = await github.poll({ settings: { repo: 'acme/app', me: 'pat' }, http, cache: { token: 't', tokenAt: Date.now() }, sinceIso: '2026-10-01T00:00:00Z', keyOf: () => '' });
+    assert.deepEqual(result.prs.map((item) => item.labels), [['frontend', 'p1']]);
+  } finally {
+    responses['/repos/acme/app/pulls/7'] = pr;
+  }
+});
+
 test('the garden feed gives every PR item its repository and title, ticket or not', async () => {
   const result = await demoPoll({ settings: { scenario: 'garden' }, cache: {} });
   const stamped = Object.fromEntries(['activity', 'asks'].map((kind) => [kind, result[kind].map((item) => ({ ...item, source: 'demo' }))]));
