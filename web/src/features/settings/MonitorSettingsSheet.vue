@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Monitor settings: what belongs to the whole monitor and not to one workspace; notifications save at once like the bell, the four numbers save with Save, and the server validates them.
+// Monitor settings: what belongs to the whole monitor and not to one workspace; the notifications switch and the four numbers are one draft that saves with Save, and the server validates the numbers.
 import { AnimatePresence, M as Motion } from 'motion-v';
 import { computed, ref } from 'vue';
 import { snapshot, ui, reload, restoreWorkspace, toggleNotifications } from '@/store.ts';
@@ -20,6 +20,8 @@ interface ConfigReply {
 const t = useText();
 const draft = ref<Record<string, string>>({});
 const specs = ref<FieldSpec[]>([]);
+const desktop = ref(false);
+const loadedDesktop = ref(false);
 const configFile = ref('');
 const loadedKey = ref('');
 const hiddenWorkspaces = computed(() => snapshot.workspaces.filter((workspace) => workspace.hidden));
@@ -28,7 +30,7 @@ const { ask, requestClose, answer, problems, fieldErrors, unloaded, dirty, save:
   close: () => {
     ui.monitor = false;
   },
-  changed: () => JSON.stringify(draft.value) !== loadedKey.value,
+  changed: () => JSON.stringify(draft.value) !== loadedKey.value || desktop.value !== loadedDesktop.value,
   apply: (reply) => {
     const fieldsOf = reply.settings_fields || {};
     specs.value = Object.entries(fieldsOf).map(([key, spec]) => ({
@@ -42,11 +44,16 @@ const { ask, requestClose, answer, problems, fieldErrors, unloaded, dirty, save:
       Object.keys(fieldsOf).map((key) => [key, String(reply.settings?.[key] ?? '')]),
     );
     loadedKey.value = JSON.stringify(draft.value);
+    desktop.value = snapshot.notifications.desktop;
+    loadedDesktop.value = desktop.value;
     configFile.value = reply.config_file || '';
   },
 });
 const save = () =>
-  saveTo({ settings: Object.fromEntries(Object.entries(draft.value).map(([key, text]) => [key, Number(text)])) }, () => {
+  saveTo({ settings: Object.fromEntries(Object.entries(draft.value).map(([key, text]) => [key, Number(text)])) }, async () => {
+    if (desktop.value !== snapshot.notifications.desktop) {
+      await toggleNotifications();
+    }
     ui.monitor = false;
     reload();
   });
@@ -71,8 +78,8 @@ const save = () =>
           <input
             type="checkbox"
             role="switch"
-            :checked="snapshot.notifications.desktop"
-            @change="toggleNotifications"
+            :checked="desktop"
+            @change="desktop = ($event.target as HTMLInputElement).checked"
           />
           {{ t('settings.monitor.notificationsSwitch') }}
         </label>

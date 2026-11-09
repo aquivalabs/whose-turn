@@ -120,14 +120,30 @@ test('closing with unsaved numbers asks before dropping them', async () => {
   expect(sent).toEqual([]);
 });
 
-test('the notifications switch saves at once through the same route as the bell', async () => {
+test('the notifications switch changes the draft, marks the sheet unsaved, and saves with Save', async () => {
   stubServer({ notifications: { desktop: false } });
   await openFromRail();
 
   await fireEvent.click(screen.getByRole('switch', { name: /Desktop notifications/ }));
 
-  await waitFor(() => expect(sent).toEqual([{ url: '/api/notifications', body: { desktop: false } }]));
+  expect(sent).toEqual([]);
+  expect(snapshot.notifications.desktop).toBe(true);
+  expect(screen.getByText('Unsaved changes')).toBeTruthy();
+  await fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+  await waitFor(() => expect(sent.map((call) => call.url)).toEqual(['/api/config', '/api/notifications']));
+  expect(sent[1].body).toEqual({ desktop: false });
   expect(snapshot.notifications.desktop).toBe(false);
+});
+
+test('flipping the switch back clears the unsaved mark and Save sends no notification change', async () => {
+  stubServer();
+  await openFromRail();
+
+  await fireEvent.click(screen.getByRole('switch', { name: /Desktop notifications/ }));
+  await fireEvent.click(screen.getByRole('switch', { name: /Desktop notifications/ }));
+
+  expect(screen.queryByText('Unsaved changes')).toBeNull();
 });
 
 const quiet = (id: string, hidden: '' | 'parked' | 'paused') => ({
