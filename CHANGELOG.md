@@ -10,6 +10,10 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ### Fixed
 - A ticket on hold that is assigned to you now reads "on hold" in the With column of Waiting on others, not "you". RMA-449.
+### Added
+- Every to-do has a Copy for AI button, like the rows of the other lists. RMA-443.
+- Clicking elsewhere while editing a to-do now saves your change instead of throwing it away; Escape still cancels. RMA-443.
+- Deleting several to-dos in a row keeps an Undo for each of them, not only the last one. RMA-443.
 
 ## [1.0.0-beta.5] - 2026-11-09
 

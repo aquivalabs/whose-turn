@@ -10,6 +10,7 @@ import { useClearOnReconnect } from '@/composables/useClearOnReconnect.ts';
 import Island from '@/ui/Island.vue';
 import Segmented from '@/ui/Segmented.vue';
 import ExtLink from '@/ui/ExtLink.vue';
+import AiButton from '@/ui/AiButton.vue';
 import { useTodosView } from './useTodosView.ts';
 import { useText } from '@/i18n/index.ts';
 
@@ -68,15 +69,15 @@ const add = async () => {
   }
 };
 const flip = (todo: Todo) => send({ action: todo.done ? 'undo' : 'done', id: todo.id });
-const removed = ref<Todo | null>(null);
+const removed = ref<Todo[]>([]);
 const remove = async (todo: Todo) => {
   if (await send({ action: 'delete', id: todo.id })) {
-    removed.value = todo;
+    removed.value = [...removed.value, todo];
   }
 };
 const restore = async () => {
-  const todo = removed.value;
-  removed.value = null;
+  const todo = removed.value.at(-1);
+  removed.value = removed.value.slice(0, -1);
   if (todo && (await send({ action: 'add', text: todo.text })) && todo.done) {
     const back = (snapshot.todos || []).find((item) => item.text === todo.text && !item.done);
     if (back) {
@@ -97,6 +98,9 @@ const cancelEdit = () => {
   editing.value = '';
 };
 const saveEdit = async (todo: Todo) => {
+  if (editing.value !== todo.id) {
+    return;
+  }
   const text = editText.value.trim();
   if (!text || text === todo.text) {
     return cancelEdit();
@@ -145,8 +149,8 @@ const options = computed(() => [
       }}</Motion>
     </AnimatePresence>
     <AnimatePresence>
-      <Motion v-if="removed" v-bind="fade" as="p" class="todos__undo" role="status">
-        {{ t('todos.undo.deleted') }}
+      <Motion v-if="removed.length" v-bind="fade" as="p" class="todos__undo" role="status">
+        {{ t('todos.undo.deleted', { count: removed.length }, removed.length) }}
         <button type="button" class="todos__undo-btn" @click="restore">{{ t('todos.undo.button') }}</button>
       </Motion>
     </AnimatePresence>
@@ -180,7 +184,7 @@ const options = computed(() => [
           autocomplete="off"
           @keydown.enter="saveEdit(todo)"
           @keydown.esc="cancelEdit"
-          @blur="cancelEdit"
+          @blur="saveEdit(todo)"
         />
         <span v-else class="todos__text" @dblclick="startEdit(todo)"
           ><template v-for="(piece, index) in pieces" :key="index"
@@ -191,6 +195,7 @@ const options = computed(() => [
           ></span
         >
         <span class="todos__meta">{{ meta }}</span>
+        <AiButton :query="{ ws: snapshot.workspace.id, kind: 'todo', ref: todo.id }" />
         <button type="button" class="todos__pencil" :aria-label="t('todos.item.edit')" @click="startEdit(todo)">
           {{ PENCIL }}
         </button>
@@ -235,7 +240,7 @@ const options = computed(() => [
 
 .todos__item {
   display: grid;
-  grid-template-columns: 1.25rem minmax(0, 1fr) auto 1.25rem 1.25rem;
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto auto 1.25rem 1.25rem;
   align-items: center;
   gap: 0.625rem;
   padding: 0.4375rem 1.25rem;

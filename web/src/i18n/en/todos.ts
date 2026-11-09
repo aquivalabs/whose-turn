@@ -14,7 +14,7 @@ export default {
     button: 'Add',
   },
   undo: {
-    deleted: 'To-do deleted.',
+    deleted: 'To-do deleted. | {count} to-dos deleted.',
     button: 'Undo',
   },
   item: {
