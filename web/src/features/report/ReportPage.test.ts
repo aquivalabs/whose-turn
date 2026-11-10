@@ -4,6 +4,7 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { render, screen } from '@testing-library/vue';
 import { getJson } from '@/lib/api.ts';
 import { SERVER_DOWN } from '@/lib/problems.ts';
+import { LAST_WORKSPACE_KEY } from '@/lib/storage-keys.ts';
 
 // The network boundary: getJson is the only call that leaves the window.
 vi.mock('@/lib/api.ts', async (importOriginal) => ({
@@ -107,7 +108,7 @@ test('a server that does not answer is named, with what to do', async () => {
 });
 
 test('the page takes the colours of the workspace the window last opened (RMA-450)', async () => {
-  localStorage.setItem('wt-ws', 'atlas');
+  localStorage.setItem(LAST_WORKSPACE_KEY, 'atlas');
   vi.mocked(getJson).mockImplementation((url: string) =>
     Promise.resolve(
       url.startsWith('/api/workspaces')

@@ -23,11 +23,12 @@ import type { ApiError, FeedItem, Lifecycle, Marks, Snapshot, StreamEvent, Todo 
 import { show as showBackdrop } from './backdrop.ts';
 import { themeVariablesOf } from './scheme.ts';
 import { liveStatus } from './lib/live-status.ts';
+import { LAST_WORKSPACE_KEY } from './lib/storage-keys.ts';
 import { text, type TextKey } from './i18n/index.ts';
 
 // docs/adr/0002-vueuse-in-the-window.md (storage rows)
 const STORED = { writeDefaults: false };
-const lastWorkspace = useLocalStorage('wt-ws', '', STORED);
+const lastWorkspace = useLocalStorage(LAST_WORKSPACE_KEY, '', STORED);
 const lastMode = useSessionStorage('wt-mode', '', STORED);
 
 /** What the window shows over the dashboard when the monitor is not there: the restart never came back, the first load got no answer, or a stopped monitor answers again. */

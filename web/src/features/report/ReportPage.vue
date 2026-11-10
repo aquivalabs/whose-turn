@@ -2,6 +2,7 @@
 // The reporter's page: one issue filed from this machine, its state, and the maintainer's answers. Everything from the server is rendered as text.
 import { computed, ref, onMounted } from 'vue';
 import { themeVariablesOf } from '@/scheme.ts';
+import { LAST_WORKSPACE_KEY } from '@/lib/storage-keys.ts';
 import { getJson } from '@/lib/api.ts';
 import { SERVER_DOWN } from '@/lib/problems.ts';
 import { when } from '@/lib/time.ts';
@@ -15,7 +16,7 @@ const report = ref<FiledReport | null>(null);
 const note = ref(id ? t('report.loading') : t('report.noId'));
 const workspaces = ref<Workspace[]>([]);
 const theme = computed(() => {
-  const last = localStorage.getItem('wt-ws');
+  const last = localStorage.getItem(LAST_WORKSPACE_KEY);
   const workspace = workspaces.value.find((entry) => entry.id === last) || workspaces.value[0];
   return themeVariablesOf(workspace?.theme);
 });
