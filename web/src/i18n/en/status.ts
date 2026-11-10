@@ -32,6 +32,13 @@ export default {
     pluginFailedHint: 'the monitor could not update the Claude plugin; paste it in your Claude session, then run /reload-plugins --force',
     pluginBehindHint: 'a Claude session still runs a plugin that does not know monitor {current}; paste it in that session, then run /reload-plugins --force',
   },
+  scheme: {
+    system: 'System theme',
+    light: 'Light theme',
+    dark: 'Dark theme',
+    tip: 'Click to switch: system, light, dark. The choice is kept in this browser.',
+    pinned: 'The address sets the theme with ?scheme=; remove it to switch here.',
+  },
   notifications: {
     on: 'Notifications on',
     off: 'Notifications off',

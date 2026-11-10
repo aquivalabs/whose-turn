@@ -13,6 +13,7 @@ import { useAttention } from '@/composables/useAttention.ts';
 import AiButton from '@/ui/AiButton.vue';
 import UpdateChip from './UpdateChip.vue';
 import NotificationsToggle from './NotificationsToggle.vue';
+import SchemeToggle from './SchemeToggle.vue';
 import { useText } from '@/i18n/index.ts';
 const emit = defineEmits<{ report: [] }>();
 const t = useText();
@@ -94,6 +95,7 @@ const openAsApp = () => {
           <path :d="OPEN_IN_NEW" fill="currentColor" /></svg
         ><span class="status-bar__label">{{ openLabel }}</span>
       </button>
+      <SchemeToggle />
       <NotificationsToggle />
       <button
         type="button"

@@ -760,6 +760,10 @@ input[type='radio'] {
   --btn-hue: var(--sys-purple);
 }
 
+.scheme-toggle {
+  --btn-hue: var(--sys-teal);
+}
+
 .status-bar__report {
   --btn-hue: var(--sys-indigo);
 }

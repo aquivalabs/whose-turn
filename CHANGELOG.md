@@ -5,6 +5,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- A theme button in the status bar switches the window between the system's theme, light and dark; your browser remembers the choice. RMA-457.
 - Add `?scheme=light` or `?scheme=dark` to the window's address to show that scheme whatever the system uses, for example to keep both open side by side. RMA-451.
 - Every to-do has a Copy for AI button, like the rows of the other lists. RMA-443.
 - A Help entry at the bottom of the left rail, also opened with `?`, lists the keyboard shortcuts and links to the README; on a Mac it names the Option key instead of Alt. RMA-447.

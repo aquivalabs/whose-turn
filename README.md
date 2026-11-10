@@ -239,7 +239,7 @@ Open it at `http://127.0.0.1:<port>/` (or with `open.sh` as an app window). One 
 
 **What's new.** The button above the gear at the bottom of the rail opens a sheet with CHANGELOG.md by version, newest first, the running version marked; a dot on the button says there are versions you have not read since you last opened it, and the "Updated to <version>" chip after an update opens the same sheet.
 
-**Keys.** `/` focuses the feed search, `t` the to-do field, Escape closes a sheet, Alt+Up and Alt+Down (Option on a Mac) move a focused rail icon, drag also reorders. The window follows the system's light or dark scheme; `?scheme=light` or `?scheme=dark` in the address pins one, so both can be open side by side. Its tab icon is the open workspace's rail icon.
+**Keys.** `/` focuses the feed search, `t` the to-do field, Escape closes a sheet, Alt+Up and Alt+Down (Option on a Mac) move a focused rail icon, drag also reorders. The theme button in the status bar switches the window between System, Light and Dark, and this browser keeps the choice; `?scheme=light` or `?scheme=dark` in the address wins over it, so both can be open side by side. Its tab icon is the open workspace's rail icon.
 
 Under the glass an animal drawn in dots follows the workspace; how to add one is in [`docs/mechanisms/species-dsl.md`](docs/mechanisms/species-dsl.md), and `/sheet` draws them all.
 
