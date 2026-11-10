@@ -21,7 +21,7 @@ import { resolveMode, sizeBody } from './lib/window-mode.ts';
 import { SERVER_DOWN, TEXT_KEPT, errorProblem, writeProblem } from './lib/problems.ts';
 import type { ApiError, FeedItem, Lifecycle, Marks, Snapshot, StreamEvent, Todo } from './lib/types.ts';
 import { show as showBackdrop } from './backdrop.ts';
-import { dark } from './scheme.ts';
+import { themeVariablesOf } from './scheme.ts';
 import { liveStatus } from './lib/live-status.ts';
 import { text, type TextKey } from './i18n/index.ts';
 
@@ -142,10 +142,7 @@ export const now = useNow({
 });
 
 /** The workspace palette for the current colour scheme, as the CSS variables App.vue puts on the root. */
-export const themeVariables = computed(() => {
-  const theme = snapshot.workspace.theme;
-  return theme && theme.light && theme.dark ? theme[dark.value ? 'dark' : 'light'] : {};
-});
+export const themeVariables = computed(() => themeVariablesOf(snapshot.workspace.theme));
 export const counts = computed(() => snapshot.counts);
 /** The live verdict for the open workspace: the dot, the status text and which sources are failing. */
 export const liveVerdict = computed(() => {

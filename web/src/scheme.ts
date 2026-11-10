@@ -1,6 +1,7 @@
 // The colour scheme in force, shared by the store, the backdrop and the sheet: ?scheme= in the address, else the choice kept in this browser, else the system. RMA-451, RMA-457.
 import { computed, watch } from 'vue';
 import { useEventListener, useLocalStorage, useMutationObserver, usePreferredDark } from '@vueuse/core';
+import type { SchemeVariables, Theme } from './lib/types.ts';
 
 /** What the user picked: follow the system, or one scheme. */
 export type SchemeChoice = 'system' | 'light' | 'dark';
@@ -9,15 +10,14 @@ const CHOICES: readonly SchemeChoice[] = ['system', 'light', 'dark'];
 const isChoice = (value: unknown): value is SchemeChoice => CHOICES.includes(value as SchemeChoice);
 const prefersDark = usePreferredDark();
 const fromAddress = new URLSearchParams(location.search).get('scheme');
+const pinned = fromAddress === 'light' || fromAddress === 'dark' ? fromAddress : null;
 const stored = useLocalStorage<SchemeChoice>('wt-scheme', 'system', { writeDefaults: false });
 
-/** The choice in force: the address wins over the stored one. */
-export const schemeChoice = computed<SchemeChoice>(() =>
-  fromAddress === 'light' || fromAddress === 'dark' ? fromAddress : isChoice(stored.value) ? stored.value : 'system',
-);
-
 /** Whether the address pins the scheme, so the switch has no say. */
-export const pinnedByAddress = fromAddress === 'light' || fromAddress === 'dark';
+export const pinnedByAddress = pinned !== null;
+
+/** The choice in force: the address wins over the stored one. */
+export const schemeChoice = computed<SchemeChoice>(() => pinned ?? (isChoice(stored.value) ? stored.value : 'system'));
 
 /** The choice after this one: System, then Light, then Dark, then System again. */
 export const nextChoice = (choice: SchemeChoice): SchemeChoice => CHOICES[(CHOICES.indexOf(choice) + 1) % CHOICES.length];
@@ -26,6 +26,10 @@ export const nextChoice = (choice: SchemeChoice): SchemeChoice => CHOICES[(CHOIC
 export const cycleScheme = () => {
   stored.value = nextChoice(schemeChoice.value);
 };
+
+/** A workspace theme's variables for the scheme in force, or none without a theme. */
+export const themeVariablesOf = (theme: Theme | null | undefined): SchemeVariables =>
+  theme?.light && theme.dark ? theme[isDark() ? 'dark' : 'light'] : {};
 
 /** Whether the dark scheme is in force, read at call time. */
 export const isDark = () => (schemeChoice.value === 'system' ? prefersDark.value : schemeChoice.value === 'dark');
@@ -48,7 +52,10 @@ export const pinStylesheets = () => {
         continue;
       }
       originals.set(rule, original);
-      rule.media.mediaText = choice === 'system' ? original : original.includes(choice) ? 'all' : 'not all';
+      const target = choice === 'system' ? original : original.includes(choice) ? 'all' : 'not all';
+      if (rule.media.mediaText !== target) {
+        rule.media.mediaText = target;
+      }
     }
   }
 };

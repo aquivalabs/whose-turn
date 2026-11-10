@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The reporter's page: one issue filed from this machine, its state, and the maintainer's answers. Everything from the server is rendered as text.
 import { computed, ref, onMounted } from 'vue';
-import { dark } from '@/scheme.ts';
+import { themeVariablesOf } from '@/scheme.ts';
 import { getJson } from '@/lib/api.ts';
 import { SERVER_DOWN } from '@/lib/problems.ts';
 import { when } from '@/lib/time.ts';
@@ -17,7 +17,7 @@ const workspaces = ref<Workspace[]>([]);
 const theme = computed(() => {
   const last = localStorage.getItem('wt-ws');
   const workspace = workspaces.value.find((entry) => entry.id === last) || workspaces.value[0];
-  return workspace?.theme?.[dark.value ? 'dark' : 'light'];
+  return themeVariablesOf(workspace?.theme);
 });
 onMounted(() => {
   if (!id) {
