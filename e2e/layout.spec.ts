@@ -54,3 +54,13 @@ test('below the breakpoint the page flows: no sideways scroll', async ({ page })
 
   expect(sideways).toBe(false);
 });
+
+test('a multi-line text box is a rounded rectangle, not a pill (RMA-460)', async ({ page }) => {
+  await page.goto('/?ws=northwind');
+  await page.getByRole('button', { name: 'Report' }).first().click();
+  const box = page.locator('.feedback-sheet__text');
+  await expect(box).toBeVisible();
+  const radius = await box.evaluate((element) => parseFloat(getComputedStyle(element).borderTopLeftRadius));
+  const height = await box.evaluate((element) => element.clientHeight);
+  expect(radius).toBeLessThan(height / 4);
+});
