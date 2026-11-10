@@ -9,6 +9,8 @@ import HelpSheet from './HelpSheet.vue';
 afterEach(() => {
   cleanup();
   ui.help = false;
+  Reflect.deleteProperty(navigator, 'platform');
+  Reflect.deleteProperty(navigator, 'userAgentData');
 });
 
 const Host = defineComponent({
