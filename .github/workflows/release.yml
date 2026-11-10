@@ -29,6 +29,13 @@ jobs:
           else
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: The commit is already on main
+        if: steps.version.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status=$(gh api "repos/${{ github.repository }}/compare/main...${{ github.sha }}" --jq .status)
+          case "$status" in identical|behind) ;; *) echo "release is at a commit that is not on main ($status); refusing to publish." >&2; exit 1;; esac
       - name: The BladeForge skill covers this version
         if: steps.version.outputs.new == 'true'
         env:
