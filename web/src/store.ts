@@ -396,12 +396,23 @@ export const connect = () => {
 const countError = () => {
   ui.consoleErrors++;
 };
+/** A tab in the background lets its stream go and catches up when it is back in front, so hidden tabs hold no connection. */
+export const followVisibility = () => {
+  if (document.hidden) {
+    stream.close();
+    return;
+  }
+  if (snapshot.workspace.id && !stream.eventSource.value && ui.lifecycle !== 'quitting') {
+    void load().then(connect, () => {});
+  }
+};
 
 /** Starts what runs on its own: the clock, the first load and the stream behind it; importing this module does none of it. */
 export const start = () => {
   clock.resume();
   useEventListener(window, 'error', countError);
   useEventListener(window, 'unhandledrejection', countError);
+  useEventListener(document, 'visibilitychange', followVisibility);
   return firstLoad();
 };
 const firstLoad = () =>

@@ -180,6 +180,36 @@ test('start opens the event stream once the first load has answered', async () =
   expect(opened).toHaveBeenCalledTimes(1);
 });
 
+test('a hidden tab closes its stream and opens it again, after a fresh load, when it is back in front (RMA-453)', async () => {
+  const fetchStub = vi.fn(() => Promise.resolve(reply(workspaceReply('w'))));
+  vi.stubGlobal('fetch', fetchStub);
+  const sources: { close: ReturnType<typeof vi.fn> }[] = [];
+  vi.stubGlobal(
+    'EventSource',
+    vi.fn(function (this: object) {
+      const source = Object.assign(this, { close: vi.fn(), addEventListener: vi.fn(), readyState: 0 });
+      sources.push(source);
+      return source;
+    }),
+  );
+  let hidden = false;
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
+  const store = await freshStore();
+  await store.start();
+  expect(sources).toHaveLength(1);
+
+  hidden = true;
+  store.followVisibility();
+  expect(sources[0].close).toHaveBeenCalledOnce();
+
+  const loadsBefore = fetchStub.mock.calls.length;
+  hidden = false;
+  store.followVisibility();
+  await vi.waitFor(() => expect(sources).toHaveLength(2));
+  expect(fetchStub.mock.calls.length).toBeGreaterThan(loadsBefore);
+  Reflect.deleteProperty(document, 'hidden');
+});
+
 test('a refused state request for a remembered workspace is retried once without it, and not when none was asked for', async () => {
   const store = await freshStore();
   const gone = {
