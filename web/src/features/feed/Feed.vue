@@ -433,12 +433,17 @@ const restoreMarks = async () => {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  min-width: 0;
   font-size: 0.875rem;
 }
 
 .feed__group-ticket {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .feed__group-sum {

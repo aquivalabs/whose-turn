@@ -59,7 +59,7 @@ const note = computed(() =>
             <th class="waiting__col waiting__col--ticket">{{ t('waiting.col.ticket') }}</th>
             <th class="waiting__col waiting__col--status">{{ t('waiting.col.status') }}</th>
             <th class="waiting__col waiting__col--with">{{ t('waiting.col.with') }}</th>
-            <th v-if="showReason" class="hide-narrow">{{ t('waiting.col.waitingFor') }}</th>
+            <th v-if="showReason" class="hide-narrow waiting__col--reason">{{ t('waiting.col.waitingFor') }}</th>
             <th v-if="showPr" class="waiting__col waiting__col--pr">{{ t('waiting.col.pr') }}</th>
             <th class="table__actions-col waiting__col waiting__col--actions">
               <span class="visually-hidden">{{ t('waiting.col.copyForAi') }}</span>
@@ -134,17 +134,26 @@ const note = computed(() =>
   table-layout: fixed;
 }
 
+.waiting__table th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.waiting__table th.waiting__col--reason {
+  white-space: normal;
+}
+
 .waiting__col--ticket {
-  width: 22%;
+  width: 24%;
 }
 
 .waiting__col--status,
 .waiting__col--with {
-  width: 6.5rem;
+  width: 5.5rem;
 }
 
 .waiting__col--pr {
-  width: 4.5rem;
+  width: 4rem;
 }
 
 .waiting__col--actions {
