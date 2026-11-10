@@ -4,6 +4,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.0.0-beta.6] - 2026-11-10
+
 ### Added
 - A theme button in the status bar switches the window between the system's theme, light and dark; your browser remembers the choice. RMA-457.
 - Add `?scheme=light` or `?scheme=dark` to the window's address to show that scheme whatever the system uses, for example to keep both open side by side. RMA-451.
