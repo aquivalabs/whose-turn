@@ -76,6 +76,18 @@ test('the error colour stays 45 RGB units (Euclidean, 0 to 255 per channel) from
   }
 });
 
+test('the accent keeps clear of the passing and warning colours too, light and dark (RMA-451)', () => {
+  for (const [seed, accent] of [...WHEEL_SEEDS, ...DEMO_SEEDS]) {
+    const palette = paletteFrom(seed, accent);
+    for (const scheme of ['light', 'dark']) {
+      for (const state of ['--md-on-success-container', '--md-on-warn-container']) {
+        const distance = rgbDistance(palette[scheme]['--md-primary'], palette[scheme][state]);
+        assert.ok(distance >= MIN_RGB_DISTANCE, `${seed} ${scheme} primary against ${state} is ${distance.toFixed(0)}`);
+      }
+    }
+  }
+});
+
 test('a workspace without a seed gets one derived from its id: stable, a hex, and different per id', () => {
   assert.equal(derivedSeed('marketplaces'), derivedSeed('marketplaces'));
   assert.match(derivedSeed('marketplaces'), /^#[0-9a-f]{6}$/);
