@@ -74,7 +74,6 @@
   border-radius: var(--r-dashboard);
   pointer-events: none;
   opacity: 0.35;
-  filter: blur(6px);
 }
 
 .dashboard a {
