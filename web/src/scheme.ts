@@ -20,7 +20,7 @@ export const pinnedByAddress = pinned !== null;
 export const schemeChoice = computed<SchemeChoice>(() => pinned ?? (isChoice(stored.value) ? stored.value : 'system'));
 
 /** The choice after this one: System, then Light, then Dark, then System again. */
-export const nextChoice = (choice: SchemeChoice): SchemeChoice => CHOICES[(CHOICES.indexOf(choice) + 1) % CHOICES.length];
+const nextChoice = (choice: SchemeChoice): SchemeChoice => CHOICES[(CHOICES.indexOf(choice) + 1) % CHOICES.length];
 
 /** Moves the stored choice on by one. */
 export const cycleScheme = () => {

@@ -56,6 +56,14 @@ test('pinning turns the colour-scheme rules on and off, and System gives them ba
   expect(media()[1]).toContain('prefers-color-scheme: light');
 });
 
+test('a stylesheet added after install is pinned to the choice too (RMA-457)', async () => {
+  localStorage.setItem('wt-scheme', 'dark');
+  const scheme = await loadWith('');
+  scheme.installScheme();
+  const media = sheetWith(BOTH);
+  await vi.waitFor(() => expect(media()).toEqual(['all', 'not all']));
+});
+
 test('a stored value that is not a choice reads as System', async () => {
   localStorage.setItem('wt-scheme', 'sepia');
   expect((await loadWith('')).schemeChoice.value).toBe('system');
