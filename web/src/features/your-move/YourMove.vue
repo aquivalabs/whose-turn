@@ -367,6 +367,9 @@ const undoHandled = () => {
   justify-content: center;
   width: 1.875rem;
   padding: 0;
+  border: 0;
+  background: color-mix(in oklab, var(--sys-green) 8%, transparent);
+  color: color-mix(in oklab, var(--sys-green) 55%, var(--md-on-surface));
 }
 
 .your-move__mark--plain::before {
