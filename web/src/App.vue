@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The window: the rail, the status line, and the dashboard that fills the rest; sheets open over it. State and data flow live in store.ts.
 import { computed, onMounted, watch } from 'vue';
-import { onKeyStroke, useFavicon } from '@vueuse/core';
+import { onKeyStroke } from '@vueuse/core';
 import { AnimatePresence, LazyMotion, M as Motion, MotionConfig } from 'motion-v';
 import { fade, loadFeatures, reduced } from './motion.ts';
 import {
@@ -23,6 +23,7 @@ import { mulberry32 } from './lib/random.ts';
 import { useDialogFocus, useShortcuts } from './composables/useKeyboard.ts';
 import { usePanelSize } from './composables/usePanelSize.ts';
 import { useFold } from './composables/useFold.ts';
+import { useTabIcon } from './composables/useTabIcon.ts';
 import Rail from './features/rail/Rail.vue';
 import StatusBar from './features/status/StatusBar.vue';
 import WorkspaceHeader from './features/header/WorkspaceHeader.vue';
@@ -76,7 +77,7 @@ const icon = computed(() => {
   };
   return 'data:image/svg+xml,' + encodeURIComponent(workspaceIconSvg(workspaceIconParts({ id, name }, mulberry32), colours));
 });
-useFavicon(icon);
+useTabIcon(icon);
 onKeyStroke('Escape', closeTopLayer, { target: document });
 onMounted(() => {
   reportWindowSize();
