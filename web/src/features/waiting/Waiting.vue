@@ -41,6 +41,7 @@ const note = computed(() =>
     id="waiting"
     :icon="CLOCK"
     hue="var(--sys-indigo)"
+    rank="quiet"
     :size-key="`${snapshot.workspace.id}:waiting`"
     :title="t('waiting.title')"
     :note="note"

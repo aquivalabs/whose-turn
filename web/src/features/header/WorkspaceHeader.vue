@@ -80,9 +80,9 @@ const toggle = () => glideThrough(header.value, 'height', flip);
         :key="tile.key"
         class="workspace-header__tile"
         :class="{ 'workspace-header__tile--lit': tile.lit, 'workspace-header__tile--hero': tile.key === 'mine' }"
-        :style="{ '--tile-hue': tile.hue }"
+        :style="{ '--tile-hue': tile.hue, '--tonal-hue': tile.hue }"
       >
-        <span class="workspace-header__tile-icon" aria-hidden="true"
+        <span class="tonal tonal--soft workspace-header__tile-icon" aria-hidden="true"
           ><svg viewBox="0 0 24 24"><path :d="tile.icon" fill="currentColor" /></svg
         ></span>
         <strong class="workspace-header__tile-value" :data-tip="tile.tip">{{ tile.value }}</strong>
@@ -219,14 +219,9 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 }
 
 .workspace-header__tile-icon {
-  display: grid;
   grid-area: icon;
-  place-items: center;
   width: 1.875rem;
   height: 1.875rem;
-  border-radius: 50%;
-  background: color-mix(in oklab, var(--tile-hue) 6%, transparent);
-  color: color-mix(in oklab, var(--tile-hue) 45%, var(--md-on-surface));
 }
 
 .workspace-header__tile-icon svg {

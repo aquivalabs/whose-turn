@@ -126,6 +126,7 @@ const options = computed(() => [
     id="todo"
     :icon="CHECKLIST"
     hue="var(--sys-orange)"
+    rank="quiet"
     :size-key="`${snapshot.workspace.id}:todo`"
     :title="t('todos.title')"
     :note="t('todos.note')"

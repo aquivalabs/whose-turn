@@ -79,6 +79,7 @@ const undoHandled = () => {
     id="your-move"
     :icon="ARROW_FORWARD"
     hue="var(--md-primary)"
+    rank="lead"
     :size-key="`${snapshot.workspace.id}:your-move`"
     :title="t('yourMove.island.title')"
     :note="t('yourMove.island.note')"

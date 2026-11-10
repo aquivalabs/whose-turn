@@ -18,6 +18,7 @@ const props = withDefaults(
     resize?: 'height' | 'width';
     icon?: string;
     hue?: string;
+    rank?: 'lead' | 'quiet';
   }>(),
   {
     sizeKey: '',
@@ -166,6 +167,7 @@ const bounds = () => {
       'island--column': column,
       'island--strip': strip,
       'island--sized': sized,
+      [`island--${rank}`]: Boolean(rank),
     }"
     :style="
       resize === 'height'
@@ -182,7 +184,7 @@ const bounds = () => {
         @click.stop="toggle"
       />
       <h2 class="island__title">
-        <span v-if="icon" class="island__icon" :style="{ '--icon-hue': hue }" aria-hidden="true"
+        <span v-if="icon" class="tonal island__icon" :style="{ '--tonal-hue': hue }" aria-hidden="true"
           ><svg viewBox="0 0 24 24"><path :d="icon" fill="currentColor" /></svg></span
         >{{ title }} <slot name="head" />
       </h2>
@@ -218,13 +220,8 @@ const bounds = () => {
 }
 
 .island__icon {
-  display: inline-grid;
-  place-items: center;
   width: 1.625rem;
   height: 1.625rem;
-  border-radius: 50%;
-  background: color-mix(in oklab, var(--icon-hue) 8%, transparent);
-  color: color-mix(in oklab, var(--icon-hue) 55%, var(--md-on-surface));
 }
 
 .island__icon svg {
@@ -243,6 +240,16 @@ const bounds = () => {
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
+}
+
+.island--lead .island__title {
+  font-size: 1.25rem;
+}
+
+.island--quiet .island__title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--md-on-surface-variant);
 }
 
 .island__note {
