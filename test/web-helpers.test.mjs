@@ -6,7 +6,7 @@ import { checksTone, outcomeTone, isPrOnly, hasPrColumn } from '../web/src/lib/m
 import { workspaceIconParts, workspaceIconSvg } from '../web/src/lib/icons.ts';
 import { mulberry32 } from '../web/src/lib/random.ts';
 import { hasBody } from '../web/src/lib/feed.ts';
-import { browserOf } from '../web/src/lib/browser.ts';
+import { browserOf, isMac } from '../web/src/lib/browser.ts';
 
 const NOW = Date.parse('2026-11-03T12:00:00Z');
 const MINUTE = 60000;
@@ -137,4 +137,11 @@ test('browserOf picks the real brand over Chromium and "Not A Brand", falls back
   assert.deepEqual(agent('Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.2849.5'), { name: 'Edge', version: '130' });
   assert.deepEqual(agent('Mozilla/5.0 AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36'), { name: 'Chrome', version: '130' });
   assert.equal(agent('curl/8.0'), null);
+});
+
+test('isMac reads the platform from client hints, then navigator.platform, then the user agent (RMA-447)', () => {
+  assert.equal(isMac({ userAgent: '', userAgentData: { platform: 'macOS' } }), true);
+  assert.equal(isMac({ userAgent: '', platform: 'MacIntel' }), true);
+  assert.equal(isMac({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)' }), true);
+  assert.equal(isMac({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', platform: 'Win32' }), false);
 });

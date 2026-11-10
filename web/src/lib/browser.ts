@@ -9,7 +9,8 @@ interface Brand {
 }
 interface Nav {
   userAgent: string;
-  userAgentData?: { brands?: Brand[] };
+  platform?: string;
+  userAgentData?: { brands?: Brand[]; platform?: string };
 }
 
 const BRANDS: Record<string, string> = {
@@ -44,3 +45,6 @@ export const browserOf = (nav: Nav): BrowserInfo | null => {
   }
   return null;
 };
+
+/** Whether the keyboard is a Mac's, where Alt is labelled Option. */
+export const isMac = (nav: Nav): boolean => /mac/i.test(nav.userAgentData?.platform || nav.platform || nav.userAgent);

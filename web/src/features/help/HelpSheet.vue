@@ -4,6 +4,7 @@ import { AnimatePresence } from 'motion-v';
 import { ui } from '@/store.ts';
 import { useText } from '@/i18n/index.ts';
 import Modal from '@/ui/Modal.vue';
+import { isMac } from '@/lib/browser.ts';
 
 const t = useText();
 const README = 'https://github.com/aquivalabs/whose-turn#readme';
@@ -11,7 +12,7 @@ const rows = [
   { keys: ['/'], label: 'help.search' },
   { keys: ['t'], label: 'help.todo' },
   { keys: ['?'], label: 'help.help' },
-  { keys: ['Alt', '↑', '↓'], label: 'help.moveWorkspace' },
+  { keys: [isMac(navigator) ? '⌥ Option' : 'Alt', '↑', '↓'], label: 'help.moveWorkspace' },
   { keys: ['Esc'], label: 'help.close' },
 ] as const;
 </script>

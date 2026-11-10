@@ -33,3 +33,14 @@ test('pressing ? opens Help (RMA-447)', async () => {
   await fireEvent.keyDown(document, { key: '?', shiftKey: true });
   expect(await screen.findByRole('dialog', { name: 'Help' })).toBeTruthy();
 });
+
+test.each([
+  ['MacIntel', '⌥ Option'],
+  ['Win32', 'Alt'],
+])('on %s Help names the move key %s (RMA-447)', async (platform, label) => {
+  Object.defineProperty(navigator, 'platform', { configurable: true, value: platform });
+  Object.defineProperty(navigator, 'userAgentData', { configurable: true, value: undefined });
+  ui.help = true;
+  render(HelpSheet);
+  expect(await screen.findByText(label)).toBeTruthy();
+});
