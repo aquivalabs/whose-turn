@@ -9,5 +9,9 @@ fi
 npm run check
 # AGENTS.md § Gates, "Docs follow the docs standard"
 node scripts/docs-check.mjs
-# AGENTS.md § Gates, "/review on every pull request", RMA-207
-printf '%s\n' "$refs" | npx -y -p bladeforge-review-harness@0.3.1 review-gate
+# AGENTS.md § Gates, "/review on every pull request", RMA-207; a push to release carries only reviewed main commits
+if printf '%s\n' "$refs" | awk '$3 == "refs/heads/release" { found = 1 } END { exit !found }'; then
+  printf '%s\n' "$refs" | npx -y -p bladeforge-review-harness@0.3.1 review-gate --secrets-only
+else
+  printf '%s\n' "$refs" | npx -y -p bladeforge-review-harness@0.3.1 review-gate
+fi
