@@ -641,6 +641,10 @@
   color: var(--md-on-surface);
 }
 
+textarea.input {
+  border-radius: 0.75rem;
+}
+
 .input:focus {
   outline: var(--focus-ring);
   outline-offset: -1px;
