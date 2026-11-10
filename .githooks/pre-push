@@ -9,5 +9,5 @@ fi
 npm run check
 # AGENTS.md § Gates, "Docs follow the docs standard"
 node scripts/docs-check.mjs
-# AGENTS.md § Gates, "/review once at the end of a working day", RMA-206
-printf '%s\n' "$refs" | npx -y -p bladeforge-review-harness@0.3.1 review-gate --secrets-only
+# AGENTS.md § Gates, "/review on every pull request", RMA-207
+printf '%s\n' "$refs" | npx -y -p bladeforge-review-harness@0.3.1 review-gate
