@@ -130,3 +130,14 @@ test('the config loader keeps a valid theme and drops an invalid seed or accent'
   assert.match(none.derived_seed, /^#[0-9a-f]{6}$/);
   assert.notEqual(none.derived_seed, invalid.derived_seed);
 });
+
+test('the header gets its own gradient, denser than the backdrop blobs in dark and the same in light (RMA-454)', () => {
+  const alpha = (value) => Number(/,\s*([\d.]+)\)$/.exec(value)[1]);
+  for (const [seed, accent] of DEMO_SEEDS) {
+    const palette = paletteFrom(seed, accent);
+    for (const index of [1, 2]) {
+      assert.ok(alpha(palette.dark[`--header-${index}`]) > alpha(palette.dark[`--blob-${index}`]), `${seed} dark header ${index}`);
+      assert.equal(palette.light[`--header-${index}`], palette.light[`--blob-${index}`]);
+    }
+  }
+});

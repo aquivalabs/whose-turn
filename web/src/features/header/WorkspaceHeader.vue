@@ -99,7 +99,7 @@ const toggle = () => glideThrough(header.value, 'height', flip);
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 2rem;
   gap: 0.5rem;
   padding: 0.5rem;
-  background: linear-gradient(135deg, var(--blob-1), var(--blob-2));
+  background: linear-gradient(135deg, var(--header-1, var(--blob-1)), var(--header-2, var(--blob-2)));
   color: var(--header-ink, var(--md-on-primary-container));
 }
 

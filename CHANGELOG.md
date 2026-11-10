@@ -24,6 +24,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - In Monitor settings the desktop notifications switch now waits for Save like the other fields, and counts as an unsaved change until you save. RMA-446.
 
 ### Fixed
+- In the dark theme the workspace header shows its colour clearly instead of a dull, greyish gradient. RMA-454.
 - On a window about 1100 pixels wide, the Waiting for column head of Waiting on others is no longer cut to a few letters, and a long key in What changed ends in an ellipsis instead of running under its Copy for AI button. RMA-455.
 - Opening or reloading the window no longer hangs when several monitor tabs are open. A tab in the background now lets go of its live updates and catches up as soon as you come back to it. RMA-453.
 - The keyboard shortcuts `/`, `t` and `?` now work on any keyboard layout, Russian included; before they did nothing unless the layout was Latin. RMA-452.
