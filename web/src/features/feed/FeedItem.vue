@@ -77,8 +77,8 @@ const toggle = () => {
           <button type="button" class="btn btn--tonal" @click.stop="emit('open', item)">
             {{ t('feed.item.openFormatted') }}
           </button>
-          <AiButton :query="{ ws: snapshot.workspace.id, kind: 'feed', ref: item.id }" />
           <ExtLink :text="t('feed.item.openIn', { source: source.label })" :url="item.url" class="btn" />
+          <AiButton class="feed-item__copy" :query="{ ws: snapshot.workspace.id, kind: 'feed', ref: item.id }" />
         </div>
       </template>
       <span v-else-if="line" class="feed-item__text">{{ line }}</span>
@@ -139,8 +139,8 @@ const toggle = () => {
 }
 
 .feed-item__icon--ok {
-  background: var(--md-tertiary-container);
-  color: var(--md-on-tertiary-container);
+  background: var(--md-success-container, var(--md-tertiary-container));
+  color: var(--md-on-success-container, var(--md-on-tertiary-container));
 }
 
 .feed-item__body {
@@ -207,8 +207,13 @@ const toggle = () => {
 .feed-item__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
   margin-top: 0.5rem;
+}
+
+.feed-item__copy {
+  margin-left: auto;
 }
 
 .feed-item--new .feed-item__kind {

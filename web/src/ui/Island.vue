@@ -16,6 +16,8 @@ const props = withDefaults(
     tip?: string;
     column?: boolean;
     resize?: 'height' | 'width';
+    icon?: string;
+    hue?: string;
   }>(),
   {
     sizeKey: '',
@@ -179,7 +181,11 @@ const bounds = () => {
         :data-tippy-placement="strip ? 'left' : undefined"
         @click.stop="toggle"
       />
-      <h2 class="island__title">{{ title }} <slot name="head" /></h2>
+      <h2 class="island__title">
+        <span v-if="icon" class="island__icon" :style="{ '--icon-hue': hue }" aria-hidden="true"
+          ><svg viewBox="0 0 24 24"><path :d="icon" fill="currentColor" /></svg></span
+        >{{ title }} <slot name="head" />
+      </h2>
       <p class="island__note">
         <span class="island__note-text">{{ note }}</span>
         <button v-if="tip" type="button" class="hint-icon" :aria-label="t('common.island.about', { title })" :data-tip="tip" data-tip-click>
@@ -211,12 +217,30 @@ const bounds = () => {
   padding: 0.75rem 1.25rem 0.75rem 0.75rem;
 }
 
+.island__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--icon-hue) 8%, transparent);
+  color: color-mix(in oklab, var(--icon-hue) 55%, var(--md-on-surface));
+}
+
+.island__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .island__title {
+  display: flex;
   flex: none;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.0625rem;
   line-height: 1.5rem;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
 }

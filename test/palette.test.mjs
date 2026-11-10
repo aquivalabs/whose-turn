@@ -9,7 +9,7 @@ import './fixtures/demo-connector.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
 const STYLESHEET = readFileSync(new URL('../web/src/styles/tokens.css', import.meta.url), 'utf8');
-const KEPT_FROM_STYLESHEET = /warn|label|font|-r-|^--glass-/;
+const KEPT_FROM_STYLESHEET = /font|-r-|^--glass-/;
 
 const schemeVariables = () => {
   const names = [...new Set([...STYLESHEET.matchAll(/(--(?:md-|glass|blob-)[\w-]*)\s*:/g)].map((match) => match[1]))].filter((name) => !KEPT_FROM_STYLESHEET.test(name));
@@ -43,7 +43,7 @@ test('the scheme covers every colour variable the stylesheet defines, light and 
     for (const name of expected[scheme]) {
       assert.ok(name in palette[scheme], `${scheme} is missing ${name}`);
     }
-    assert.ok(!Object.keys(palette[scheme]).some((name) => KEPT_FROM_STYLESHEET.test(name)), 'warn stays in the stylesheet');
+    assert.ok(!Object.keys(palette[scheme]).some((name) => KEPT_FROM_STYLESHEET.test(name)), 'radii, fonts and glass strengths stay in the stylesheet');
   }
 });
 

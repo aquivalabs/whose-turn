@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ARROW_FORWARD } from '@/lib/icons.ts';
 // Your move: the rows where the next step is yours, with the age, the why, and the Handled mark kept on this machine.
 import { computed, reactive } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
@@ -76,6 +77,8 @@ const undoHandled = () => {
 <template>
   <Island
     id="your-move"
+    :icon="ARROW_FORWARD"
+    hue="var(--md-primary)"
     :size-key="`${snapshot.workspace.id}:your-move`"
     :title="t('yourMove.island.title')"
     :note="t('yourMove.island.note')"
@@ -260,7 +263,7 @@ const undoHandled = () => {
 }
 
 .your-move__next {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .your-move__line-cell {

@@ -1,5 +1,8 @@
 /* Material 3 tonal scheme; a workspace theme overrides these variables on .app from lib/palette.mjs. The page, unread, live-dot and tooltip colours are tokens here too, so no component holds a colour literal. */
 :root {
+  --r-island: 1.125rem;
+  --r-dashboard: calc(var(--r-island) + 0.875rem);
+  --r-tile: calc(var(--r-island) - 0.5rem);
   --page-bg: #f3f4f8;
   --tip-bg: #1f2433;
   --tip-ink: #e8ecf5;
@@ -66,7 +69,7 @@
   --state-hover: rgb(var(--md-state), 0.08);
   --focus-ring: 2px solid var(--md-primary);
   --glass: 255, 255, 255;
-  --glass-a: 0.52;
+  --glass-a: 0.62;
   --glass-edge: rgb(255 255 255 / 70%);
   --glass-hi: rgb(255 255 255 / 90%);
   --blob-1: rgb(44 86 151 / 30%);
@@ -79,6 +82,13 @@
   --chip-font-size: 0.6875rem;
   --chip-radius: 0.375rem;
   --chip-pad-x: 0.5rem;
+  --sys-blue: #007aff;
+  --sys-indigo: #5856d6;
+  --sys-teal: #30b0c7;
+  --sys-orange: #ff9500;
+  --sys-green: #34c759;
+  --sys-red: #ff3b30;
+  --sys-purple: #af52de;
   --new: #5cc8f0;
   --new-bg: rgb(92 200 240 / 17%);
   --new-ink: #04222e;
@@ -95,6 +105,13 @@
 
 @media (prefers-color-scheme: dark) {
   .app {
+    --sys-blue: #0a84ff;
+    --sys-indigo: #5e5ce6;
+    --sys-teal: #40c8e0;
+    --sys-orange: #ff9f0a;
+    --sys-green: #30d158;
+    --sys-red: #ff453a;
+    --sys-purple: #bf5af2;
     --md-primary: #adc6ff;
     --md-on-primary: #0f2f60;
     --md-primary-container: #2b4678;

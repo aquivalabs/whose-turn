@@ -70,6 +70,7 @@ const reveal = () => {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
+    mask-image: linear-gradient(to bottom, black calc(100% - 1.25rem), transparent);
   }
 
   .dashboard--fit .row-scroll::-webkit-scrollbar {
@@ -91,8 +92,7 @@ const reveal = () => {
   flex: none;
   display: block;
   margin: 0 -1.25rem;
-  padding: 0.25rem 1.25rem 0.375rem;
-  border-top: 1px solid var(--md-outline-variant);
+  padding: 0.5rem 1.25rem;
   color: var(--md-primary);
   font-size: 0.8125rem;
   font-weight: 500;

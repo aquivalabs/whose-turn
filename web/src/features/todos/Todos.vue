@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CHECKLIST } from '@/lib/icons.ts';
 // To do: the user's own notes, kept by the server per workspace; a ticket key in the text becomes a link.
 import { computed, nextTick, ref, useTemplateRef } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
@@ -123,6 +124,8 @@ const options = computed(() => [
 <template>
   <Island
     id="todo"
+    :icon="CHECKLIST"
+    hue="var(--sys-orange)"
     :size-key="`${snapshot.workspace.id}:todo`"
     :title="t('todos.title')"
     :note="t('todos.note')"

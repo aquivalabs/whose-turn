@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CLOCK } from '@/lib/icons.ts';
 // Waiting on others: tickets you touched where someone else holds the next step.
 import { computed } from 'vue';
 import { AnimatePresence, M as Motion } from 'motion-v';
@@ -38,6 +39,8 @@ const note = computed(() =>
 <template>
   <Island
     id="waiting"
+    :icon="CLOCK"
+    hue="var(--sys-indigo)"
     :size-key="`${snapshot.workspace.id}:waiting`"
     :title="t('waiting.title')"
     :note="note"

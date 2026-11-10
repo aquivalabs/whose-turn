@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BOLT } from '@/lib/icons.ts';
 // What changed: newest first, filtered by source, searched by words, grouped by ticket or flat; unread stays lit until clicked.
 import { computed, nextTick, ref, watch } from 'vue';
 import { refAutoReset, watchDebounced } from '@vueuse/core';
@@ -127,6 +128,8 @@ const restoreMarks = async () => {
 <template>
   <Island
     id="feed"
+    :icon="BOLT"
+    hue="var(--sys-teal)"
     :size-key="`${snapshot.workspace.id}:feed`"
     :title="t('feed.title')"
     :note="t('feed.note')"
@@ -386,11 +389,14 @@ const restoreMarks = async () => {
   background: rgb(var(--md-state), 0.05);
 }
 
-.feed__group.feed__group--new {
-  background: var(--new-bg);
-  box-shadow:
-    inset 4px 0 0 var(--new),
-    inset 0 0 0 1px var(--new-edge);
+.feed__group--new .feed__group-key::before {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  align-self: center;
+  border-radius: 50%;
+  background: var(--new);
 }
 
 .feed__group-head {
@@ -414,20 +420,9 @@ const restoreMarks = async () => {
   background: var(--state-hover);
 }
 
-.feed__group--new > .feed__group-head {
-  background: var(--new-bg);
-  box-shadow: inset 4px 0 0 var(--new);
-}
-
 .feed__group--move,
 .feed__group--move > .feed__group-head {
   box-shadow: inset 4px 0 0 var(--move);
-}
-
-.feed__group.feed__group--new.feed__group--move {
-  box-shadow:
-    inset 4px 0 0 var(--move),
-    inset 0 0 0 1px var(--new-edge);
 }
 
 .feed__group-text {
@@ -452,6 +447,11 @@ const restoreMarks = async () => {
   font-size: 0.8125rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.feed__group--new .feed__group-sum {
+  font-weight: 600;
+  color: var(--md-on-surface);
 }
 
 .feed__group-meta {
@@ -487,8 +487,8 @@ const restoreMarks = async () => {
 }
 
 .feed__group-count--new {
-  background: var(--new);
-  color: var(--new-ink);
+  background: color-mix(in oklab, var(--new) 22%, transparent);
+  color: var(--md-on-surface);
 }
 
 .feed__children {

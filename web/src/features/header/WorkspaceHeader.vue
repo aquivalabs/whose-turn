@@ -3,7 +3,7 @@ import { useTemplateRef } from 'vue';
 import { computed } from 'vue';
 import { snapshot, counts, openSettings, noDataText, allSourcesDown } from '@/store.ts';
 import { glideThrough } from '@/motion.ts';
-import { GEAR } from '@/lib/icons.ts';
+import { GEAR, ARROW_FORWARD, CLOCK, CROSS, CHECK } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
 import ExtLink from '@/ui/ExtLink.vue';
@@ -12,6 +12,12 @@ const t = useText();
 const DASH = '—';
 const shown = (value: number) => (allSourcesDown.value ? DASH : value);
 const dashTip = computed(() => noDataText('header.noData') || undefined);
+const tiles = computed(() => [
+  { key: 'mine', icon: ARROW_FORWARD, hue: 'var(--md-primary)', label: t('header.tiles.yourMove'), value: shown(counts.value.mine), tip: dashTip.value, lit: counts.value.mine > 0 && !allSourcesDown.value },
+  { key: 'others', icon: CLOCK, hue: 'var(--sys-indigo)', label: t('header.tiles.waitingOnOthers'), value: shown(counts.value.others), tip: dashTip.value, lit: false },
+  { key: 'failing', icon: CROSS, hue: 'var(--sys-red)', label: t('header.tiles.failing'), value: counts.value.failing, tip: undefined, lit: counts.value.failing > 0 },
+  { key: 'done', icon: CHECK, hue: 'var(--sys-green)', label: t('header.tiles.done'), value: shown(counts.value.done), tip: dashTip.value, lit: false },
+]);
 const { collapsed, toggle: flip } = useFold('header');
 const header = useTemplateRef<HTMLElement>('header');
 const toggle = () => glideThrough(header.value, 'height', flip);
@@ -72,26 +78,17 @@ const toggle = () => glideThrough(header.value, 'height', flip);
     </div>
     <div class="workspace-header__tiles">
       <div
+        v-for="tile in tiles"
+        :key="tile.key"
         class="workspace-header__tile"
-        :class="{ 'workspace-header__tile--you': counts.mine > 0 && !allSourcesDown }"
+        :class="{ 'workspace-header__tile--lit': tile.lit, 'workspace-header__tile--hero': tile.key === 'mine' }"
+        :style="{ '--tile-hue': tile.hue }"
       >
-        <span class="workspace-header__tile-label">{{ t('header.tiles.yourMove') }}</span
-        ><strong class="workspace-header__tile-value" :data-tip="dashTip">{{ shown(counts.mine) }}</strong>
-      </div>
-      <div class="workspace-header__tile">
-        <span class="workspace-header__tile-label">{{ t('header.tiles.waitingOnOthers') }}</span
-        ><strong class="workspace-header__tile-value" :data-tip="dashTip">{{ shown(counts.others) }}</strong>
-      </div>
-      <div
-        class="workspace-header__tile"
-        :class="{ 'workspace-header__tile--fail': counts.failing }"
-      >
-        <span class="workspace-header__tile-label">{{ t('header.tiles.failing') }}</span
-        ><strong class="workspace-header__tile-value">{{ counts.failing }}</strong>
-      </div>
-      <div class="workspace-header__tile">
-        <span class="workspace-header__tile-label">{{ t('header.tiles.done') }}</span
-        ><strong class="workspace-header__tile-value" :data-tip="dashTip">{{ shown(counts.done) }}</strong>
+        <span class="workspace-header__tile-icon" aria-hidden="true"
+          ><svg viewBox="0 0 24 24"><path :d="tile.icon" fill="currentColor" /></svg
+        ></span>
+        <strong class="workspace-header__tile-value" :data-tip="tile.tip">{{ tile.value }}</strong>
+        <span class="workspace-header__tile-label">{{ tile.label }}</span>
       </div>
     </div>
   </header>
@@ -158,16 +155,14 @@ const toggle = () => glideThrough(header.value, 'height', flip);
   align-items: center;
   height: 1.5rem;
   padding: 0 0.625rem;
-  border: 1px solid var(--glass-edge);
-  border-radius: 62.4375rem;
-  background: rgb(var(--glass), 0.55);
   color: inherit;
   font-size: 0.75rem;
   font-weight: 500;
+  opacity: 0.8;
 }
 
 .workspace-header__links a:hover {
-  background: rgb(var(--glass), 0.85);
+  opacity: 1;
 }
 
 .workspace-header__tools {
@@ -182,8 +177,12 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 
 .workspace-header__fold,
 .workspace-header__settings {
+  width: 2rem;
+  height: 2rem;
   margin: 0;
-  color: inherit;
+  background: color-mix(in oklab, var(--md-on-primary-container) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--md-on-primary-container) 20%, transparent);
+  color: var(--md-on-primary-container);
 }
 
 .workspace-header__gear {
@@ -199,14 +198,17 @@ const toggle = () => glideThrough(header.value, 'height', flip);
 
 .workspace-header__tile {
   display: grid;
-  align-content: start;
-  gap: 0.25rem;
-  padding: 0.75rem 1rem;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'icon value' 'label label';
+  align-items: center;
+  gap: 0.375rem 0.5rem;
+  padding: 0.625rem 0.875rem 0.75rem;
   border: 1px solid var(--glass-edge);
-  border-radius: var(--md-r-card);
+  border-radius: var(--r-tile);
   background: rgb(var(--glass), calc(var(--glass-a) + 0.1));
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
   color: var(--md-on-surface);
 }
 
@@ -218,35 +220,62 @@ const toggle = () => glideThrough(header.value, 'height', flip);
   }
 }
 
+.workspace-header__tile-icon {
+  display: grid;
+  grid-area: icon;
+  place-items: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--tile-hue) 6%, transparent);
+  color: color-mix(in oklab, var(--tile-hue) 45%, var(--md-on-surface));
+}
+
+.workspace-header__tile-icon svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 .workspace-header__tile-label {
+  grid-area: label;
   color: var(--md-on-surface-variant);
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 600;
   line-height: 1rem;
-  letter-spacing: 0.03em;
 }
 
 .workspace-header__tile-value {
-  min-height: 2.5rem;
-  font-size: 2rem;
-  font-weight: 400;
-  line-height: 2.5rem;
+  grid-area: value;
+  justify-self: end;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 2rem;
+  color: var(--md-on-surface-variant);
   font-variant-numeric: tabular-nums;
 }
 
-.workspace-header__tile--you {
-  border-color: transparent;
-  background: var(--md-primary);
-  color: var(--md-on-primary);
+.workspace-header__tile--lit .workspace-header__tile-value {
+  color: var(--tile-hue);
 }
 
-.workspace-header__tile--you .workspace-header__tile-label {
-  color: var(--md-on-primary);
-  opacity: 0.85;
+/* Your move is the hero: the one big number on the card. */
+.workspace-header__tile--hero {
+  background: rgb(var(--glass), calc(var(--glass-a) + 0.3));
 }
 
-.workspace-header__tile--fail .workspace-header__tile-value {
-  color: var(--md-error);
+.workspace-header__tile--hero .workspace-header__tile-value {
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 2.75rem;
+  color: var(--md-on-surface);
+}
+
+.workspace-header__tile--hero.workspace-header__tile--lit .workspace-header__tile-value {
+  color: var(--tile-hue);
+}
+
+.workspace-header__tile--hero .workspace-header__tile-label {
+  color: var(--md-on-surface);
 }
 
 .workspace-header--collapsed {

@@ -19,6 +19,7 @@ withDefaults(defineProps<{ open: boolean; tag?: 'button' | 'span' }>(), { tag: '
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
+  background: rgb(var(--md-state), 0.06);
   color: var(--md-on-surface-variant);
   cursor: pointer;
   user-select: none;
@@ -39,7 +40,7 @@ withDefaults(defineProps<{ open: boolean; tag?: 'button' | 'span' }>(), { tag: '
 }
 
 .chevron:hover {
-  background: var(--state-hover);
+  background: rgb(var(--md-state), 0.12);
 }
 
 .chevron:focus-visible {

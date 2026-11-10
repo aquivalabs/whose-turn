@@ -58,8 +58,8 @@ const copy = () =>
   height: 1.625rem;
   border-radius: 50%;
   cursor: pointer;
-  color: var(--md-primary);
-  background: rgb(var(--md-state), 0.06);
+  color: var(--ai-ink, var(--md-primary));
+  background: color-mix(in oklab, var(--ai-ink, var(--md-primary)) 7%, transparent);
   vertical-align: middle;
   transition:
     background var(--motion-fast) var(--motion-ease),
@@ -102,7 +102,7 @@ const copy = () =>
 .ai-button--big {
   width: 2rem;
   height: 2rem;
-  background: rgb(var(--glass), 0.7);
+  background: color-mix(in oklab, var(--ai-ink, var(--md-primary)) 7%, rgb(var(--glass), 0.7));
 }
 
 .ai-button--big .ai-button__icon {

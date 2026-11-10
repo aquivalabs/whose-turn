@@ -80,9 +80,9 @@ The four numbers `poll_seconds`, `history_days`, `stale_minutes` and `failing_po
 | `…connectors.linear.workspace`, `team`, `project` | the Linear workspace slug (the part after linear.app/), and optionally one team key or one project name; the personal API key goes to the secret store under the workspace slug |
 | `…connectors.file.path`, `me` | experimental: a local Markdown task list (`- [ ]` items, `##` headings as statuses, `@name` assigns) or a JSON list of tickets, and your name in it; no network, no secret |
 | `…connectors.module.adapter`, `label` | your own source (**+ Add Custom source** in Workspace settings): `label` is its name, `adapter` the file in the `adapters` folder of the data directory, made from the name on save, where a template is created if none exists; its default export extends `Adapter` from `./_whose-turn.mjs` (the [connector contract](docs/mechanisms/connector-contract.md)), plus the fields it declares; a broken one refuses the save; it runs inside the server with the server's rights, so keep only code you wrote or read there; check it with `node scripts/check-adapter.mjs <file>` |
-| `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark Material 3 scheme from it (`lib/palette.mjs`); without it the stylesheet's blue stays |
+| `workspaces[].theme.seed` | optional hex colour, `#rrggbb`; the window derives its light and dark scheme from it (`lib/palette.mjs`): the seed's hue is the workspace accent (keys, the Your move number, links), surfaces stay near-neutral, and the state colours (failing red, warning amber, passing green, merged violet) keep fixed hues the accent is moved away from; without a seed the stylesheet's blue stays |
 | `workspaces[].theme.backdrop` | `false` turns the dot-drawn backdrop animal off for this workspace: the canvas is not rendered at all; default `true`. It is the "Backdrop animal" box under Look in the workspace settings, and `theme` may hold only this key (RMA-300) |
-| `workspaces[].theme.accent` | optional second hex that sets the tertiary hue; defaults to the seed's hue turned by 80 degrees |
+| `workspaces[].theme.accent` | optional second hex that sets the tertiary hue, used for unread marks and Copy for AI; defaults to the seed's hue turned by 120 degrees, to the side farther from the state colours |
 
 A flat config with `github`, `jira` and `rules` at the top level still loads as one workspace named `default`.
 
@@ -239,7 +239,7 @@ Open it at `http://127.0.0.1:<port>/` (or with `open.sh` as an app window). One 
 
 **What's new.** The button above the gear at the bottom of the rail opens a sheet with CHANGELOG.md by version, newest first, the running version marked; a dot on the button says there are versions you have not read since you last opened it, and the "Updated to <version>" chip after an update opens the same sheet.
 
-**Keys.** `/` focuses the feed search, `t` the to-do field, Escape closes a sheet, Alt+Up and Alt+Down move a focused rail icon, drag also reorders. The window follows the system's light or dark scheme, and its tab icon is the open workspace's rail icon.
+**Keys.** `/` focuses the feed search, `t` the to-do field, Escape closes a sheet, Alt+Up and Alt+Down move a focused rail icon, drag also reorders. The window follows the system's light or dark scheme; `?scheme=light` or `?scheme=dark` in the address pins one, so both can be open side by side. Its tab icon is the open workspace's rail icon.
 
 Under the glass an animal drawn in dots follows the workspace; how to add one is in [`docs/mechanisms/species-dsl.md`](docs/mechanisms/species-dsl.md), and `/sheet` draws them all.
 

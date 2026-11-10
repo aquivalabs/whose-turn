@@ -5,10 +5,12 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ## [Unreleased]
 
 ### Added
+- Add `?scheme=light` or `?scheme=dark` to the window's address to show that scheme whatever the system uses, for example to keep both open side by side. RMA-451.
 - Every to-do has a Copy for AI button, like the rows of the other lists. RMA-443.
 - A Help entry at the bottom of the left rail, also opened with `?`, lists the keyboard shortcuts and links to the README. RMA-447.
 
 ### Changed
+- The window is calmer and easier to scan. The workspace colour marks your keys, the Your move number and links, while failing, warning, passing and merged keep their own colours that a workspace colour can no longer imitate. Your move is the largest number at the top and its panel title leads; the other numbers, labels and the new-event pills are quieter. Icons sit in light tinted circles everywhere, the buttons carry soft colours with a thin outline, tables drop the lines between rows, a cut-off list fades at its bottom edge instead of slicing a row, the backdrop animal is a soft wash, and the feed's unread rows show a dot and a bold title. RMA-451.
 - Checkboxes and radio buttons take the workspace's colour instead of the system blue, the Handled chip matches the other chips, and the feed search shows its whole hint at 1280 wide. RMA-450.
 - A failed update now shows its reason next to Retry, and a failed Claude plugin update says it failed instead of looking like a plain offer. RMA-438.
 - When a source is failing, Waiting on others, What changed and the numbers at the top say there is no data instead of showing an empty list or a zero. RMA-437.

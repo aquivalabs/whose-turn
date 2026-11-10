@@ -205,9 +205,9 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       :aria-label="t('rail.addWorkspace')"
       @click.prevent="onAddWorkspace"
     >
-      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
-        <path :d="PLUS" fill="currentColor" />
-      </svg>
+      <span class="rail__glyph" :style="{ '--glyph-hue': 'var(--sys-blue)' }" aria-hidden="true"
+        ><svg viewBox="0 0 24 24" class="rail__gear"><path :d="PLUS" fill="currentColor" /></svg
+      ></span>
       <span class="rail__label">{{ t('rail.addWorkspace') }}</span>
     </a>
     <span class="rail__spacer"></span>
@@ -227,16 +227,16 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       </Motion>
     </AnimatePresence>
     <a class="rail__item" href="#whats-new" :aria-label="t('rail.whatsNew')" @click.prevent="onWhatsNew">
-      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
-        <path :d="GIFT" fill="currentColor" />
-      </svg>
+      <span class="rail__glyph" :style="{ '--glyph-hue': 'var(--sys-orange)' }" aria-hidden="true"
+        ><svg viewBox="0 0 24 24" class="rail__gear"><path :d="GIFT" fill="currentColor" /></svg
+      ></span>
       <span class="rail__label">{{ t('rail.whatsNew') }}</span>
       <span v-if="unseen.length" class="rail__dot" :title="t('rail.unseen')"></span>
     </a>
     <a class="rail__item" href="#help" :aria-label="t('rail.help')" @click.prevent="onHelp">
-      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
-        <path :d="HELP" fill="currentColor" />
-      </svg>
+      <span class="rail__glyph" :style="{ '--glyph-hue': 'var(--sys-teal)' }" aria-hidden="true"
+        ><svg viewBox="0 0 24 24" class="rail__gear"><path :d="HELP" fill="currentColor" /></svg
+      ></span>
       <span class="rail__label">{{ t('rail.help') }}</span>
     </a>
     <a
@@ -247,9 +247,9 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       :aria-expanded="powerOpen"
       @click.prevent="onPower"
     >
-      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
-        <path :d="POWER" fill="currentColor" />
-      </svg>
+      <span class="rail__glyph" :style="{ '--glyph-hue': 'var(--sys-red)' }" aria-hidden="true"
+        ><svg viewBox="0 0 24 24" class="rail__gear"><path :d="POWER" fill="currentColor" /></svg
+      ></span>
       <span class="rail__label">{{ t('rail.power') }}</span>
     </a>
     <PowerMenu v-model:open="powerOpen" :anchor="power" />
@@ -259,9 +259,9 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
       :aria-label="t('rail.settings')"
       @click.prevent="onSettings"
     >
-      <svg viewBox="0 0 24 24" class="rail__gear" aria-hidden="true">
-        <path :d="GEAR" fill="currentColor" />
-      </svg>
+      <span class="rail__glyph" :style="{ '--glyph-hue': 'var(--sys-indigo)' }" aria-hidden="true"
+        ><svg viewBox="0 0 24 24" class="rail__gear"><path :d="GEAR" fill="currentColor" /></svg
+      ></span>
       <span class="rail__label">{{ t('rail.settings') }}</span>
     </a>
   </nav>
@@ -349,13 +349,22 @@ const onDrop = (event: DragEvent, workspace: Workspace) => {
   border-radius: 0.625rem;
 }
 
-.rail__gear {
+.rail__glyph {
   flex: none;
   display: grid;
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  color: var(--md-on-surface-variant);
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--glyph-hue) 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--glyph-hue) 20%, transparent);
+  color: color-mix(in oklab, var(--glyph-hue) 40%, var(--md-on-surface));
+}
+
+.rail__gear {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .rail__label {
