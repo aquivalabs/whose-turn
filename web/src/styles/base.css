@@ -73,7 +73,7 @@
   height: 100%;
   border-radius: var(--r-dashboard);
   pointer-events: none;
-  opacity: 0.75;
+  opacity: 0.65;
 }
 
 .dashboard a {
@@ -522,7 +522,7 @@
   padding: 0 0.125rem;
   color: var(--md-on-surface-variant);
   font-size: 0.6875rem;
-  opacity: 0.75;
+  opacity: 0.65;
   cursor: help;
 }
 
