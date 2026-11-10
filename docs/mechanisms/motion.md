@@ -10,12 +10,12 @@ The window's movement: panels fold, rows slide in and out, dialogs fade, all thr
 
 | File | Role |
 |---|---|
-| `web/src/styles/tokens.css` (its `--motion-*` tokens; the chip size and label colour tokens there belong to the window's look, RMA-441) | `--motion-fast` 320 ms, `--motion-base` 480 ms, `--motion-slow` 640 ms, `--motion-ease` `cubic-bezier(0.33, 1, 0.68, 1)`; 0 ms under reduced motion |
+| `web/src/styles/tokens.css` (its `--motion-*` tokens; the chip size, label colour and corner radius tokens there belong to the window's look, RMA-441 and RMA-451) | `--motion-fast` 320 ms, `--motion-base` 480 ms, `--motion-slow` 640 ms, `--motion-ease` `cubic-bezier(0.33, 1, 0.68, 1)`; 0 ms under reduced motion |
 | `web/src/motion.ts` | the same numbers for JavaScript, the presets `fade`, `rise`, `listed`, `fold`, the spring, `glideThrough` and the `leaving` marker |
 | `web/src/motion-features.ts` | the only door to the heavy part of `motion-v` (the feature set and `animate`), imported lazily |
 | `web/src/features/your-move/RecentlyDone.vue` | the Recently done block: its fold glides |
-| `web/src/ui/Island.vue` | a panel: its fold, its floor and its natural height, and the `:deep(.island__fade)` rule that passes the panel's height to Waiting's list |
-| `web/src/ui/RowScroll.vue` | the "+N more" line scrolls the hidden rows into view smoothly, and at once under reduced motion |
+| `web/src/ui/Island.vue` | a panel: its fold, its floor and its natural height, and the `:deep(.island__fade)` rule that passes the panel's height to Waiting's list; its head icon circle is the look, RMA-451 |
+| `web/src/ui/RowScroll.vue` | the "+N more" line scrolls the hidden rows into view smoothly, and at once under reduced motion; the fade at the list's bottom edge is a still mask, not motion, RMA-451 |
 | `web/src/ui/Modal.vue` | the dialog: the backdrop and the card |
 | `web/src/ui/Swap.vue` | faces that take turns (the empty text and the list, the update chip): the one on show leaves before the other enters |
 | `web/src/test-motion.ts` | the stand-in the Vitest tier uses instead of `motion-v` |
