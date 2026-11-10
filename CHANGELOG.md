@@ -21,6 +21,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 - In Monitor settings the desktop notifications switch now waits for Save like the other fields, and counts as an unsaved change until you save. RMA-446.
 
 ### Fixed
+- The keyboard shortcuts `/`, `t` and `?` now work on any keyboard layout, Russian included; before they did nothing unless the layout was Latin. RMA-452.
 - Clicking elsewhere while editing a to-do now saves your change instead of throwing it away; Escape still cancels. RMA-443.
 - Deleting several to-dos in a row keeps an Undo for each of them, not only the last one. RMA-443.
 - A ticket on hold that is assigned to you now reads "on hold" in the With column of Waiting on others, not "you". RMA-449.

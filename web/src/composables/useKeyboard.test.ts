@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { effectScope, ref, type EffectScope } from 'vue';
-import { useShortcuts, wrapTarget } from './useKeyboard.ts';
+import { shortcutOf, useShortcuts, wrapTarget } from './useKeyboard.ts';
 
 const items = ['first', 'middle', 'last'].map((name) => {
   const element = document.createElement('button');
@@ -83,9 +83,32 @@ describe('useShortcuts', () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
+  test('the slash key on a Russian layout still focuses the feed search', () => {
+    const event = press(outside, '.', { code: 'Slash' });
+
+    expect(document.activeElement).toBe(search);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
   test('nothing is consumed when the target field is not on the page', () => {
     const event = press(outside, 't');
 
     expect(event.defaultPrevented).toBe(false);
   });
+});
+
+test.each([
+  ['/', 'Slash', false, 'search'],
+  ['t', 'KeyT', false, 'todo'],
+  ['?', 'Slash', true, 'help'],
+  ['.', 'Slash', false, 'search'],
+  ['\u0435', 'KeyT', false, 'todo'],
+  [',', 'Slash', true, 'help'],
+] as const)('%s on %s (Shift %s) means %s', (key, code, shiftKey, shortcut) => {
+  expect(shortcutOf(new KeyboardEvent('keydown', { key, code, shiftKey }))).toBe(shortcut);
+});
+
+test('a key with no shortcut on either layout means nothing', () => {
+  expect(shortcutOf(new KeyboardEvent('keydown', { key: 'T', code: 'KeyT', shiftKey: true }))).toBeUndefined();
+  expect(shortcutOf(new KeyboardEvent('keydown', { key: 'a', code: 'KeyA' }))).toBeUndefined();
 });

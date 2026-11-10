@@ -54,26 +54,34 @@ export const useDialogFocus = (covered: Ref<boolean>) => {
   );
 };
 
-const SHORTCUTS: Record<string, string> = {
-  '/': '.feed__search-input',
-  t: '.todos__input',
+type Shortcut = 'search' | 'todo' | 'help';
+const BY_KEY: Record<string, Shortcut> = { '/': 'search', t: 'todo', '?': 'help' };
+const BY_CODE: Record<string, Shortcut> = { Slash: 'search', KeyT: 'todo', 'Shift+Slash': 'help' };
+const FIELDS: Record<Exclude<Shortcut, 'help'>, string> = {
+  search: '.feed__search-input',
+  todo: '.todos__input',
 };
+
+/** The shortcut a key press means: by the character typed, else by the physical key, so any layout works. */
+export const shortcutOf = (event: KeyboardEvent): Shortcut | undefined =>
+  BY_KEY[event.key] ?? BY_CODE[(event.shiftKey ? 'Shift+' : '') + event.code];
 
 /** "/" focuses the feed search, "t" the to-do field and "?" opens Help, unless a field or a dialog has the keyboard. */
 export const useShortcuts = (covered: Ref<boolean>) =>
   onKeyStroke(
-    [...Object.keys(SHORTCUTS), '?'],
+    true,
     (event) => {
+      const shortcut = shortcutOf(event);
       const target = event.target as HTMLElement | null;
-      if (covered.value || event.metaKey || event.ctrlKey || event.altKey || target?.closest?.(TYPING)) {
+      if (!shortcut || covered.value || event.metaKey || event.ctrlKey || event.altKey || target?.closest?.(TYPING)) {
         return;
       }
-      if (event.key === '?') {
+      if (shortcut === 'help') {
         event.preventDefault();
         ui.help = true;
         return;
       }
-      const field = document.querySelector<HTMLElement>(SHORTCUTS[event.key]);
+      const field = document.querySelector<HTMLElement>(FIELDS[shortcut]);
       if (field) {
         event.preventDefault();
         field.focus();
