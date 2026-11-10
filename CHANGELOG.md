@@ -4,6 +4,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.0.0-beta.7] - 2026-11-10
+
 ### Fixed
 
 - The text box in Report a problem and the Handled note is a rounded rectangle again, not a big oval that clips its hint. RMA-460.
