@@ -149,7 +149,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 0.75rem 0.75rem 0.75rem 4.5rem;
+  padding: 0.75rem 0.75rem 0.5rem 4.5rem;
 }
 
 .app__shell > .dashboard {
