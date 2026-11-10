@@ -1,0 +1,7 @@
+{"at": "2026-11-10T13:19:26.156072+00:00", "hash": "31f09709e89e4e6641922ebc6f237b4279ad5743d90d2fbce1c49807512cecaa", "round": 1, "lens": "craft", "verdict": "PASS", "score": 10, "findings": 0, "unique": 0, "refuted": 0}
+{"at": "2026-11-10T13:19:26.156072+00:00", "hash": "31f09709e89e4e6641922ebc6f237b4279ad5743d90d2fbce1c49807512cecaa", "round": 1, "lens": "architecture", "verdict": "PASS", "score": 9, "findings": 2, "unique": 1, "refuted": 0}
+{"at": "2026-11-10T13:19:26.156072+00:00", "hash": "31f09709e89e4e6641922ebc6f237b4279ad5743d90d2fbce1c49807512cecaa", "round": 1, "lens": "tests", "verdict": "PASS", "score": 7, "findings": 1, "unique": 1, "refuted": 0}
+{"at": "2026-11-10T13:19:26.156072+00:00", "hash": "31f09709e89e4e6641922ebc6f237b4279ad5743d90d2fbce1c49807512cecaa", "round": 1, "lens": "docs", "verdict": "PASS", "score": 9, "findings": 1, "unique": 1, "refuted": 0}
+{"at": "2026-11-10T13:19:26.156072+00:00", "hash": "31f09709e89e4e6641922ebc6f237b4279ad5743d90d2fbce1c49807512cecaa", "round": 1, "lens": "security", "verdict": "PASS", "score": 9, "findings": 1, "unique": 0, "refuted": 0}
+{"at": "2026-11-10T13:19:26.156072+00:00", "hash": "31f09709e89e4e6641922ebc6f237b4279ad5743d90d2fbce1c49807512cecaa", "round": 1, "lens": "leak", "verdict": "PASS", "score": 10, "findings": 0, "unique": 0, "refuted": 0}
+{"at": "2026-11-10T13:19:26.156072+00:00", "hash": "31f09709e89e4e6641922ebc6f237b4279ad5743d90d2fbce1c49807512cecaa", "round": 1, "lens": "security-scan", "verdict": "PASS", "score": 10, "findings": 0, "unique": 0, "refuted": 0}
