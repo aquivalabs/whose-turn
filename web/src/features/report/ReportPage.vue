@@ -1,17 +1,24 @@
 <script setup lang="ts">
 // The reporter's page: one issue filed from this machine, its state, and the maintainer's answers. Everything from the server is rendered as text.
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
+import { dark } from '@/scheme.ts';
 import { getJson } from '@/lib/api.ts';
 import { SERVER_DOWN } from '@/lib/problems.ts';
 import { when } from '@/lib/time.ts';
 import { outcomeTone } from '@/lib/moves.ts';
 import { modifier } from '@/lib/bem.ts';
-import type { FiledReport } from '@/lib/types.ts';
+import type { FiledReport, Workspace } from '@/lib/types.ts';
 import { useText } from '@/i18n/index.ts';
 const t = useText();
 const id = new URLSearchParams(location.search).get('id') || '';
 const report = ref<FiledReport | null>(null);
 const note = ref(id ? t('report.loading') : t('report.noId'));
+const workspaces = ref<Workspace[]>([]);
+const theme = computed(() => {
+  const last = localStorage.getItem('wt-ws');
+  const workspace = workspaces.value.find((entry) => entry.id === last) || workspaces.value[0];
+  return workspace?.theme?.[dark.value ? 'dark' : 'light'];
+});
 onMounted(() => {
   if (!id) {
     return;
@@ -25,10 +32,11 @@ onMounted(() => {
     .catch(() => {
       note.value = t('report.serverDown', { problem: SERVER_DOWN });
     });
+  getJson<Workspace[]>('/api/workspaces').then((list) => (workspaces.value = Array.isArray(list) ? list : []), () => {});
 });
 </script>
 <template>
-  <main class="app report-page">
+  <main class="app report-page" :style="theme">
     <p v-if="!report" class="report-page__note">{{ note }}</p>
     <template v-else>
       <header class="report-page__head">

@@ -4,7 +4,7 @@ import { computed } from 'vue';
 import { M as Motion } from 'motion-v';
 import { fade } from '@/motion.ts';
 import { snapshot, now } from '@/store.ts';
-import { toneOf, hasBody, badgeOf, subjectOf, itemLine } from '@/lib/feed.ts';
+import { toneOf, hasBody, subjectOf, itemLine } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
 import ExtLink from '@/ui/ExtLink.vue';
@@ -15,13 +15,13 @@ import { useText } from '@/i18n/index.ts';
 const props = defineProps<{
   item: FeedItem;
   source: ConnectorSummary;
+  badge: string;
   fresh: boolean;
   flash?: boolean;
   expanded: boolean;
 }>();
 const emit = defineEmits<{ open: [item: FeedItem]; toggle: [id: string]; seen: [id: string] }>();
 const t = useText();
-const badge = computed(() => badgeOf(props.source));
 const subject = computed(() => subjectOf(props.item));
 const line = computed(() => itemLine(props.item));
 const tone = computed(() => toneOf(props.item.kind));
@@ -48,10 +48,10 @@ const toggle = () => {
     :id="'feed-' + item.id"
     as="li"
     class="feed-item"
-    :class="{ 'feed-item--new': fresh, 'feed-item--open': open, 'feed-item--flash': flash }"
+    :class="{ 'feed-item--new': fresh, 'feed-item--open': open, 'feed-item--flash': flash, 'feed-item--plain': !badge }"
     @click="seen"
   >
-    <span class="feed-item__icon" :class="modifier('feed-item__icon', iconTone)">{{ badge }}</span>
+    <span v-if="badge" class="feed-item__icon" :class="modifier('feed-item__icon', iconTone)">{{ badge }}</span>
     <div class="feed-item__body">
       <div class="feed-item__top">
         <Chevron
@@ -67,7 +67,7 @@ const toggle = () => {
         <span v-if="item.who" class="feed-item__who">{{ item.who }}</span>
         <span v-if="item.mention" class="at-you">{{ t('feed.item.you') }}</span>
         <span class="feed-item__right">
-          <span class="timestamp feed-item__when" :data-new="t('feed.item.new')">{{ when }}</span>
+          <span class="timestamp feed-item__when">{{ when }}</span>
         </span>
       </div>
       <template v-if="open">
@@ -103,11 +103,12 @@ const toggle = () => {
   background: rgb(var(--md-state), 0.05);
 }
 
+.feed-item--plain {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .feed-item.feed-item--new {
   background: var(--new-bg);
-  box-shadow:
-    inset 4px 0 0 var(--new),
-    inset 0 0 0 1px var(--new-edge);
 }
 
 .feed-item.feed-item--flash {
@@ -223,24 +224,6 @@ const toggle = () => {
 
 .feed-item--new .feed-item__text {
   color: var(--md-on-surface);
-}
-
-.feed-item--new .feed-item__icon {
-  box-shadow: 0 0 0 2px var(--new);
-}
-
-.feed-item--new .feed-item__when::before {
-  content: attr(data-new);
-  display: inline-block;
-  margin-right: 0.375rem;
-  padding: 0.0625rem 0.375rem;
-  border-radius: 0.25rem;
-  background: var(--new);
-  color: var(--new-ink);
-  font-size: 0.625rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  vertical-align: 0.0625rem;
 }
 
 .feed-item:not(.feed-item--new) .feed-item__body {

@@ -97,7 +97,7 @@ const note = computed(() =>
                 class="age"
                 :class="{ 'age--old': since.hours >= 72 }"
                 :data-tip="t('waiting.row.since', { status: row.status, when: when(row.status_since) })"
-                >{{ since.text }}</span
+                >{{ t('waiting.row.for', { age: since.text }) }}</span
               >
             </td>
             <td v-if="showReason" class="hide-narrow">

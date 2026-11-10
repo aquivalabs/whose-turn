@@ -79,3 +79,19 @@ export const itemLine = (item: FeedItem) =>
 
 /** The source badge: the badge the connector's type declares, else the initials of the connector's label, as the rail does for workspaces (RMA-137, RMA-167, RMA-429). */
 export const badgeOf = (source: ConnectorSummary) => source.badge || glyphOf(source.label);
+
+/** Each source's badge by id: none with a single source, and badges that would repeat fall back to the label's initials, then get a number. RMA-450. */
+export const badgesFor = (sources: ConnectorSummary[]): Record<string, string> => {
+  if (sources.length < 2) {
+    return {};
+  }
+  const count = (list: string[], value: string) => list.filter((entry) => entry === value).length;
+  const own = sources.map(badgeOf);
+  const first = sources.map((source, index) => (count(own, own[index]) > 1 ? glyphOf(source.label) : own[index]));
+  return Object.fromEntries(
+    sources.map((source, index) => {
+      const badge = first[index];
+      return [source.id, count(first, badge) > 1 ? `${badge.slice(0, 1)}${count(first.slice(0, index), badge) + 1}` : badge];
+    }),
+  );
+};

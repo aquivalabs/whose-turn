@@ -18,7 +18,7 @@ const source = { id: 'tracker', type: 'jira', label: 'Tracker' };
 
 test('expanding a fresh comment asks the feed to toggle it and mark it seen', async () => {
   const { emitted } = render(FeedItemRow, {
-    props: { item, source, fresh: true, expanded: false },
+    props: { item, source, badge: 'TR', fresh: true, expanded: false },
   });
 
   await fireEvent.click(screen.getByRole('button', { name: 'Expand' }));
@@ -29,22 +29,22 @@ test('expanding a fresh comment asks the feed to toggle it and mark it seen', as
 
 test('a read item asks for nothing when clicked, and shows its body only when expanded', async () => {
   const { emitted, rerender } = render(FeedItemRow, {
-    props: { item, source, fresh: false, expanded: false },
+    props: { item, source, badge: 'TR', fresh: false, expanded: false },
   });
 
   await fireEvent.click(screen.getByText('PROJ-7').closest('li')!);
 
   expect(emitted().seen).toBeUndefined();
   expect(screen.queryByText('please look')).toBeNull();
-  await rerender({ item, source, fresh: false, expanded: true });
+  await rerender({ item, source, badge: 'TR', fresh: false, expanded: true });
   expect(screen.getByText('please look')).toBeTruthy();
 });
 
 test('only a fresh item carries the new styling', async () => {
-  const { rerender } = render(FeedItemRow, { props: { item, source, fresh: false, expanded: false } });
+  const { rerender } = render(FeedItemRow, { props: { item, source, badge: 'TR', fresh: false, expanded: false } });
   const row = () => screen.getByText('PROJ-7').closest('li')!;
 
   expect(row().classList.contains('feed-item--new')).toBe(false);
-  await rerender({ item, source, fresh: true, expanded: false });
+  await rerender({ item, source, badge: 'TR', fresh: true, expanded: false });
   expect(row().classList.contains('feed-item--new')).toBe(true);
 });

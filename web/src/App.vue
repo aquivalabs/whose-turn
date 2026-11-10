@@ -97,7 +97,9 @@ onMounted(() => {
       <StatusBar :inert="covered" @report="ui.feedback = true" />
       <AnimatePresence>
         <Motion v-if="alerts.length" v-bind="fade" class="alert" :inert="covered">
-          {{ alerts.join('  ·  ') }}
+          <ul class="alert__list">
+            <li v-for="alert in alerts" :key="alert">{{ alert }}</li>
+          </ul>
           <button type="button" class="alert__action" @click="openSettings()">
             {{ t('common.app.openWorkspaceSettings') }}
           </button>

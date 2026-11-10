@@ -6,6 +6,7 @@ import { glideThrough } from '@/motion.ts';
 import { GEAR, ARROW_FORWARD, CLOCK, CROSS, CHECK } from '@/lib/icons.ts';
 import { useFold } from '@/composables/useFold.ts';
 import AiButton from '@/ui/AiButton.vue';
+import Chevron from '@/ui/Chevron.vue';
 import ExtLink from '@/ui/ExtLink.vue';
 import { useText } from '@/i18n/index.ts';
 const t = useText();
@@ -65,16 +66,13 @@ const toggle = () => glideThrough(header.value, 'height', flip);
           <path :d="GEAR" fill="currentColor" />
         </svg>
       </button>
-      <button
-        type="button"
-        class="fold-toggle workspace-header__fold"
-        :class="{ 'fold-toggle--folded': collapsed }"
+      <Chevron
+        class="workspace-header__fold"
+        :open="!collapsed"
         :aria-label="t('header.fold')"
         :data-tip="t('header.foldTip')"
         @click.stop="toggle"
-      >
-        ▾
-      </button>
+      />
     </div>
     <div class="workspace-header__tiles">
       <div

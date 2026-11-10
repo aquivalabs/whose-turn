@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { reactive } from 'vue';
-import { groupFeed, isNew, kindsLabel, moveKeys, matchesQuery, badgeOf, subjectOf, itemLine } from '../web/src/lib/feed.ts';
+import { groupFeed, isNew, kindsLabel, moveKeys, matchesQuery, badgeOf, badgesFor, subjectOf, itemLine } from '../web/src/lib/feed.ts';
 import { yourRows, waitingRows, recentlyDone, statusTone } from '../web/src/lib/moves.ts';
 import { topLayer } from '../web/src/lib/layers.ts';
 import { modifier } from '../web/src/lib/bem.ts';
@@ -232,4 +232,11 @@ test('a BEM modifier names the block and the tone, and an empty tone adds no cla
   assert.equal(modifier('pill', 'bad'), 'pill--bad');
   assert.equal(modifier('feed-item__icon', 'jira'), 'feed-item__icon--jira');
   assert.equal(modifier('pill', ''), '');
+});
+
+test('badgesFor shows no badge with one source, and never the same badge twice (RMA-450)', () => {
+  assert.deepEqual(badgesFor([{ id: 'a', type: 'demo', label: 'Demo' }]), {});
+  assert.deepEqual(badgesFor([{ id: 'a', type: 'github', label: 'GitHub', badge: 'GH' }, { id: 'b', type: 'jira', label: 'Jira', badge: 'JI' }]), { a: 'GH', b: 'JI' });
+  assert.deepEqual(badgesFor([{ id: 'a', type: 'github', label: 'work', badge: 'GH' }, { id: 'b', type: 'github', label: 'home', badge: 'GH' }]), { a: 'WO', b: 'HO' });
+  assert.deepEqual(badgesFor([{ id: 'a', type: 'jira', label: 'Jira', badge: 'JI' }, { id: 'b', type: 'jira', label: 'Jira', badge: 'JI' }]), { a: 'J1', b: 'J2' });
 });

@@ -22,6 +22,7 @@ export default {
     approvedBy: ' approved by ',
     changesBy: ' changes requested by ',
     since: '{status} since {when}',
+    for: 'for {age}',
     fullReason: 'Full reason',
     full: 'full',
   },

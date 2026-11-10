@@ -105,3 +105,23 @@ test('a server that does not answer is named, with what to do', async () => {
 
   expect(await screen.findByText(`${SERVER_DOWN}; reload this page once it is back.`)).toBeTruthy();
 });
+
+test('the page takes the colours of the workspace the window last opened (RMA-450)', async () => {
+  localStorage.setItem('wt-ws', 'atlas');
+  vi.mocked(getJson).mockImplementation((url: string) =>
+    Promise.resolve(
+      url.startsWith('/api/workspaces')
+        ? [
+            { id: 'northwind', theme: { light: { '--md-primary': '#aa0000' }, dark: { '--md-primary': '#ff8888' } } },
+            { id: 'atlas', theme: { light: { '--md-primary': '#00aa00' }, dark: { '--md-primary': '#88ff88' } } },
+          ]
+        : { report: report() },
+    ) as ReturnType<typeof getJson>,
+  );
+
+  await open('?id=RMA-900');
+
+  await screen.findByRole('heading', { name: 'The chip wraps' });
+  await vi.waitFor(() => expect(document.querySelector<HTMLElement>('.report-page')?.style.getPropertyValue('--md-primary')).toMatch(/#00aa00|#88ff88/));
+  localStorage.clear();
+});

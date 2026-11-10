@@ -641,8 +641,14 @@
   color: var(--md-on-error-container);
 }
 
+.alert__list {
+  margin: 0 0 0.25rem;
+  padding: 0;
+  list-style: none;
+}
+
 .alert__action {
-  margin-left: 0.5rem;
+  margin-left: 0;
   color: inherit;
   font-weight: 600;
   text-decoration: underline;

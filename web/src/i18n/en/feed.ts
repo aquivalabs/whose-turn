@@ -38,6 +38,5 @@ export default {
     you: "{'@'}you",
     openFormatted: 'Open formatted',
     openIn: 'Open in {source}',
-    new: 'NEW',
   },
 };

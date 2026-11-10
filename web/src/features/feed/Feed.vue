@@ -4,7 +4,7 @@ import { BOLT } from '@/lib/icons.ts';
 import { computed, nextTick, ref, watch } from 'vue';
 import { refAutoReset, watchDebounced } from '@vueuse/core';
 import { snapshot, ui, now, setMarks, tellProblem, holdScroller, noDataText } from '@/store.ts';
-import { isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
+import { badgesFor, isNew, matchesQuery, groupFeed, kindsLabel, moveKeys } from '@/lib/feed.ts';
 import type { FeedGroup } from '@/lib/feed.ts';
 import type { ConnectorSummary, FeedItem } from '@/lib/types.ts';
 import { ago } from '@/lib/time.ts';
@@ -32,6 +32,7 @@ const sources = computed(() =>
   Object.fromEntries(connectors.value.map((connector) => [connector.id, connector])),
 );
 const sourceOf = (id: string): ConnectorSummary => sources.value[id] || { id, type: id, label: id };
+const badges = computed(() => badgesFor(connectors.value));
 const filters = computed(() =>
   connectors.value.length > 1
     ? [{ id: 'all', label: t('feed.filters.all') }].concat(
@@ -235,6 +236,7 @@ const restoreMarks = async () => {
               :key="item.id"
               :item="item"
               :source="sourceOf(item.source)"
+              :badge="badges[item.source] ?? ''"
               :fresh="fresh(item)"
               :flash="flashed === item.id"
               :expanded="ui.open.has(item.id)"
@@ -255,6 +257,7 @@ const restoreMarks = async () => {
           :key="item.id"
           :item="item"
           :source="sourceOf(item.source)"
+          :badge="badges[item.source] ?? ''"
           :fresh="fresh(item)"
           :flash="flashed === item.id"
           :expanded="ui.open.has(item.id)"
