@@ -73,7 +73,7 @@
   height: 100%;
   border-radius: var(--r-dashboard);
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.75;
 }
 
 .dashboard a {
