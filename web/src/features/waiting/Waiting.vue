@@ -145,12 +145,12 @@ const note = computed(() =>
 }
 
 .waiting__col--ticket {
-  width: 24%;
+  width: 22%;
 }
 
 .waiting__col--status,
 .waiting__col--with {
-  width: 5.5rem;
+  width: 5rem;
 }
 
 .waiting__col--pr {
