@@ -19,4 +19,9 @@ test('at 1100 wide no Waiting on others head is cut and a long feed key stops be
     }).length,
   );
   expect(overlaps).toBe(0);
+
+  const cutShortKeys = await page.$$eval('.feed__group-ticket', (keys) =>
+    keys.filter((key) => /^[A-Z]+-\d+$/.test(key.textContent?.trim() ?? '') && key.scrollWidth > key.clientWidth).length,
+  );
+  expect(cutShortKeys).toBe(0);
 });

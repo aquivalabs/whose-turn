@@ -438,8 +438,8 @@ const restoreMarks = async () => {
 }
 
 .feed__group-ticket {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: none;
+  max-width: 100%;
   overflow: hidden;
   font-weight: 600;
   text-overflow: ellipsis;
