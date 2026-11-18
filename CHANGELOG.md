@@ -4,6 +4,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.0.0-beta.8] - 2026-11-18
+
 ### Fixed
 
 - When Open as app does not bring up the window within a few seconds, the monitor opens in a browser tab and says so, instead of silently showing nothing. RMA-463.
