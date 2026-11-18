@@ -16,9 +16,9 @@ test('the window size is stored per data dir, read back, and bad values are refu
   const { server, port, url, post } = await startTestApi({ reports: {}, dataDir, opener: (call) => opened.push(call) });
   try {
     // Exercise + Verify
-    assert.deepEqual(await (await fetch(url('/api/window'))).json(), {});
+    assert.deepEqual(await (await fetch(url('/api/window'))).json(), { windows: 0 });
     assert.equal((await post('/api/window', { width: 1200, height: 800 })).status, 200);
-    assert.deepEqual(await (await fetch(url('/api/window'))).json(), { width: 1200, height: 800 });
+    assert.deepEqual(await (await fetch(url('/api/window'))).json(), { width: 1200, height: 800, windows: 0 });
     assert.deepEqual(JSON.parse(readFileSync(join(dataDir, 'window.json'), 'utf8')), { width: 1200, height: 800 });
     for (const bad of [{ width: 'wide', height: 800 }, { width: 100, height: 800 }, { width: 1200 }]) {
       const response = await post('/api/window', bad);
@@ -26,7 +26,12 @@ test('the window size is stored per data dir, read back, and bad values are refu
       assert.equal((await response.json()).error.status, 'INVALID_ARGUMENT');
     }
     assert.equal((await post('/api/window', { width: 1000, height: 700 }, { Origin: 'http://evil.example' })).status, 403);
-    assert.deepEqual(await (await fetch(url('/api/window'))).json(), { width: 1200, height: 800 });
+    assert.deepEqual(await (await fetch(url('/api/window'))).json(), { width: 1200, height: 800, windows: 0 });
+
+    const controller = new AbortController();
+    await fetch(url('/api/stream'), { signal: controller.signal });
+    assert.equal((await (await fetch(url('/api/window'))).json()).windows, 1);
+    controller.abort();
 
     assert.equal((await post('/api/open', { mode: 'app' })).status, 200);
     assert.equal((await post('/api/open', { mode: 'browser' })).status, 200);
@@ -63,9 +68,19 @@ const stub = (name, body) => {
 const argLog = join(stubDir, 'args.log');
 const logArgs = (name) => `echo "${name} $*" >> "${argLog}"`;
 
-const run = ({ system, chrome = true, remembered = '', args = [], linuxBrowser = '' }) => {
+const replies = join(stubDir, 'replies');
+const calls = join(stubDir, 'calls');
+
+const run = ({ system, chrome = true, remembered = '', answers = [], args = [], linuxBrowser = '' }) => {
+  const lines = answers.length ? answers : remembered ? [remembered] : [];
+  writeFileSync(replies, lines.map((line) => `${line}\n`).join(''));
+  writeFileSync(calls, '0');
   stub('uname', `echo ${system}`);
-  stub('curl', remembered ? `echo '${remembered}'` : 'exit 7');
+  stub('sleep', ':');
+  stub('curl', `n=$(< "${calls}"); echo $((n + 1)) > "${calls}"\nlast=$(wc -l < "${replies}")\n[ "$last" -eq 0 ] && exit 7\nline=$((n + 1 > last ? last : n + 1))\nhead -n "$line" "${replies}" | tail -n 1`);
+  for (const tool of ['wc', 'head', 'tail']) {
+    stub(tool, `exec /usr/bin/${tool} "$@"`);
+  }
   stub('open', `if [ "$1" = -Ra ]; then ${chrome ? 'exit 0' : 'exit 1'}; fi\n${logArgs('open')}`);
   stub('xdg-open', logArgs('xdg-open'));
   for (const name of ['google-chrome', 'chromium', 'chromium-browser', 'microsoft-edge']) {
@@ -75,8 +90,14 @@ const run = ({ system, chrome = true, remembered = '', args = [], linuxBrowser =
     stub(linuxBrowser, logArgs(linuxBrowser));
   }
   writeFileSync(argLog, '');
-  execFileSync('/bin/bash', [join(appDir, 'open.sh'), ...args], { env: { PATH: stubDir, WHOSE_TURN_PORT: String(freePort) } });
-  return readFileSync(argLog, 'utf8').trim();
+  let status = 0;
+  try {
+    execFileSync('/bin/bash', [join(appDir, 'open.sh'), ...args], { env: { PATH: stubDir, WHOSE_TURN_PORT: String(freePort), WHOSE_TURN_OPEN_WAIT: '1' }, stdio: 'pipe' });
+  } catch (error) {
+    status = error.status;
+  }
+  const log = readFileSync(argLog, 'utf8').trim();
+  return answers.length ? { log, status } : log;
 };
 
 test('open.sh opens the app window on macOS at the remembered size, a tab with --browser or without Chrome', () => {
@@ -84,6 +105,17 @@ test('open.sh opens the app window on macOS at the remembered size, a tab with -
   assert.equal(run({ system: 'Darwin', remembered: '{"width":1200,"height":800}' }), `open -na Google Chrome --args --app=http://127.0.0.1:${freePort}/?mode=app --window-size=1200,800`);
   assert.equal(run({ system: 'Darwin', args: ['--browser'] }), `open http://127.0.0.1:${freePort}/`);
   assert.equal(run({ system: 'Darwin', chrome: false }), `open http://127.0.0.1:${freePort}/`);
+});
+
+test('open.sh waits for the app window to connect, and opens a tab and exits 1 when it never does', () => {
+  // Setup
+  const app = `open -na Google Chrome --args --app=http://127.0.0.1:${freePort}/?mode=app --window-size=1500,950`;
+  // Exercise
+  const connected = run({ system: 'Darwin', answers: ['{"windows":1}', '{"windows":1}', '{"windows":2}'] });
+  const missing = run({ system: 'Darwin', answers: ['{"windows":1}'] });
+  // Verify
+  assert.deepEqual(connected, { log: app, status: 0 });
+  assert.deepEqual(missing, { log: `${app}\nopen http://127.0.0.1:${freePort}/`, status: 1 });
 });
 
 test('open.sh on Linux uses the first Chrome or Edge on PATH, else xdg-open', async () => {
