@@ -13,14 +13,15 @@ export default class Board extends Adapter {
   /** @param {import('../../../types/connector.js').PollContext} context */
   async poll({ settings, secret }) {
     const token = await secret();
+    const hoursAgo = (hours) => new Date(Date.now() - hours * 3600000).toISOString();
     /** @type {(key: string, summary: string, status: string, category: Ticket['status_category']) => Ticket} */
     const card = (key, summary, status, category) => ({
-      key, summary, status, status_category: category, assignee: 'Alex Doe', updated: '2026-11-02T10:00:00Z', url: `https://board.example/${settings.board}/${key}`,
+      key, summary, status, status_category: category, assignee: 'Alex Doe', updated: hoursAgo(2), url: `https://board.example/${settings.board}/${key}`,
     });
     return {
       me: 'Alex Doe',
       tickets: [card('BRD-1', 'Draft the onboarding email', 'Doing', 'indeterminate'), card('BRD-2', 'Pick the venue', 'Done', 'done')],
-      comments: [{ id: 'k1', key: 'BRD-1', at: '2026-11-02T11:00:00Z', author: 'Sam Lead', body: '@Alex Doe can you share the draft today?', url: 'https://board.example/c/k1' }],
+      comments: [{ id: 'k1', key: 'BRD-1', at: hoursAgo(1), author: 'Sam Lead', body: '@Alex Doe can you share the draft today?', url: 'https://board.example/c/k1' }],
       errors: token ? {} : { auth: 'no token' },
     };
   }
