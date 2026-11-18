@@ -6,17 +6,18 @@ base=http://127.0.0.1:$port
 width=1500
 height=950
 
-windows() {
-  local reply
-  reply=$(curl -fs --max-time 1 "$base/api/window" 2>/dev/null)
-  [[ $reply =~ \"windows\":([0-9]+) ]] && echo "${BASH_REMATCH[1]}"
+window() {
+  curl -fs --max-time 1 "$base/api/window" 2>/dev/null
 }
 
-size=$(curl -fs --max-time 1 "$base/api/window" 2>/dev/null)
+count() {
+  [[ $1 =~ \"windows\":([0-9]+) ]] && echo "${BASH_REMATCH[1]}"
+}
+
+size=$(window)
 [[ $size =~ \"width\":([0-9]+) ]] && width=${BASH_REMATCH[1]}
 [[ $size =~ \"height\":([0-9]+) ]] && height=${BASH_REMATCH[1]}
-before=
-[[ $size =~ \"windows\":([0-9]+) ]] && before=${BASH_REMATCH[1]}
+before=$(count "$size")
 
 tab() {
   if [[ $(uname) == Darwin ]]; then open "$base/"; else xdg-open "$base/"; fi
@@ -26,7 +27,7 @@ confirm() {
   [[ -z $before ]] && exit 0
   local wait=${WHOSE_TURN_OPEN_WAIT:-10} tries now
   for ((tries = 0; tries < wait * 2; tries += 1)); do
-    now=$(windows)
+    now=$(count "$(window)")
     [[ -n $now && $now -gt $before ]] && exit 0
     sleep 0.5
   done
