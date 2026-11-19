@@ -57,6 +57,12 @@ watch(
     feedState.query = '';
   },
 );
+// RMA-472: one ticket and one event open at a time, so nothing piles up to fold one by one.
+const openOnly = (group: string) => {
+  feedState.openGroups.clear();
+  feedState.openGroups.add(group);
+  ui.open.clear();
+};
 const FOCUS_MS = 2500;
 const flashed = refAutoReset('', FOCUS_MS);
 watch(
@@ -69,7 +75,7 @@ watch(
     }
     feedState.source = 'all';
     feedState.query = '';
-    feedState.openGroups.add(item.key || item.ref || item.id);
+    openOnly(item.key || item.ref || item.id);
     flashed.value = id;
     await nextTick();
     document.getElementById(`feed-${id}`)?.scrollIntoView({ block: 'center' });
@@ -97,15 +103,21 @@ const groups = computed(() => {
     open: feedState.openGroups.has(group.id) || Boolean(feedState.query),
   }));
 });
-const toggleMember = (members: Set<string>, id: string) => {
-  if (members.has(id)) {
-    members.delete(id);
-  } else {
-    members.add(id);
+const toggleGroup = (group: FeedGroup) => {
+  if (!feedState.openGroups.has(group.id)) {
+    openOnly(group.id);
+    return;
+  }
+  feedState.openGroups.delete(group.id);
+  group.items.forEach((item) => ui.open.delete(item.id));
+};
+const toggleItem = (id: string) => {
+  const wasOpen = ui.open.has(id);
+  ui.open.clear();
+  if (!wasOpen) {
+    ui.open.add(id);
   }
 };
-const toggleGroup = (group: FeedGroup) => toggleMember(feedState.openGroups, group.id);
-const toggleItem = (id: string) => toggleMember(ui.open, id);
 const markSeen = (id: string) => setMarks({ seen: [id] }).then(tellProblem);
 const problem = ref('');
 useClearOnReconnect(() => {

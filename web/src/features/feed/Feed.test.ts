@@ -117,3 +117,68 @@ test('the panel hands its list element to the store and takes it back when it go
   unmount();
   expect(scrollers.feed).toBeNull();
 });
+
+const accordionFeed = [
+  { id: 'a1', source: 's', key: 'NW-1', kind: 'comment', at: '2026-11-02T10:00:00Z', body: 'First comment' },
+  { id: 'a2', source: 's', key: 'NW-1', kind: 'comment', at: '2026-11-02T10:05:00Z', body: 'Second comment' },
+  { id: 'b1', source: 's', key: 'NW-2', kind: 'comment', at: '2026-11-02T11:00:00Z', body: 'Other ticket' },
+] as FeedItem[];
+
+const freshFeedState = (view: 'ticket' | 'flat') => {
+  const state = useFeedState();
+  state.query = '';
+  state.view = view;
+  state.openGroups.clear();
+  ui.open.clear();
+  return state;
+};
+
+test('opening a ticket closes the open one and the events open in it (RMA-472)', async () => {
+  // Setup
+  snapshot.feed = accordionFeed;
+  const state = freshFeedState('ticket');
+  state.openGroups.add('NW-1');
+  ui.open.add('a1');
+  render(Feed);
+
+  // Exercise
+  await fireEvent.click(await screen.findByRole('button', { name: 'Fold NW-2' }));
+
+  // Verify
+  expect([...state.openGroups]).toEqual(['NW-2']);
+  expect(ui.open.size).toBe(0);
+});
+
+test('folding a ticket folds its events, so it opens with them closed next time (RMA-472)', async () => {
+  // Setup
+  snapshot.feed = accordionFeed;
+  const state = freshFeedState('ticket');
+  state.openGroups.add('NW-1');
+  ui.open.add('a2');
+  render(Feed);
+
+  // Exercise
+  await fireEvent.click(await screen.findByRole('button', { name: 'Fold NW-1' }));
+
+  // Verify
+  expect(state.openGroups.size).toBe(0);
+  expect(ui.open.has('a2')).toBe(false);
+});
+
+test('expanding an event folds the one expanded before, and a second click folds it (RMA-472)', async () => {
+  // Setup
+  snapshot.feed = accordionFeed;
+  freshFeedState('flat');
+  render(Feed);
+  const expand = async (index: number) => fireEvent.click((await screen.findAllByRole('button', { name: /Expand|Collapse/ }))[index]);
+
+  // Exercise + Verify
+  await expand(0);
+  expect(ui.open.size).toBe(1);
+  const first = [...ui.open][0];
+  await expand(1);
+  expect(ui.open.size).toBe(1);
+  expect(ui.open.has(first)).toBe(false);
+  await fireEvent.click(await screen.findByRole('button', { name: 'Collapse' }));
+  expect(ui.open.size).toBe(0);
+});
