@@ -156,9 +156,10 @@ const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
   const last = others[others.length - 1];
   const myLast = mine.length ? mine[mine.length - 1].at : '';
   const key = keyOf(pr.title);
+  const requested = (pr.requested_reviewers || []).map((user) => user.login);
   const subject = { pr: prRef(repo, number), key, title: pr.title };
   const row = {
-    pr: number, key, title: pr.title, base: pr.base.ref, state, review: reviewDecision(reviews, (pr.requested_reviewers || []).map((user) => user.login)), checks: checks.state, merged_at: pr.merged_at || '',
+    pr: number, key, title: pr.title, base: pr.base.ref, state, review: reviewDecision(reviews, requested), checks: checks.state, merged_at: pr.merged_at || '',
     updated_at: pr.updated_at, url: pr.html_url,
     reviewers: state === 'OPEN' ? reviewersOf(pr, reviews, { me, bots }) : [],
     last_comment_by: last ? last.who : '', last_comment_at: last ? last.at : '', last_comment_url: last ? last.url : '', last_comment: last ? oneline(last.body, 160) : '',
