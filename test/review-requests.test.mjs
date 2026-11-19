@@ -4,14 +4,17 @@ import github, { reviewDecision } from '../connectors/github.mjs';
 
 const SINCE = '2026-10-01T00:00:00Z';
 
-const fakeGh = ({ reviewItems = [], notes = [] } = {}) => {
+const fakeGh = ({ reviewItems = [], prItems = [], notes = [], replies = {} } = {}) => {
   const asked = [];
   const http = {
     fetchJson: async (url) => {
       const { pathname, searchParams } = new URL(url);
       asked.push(decodeURIComponent(`${pathname}?${searchParams}`).replace(/\+/g, ' '));
       if (pathname === '/search/issues') {
-        return { items: (searchParams.get('q') || '').includes('user-review-requested:') ? reviewItems : [] };
+        return { items: (searchParams.get('q') || '').includes('user-review-requested:') ? reviewItems : prItems };
+      }
+      if (pathname in replies) {
+        return replies[pathname];
       }
       if (pathname === '/notifications') {
         return notes;
@@ -91,4 +94,18 @@ test('an approver asked to review again no longer counts as approved, and neithe
   assert.equal(reviewDecision(reviews), 'APPROVED');
   assert.equal(reviewDecision(reviews, ['sam']), '');
   assert.equal(reviewDecision(changes, ['sam']), 'APPROVED');
+});
+
+test('a polled PR whose approver is requested again reads not approved (RMA-468)', async () => {
+  // Setup
+  const pull = { number: 5, title: 'PROJ-5 x', state: 'open', merged_at: null, base: { ref: 'main' }, head: { sha: 'abc' }, user: { login: 'pat' }, updated_at: '2026-11-05T10:00:00Z', html_url: 'https://github.com/acme/app/pull/5' };
+  const approval = [{ user: { login: 'sam' }, state: 'APPROVED', submitted_at: '2026-11-05T09:00:00Z', html_url: 'https://github.com/acme/app/pull/5#r', body: '' }];
+  const replies = (requested) => ({ '/repos/acme/app/pulls/5': { ...pull, requested_reviewers: requested }, '/repos/acme/app/pulls/5/reviews': approval });
+  const item = { number: 5, updated_at: pull.updated_at };
+  // Exercise
+  const approved = await pollOnce(fakeGh({ prItems: [item], replies: replies([]) }).http);
+  const asked = await pollOnce(fakeGh({ prItems: [item], replies: replies([{ login: 'sam' }]) }).http);
+  // Verify
+  assert.equal(approved.prs[0].review, 'APPROVED');
+  assert.equal(asked.prs[0].review, '');
 });
