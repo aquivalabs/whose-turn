@@ -3,7 +3,7 @@ import { toIsoUtc, mapLimit } from '../lib/text.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
 import { STATUS_CATEGORIES } from '../lib/contract.mjs';
 import { Adapter } from '../lib/adapter.mjs';
-import { SetupError, describeFailure } from '../lib/failure.mjs';
+import { SetupError, partFailed } from '../lib/failure.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-jira';
 
@@ -133,15 +133,10 @@ const poll = async ({ settings, http, secrets, cache, historyDays }) => {
   const jql = settings.jql || '(assignee = currentUser() AND statusCategory != Done) OR (assignee was currentUser() AND updated >= -30d) ORDER BY updated DESC';
   const search = (query) => api('/rest/api/3/search/jql', { jql: query, maxResults: 100, fields: ['summary', 'status', 'assignee', 'updated', 'comment', 'labels'] });
   const mentionQuery = settings.mentions === false ? '' : mentionsJql(meId, historyDays);
-  const errors = /** @type {Record<string, string>} */ ({});
-  const failures = /** @type {Record<string, ReturnType<typeof describeFailure>>} */ ({});
-  const fail = (part, error) => {
-    errors[part] = `${error.name}: ${error.message}`;
-    failures[part] = describeFailure(error);
-  };
+  const failed = { errors: {}, failures: {} };
   const [result, mentioned] = await Promise.all([
     search(jql),
-    mentionQuery ? search(mentionQuery).then((found) => found.issues || [], (error) => { fail('mentions', error); return []; }) : [],
+    mentionQuery ? search(mentionQuery).then((found) => found.issues || [], (error) => { partFailed(failed, 'mentions', error); return []; }) : [],
   ]);
   const held = new Set((result.issues || []).map((issue) => issue.key));
   const tickets = [];
@@ -169,10 +164,10 @@ const poll = async ({ settings, http, secrets, cache, historyDays }) => {
       ticket.status_change = await statusEntered(api, cache.statusEntered, ticket.key, ticket.updated, ticket.status);
     } catch (error) {
       ticket.status_change = null;
-      fail('changelog', error);
+      partFailed(failed, 'changelog', error);
     }
   });
-  return { me: meName, tickets, comments, ticket_base: `${base}/browse/`, errors, failures };
+  return { me: meName, tickets, comments, ticket_base: `${base}/browse/`, ...failed };
 };
 
 /** The Jira Cloud source under connector contract 1. */
@@ -182,6 +177,7 @@ class Jira extends Adapter {
   label = 'Jira';
   capabilities = ['tickets', 'comments'];
   fields = FIELDS;
+  parts = ['mentions', 'changelog'];
   endpointKey = 'base';
   tone = 'jira';
 
