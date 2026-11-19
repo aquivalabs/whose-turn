@@ -4,6 +4,10 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+
+- A pull request whose check passed is no longer shown with failing checks just because a second run of the same check on the same commit failed, matching what GitHub's merge box says. RMA-466.
+
 ## [1.0.0-beta.8] - 2026-11-18
 
 ### Fixed
