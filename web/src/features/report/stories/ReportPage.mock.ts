@@ -1,7 +1,7 @@
 import type { FiledReport, Workspace } from '@/lib/types.ts';
+import { demoWorkspace, hoursAgo } from '@/stories/fixtures.ts';
 
-const hour = 60 * 60 * 1000;
-const at = (hoursAgo: number) => new Date(Date.now() - hoursAgo * hour).toISOString();
+const at = hoursAgo;
 
 const filed: FiledReport = {
   id: 'PROJ-12',
@@ -18,7 +18,7 @@ const filed: FiledReport = {
   ],
 };
 
-const workspaces: Workspace[] = [{ id: 'demo', name: 'Demo', connectors: [], links: [], key_pattern: '', theme: null }];
+const workspaces: Workspace[] = [demoWorkspace({ connectors: [], key_pattern: '' })];
 
 /** The server replies behind the page, one per state of the story. */
 export const reportPageStorybookMock = {

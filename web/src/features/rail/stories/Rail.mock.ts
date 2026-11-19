@@ -1,20 +1,12 @@
-import type { Snapshot, Workspace } from '@/lib/types.ts';
+import type { Snapshot } from '@/lib/types.ts';
+import { demoWorkspace } from '@/stories/fixtures.ts';
 
-const workspace = (id: string, name: string, change: Partial<Workspace> = {}): Workspace => ({
-  id,
-  name,
-  connectors: [{ id: 'tracker', type: 'jira', label: 'Tracker' }],
-  links: [],
-  key_pattern: '\\bPROJ-\\d+\\b',
-  theme: null,
-  ...change,
-});
-
-const demo = workspace('demo', 'Demo', { open_moves: 3 });
-const side = workspace('side', 'Side project', { open_moves: 12 });
-const ops = workspace('ops', 'Operations', { failing_sources: 1 });
-const archive = workspace('archive', 'Archive', { hidden: 'parked', returned: true });
-const idle = workspace('idle', 'Idle team', { hidden: 'paused' });
+const tracker = { connectors: [{ id: 'tracker', type: 'jira' as const, label: 'Tracker' }] };
+const demo = demoWorkspace({ ...tracker, open_moves: 3 });
+const side = demoWorkspace({ ...tracker, id: 'side', name: 'Side project', open_moves: 12 });
+const ops = demoWorkspace({ ...tracker, id: 'ops', name: 'Operations', failing_sources: 1 });
+const archive = demoWorkspace({ ...tracker, id: 'archive', name: 'Archive', hidden: 'parked', returned: true });
+const idle = demoWorkspace({ ...tracker, id: 'idle', name: 'Idle team', hidden: 'paused' });
 
 /** The snapshot slices the rail reads, one per state of the story. */
 export const railStorybookMock = {

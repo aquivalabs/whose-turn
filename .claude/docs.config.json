@@ -93,8 +93,9 @@
       "id": "storybook",
       "paths": [
         ".storybook/*.ts",
-        "web/src/stories/with-snapshot.ts",
-        "web/src/stories/fake-server.ts"
+        "web/src/stories/with-state.ts",
+        "web/src/stories/fake-server.ts",
+        "web/src/stories/fixtures.ts"
       ],
       "doc": "docs/mechanisms/storybook.md"
     }

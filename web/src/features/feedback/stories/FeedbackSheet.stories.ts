@@ -1,38 +1,13 @@
-import type { Decorator, Meta, StoryObj } from '@storybook/vue3';
-import { onMounted } from 'vue';
-import { ui } from '@/store.ts';
-import { answer, goOffline } from '@/stories/fake-server.ts';
+import type { Meta, StoryObj } from '@storybook/vue3';
+import { withState } from '@/stories/with-state.ts';
 import FeedbackSheet from '../FeedbackSheet.vue';
 import { feedbackSheetStorybookMock } from './FeedbackSheet.mock.ts';
 
-type State = 'default' | 'noReports' | 'unreachable';
 interface Args {
-  state: State;
+  state: 'default' | 'noReports' | 'unreachable';
 }
 
-const withFeedbackServer: Decorator = (story, context) => ({
-  components: { story },
-  setup: () => {
-    const { state } = context.args as unknown as Args;
-    const mock = feedbackSheetStorybookMock;
-    ui.feedback = false;
-    if (state === 'unreachable') {
-      goOffline();
-    } else {
-      const reports = state === 'noReports' ? [] : mock.reports;
-      answer('/api/feedback', (body) => {
-        if (body.preview) {
-          return mock.preview;
-        }
-        return body.text ? { ...mock.sent, reports } : { reports };
-      });
-    }
-    onMounted(() => {
-      ui.feedback = true;
-    });
-  },
-  template: '<story />',
-});
+const mock = feedbackSheetStorybookMock;
 
 const meta = {
   title: 'Sheets/Report',
@@ -41,7 +16,18 @@ const meta = {
   argTypes: {
     state: { control: 'select', options: ['default', 'noReports', 'unreachable'], description: 'unreachable: the past reports and Send both fail' },
   } as never,
-  decorators: [withFeedbackServer],
+  decorators: [
+    withState<Args>(({ state }) => {
+      const reports = state === 'noReports' ? [] : mock.reports;
+      return {
+        open: ['feedback'],
+        server:
+          state === 'unreachable'
+            ? 'offline'
+            : { '/api/feedback': (body) => (body.preview ? mock.preview : body.text ? { ...mock.sent, reports } : { reports }) },
+      };
+    }),
+  ],
 } satisfies Meta<typeof FeedbackSheet>;
 
 export default meta;

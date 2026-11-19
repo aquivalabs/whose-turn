@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import { withSnapshot } from '@/stories/with-snapshot.ts';
+import { withState } from '@/stories/with-state.ts';
 import Feed from '../Feed.vue';
 import { useFeedState } from '../useFeedState.ts';
 import { feedStorybookMock } from './Feed.mock.ts';
@@ -20,9 +20,9 @@ const meta = {
     view: { control: 'radio', options: ['ticket', 'flat'] },
     open: { control: 'boolean', description: 'Every ticket group open' },
   } as never,
+  parameters: { frame: { height: '36rem' } },
   decorators: [
-    withSnapshot((args) => {
-      const { state, view, open } = args as unknown as Args;
+    withState<Args>(({ state, view, open }) => {
       const feedState = useFeedState();
       feedState.view = view;
       feedState.query = '';
@@ -31,9 +31,8 @@ const meta = {
       if (open) {
         slice.feed.forEach((item) => feedState.openGroups.add(item.key || item.ref));
       }
-      return slice;
+      return { snapshot: slice };
     }),
-    () => ({ template: '<div style="height: 36rem; display: flex"><story /></div>' }),
   ],
 } satisfies Meta<typeof Feed>;
 

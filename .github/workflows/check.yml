@@ -17,11 +17,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
-      # docs/mechanisms/storybook.md
-      - run: npm run build-storybook
       # The coverage ratchet: thresholds in vitest.config.ts and package.json `coverage:server`, set at the measured numbers (RMA-364).
       - run: npm run coverage
       # The browser layout check in Chromium (RMA-362): every panel's list stays inside its panel and scrolls.
       # RMA-470
       - run: npx playwright install --with-deps chromium || npx playwright install chromium
       - run: npm run test:e2e
+      # docs/mechanisms/storybook.md
+      - run: npm run build-storybook

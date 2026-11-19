@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import { withSnapshot } from '@/stories/with-snapshot.ts';
+import { withState } from '@/stories/with-state.ts';
 import RecentlyDone from '../RecentlyDone.vue';
 import { recentlyDoneStorybookMock } from './RecentlyDone.mock.ts';
 
@@ -18,12 +18,10 @@ const meta = {
     open: { control: 'boolean', description: 'The fold, as remembered in the browser' },
   } as never,
   decorators: [
-    withSnapshot((args) => {
-      const { state, open } = args as unknown as Args;
-      localStorage.setItem('wt-recent-open', open ? '1' : '0');
-      return structuredClone(recentlyDoneStorybookMock[state]);
-    }),
-    () => ({ template: '<div style="width: 100%"><story /></div>' }),
+    withState<Args>(({ state, open }) => ({
+      snapshot: recentlyDoneStorybookMock[state],
+      storage: { 'wt-recent-open': open ? '1' : '0' },
+    })),
   ],
 } satisfies Meta<typeof RecentlyDone>;
 

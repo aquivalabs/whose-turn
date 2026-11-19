@@ -16,7 +16,7 @@ const meta = {
     seed: { control: { type: 'number', min: 0 } },
     ink: { control: 'text' },
   },
-  decorators: [() => ({ template: '<div style="width: 12rem"><story /></div>' })],
+  parameters: { frame: { width: '12rem' } },
 } satisfies Meta<typeof SpeciesCell>;
 
 export default meta;

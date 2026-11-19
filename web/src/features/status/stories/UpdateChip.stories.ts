@@ -1,23 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import { withSnapshot } from '@/stories/with-snapshot.ts';
-import { answer } from '@/stories/fake-server.ts';
-import type { Decorator } from '@storybook/vue3';
+import { withState } from '@/stories/with-state.ts';
 import UpdateChip from '../UpdateChip.vue';
 import { updateChipStorybookMock } from './UpdateChip.mock.ts';
 
-type State = keyof typeof updateChipStorybookMock;
 interface Args {
-  state: State;
+  state: keyof typeof updateChipStorybookMock;
 }
-
-const withUpdateServer: Decorator = (story) => ({
-  components: { story },
-  setup: () => {
-    answer('/api/update', () => ({ update: { ...updateChipStorybookMock.installing } }));
-    answer('/api/update/plugin-copied', () => ({ update: { ...updateChipStorybookMock.none } }));
-  },
-  template: '<story />',
-});
 
 const meta = {
   title: 'Islands/Status line/Update chip',
@@ -27,10 +15,15 @@ const meta = {
     state: { control: 'select', options: Object.keys(updateChipStorybookMock), description: 'none shows nothing' },
   } as never,
   decorators: [
-    withSnapshot((args) => ({ update: structuredClone(updateChipStorybookMock[(args as unknown as Args).state]) })),
-    withUpdateServer,
-    () => ({ template: '<div style="min-height: 2rem"><story /></div>' }),
+    withState<Args>(({ state }) => ({
+      snapshot: { update: updateChipStorybookMock[state] },
+      server: {
+        '/api/update': () => ({ update: updateChipStorybookMock.installing }),
+        '/api/update/plugin-copied': () => ({ update: updateChipStorybookMock.none }),
+      },
+    })),
   ],
+  parameters: { frame: { height: '2rem' } },
 } satisfies Meta<typeof UpdateChip>;
 
 export default meta;

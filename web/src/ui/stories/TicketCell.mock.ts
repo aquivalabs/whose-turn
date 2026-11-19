@@ -1,18 +1,11 @@
 import type { TurnRow } from '@/lib/types.ts';
+import { demoRow } from '@/stories/fixtures.ts';
 
-const base: TurnRow = {
-  row_id: 'r1',
-  key: 'PROJ-12',
+const base = demoRow('PROJ-12', {
   summary: 'Item — rising: a short summary of the ticket',
-  ticket_url: 'https://example.com/browse/PROJ-12',
-  group: 'you',
-  rank: 1,
-  updated: '2026-01-01T10:00:00Z',
-  status: 'In review',
-  next: 'Review',
   labels: ['backend', 'urgent'],
   badges: ['urgent'],
-};
+});
 
 export const ticketCellStorybookMock: Record<string, TurnRow> = {
   default: base,

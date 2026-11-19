@@ -1,19 +1,11 @@
-import type { Decorator, Meta, StoryObj } from '@storybook/vue3';
-import { answer, goOffline } from '@/stories/fake-server.ts';
+import type { Meta, StoryObj } from '@storybook/vue3';
+import { withState } from '@/stories/with-state.ts';
 import AiButton from '../AiButton.vue';
 import { aiButtonStorybookMock } from './AiButton.mock.ts';
 
-const withHandoff: Decorator = (story, context) => ({
-  components: { story },
-  setup: () => {
-    if ((context.args as { failing?: boolean }).failing) {
-      goOffline();
-      return;
-    }
-    answer('/api/handoff', () => aiButtonStorybookMock.handoff);
-  },
-  template: '<story />',
-});
+const withHandoff = withState<{ failing?: boolean }>((args) => ({
+  server: args.failing ? 'offline' : { '/api/handoff': () => aiButtonStorybookMock.handoff },
+}));
 
 const meta = {
   title: 'Primitives/AiButton',
