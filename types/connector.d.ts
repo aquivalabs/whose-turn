@@ -136,6 +136,17 @@ export interface PollResult {
   ticket_base?: string;
   /** Parts that failed while the rest succeeded: part → message. A total failure throws instead. */
   errors?: Record<string, string>;
+  /** The same failed parts described with closed values only; build each with `describeFailure` from `lib/failure.mjs`. ADR 0017. */
+  failures?: Record<string, PartFailure>;
+}
+
+/** One failed part as `describeFailure` builds it: a closed code and error class, the HTTP status, and for a rate limit which limit and the minutes until it resets. */
+export interface PartFailure {
+  code: 'UNAUTHENTICATED' | 'FORBIDDEN' | 'NOT_FOUND' | 'RATE_LIMITED' | 'TIMEOUT' | 'UPSTREAM_5XX' | 'PARSE_FAILED' | 'NO_TOKEN' | 'NO_FILE' | 'PARTIAL' | 'UNKNOWN_TYPE' | 'UNKNOWN';
+  error: string;
+  status?: number;
+  limit?: string;
+  reset_min?: number;
 }
 
 /** The JSON client the server shares: ETag caching on GET, a RateLimited error on 403/429. */

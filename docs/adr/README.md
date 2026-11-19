@@ -60,6 +60,7 @@ Example shape: `0001-choose-the-message-queue.md`.
 | 0014 | [The config API trusts every local process, and binds each stored token to its service, account and endpoint](0014-config-api-trusts-local-processes.md) | accepted |
 | 0015 | [Defaults cover the common case; everything else is the user's config, explained where it is set](0015-defaults-and-user-config.md) | accepted |
 | 0016 | [Window texts live in one catalog through vue-i18n](0016-vue-i18n-for-window-texts.md) | accepted |
+| 0017 | [A failure is read from the error object, never from its message](0017-failures-read-from-the-error-object.md) | accepted |
 
 ## Referencing an ADR from code
 

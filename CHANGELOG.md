@@ -4,6 +4,11 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Fixed
+
+- When GitHub's search limit runs out, only the part that needed search waits; your notifications and workflow runs keep updating instead of the whole GitHub source stopping. RMA-483.
+- A report now says what a failing source ran into: which limit and for how long, a name that did not resolve, a refused connection or a missing token, instead of an unknown error. RMA-483.
+
 ## [1.0.0-beta.10] - 2026-11-19
 
 ### Changed

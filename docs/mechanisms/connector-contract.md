@@ -25,6 +25,7 @@ window takes a source's feed badge and icon tone from the connector summary, nev
 |---|---|
 | `lib/adapter.mjs` | `Adapter`, the base class every adapter extends; it supplies `links`, `persistedCache`, `badge` and `tone`, and its `poll` refuses |
 | `lib/contract.mjs` | `CONTRACT_VERSION`, `KINDS`, `SHAPES` (the fields and closed values of each kind), `adapterProblems`, `resultProblems`, `ContractError` |
+| `lib/failure.mjs` | `FAILURE_CODES`, `ERROR_CLASSES`, `RateLimited`, `SetupError`, `failureCode`, `errorClass`, `describeFailure`: a failure read from the error object, ADR 0017 |
 | `types/connector.d.ts` | The same contract as TypeScript types, shipped in the package: `Adapter`, `PollContext`, `PollResult` and one interface per kind |
 | `connectors/index.mjs` | `CONNECTORS`, the registry of types; `connectorCatalogue` leaves out a connector that exports `experimental: true` |
 | `connectors/module.mjs` | The `module` type: `loadAdapter` imports and checks a user adapter, `pollAdapter` polls it and checks the result |
@@ -71,12 +72,15 @@ The built-ins receive `secrets` (the store) instead of `secret()`, and read thei
 
 ### Result
 
-`{ me, tickets?, comments?, prs?, activity?, asks?, runs?, ticket_base?, errors? }`.
+`{ me, tickets?, comments?, prs?, activity?, asks?, runs?, ticket_base?, errors?, failures? }`.
 
 - `me` is your name in the source, as it appears in `assignee`, `author` and `@` mentions.
 - Only declared kinds may appear; a declared kind that is missing counts as an empty list.
 - `ticket_base` is the ticket URL without the key, used to link a key found elsewhere.
 - `errors` is `{ part: message }` for the parts that failed while the rest succeeded.
+- `failures` is `{ part: { code, error, status?, limit?, reset_min? } }` for the same parts, built with
+  `describeFailure`: closed values and numbers only, never a message. Optional; a result without it is still
+  contract 1.
 
 Shapes, every field required unless marked optional; a `url` is empty or starts with `https://`, a time
 is an ISO date-time:
@@ -101,8 +105,25 @@ request addressed to you is an ask.
   `/api/summary`, and counts toward the failing-source health alert. Name the thing to fix; never put a
   token in a message.
 - Return `errors: { part: message }` for a partial failure; the server prefixes the part with the
-  entry id.
-- Throw `RateLimited` (from `lib/http-client.mjs`) to make the server back off.
+  entry id. Add `failures: { part: describeFailure(error) }` so a report can say what failed.
+- Throw `RateLimited` (from `lib/failure.mjs`) to make the server back off; a part whose failure is
+  `RATE_LIMITED` backs it off too. `lib/http-client.mjs` throws it with the status, the limit GitHub names in
+  `x-ratelimit-resource`, and the reset from `x-ratelimit-reset` or `retry-after`.
+- Throw `SetupError('NO_TOKEN' | 'NO_FILE', message)` when the source cannot start: no token in the secret
+  store, `gh` not logged in or not installed, a file that is not there.
+
+### Failures
+
+A failure is read from the error object, never from its message (ADR 0017). Its code comes from the class
+and the upstream status (`RATE_LIMITED`, `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `UPSTREAM_5XX`,
+`TIMEOUT` for a timeout name or errno, `PARSE_FAILED`, the setup codes, else `UNKNOWN`); its class is the
+cause's errno, the error's own errno or its name when the closed list has it, else `other`. Linear's GraphQL
+errors map their `extensions.code`: `RATELIMITED` to a rate limit, `AUTHENTICATION_ERROR` and `FORBIDDEN` to
+401 and 403. A rate limit in one GitHub part fails only that part; the other parts' data stays current. The
+workspace keeps each failing source's code with the description of its failure, for a partial one the first
+rate-limited part or else the first failed part, and a report shows it as
+`type:CODE[:part][:partCODE][:status][:class][:limit][:resetNm]`, a part a reportable connector does not
+declare reading as `other`.
 - A module that is not a connector, or a result that breaks the shapes, is a `ContractError`: its
   message is `Adapter <path> does not follow connector contract 1:` followed by every problem, at most
   ten, separated by `; `.
