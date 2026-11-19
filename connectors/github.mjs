@@ -303,14 +303,14 @@ const buildAsk = async (api, { me, keyOf }, note, repo) => {
   }
   const latestUrl = subject.latest_comment_url;
   const latest = latestUrl ? comments.find((candidate) => candidate.url === latestUrl) || (await api(latestUrl)) : null;
-  const mine = (candidate) => candidate?.user?.login === me;
-  const asksMe = (candidate) => Boolean(candidate) && !mine(candidate) && (candidate.body || '').includes(`@${me}`);
-  const comment = asksMe(latest) ? latest : comments.filter(asksMe).at(-1) ?? (mine(latest) ? null : latest);
+  const byMe = (candidate) => candidate?.user?.login === me;
+  const asksMe = (candidate) => Boolean(candidate) && !byMe(candidate) && (candidate.body || '').includes(`@${me}`);
+  const comment = asksMe(latest) ? latest : comments.filter(asksMe).at(-1) ?? (byMe(latest) ? null : latest);
   if (!comment) {
     return null;
   }
   const at = comment.created_at || note.updated_at;
-  if (comments.some((candidate) => candidate.user.login === me && candidate.created_at > at)) {
+  if (comments.some((candidate) => byMe(candidate) && candidate.created_at > at)) {
     return null;
   }
   return { ...base, id: `gha:${note.id}`, kind: 'mentioned you', who: comment.user.login, at, url: comment.html_url || base.url, text: oneline(comment.body || ''), body: (comment.body || '').replace(/\r/g, '').slice(0, 6000) };
