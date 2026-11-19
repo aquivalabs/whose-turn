@@ -53,8 +53,9 @@ jobs:
       # The same gates as check.yml, so a release cannot publish what main's CI would refuse (RMA-378).
       - if: steps.version.outputs.new == 'true'
         run: npm run coverage
+      # RMA-470
       - if: steps.version.outputs.new == 'true'
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium || npx playwright install chromium
       - if: steps.version.outputs.new == 'true'
         run: npm run test:e2e
       - if: steps.version.outputs.new == 'true'

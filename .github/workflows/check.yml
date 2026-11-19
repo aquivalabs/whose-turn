@@ -20,5 +20,6 @@ jobs:
       # The coverage ratchet: thresholds in vitest.config.ts and package.json `coverage:server`, set at the measured numbers (RMA-364).
       - run: npm run coverage
       # The browser layout check in Chromium (RMA-362): every panel's list stays inside its panel and scrolls.
-      - run: npx playwright install --with-deps chromium
+      # RMA-470
+      - run: npx playwright install --with-deps chromium || npx playwright install chromium
       - run: npm run test:e2e
