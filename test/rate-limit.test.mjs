@@ -74,3 +74,8 @@ test('the poll delay doubles while rate limited, caps at 15 minutes and resets a
   assert.equal(nextDelay([{ rateLimited: true }], 600, 60), 900);
   assert.equal(nextDelay([{}, {}], 900, 60), 60);
 });
+
+test('RateLimited is still exported where contract 1 adapters import it from', async () => {
+  const { RateLimited: fromClient } = await import('../lib/http-client.mjs');
+  assert.equal(fromClient, RateLimited);
+});

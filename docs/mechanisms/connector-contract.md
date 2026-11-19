@@ -106,7 +106,8 @@ request addressed to you is an ask.
   token in a message.
 - Return `errors: { part: message }` for a partial failure; the server prefixes the part with the
   entry id. `partFailed(result, part, error)` fills both `errors[part]` and `failures[part]` so a report can say what failed.
-- Throw `RateLimited` (from `lib/failure.mjs`) to make the server back off; a part whose failure is
+- Throw `RateLimited` (from `lib/failure.mjs`; `lib/http-client.mjs` still exports it for adapters written
+  against the earlier page) to make the server back off; a part whose failure is
   `RATE_LIMITED` backs it off too. `lib/http-client.mjs` throws it with the status, the limit GitHub names in
   `x-ratelimit-resource`, and the reset from `x-ratelimit-reset` or `retry-after`.
 - Throw `SetupError('NO_TOKEN' | 'NO_FILE', message)` when the source cannot start: no token in the secret
