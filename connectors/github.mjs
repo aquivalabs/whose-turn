@@ -34,19 +34,34 @@ const createApi = (http, token) => (path) => {
   return http.fetchJson(url, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' } });
 };
 
-/** One run per check, the latest attempt: a re-run or a cancelled run replaced by a newer one no longer counts. RMA-382. */
+const checkKey = (checkRun) => `${checkRun.app?.id ?? ''}:${checkRun.name ?? ''}`;
+
+const newer = (checkRun, held) => {
+  const startedAt = String(checkRun.started_at || '');
+  const heldAt = String(held.started_at || '');
+  return startedAt > heldAt || (startedAt === heldAt && (checkRun.id ?? 0) > (held.id ?? 0));
+};
+
+const passed = (checkRun) => checkRun.conclusion === 'success';
+
+/** One run per check: the latest attempt in each check suite, and a suite that passed wins over one that failed on the same commit. RMA-382, RMA-466. */
 export const latestRuns = (runs) => {
-  const latest = new Map();
+  const attempts = new Map();
   for (const checkRun of runs) {
-    const key = `${checkRun.app?.id ?? ''}:${checkRun.name ?? ''}`;
-    const held = latest.get(key);
-    const startedAt = String(checkRun.started_at || '');
-    const heldAt = String(held?.started_at || '');
-    if (!held || startedAt > heldAt || (startedAt === heldAt && (checkRun.id ?? 0) > (held.id ?? 0))) {
-      latest.set(key, checkRun);
+    const key = `${checkRun.check_suite?.id ?? ''}:${checkKey(checkRun)}`;
+    const held = attempts.get(key);
+    if (!held || newer(checkRun, held)) {
+      attempts.set(key, checkRun);
     }
   }
-  return [...latest.values()];
+  const checks = new Map();
+  for (const checkRun of attempts.values()) {
+    const held = checks.get(checkKey(checkRun));
+    if (!held || passed(checkRun) > passed(held) || (passed(checkRun) === passed(held) && newer(checkRun, held))) {
+      checks.set(checkKey(checkRun), checkRun);
+    }
+  }
+  return [...checks.values()];
 };
 
 /** The PR's checks state from its head commit's check runs, judged on each check's latest attempt. */
