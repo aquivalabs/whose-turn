@@ -145,3 +145,31 @@ test('a mention on an issue asks you without reading any pull request (RMA-433)'
   assert.deepEqual(result.asks.map((ask) => ask.who), ['sam']);
   assert.ok(!asked.some((path) => path.startsWith('/repos/acme/app/pulls/7')));
 });
+
+test('the latest comment of a mention is taken from the thread when it is there, and fetched when it is not (RMA-433)', async () => {
+  // Setup
+  const latestUrl = 'https://api.github.com/repos/acme/app/issues/comments/9';
+  const note = { ...mention, subject: { ...mention.subject, latest_comment_url: latestUrl } };
+  const inThread = fakeGh({ notes: [note], replies: { '/repos/acme/app/issues/7/comments': [{ ...asking('sam'), url: latestUrl }] } });
+  const elsewhere = fakeGh({ notes: [note], replies: { '/repos/acme/app/issues/comments/9': { ...asking('ann'), url: latestUrl } } });
+  // Exercise
+  const found = await pollOnce(inThread.http);
+  const fetched = await pollOnce(elsewhere.http);
+  // Verify
+  assert.deepEqual(found.asks.map((ask) => ask.who), ['sam']);
+  assert.ok(!inThread.asked.some((path) => path.startsWith('/repos/acme/app/issues/comments/9')));
+  assert.deepEqual(fetched.asks.map((ask) => ask.who), ['ann']);
+});
+
+test('a team mention whose latest comment is your own asks nothing, and one whose latest comment is someone else\'s asks you (RMA-433)', async () => {
+  // Setup
+  const latestUrl = 'https://api.github.com/repos/acme/app/issues/comments/9';
+  const note = { ...mention, reason: 'team_mention', subject: { ...mention.subject, latest_comment_url: latestUrl } };
+  const plain = (login) => ({ user: { login }, created_at: '2026-11-05T09:00:00Z', html_url: 'https://github.com/acme/app/pull/7#c', url: latestUrl, body: '@acme/core please look' });
+  // Exercise
+  const yours = await pollOnce(fakeGh({ notes: [note], replies: { '/repos/acme/app/issues/7/comments': [plain('pat')] } }).http);
+  const theirs = await pollOnce(fakeGh({ notes: [note], replies: { '/repos/acme/app/issues/7/comments': [plain('sam')] } }).http);
+  // Verify
+  assert.deepEqual(yours.asks, []);
+  assert.deepEqual(theirs.asks.map((ask) => ask.who), ['sam']);
+});
