@@ -11,13 +11,12 @@ export const fieldRowStorybookMock = {
   secret: { key: 'token', label: 'Token', secret: true, hint: 'Stored in the keychain' },
 } satisfies Record<string, FieldSpec>;
 
-export const fieldRowValues = {
+/** The starting value of each field kind; a kind that starts empty has none. */
+export const fieldRowValues: Partial<Record<keyof typeof fieldRowStorybookMock, string | readonly string[]>> = {
   text: 'Demo',
   required: '',
   number: '10',
-  list: ['alpha', 'beta'],
+  list: ['alpha', 'beta'] as const,
   choice: 'team',
   colour: '#3366cc',
-  boolean: undefined,
-  secret: undefined,
-} as const;
+};
