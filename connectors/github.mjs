@@ -54,11 +54,13 @@ export const latestRuns = (runs) => {
       attempts.set(key, checkRun);
     }
   }
+  const better = (checkRun, held) => (passed(checkRun) === passed(held) ? newer(checkRun, held) : passed(checkRun));
   const checks = new Map();
   for (const checkRun of attempts.values()) {
-    const held = checks.get(checkKey(checkRun));
-    if (!held || passed(checkRun) > passed(held) || (passed(checkRun) === passed(held) && newer(checkRun, held))) {
-      checks.set(checkKey(checkRun), checkRun);
+    const key = checkKey(checkRun);
+    const held = checks.get(key);
+    if (!held || better(checkRun, held)) {
+      checks.set(key, checkRun);
     }
   }
   return [...checks.values()];
