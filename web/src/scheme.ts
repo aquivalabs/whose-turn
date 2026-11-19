@@ -22,6 +22,11 @@ export const schemeChoice = computed<SchemeChoice>(() => pinned ?? (isChoice(sto
 /** The choice after this one: System, then Light, then Dark, then System again. */
 const nextChoice = (choice: SchemeChoice): SchemeChoice => CHOICES[(CHOICES.indexOf(choice) + 1) % CHOICES.length];
 
+/** Stores one choice, as the theme switch of Storybook does. */
+export const setScheme = (choice: SchemeChoice) => {
+  stored.value = choice;
+};
+
 /** Moves the stored choice on by one. */
 export const cycleScheme = () => {
   stored.value = nextChoice(schemeChoice.value);

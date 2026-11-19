@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
@@ -12,8 +16,18 @@
     "isolatedModules": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": ["vite/client"],
-    "paths": { "@/*": ["./web/src/*"] }
+    "types": [
+      "vite/client"
+    ],
+    "paths": {
+      "@/*": [
+        "./web/src/*"
+      ]
+    }
   },
-  "include": ["web/src/**/*.ts", "web/src/**/*.vue"]
+  "include": [
+    "web/src/**/*.ts",
+    "web/src/**/*.vue",
+    ".storybook/**/*.ts"
+  ]
 }

@@ -36,7 +36,7 @@
     "dev:web": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "typecheck": "vue-tsc --noEmit && tsc -p tsconfig.server.json",
-    "lint": "eslint web/src lib connectors server.mjs test",
+    "lint": "eslint web/src .storybook lib connectors server.mjs test",
     "lint:style": "stylelint \"web/src/**/*.{vue,css}\"",
     "format": "prettier --write web/src",
     "check": "npm run typecheck && npm run lint && npm run lint:style && npm test && npm run test:web",
@@ -45,7 +45,9 @@
     "coverage": "npm run coverage:server && npm run coverage:web",
     "coverage:server": "node --experimental-strip-types --experimental-test-coverage --test-coverage-include=\"lib/**\" --test-coverage-include=\"connectors/**\" --test-coverage-include=\"scripts/**\" --test-coverage-include=server.mjs --test-coverage-include=\"web/src/lib/**\" --test-coverage-lines=90 --test-coverage-branches=87 --test-coverage-functions=90 --test \"test/**/*.test.mjs\"",
     "coverage:web": "vitest run --coverage",
-    "mutation": "stryker run"
+    "mutation": "stryker run",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build -o storybook-static --quiet"
   },
   "bin": {
     "whose-turn": "server.mjs"
@@ -54,6 +56,8 @@
     "@eslint/js": "10.0.1",
     "@intlify/eslint-plugin-vue-i18n": "4.5.1",
     "@playwright/test": "1.65.0",
+    "@storybook/vue3": "10.6.5",
+    "@storybook/vue3-vite": "10.6.5",
     "@stryker-mutator/core": "^10.1.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/vue": "8.1.0",
@@ -69,6 +73,7 @@
     "motion-v": "2.9.0",
     "postcss-html": "2.0.0",
     "prettier": "3.9.10",
+    "storybook": "10.6.5",
     "stylelint": "17.16.0",
     "stylelint-config-html": "2.0.0",
     "stylelint-config-standard": "40.0.0",

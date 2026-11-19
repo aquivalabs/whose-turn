@@ -22,6 +22,8 @@ export default defineConfig({
       // backdrop.ts paints on a canvas, which happy-dom does not have. RMA-372.
       exclude: [
         'web/src/**/*.test.ts',
+        'web/src/stories/**',
+        'web/src/**/stories/**',
         'web/src/backdrop.ts',
         'web/src/lib/bem.ts',
         'web/src/lib/browser.ts',
