@@ -132,3 +132,14 @@ test('your own comment that mentions you is not something waiting on you (RMA-43
   // Verify
   assert.deepEqual(result.asks, []);
 });
+
+test('a mention on an issue asks you without reading any pull request (RMA-433)', async () => {
+  // Setup
+  const onIssue = { ...mention, subject: { type: 'Issue', title: 'PROJ-7 x', url: 'https://api.github.com/repos/acme/app/issues/7' } };
+  const { http, asked } = fakeGh({ notes: [onIssue], replies: { '/repos/acme/app/issues/7/comments': [asking('sam')] } });
+  // Exercise
+  const result = await pollOnce(http);
+  // Verify
+  assert.deepEqual(result.asks.map((ask) => ask.who), ['sam']);
+  assert.ok(!asked.some((path) => path.startsWith('/repos/acme/app/pulls/7')));
+});
