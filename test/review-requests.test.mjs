@@ -108,6 +108,8 @@ test('a polled PR whose approver is requested again reads not approved (RMA-468)
   // Verify
   assert.equal(approved.prs[0].review, 'APPROVED');
   assert.equal(asked.prs[0].review, '');
+});
+
 const mention = { id: 'n7', reason: 'mention', updated_at: '2026-11-05T10:00:00Z', repository: { full_name: 'acme/app' }, subject: { type: 'PullRequest', title: 'PROJ-7 x', url: 'https://api.github.com/repos/acme/app/pulls/7' } };
 const asking = (login) => ({ user: { login }, created_at: '2026-11-05T09:00:00Z', html_url: 'https://github.com/acme/app/pull/7#c', body: '@pat can you check?' });
 
