@@ -294,17 +294,18 @@ const buildAsk = async (api, { me, keyOf }, note, repo) => {
   }
   const title = subject.title || '';
   const base = { repo, number, ref: prRef(repo, number), title, key: keyOf(title), url: `https://github.com/${repo}/${subject.type === 'PullRequest' ? 'pull' : 'issues'}/${number}` };
-  const [issue, comments, latest] = await Promise.all([
-    api(`/repos/${repo}/issues/${number}`),
+  const [pull, comments] = await Promise.all([
+    subject.type === 'PullRequest' ? api(`/repos/${repo}/pulls/${number}`) : null,
     api(`/repos/${repo}/issues/${number}/comments?per_page=100`),
-    subject.latest_comment_url ? api(subject.latest_comment_url) : null,
   ]);
-  if (issue.pull_request?.merged_at) {
+  if (pull?.merged_at) {
     return null;
   }
-  const asksMe = (candidate) => candidate && candidate.user?.login !== me && (candidate.body || '').includes(`@${me}`);
-  const hits = comments.filter(asksMe);
-  const comment = asksMe(latest) ? latest : hits[hits.length - 1] || (latest?.user?.login === me ? null : latest);
+  const latestUrl = subject.latest_comment_url;
+  const latest = latestUrl ? comments.find((candidate) => candidate.url === latestUrl) || (await api(latestUrl)) : null;
+  const mine = (candidate) => candidate?.user?.login === me;
+  const asksMe = (candidate) => Boolean(candidate) && !mine(candidate) && (candidate.body || '').includes(`@${me}`);
+  const comment = asksMe(latest) ? latest : comments.filter(asksMe).at(-1) ?? (mine(latest) ? null : latest);
   if (!comment) {
     return null;
   }

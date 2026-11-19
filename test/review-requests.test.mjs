@@ -114,8 +114,8 @@ const asking = (login) => ({ user: { login }, created_at: '2026-11-05T09:00:00Z'
 test('a mention on an open PR asks you, and the same mention stops asking once the PR is merged (RMA-433)', async () => {
   // Setup
   const comments = { '/repos/acme/app/issues/7/comments': [asking('sam')] };
-  const open = fakeGh({ notes: [mention], replies: { ...comments, '/repos/acme/app/issues/7': { pull_request: { merged_at: null } } } });
-  const merged = fakeGh({ notes: [mention], replies: { ...comments, '/repos/acme/app/issues/7': { pull_request: { merged_at: '2026-11-06T10:00:00Z' } } } });
+  const open = fakeGh({ notes: [mention], replies: { ...comments, '/repos/acme/app/pulls/7': { merged_at: null } } });
+  const merged = fakeGh({ notes: [mention], replies: { ...comments, '/repos/acme/app/pulls/7': { merged_at: '2026-11-06T10:00:00Z' } } });
   // Exercise
   const before = await pollOnce(open.http);
   const after = await pollOnce(merged.http);
