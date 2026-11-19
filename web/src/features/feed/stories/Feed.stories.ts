@@ -18,7 +18,7 @@ const meta = {
   argTypes: {
     state: { control: 'select', options: Object.keys(feedStorybookMock) },
     view: { control: 'radio', options: ['ticket', 'flat'] },
-    open: { control: 'boolean', description: 'Every ticket group open' },
+    open: { control: 'boolean', description: 'The newest ticket open; one ticket and one event open at a time (RMA-472)' },
   } as never,
   parameters: { frame: { height: '36rem' } },
   decorators: [
@@ -28,8 +28,8 @@ const meta = {
       feedState.query = '';
       feedState.openGroups.clear();
       const slice = feedStorybookMock[state];
-      if (open) {
-        slice.feed.forEach((item) => feedState.openGroups.add(item.key || item.ref));
+      if (open && slice.feed.length) {
+        feedState.openGroups.add(slice.feed[0].key || slice.feed[0].ref);
       }
       return { snapshot: slice };
     }),
