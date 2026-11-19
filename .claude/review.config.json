@@ -17,6 +17,8 @@
         "frontend-vue:bem-styles",
         "frontend-vue:composables-vueuse",
         "frontend-vue:testing",
+        "frontend-vue:storybook-stories",
+        "frontend-vue:skeleton-components",
         "frontend-css:rem",
         "error:format",
         "meta:ockham",
