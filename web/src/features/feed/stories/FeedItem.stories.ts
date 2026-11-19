@@ -1,6 +1,5 @@
 import { ref } from 'vue';
 import type { Meta, StoryObj } from '@storybook/vue3';
-import { withSnapshot } from '@/stories/with-snapshot.ts';
 import FeedItemRow from '../FeedItem.vue';
 import { feedItemStorybookMock } from './FeedItem.mock.ts';
 
@@ -22,7 +21,6 @@ const meta = {
     fresh: { control: 'boolean', description: 'Unread' },
     flash: { control: 'boolean', description: 'Highlighted after a jump' },
   } as never,
-  decorators: [withSnapshot(() => ({}))],
   render: (args) => ({
     components: { FeedItemRow },
     setup: () => {

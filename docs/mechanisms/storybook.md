@@ -12,20 +12,28 @@ into the app. The project's choice is recorded in `CLAUDE.md` as `Storybook stor
 | File | Role |
 |---|---|
 | `.storybook/main.ts` | finds `web/src/**/stories/*.stories.ts`, Storybook 10 with `@storybook/vue3-vite`, telemetry off |
-| `.storybook/preview.ts` | installs i18n and the fake server, pins the scheme from the toolbar's Scheme switch, wraps every story in the app's `LazyMotion` and `MotionConfig` and the `.page`, `.app` and `.dashboard` classes, and hands a component only the args that are its props |
-| `.storybook/preview-head.html` | the canvas background and a block-level dashboard, so one island renders alone |
-| `web/src/stories/with-snapshot.ts` | the decorator that writes a slice of the server snapshot into the store once, when the story mounts or its controls change |
-| `web/src/stories/fake-server.ts` | answers every `/api/*` call in the browser: `/api/marks` by default, a story's own endpoint through `answer(path, handler)`, where the handler gets the body and the method, and every call fails after `goOffline()` |
+| `.storybook/preview.ts` | installs i18n and the fake server, pins the scheme from the toolbar's Scheme switch, resets the story state before each story, wraps every story in the app's `LazyMotion` and `MotionConfig` and the `.page`, `.app` and `.dashboard` classes, sizes it from `parameters.frame`, and hands a component only the args that are its props |
+| `.storybook/preview-head.html` | the canvas background, a block-level dashboard so one island renders alone, and the `.storybook-frame` box |
+| `web/src/stories/with-state.ts` | `withState`, the one decorator through which a story sets its state, and `resetStory`, which the preview runs before each story |
+| `web/src/stories/fake-server.ts` | answers every `/api/*` call in the browser, with default routes and the ones a story adds |
+| `web/src/stories/fixtures.ts` | the demo workspace, times relative to now, health, marks and rows that the mock files build from |
 | `web/src/<folder>/stories/<Component>.stories.ts` and `.mock.ts` | one story per component; its data lives in the mock file |
 | `web/src/stories/App.stories.ts` | the whole window from a snapshot |
 
 ## How it behaves
 
-### A story owns its state through the store
+### Every story starts from the same state
 
-Islands read the store, not props (ADR 0006). A story's decorator calls `withSnapshot` with a function of the
-story's args that returns the slice to write. The write runs in the decorator's `setup`, not in its render, so a
-click inside the story does not rerun it and reset what the user opened.
+The store is a set of module singletons (ADR 0006), so a value one story set would stay for the next. Before each
+story the preview's `resetStory` puts `snapshot` and `ui` back as they were when Storybook loaded, with `ui.live`
+on, removes the `wt-*` keys from browser storage except the scheme, and resets the fake server.
+
+### A story declares its state
+
+A story's decorator is `withState((args) => state)`. The state is a slice of the server snapshot, a patch of `ui`,
+browser storage keys, routes for the fake server or `offline`, and `ui` flags to turn on after mount. The last one
+opens a sheet the way a click does: the sheets load when their flag changes, not when they mount with it set. The
+state is applied in the decorator's `setup`, not in its render, so a click inside the story does not reapply it.
 
 ### Controls that are not props stay in the story
 
@@ -36,14 +44,22 @@ the user clicked.
 
 ### No call reaches the network
 
-The preview replaces `window.fetch` for `/api/*` before any story renders and resets the routes before each one.
-A story whose island writes to the server registers a handler that keeps a local copy, so the buttons work; the
-failing state calls `goOffline()` and the island shows its own error. Other URLs pass through untouched.
+The preview replaces `window.fetch` for `/api/*`. By default the fake server answers `/api/marks` (read and handled
+marks and notes, with the rows' handled flag recomputed), `/api/todos` (add, done, undo, edit and delete on a list
+seeded from the snapshot's to-dos) and `/api/changelog` (no versions). A story adds or replaces routes; a handler
+gets the body, the method and the URL. With `offline` every call fails and the island shows its own error. Other
+URLs pass through untouched.
+
+### Size and wrapper come from parameters
+
+`parameters.frame` (`height`, `width`) puts the story in a flex box with `contain: layout`, so a fixed-position menu
+or rail stays inside it. `parameters.chrome: 'none'` drops the preview's `.app` and `.dashboard` wrapper for a
+component that brings its own, the whole window and the report page.
 
 ### The scheme is a toolbar switch
 
-The Scheme switch sets the stored scheme choice through `setScheme` in `web/src/scheme.ts`, and `installScheme`
-pins the stylesheets' `prefers-color-scheme` rules to it, as in the app.
+The Scheme switch sets the stored scheme choice through `setScheme` in `web/src/scheme.ts` when it differs, and
+`installScheme` pins the stylesheets' `prefers-color-scheme` rules to it, as in the app.
 
 ## Commands
 
@@ -54,6 +70,6 @@ pins the stylesheets' `prefers-color-scheme` rules to it, as in the app.
 
 ## What obliges an update
 
-Any change to `.storybook/`, `with-snapshot.ts` or `fake-server.ts` that changes how a story gets its state, what
+Any change to `.storybook/`, `with-state.ts`, `fake-server.ts` or `fixtures.ts` that changes how a story gets its state, what
 the server stub answers, or what wraps every story; and a change to how the app itself wraps the window (`App.vue`'s
 motion setup, the root classes, the scheme), which the preview has to follow.

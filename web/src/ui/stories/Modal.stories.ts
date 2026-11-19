@@ -27,14 +27,13 @@ const meta = {
       const paragraphs = [...Array(longBody ? 20 : 3).keys()].map((index) => modalStorybookMock.paragraphs[index % 3]);
       return { args, open, footer, longBody, paragraphs, buttons: modalStorybookMock.footer };
     },
-    template: `<div>
-      <button type="button" class="btn" @click="open = true">Open dialog</button>
+    template: `<button type="button" class="btn" @click="open = true">Open dialog</button>
       <Modal v-if="open" v-bind="args" @close="open = false">
         <p v-for="(text, index) in paragraphs" :key="index">{{ text }}</p>
         <template v-if="args.footer" #footer><button v-for="label in buttons" :key="label" type="button" class="btn">{{ label }}</button></template>
-      </Modal>
-    </div>`,
+      </Modal>`,
   }),
+  parameters: { frame: { height: '30rem' } },
 } satisfies Meta<typeof Modal>;
 
 export default meta;

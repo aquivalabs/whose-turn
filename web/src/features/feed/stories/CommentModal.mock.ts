@@ -1,13 +1,5 @@
-import type { FeedItem, Snapshot } from '@/lib/types.ts';
-
-const workspace: Snapshot['workspace'] = {
-  id: 'demo',
-  name: 'Demo',
-  connectors: [{ id: 'github', type: 'github', label: 'GitHub' }],
-  links: [],
-  key_pattern: '\\bPROJ-\\d+\\b',
-  theme: null,
-};
+import type { FeedItem } from '@/lib/types.ts';
+import { demoWorkspace } from '@/stories/fixtures.ts';
 
 const base: FeedItem = {
   id: 'c1',
@@ -21,7 +13,7 @@ const base: FeedItem = {
 
 /** The comment each state opens, and the workspace that names its source. */
 export const commentModalStorybookMock = {
-  workspace,
+  workspace: demoWorkspace({ connectors: [{ id: 'github', type: 'github', label: 'GitHub' }] }),
   items: {
     formatted: {
       ...base,

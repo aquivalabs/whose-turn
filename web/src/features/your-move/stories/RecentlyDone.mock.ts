@@ -1,29 +1,19 @@
 import type { Snapshot, TurnRow } from '@/lib/types.ts';
+import { demoRow, demoWorkspace, hoursAgo } from '@/stories/fixtures.ts';
 
-const hour = 60 * 60 * 1000;
-const at = (hoursAgo: number) => new Date(Date.now() - hoursAgo * hour).toISOString();
+const workspace = demoWorkspace({ connectors: [{ id: 'tracker', type: 'jira', label: 'Tracker' }] });
 
-const workspace: Snapshot['workspace'] = {
-  id: 'demo',
-  name: 'Demo',
-  connectors: [{ id: 'tracker', type: 'jira', label: 'Tracker' }],
-  links: [],
-  key_pattern: '\\bPROJ-\\d+\\b',
-  theme: null,
-};
-
-const done = (id: number, status: string, hoursAgo: number): TurnRow => ({
-  row_id: `PROJ-${id}`,
-  key: `PROJ-${id}`,
-  summary: `Item ${id} — ${status.toLowerCase()}`,
-  ticket_url: `https://example.com/browse/PROJ-${id}`,
-  group: 'done',
-  rank: id,
-  updated: at(hoursAgo),
-  status,
-  status_since: at(hoursAgo),
-  next: '',
-});
+const done = (id: number, status: string, hours: number): TurnRow =>
+  demoRow(`PROJ-${id}`, {
+    summary: `Item ${id} — ${status.toLowerCase()}`,
+    ticket_url: `https://example.com/browse/PROJ-${id}`,
+    group: 'done',
+    rank: id,
+    updated: hoursAgo(hours),
+    status,
+    status_since: hoursAgo(hours),
+    next: '',
+  });
 
 /** The snapshot slices the Recently done block reads, one per state of the story. */
 export const recentlyDoneStorybookMock = {

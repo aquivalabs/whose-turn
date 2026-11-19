@@ -1,5 +1,6 @@
-const day = 24 * 60 * 60 * 1000;
-const at = (daysAgo: number) => new Date(Date.now() - daysAgo * day).toISOString();
+import { hoursAgo } from '@/stories/fixtures.ts';
+
+const at = (daysAgo: number) => hoursAgo(daysAgo * 24);
 
 export const feedbackSheetStorybookMock = {
   preview: {

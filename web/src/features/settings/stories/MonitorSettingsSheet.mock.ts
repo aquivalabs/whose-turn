@@ -1,3 +1,5 @@
+import { demoWorkspace } from '@/stories/fixtures.ts';
+
 export const monitorSettingsSheetStorybookMock = {
   default: {
     settings: { poll_seconds: 60, notify_after: 5, backlog_days: 14, feed_days: 7 },
@@ -26,6 +28,6 @@ export const monitorSettingsSheetStorybookMock = {
 };
 
 export const monitorHiddenWorkspaces = [
-  { id: 'side', name: 'Side project', hidden: 'parked' },
-  { id: 'old', name: 'Old team', hidden: 'paused' },
+  demoWorkspace({ id: 'side', name: 'Side project', hidden: 'parked' }),
+  demoWorkspace({ id: 'old', name: 'Old team', hidden: 'paused' }),
 ];

@@ -1,39 +1,13 @@
-import type { Decorator, Meta, StoryObj } from '@storybook/vue3';
-import { onMounted } from 'vue';
-import { ui } from '@/store.ts';
-import { SEEN_KEY, useWhatsNew } from '@/composables/useWhatsNew.ts';
-import { answer, goOffline } from '@/stories/fake-server.ts';
+import type { Meta, StoryObj } from '@storybook/vue3';
+import { SEEN_KEY } from '@/composables/useWhatsNew.ts';
+import { withState } from '@/stories/with-state.ts';
 import WhatsNewSheet from '../WhatsNewSheet.vue';
 import { whatsNewSheetStorybookMock } from './WhatsNewSheet.mock.ts';
 
-type State = keyof typeof whatsNewSheetStorybookMock | 'unreachable';
 interface Args {
-  state: State;
+  state: keyof typeof whatsNewSheetStorybookMock | 'unreachable';
   sinceLastVisit: boolean;
 }
-
-const withChangelog: Decorator = (story, context) => ({
-  components: { story },
-  setup: () => {
-    const { state, sinceLastVisit } = context.args as unknown as Args;
-    ui.whatsNew = false;
-    useWhatsNew().changelog.value = null;
-    try {
-      localStorage.setItem(SEEN_KEY, sinceLastVisit ? '1.0.0' : '');
-    } catch {
-      // storage unavailable: the sheet still renders
-    }
-    if (state === 'unreachable') {
-      goOffline();
-    } else {
-      answer('/api/changelog', () => whatsNewSheetStorybookMock[state]);
-    }
-    onMounted(() => {
-      ui.whatsNew = true;
-    });
-  },
-  template: '<story />',
-});
 
 const meta = {
   title: 'Sheets/What is new',
@@ -43,7 +17,13 @@ const meta = {
     state: { control: 'select', options: ['default', 'empty', 'unavailable', 'unreachable'] },
     sinceLastVisit: { control: 'boolean', description: 'The last visit was on 1.0.0, so newer versions are flagged' },
   } as never,
-  decorators: [withChangelog],
+  decorators: [
+    withState<Args>(({ state, sinceLastVisit }) => ({
+      storage: { [SEEN_KEY]: sinceLastVisit ? '1.0.0' : '' },
+      open: ['whatsNew'],
+      server: state === 'unreachable' ? 'offline' : { '/api/changelog': () => whatsNewSheetStorybookMock[state] },
+    })),
+  ],
 } satisfies Meta<typeof WhatsNewSheet>;
 
 export default meta;

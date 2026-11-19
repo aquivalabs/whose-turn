@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import { ui } from '@/store.ts';
+import { withState } from '@/stories/with-state.ts';
 import HelpSheet from '../HelpSheet.vue';
 import { helpSheetStorybookMock } from './HelpSheet.mock.ts';
 
@@ -8,14 +8,7 @@ const meta = {
   component: HelpSheet,
   args: helpSheetStorybookMock as never,
   argTypes: { open: { control: 'boolean', description: 'The sheet is open' } } as never,
-  render: (args) => ({
-    components: { HelpSheet },
-    setup: () => {
-      ui.help = Boolean((args as unknown as { open: boolean }).open);
-      return {};
-    },
-    template: '<HelpSheet />',
-  }),
+  decorators: [withState<typeof helpSheetStorybookMock>(({ open }) => ({ ui: { help: open } }))],
 } satisfies Meta<typeof HelpSheet>;
 
 export default meta;

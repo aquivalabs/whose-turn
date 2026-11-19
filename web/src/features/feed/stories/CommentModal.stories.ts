@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import { withSnapshot } from '@/stories/with-snapshot.ts';
-import { ui } from '@/store.ts';
+import { withState } from '@/stories/with-state.ts';
 import CommentModal from '../CommentModal.vue';
 import { commentModalStorybookMock } from './CommentModal.mock.ts';
 
@@ -12,10 +11,10 @@ const meta = {
   args: { state: 'formatted' } as never,
   argTypes: { state: { control: 'select', options: Object.keys(commentModalStorybookMock.items) } } as never,
   decorators: [
-    withSnapshot((args) => {
-      ui.modal = structuredClone(commentModalStorybookMock.items[(args as { state: State }).state]);
-      return { workspace: structuredClone(commentModalStorybookMock.workspace) };
-    }),
+    withState<{ state: State }>(({ state }) => ({
+      snapshot: { workspace: commentModalStorybookMock.workspace },
+      ui: { modal: structuredClone(commentModalStorybookMock.items[state]) },
+    })),
   ],
 } satisfies Meta<typeof CommentModal>;
 

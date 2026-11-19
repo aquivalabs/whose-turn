@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3';
-import { withSnapshot } from '@/stories/with-snapshot.ts';
-import { useFold } from '@/composables/useFold.ts';
+import { withState } from '@/stories/with-state.ts';
 import WorkspaceHeader from '../WorkspaceHeader.vue';
 import { workspaceHeaderStorybookMock } from './WorkspaceHeader.mock.ts';
 
@@ -19,12 +18,10 @@ const meta = {
     collapsed: { control: 'boolean', description: 'Folded to one line' },
   } as never,
   decorators: [
-    withSnapshot((args) => {
-      const { state, collapsed } = args as unknown as Args;
-      useFold('header').folded.value = collapsed ? ['header'] : [];
-      return structuredClone(workspaceHeaderStorybookMock[state]);
-    }),
-    () => ({ template: '<div class="dashboard"><story /></div>' }),
+    withState<Args>(({ state, collapsed }) => ({
+      snapshot: workspaceHeaderStorybookMock[state],
+      storage: { 'wt-collapsed': JSON.stringify(collapsed ? ['header'] : []) },
+    })),
   ],
 } satisfies Meta<typeof WorkspaceHeader>;
 

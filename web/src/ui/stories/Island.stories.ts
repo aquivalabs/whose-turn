@@ -17,11 +17,12 @@ const meta = {
   render: (args) => ({
     components: { Island },
     setup: () => ({ args, rows }),
-    template: `<div style="height: 22rem; display: grid"><Island v-bind="{ ...args, rows: undefined }">
+    template: `<Island v-bind="{ ...args, rows: undefined }" style="flex: 1">
       <p v-if="!args.rows" style="padding: 1rem">Nothing here</p>
       <ul v-else style="margin: 0; padding: 0 1rem 1rem; list-style: none"><li v-for="row in rows.slice(0, args.rows)" :key="row">{{ row }}</li></ul>
-    </Island></div>`,
+    </Island>`,
   }),
+  parameters: { frame: { height: '22rem' } },
 } satisfies Meta<typeof Island>;
 
 export default meta;
