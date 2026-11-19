@@ -88,6 +88,15 @@
         "web/src/i18n/en/index.ts"
       ],
       "doc": "docs/mechanisms/i18n.md"
+    },
+    {
+      "id": "storybook",
+      "paths": [
+        ".storybook/*.ts",
+        "web/src/stories/with-snapshot.ts",
+        "web/src/stories/fake-server.ts"
+      ],
+      "doc": "docs/mechanisms/storybook.md"
     }
   ],
   "surfaceRules": {
