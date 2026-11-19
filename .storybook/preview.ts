@@ -6,10 +6,14 @@ import '../web/src/styles/base.css';
 import { i18n } from '../web/src/i18n/index.ts';
 import { installScheme, setScheme } from '../web/src/scheme.ts';
 import type { SchemeChoice } from '../web/src/scheme.ts';
+import { installFakeServer, resetServer } from '../web/src/stories/fake-server.ts';
+import { LazyMotion, MotionConfig } from 'motion-v';
+import { loadFeatures, reduced } from '../web/src/motion.ts';
 
 setup((app) => {
   app.use(i18n);
 });
+installFakeServer();
 document.body.classList.add('page');
 installScheme();
 
@@ -24,7 +28,16 @@ const preview: Preview = {
   decorators: [
     (story, context) => {
       setScheme(context.globals.scheme as SchemeChoice);
-      return { components: { story }, template: '<div class="app storybook-app"><div class="dashboard storybook-dashboard"><story /></div></div>' };
+      return {
+        components: { story, LazyMotion, MotionConfig },
+        setup: () => {
+          resetServer();
+          return { loadFeatures, reduced };
+        },
+        template: `<LazyMotion :features="loadFeatures"><MotionConfig reduced-motion="user" :skip-animations="reduced">
+          <div class="app storybook-app"><div class="dashboard storybook-dashboard"><story /></div></div>
+        </MotionConfig></LazyMotion>`,
+      };
     },
   ],
   parameters: { layout: 'padded' },
