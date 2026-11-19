@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { RateLimited, SetupError, describeFailure, errorClass, failureCode } from '../lib/failure.mjs';
+import { RateLimited, SetupError, describeFailure, errorClass, failureCode, pickFailure } from '../lib/failure.mjs';
 import { linearQuery } from '../lib/linear-api.mjs';
 import { resultProblems } from '../lib/contract.mjs';
 import { failureToken } from '../lib/diagnostics.mjs';
@@ -95,4 +95,18 @@ test('a missing token or file fails the source with NO_TOKEN or NO_FILE, not UNK
 
   // Verify
   assert.deepEqual(failures.map(failureCode), ['NO_TOKEN', 'NO_TOKEN', 'NO_FILE']);
+});
+
+test('a partial failure is reported by its most telling part, the same whatever order the parts came in', () => {
+  // Setup
+  const timeout = { code: 'TIMEOUT', error: 'TimeoutError' };
+  const limited = { code: 'RATE_LIMITED', error: 'RateLimited' };
+  const odd = { code: 'UNKNOWN', error: 'other' };
+
+  // Exercise + Verify
+  assert.deepEqual(pickFailure({ runs: timeout, pulls: limited }), ['pulls', limited]);
+  assert.deepEqual(pickFailure({ pulls: limited, runs: timeout }), ['pulls', limited]);
+  assert.deepEqual(pickFailure({ runs: odd, pulls: odd }), ['pulls', odd]);
+  assert.deepEqual(pickFailure({ notifications: odd, contract: { code: 'PARSE_FAILED', error: 'ContractError' } }), ['contract', { code: 'PARSE_FAILED', error: 'ContractError' }]);
+  assert.deepEqual(pickFailure({}), []);
 });

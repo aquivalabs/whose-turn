@@ -1,7 +1,7 @@
 /** GitHub connector: your PRs in one repository with reviews, comments and checks, the workflow runs on its default branch, plus review requests and mentions across the org. Token from `GH_TOKEN`, else `gh auth token`. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { RateLimited, SetupError, describeFailure } from '../lib/failure.mjs';
+import { SetupError, partFailed } from '../lib/failure.mjs';
 import { oneline, nowIso, mapLimit, wordsRegex, DAY } from '../lib/text.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
 import { Adapter } from '../lib/adapter.mjs';
@@ -23,7 +23,7 @@ const ghToken = (account, cache) => cachedToken(cache, async () => {
     return process.env.GH_TOKEN;
   }
   const { stdout } = await run('gh', account ? ['auth', 'token', '--user', account] : ['auth', 'token']).catch((error) => {
-    throw new SetupError('NO_TOKEN', `gh gave no token${account ? ` for ${account}` : ''}: ${error.code === 'ENOENT' ? 'gh is not installed' : 'not logged in'}`);
+    throw new SetupError('NO_TOKEN', `gh gave no token${account ? ` for ${account}` : ''}: ${error.code === 'ENOENT' ? 'gh is not installed' : 'not logged in'}`, { cause: error });
   });
   return stdout.trim();
 });
@@ -364,12 +364,10 @@ const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () => true 
   const context = { repo: settings.repo, org: settings.org || settings.repo.split('/')[0], me, bots: wordsRegex(settings.bots || ['github-actions', 'dependabot', '[bot]']), keyOf, sinceIso, cache, owns };
   const watchRuns = settings.workflow_runs !== false;
   const [prsOutcome, asksOutcome, runsOutcome] = await Promise.allSettled([pollPrs(api, context), pollAsks(api, context), watchRuns ? pollRuns(api, context) : { runs: [], activity: [] }]);
-  const errors = /** @type {Record<string, string>} */ ({});
-  const failures = /** @type {Record<string, ReturnType<typeof describeFailure>>} */ ({});
+  const failed = { errors: {}, failures: {} };
   for (const [part, outcome] of /** @type {[string, PromiseSettledResult<unknown>][]} */ ([['pulls', prsOutcome], ['notifications', asksOutcome], ['runs', runsOutcome]])) {
     if (outcome.status === 'rejected') {
-      errors[part] = `${outcome.reason instanceof RateLimited ? 'rate limited' : outcome.reason.name}: ${outcome.reason.message}`;
-      failures[part] = describeFailure(outcome.reason);
+      partFailed(failed, part, outcome.reason);
     }
   }
   const last = cache.last || { prs: [], prActivity: [], asks: [], runs: [], runActivity: [] };
@@ -381,7 +379,7 @@ const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () => true 
     runActivity: runsOutcome.status === 'fulfilled' ? runsOutcome.value.activity : last.runActivity,
   };
   const { prs, prActivity, asks, runs, runActivity } = cache.last;
-  return { me, prs, asks, runs, activity: [...prActivity, ...runActivity].sort((a, b) => b.at.localeCompare(a.at)), errors, failures };
+  return { me, prs, asks, runs, activity: [...prActivity, ...runActivity].sort((a, b) => b.at.localeCompare(a.at)), ...failed };
 };
 
 /** The GitHub source under connector contract 1. */
@@ -392,6 +390,7 @@ class GitHub extends Adapter {
   capabilities = ['prs', 'asks', 'runs', 'activity'];
   fields = FIELDS;
   persistedCache = ['prs', 'asks', 'runStreaks'];
+  parts = ['pulls', 'notifications', 'runs'];
   badge = 'GH';
 
   links(settings) {

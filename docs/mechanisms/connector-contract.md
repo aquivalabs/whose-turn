@@ -25,7 +25,7 @@ window takes a source's feed badge and icon tone from the connector summary, nev
 |---|---|
 | `lib/adapter.mjs` | `Adapter`, the base class every adapter extends; it supplies `links`, `persistedCache`, `badge` and `tone`, and its `poll` refuses |
 | `lib/contract.mjs` | `CONTRACT_VERSION`, `KINDS`, `SHAPES` (the fields and closed values of each kind), `adapterProblems`, `resultProblems`, `ContractError` |
-| `lib/failure.mjs` | `FAILURE_CODES`, `ERROR_CLASSES`, `RateLimited`, `SetupError`, `failureCode`, `errorClass`, `describeFailure`: a failure read from the error object, ADR 0017 |
+| `lib/failure.mjs` | `FAILURE_CODES`, `ERROR_CLASSES`, `RateLimited`, `SetupError`, `failureCode`, `errorClass`, `describeFailure`, `isFailure`, `partFailed`, `pickFailure`: a failure read from the error object, ADR 0017 |
 | `types/connector.d.ts` | The same contract as TypeScript types, shipped in the package: `Adapter`, `PollContext`, `PollResult` and one interface per kind |
 | `connectors/index.mjs` | `CONNECTORS`, the registry of types; `connectorCatalogue` leaves out a connector that exports `experimental: true` |
 | `connectors/module.mjs` | The `module` type: `loadAdapter` imports and checks a user adapter, `pollAdapter` polls it and checks the result |
@@ -52,7 +52,7 @@ These members are required:
 
 The base supplies the optional members, which an adapter overrides when it needs them: `links(settings)`
 (quick links for the header, none by default), `persistedCache` (cache keys holding `Map`s that survive a
-restart), `badge` (the feed badge under the type's own name), `tone` (the feed icon tone, neutral by default; Jira and Linear set `jira`), `experimental` (accepted by the config but not offered in the settings sheet) and `reportable` (a report may name the type; `file` and the user's own sources report as `other`). A built-in
+restart), `badge` (the feed badge under the type's own name), `tone` (the feed icon tone, neutral by default; Jira and Linear set `jira`), `experimental` (accepted by the config but not offered in the settings sheet), `reportable` (a report may name the type; `file` and the user's own sources report as `other`) and `parts` (the part names its partial failures may give a report; GitHub `pulls`, `notifications`, `runs`, Jira `mentions`, `changelog`). A built-in
 may also set `endpointKey`, the field a stored secret is bound to.
 
 ### Context
@@ -105,7 +105,7 @@ request addressed to you is an ask.
   `/api/summary`, and counts toward the failing-source health alert. Name the thing to fix; never put a
   token in a message.
 - Return `errors: { part: message }` for a partial failure; the server prefixes the part with the
-  entry id. Add `failures: { part: describeFailure(error) }` so a report can say what failed.
+  entry id. `partFailed(result, part, error)` fills both `errors[part]` and `failures[part]` so a report can say what failed.
 - Throw `RateLimited` (from `lib/failure.mjs`) to make the server back off; a part whose failure is
   `RATE_LIMITED` backs it off too. `lib/http-client.mjs` throws it with the status, the limit GitHub names in
   `x-ratelimit-resource`, and the reset from `x-ratelimit-reset` or `retry-after`.
@@ -120,10 +120,10 @@ and the upstream status (`RATE_LIMITED`, `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FO
 cause's errno, the error's own errno or its name when the closed list has it, else `other`. Linear's GraphQL
 errors map their `extensions.code`: `RATELIMITED` to a rate limit, `AUTHENTICATION_ERROR` and `FORBIDDEN` to
 401 and 403. A rate limit in one GitHub part fails only that part; the other parts' data stays current. The
-workspace keeps each failing source's code with the description of its failure, for a partial one the first
-rate-limited part or else the first failed part, and a report shows it as
-`type:CODE[:part][:partCODE][:status][:class][:limit][:resetNm]`, a part a reportable connector does not
-declare reading as `other`.
+workspace keeps each failing source's code with the description of its failure, for a partial one the part
+`pickFailure` puts first (a rate limit, then auth, missing, server, timeout, parse, unknown, ties by part name), and a report shows it as
+`type:CODE[:part][:partCODE][:status][:class][:limit][:resetNm]`, a part the connector does not list in
+`parts` reading as `other`.
 - A module that is not a connector, or a result that breaks the shapes, is a `ContractError`: its
   message is `Adapter <path> does not follow connector contract 1:` followed by every problem, at most
   ten, separated by `; `.
