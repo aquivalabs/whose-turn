@@ -285,6 +285,7 @@ const issueNumber = (apiUrl) => {
   return match ? Number(match[2]) : null;
 };
 
+// RMA-433
 const buildAsk = async (api, { me, keyOf }, note, repo) => {
   const subject = note.subject;
   const number = issueNumber(subject.url);
@@ -293,12 +294,17 @@ const buildAsk = async (api, { me, keyOf }, note, repo) => {
   }
   const title = subject.title || '';
   const base = { repo, number, ref: prRef(repo, number), title, key: keyOf(title), url: `https://github.com/${repo}/${subject.type === 'PullRequest' ? 'pull' : 'issues'}/${number}` };
-  let comment = subject.latest_comment_url ? await api(subject.latest_comment_url) : null;
-  const comments = await api(`/repos/${repo}/issues/${number}/comments?per_page=100`);
-  if (!comment || !(comment.body || '').includes(`@${me}`)) {
-    const hits = comments.filter((candidate) => (candidate.body || '').includes(`@${me}`));
-    comment = hits.length ? hits[hits.length - 1] : comment;
+  const [issue, comments, latest] = await Promise.all([
+    api(`/repos/${repo}/issues/${number}`),
+    api(`/repos/${repo}/issues/${number}/comments?per_page=100`),
+    subject.latest_comment_url ? api(subject.latest_comment_url) : null,
+  ]);
+  if (issue.pull_request?.merged_at) {
+    return null;
   }
+  const asksMe = (candidate) => candidate && candidate.user?.login !== me && (candidate.body || '').includes(`@${me}`);
+  const hits = comments.filter(asksMe);
+  const comment = asksMe(latest) ? latest : hits[hits.length - 1] || (latest?.user?.login === me ? null : latest);
   if (!comment) {
     return null;
   }
