@@ -1,7 +1,7 @@
 /** GitHub connector: your PRs in one repository with reviews, comments and checks, the workflow runs on its default branch, plus review requests and mentions across the org. Token from `GH_TOKEN`, else `gh auth token`. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { RateLimited } from '../lib/http-client.mjs';
+import { RateLimited, SetupError, describeFailure } from '../lib/failure.mjs';
 import { oneline, nowIso, mapLimit, wordsRegex, DAY } from '../lib/text.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
 import { Adapter } from '../lib/adapter.mjs';
@@ -22,7 +22,9 @@ const ghToken = (account, cache) => cachedToken(cache, async () => {
   if (process.env.GH_TOKEN) {
     return process.env.GH_TOKEN;
   }
-  const { stdout } = await run('gh', account ? ['auth', 'token', '--user', account] : ['auth', 'token']);
+  const { stdout } = await run('gh', account ? ['auth', 'token', '--user', account] : ['auth', 'token']).catch((error) => {
+    throw new SetupError('NO_TOKEN', `gh gave no token${account ? ` for ${account}` : ''}: ${error.code === 'ENOENT' ? 'gh is not installed' : 'not logged in'}`);
+  });
   return stdout.trim();
 });
 
@@ -363,12 +365,11 @@ const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () => true 
   const watchRuns = settings.workflow_runs !== false;
   const [prsOutcome, asksOutcome, runsOutcome] = await Promise.allSettled([pollPrs(api, context), pollAsks(api, context), watchRuns ? pollRuns(api, context) : { runs: [], activity: [] }]);
   const errors = /** @type {Record<string, string>} */ ({});
+  const failures = /** @type {Record<string, ReturnType<typeof describeFailure>>} */ ({});
   for (const [part, outcome] of /** @type {[string, PromiseSettledResult<unknown>][]} */ ([['pulls', prsOutcome], ['notifications', asksOutcome], ['runs', runsOutcome]])) {
     if (outcome.status === 'rejected') {
-      if (outcome.reason instanceof RateLimited) {
-        throw outcome.reason;
-      }
-      errors[part] = `${outcome.reason.name}: ${outcome.reason.message}`;
+      errors[part] = `${outcome.reason instanceof RateLimited ? 'rate limited' : outcome.reason.name}: ${outcome.reason.message}`;
+      failures[part] = describeFailure(outcome.reason);
     }
   }
   const last = cache.last || { prs: [], prActivity: [], asks: [], runs: [], runActivity: [] };
@@ -380,7 +381,7 @@ const poll = async ({ settings, http, cache, sinceIso, keyOf, owns = () => true 
     runActivity: runsOutcome.status === 'fulfilled' ? runsOutcome.value.activity : last.runActivity,
   };
   const { prs, prActivity, asks, runs, runActivity } = cache.last;
-  return { me, prs, asks, runs, activity: [...prActivity, ...runActivity].sort((a, b) => b.at.localeCompare(a.at)), errors };
+  return { me, prs, asks, runs, activity: [...prActivity, ...runActivity].sort((a, b) => b.at.localeCompare(a.at)), errors, failures };
 };
 
 /** The GitHub source under connector contract 1. */
