@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import github from '../connectors/github.mjs';
+import github, { reviewDecision } from '../connectors/github.mjs';
 
 const SINCE = '2026-10-01T00:00:00Z';
 
@@ -80,4 +80,15 @@ test('a source keeps only the review requests and mentions it owns, so one reque
   const result = await github.poll({ settings: { repo: 'acme/app', me: 'pat', workflow_runs: false }, http, cache: stubToken(), sinceIso: SINCE, keyOf: () => '', owns });
   // Verify
   assert.deepEqual(result.asks.map((ask) => ask.ref), ['app#4011']);
+});
+
+test('an approver asked to review again no longer counts as approved, and neither does one who asked for changes (RMA-468)', () => {
+  // Setup
+  const review = (login, state) => ({ user: { login }, state });
+  const reviews = [review('sam', 'APPROVED'), review('ann', 'COMMENTED')];
+  const changes = [review('sam', 'CHANGES_REQUESTED'), review('ann', 'APPROVED')];
+  // Exercise + Verify
+  assert.equal(reviewDecision(reviews), 'APPROVED');
+  assert.equal(reviewDecision(reviews, ['sam']), '');
+  assert.equal(reviewDecision(changes, ['sam']), 'APPROVED');
 });

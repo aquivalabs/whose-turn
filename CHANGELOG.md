@@ -7,6 +7,7 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 ### Fixed
 
 - A pull request whose check passed is no longer shown with failing checks just because a second run of the same check on the same commit failed, matching what GitHub's merge box says. RMA-466.
+- A pull request whose approver you asked to review again after new commits now shows as waiting on that reviewer, not as approved and your move. RMA-468.
 
 ## [1.0.0-beta.8] - 2026-11-18
 

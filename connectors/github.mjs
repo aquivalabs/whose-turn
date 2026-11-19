@@ -85,10 +85,11 @@ export const checksState = (allRuns) => {
 const checksFor = async (api, repo, sha) =>
   checksState((await api(`/repos/${repo}/commits/${sha}/check-runs?per_page=100`)).check_runs || []);
 
-const reviewDecision = (reviews) => {
+/** The PR's review decision from each reviewer's latest verdict; a reviewer asked to review again counts as not having decided. RMA-468. */
+export const reviewDecision = (reviews, requested = []) => {
   const latest = {};
   for (const review of reviews) {
-    if (['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(review.state)) {
+    if (['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(review.state) && !requested.includes(review.user.login)) {
       latest[review.user.login] = review.state;
     }
   }
@@ -157,7 +158,7 @@ const buildPr = async (api, { repo, me, bots, keyOf, sinceIso }, number) => {
   const key = keyOf(pr.title);
   const subject = { pr: prRef(repo, number), key, title: pr.title };
   const row = {
-    pr: number, key, title: pr.title, base: pr.base.ref, state, review: reviewDecision(reviews), checks: checks.state, merged_at: pr.merged_at || '',
+    pr: number, key, title: pr.title, base: pr.base.ref, state, review: reviewDecision(reviews, (pr.requested_reviewers || []).map((user) => user.login)), checks: checks.state, merged_at: pr.merged_at || '',
     updated_at: pr.updated_at, url: pr.html_url,
     reviewers: state === 'OPEN' ? reviewersOf(pr, reviews, { me, bots }) : [],
     last_comment_by: last ? last.who : '', last_comment_at: last ? last.at : '', last_comment_url: last ? last.url : '', last_comment: last ? oneline(last.body, 160) : '',
