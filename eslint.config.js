@@ -5,14 +5,14 @@ import pluginVue from 'eslint-plugin-vue';
 import prettier from 'eslint-config-prettier';
 import vueI18n from '@intlify/eslint-plugin-vue-i18n';
 
-const webFiles = ['web/src/**/*.{ts,vue}'];
+const webFiles = ['web/src/**/*.{ts,vue}', '.storybook/**/*.ts'];
 const nodeGlobals = Object.fromEntries(
   ['process', 'Buffer', 'console', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'URL', 'URLSearchParams', 'fetch', 'AbortController', 'AbortSignal', 'TextEncoder', 'TextDecoder', 'structuredClone', 'queueMicrotask', 'Headers', 'Request', 'Response', 'FormData', 'Blob', 'WebSocket', 'EventSource', 'performance', 'BroadcastChannel'].map((name) => [name, 'readonly']),
 );
 const serverFiles = ['lib/**/*.mjs', 'connectors/**/*.mjs', 'server.mjs', 'test/**/*.mjs'];
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'coverage/**', 'node_modules/**'] },
+  { ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'storybook-static/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended.map((cfg) => ({ ...cfg, files: webFiles })),
   ...pluginVue.configs['flat/recommended'].map((cfg) => ({ ...cfg, files: cfg.files ?? webFiles })),
