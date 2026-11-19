@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { clientOf, createFeedback, MAX_BODY_CHARS, mayReceiveAdminToken, openReports, osMajor, refusesDiagnostics, RELAY_URL, utcOffsetZone } from '../lib/feedback.mjs';
 import { emptyRegistry, startTestApi } from './fixtures/api.mjs';
-import { RateLimited } from '../lib/http-client.mjs';
+import { RateLimited } from '../lib/failure.mjs';
 import { scratchDir } from './fixtures/scratch.mjs';
 
 const RELAY = 'https://relay.invalid/';

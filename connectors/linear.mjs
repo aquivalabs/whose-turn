@@ -3,6 +3,7 @@ import { toIsoUtc } from '../lib/text.mjs';
 import { linearQuery } from '../lib/linear-api.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
 import { Adapter } from '../lib/adapter.mjs';
+import { SetupError } from '../lib/failure.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-linear';
 
@@ -63,7 +64,7 @@ const apiKey = async (settings, secrets, cache) => {
   const service = settings.token_service || DEFAULT_SERVICE;
   const token = await cachedToken(cache, () => secrets.get(service, settings.workspace));
   if (!token) {
-    throw new Error(`No Linear API key in the secret store (service ${service}, account ${settings.workspace})`);
+    throw new SetupError('NO_TOKEN', `No Linear API key in the secret store (service ${service}, account ${settings.workspace})`);
   }
   return token;
 };

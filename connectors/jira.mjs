@@ -3,6 +3,7 @@ import { toIsoUtc, mapLimit } from '../lib/text.mjs';
 import { cachedToken } from '../lib/token-cache.mjs';
 import { STATUS_CATEGORIES } from '../lib/contract.mjs';
 import { Adapter } from '../lib/adapter.mjs';
+import { SetupError, describeFailure } from '../lib/failure.mjs';
 
 const DEFAULT_SERVICE = 'whose-turn-jira';
 
@@ -110,7 +111,7 @@ const jiraToken = async (settings, secrets, cache) => {
   const service = settings.token_service || DEFAULT_SERVICE;
   const token = await cachedToken(cache, () => secrets.get(service, settings.email));
   if (!token) {
-    throw new Error(`No Jira API token in the secret store (service ${service}, account ${settings.email})`);
+    throw new SetupError('NO_TOKEN', `No Jira API token in the secret store (service ${service}, account ${settings.email})`);
   }
   return token;
 };
@@ -133,9 +134,14 @@ const poll = async ({ settings, http, secrets, cache, historyDays }) => {
   const search = (query) => api('/rest/api/3/search/jql', { jql: query, maxResults: 100, fields: ['summary', 'status', 'assignee', 'updated', 'comment', 'labels'] });
   const mentionQuery = settings.mentions === false ? '' : mentionsJql(meId, historyDays);
   const errors = /** @type {Record<string, string>} */ ({});
+  const failures = /** @type {Record<string, ReturnType<typeof describeFailure>>} */ ({});
+  const fail = (part, error) => {
+    errors[part] = `${error.name}: ${error.message}`;
+    failures[part] = describeFailure(error);
+  };
   const [result, mentioned] = await Promise.all([
     search(jql),
-    mentionQuery ? search(mentionQuery).then((found) => found.issues || [], (error) => { errors.mentions = `${error.name}: ${error.message}`; return []; }) : [],
+    mentionQuery ? search(mentionQuery).then((found) => found.issues || [], (error) => { fail('mentions', error); return []; }) : [],
   ]);
   const held = new Set((result.issues || []).map((issue) => issue.key));
   const tickets = [];
@@ -163,10 +169,10 @@ const poll = async ({ settings, http, secrets, cache, historyDays }) => {
       ticket.status_change = await statusEntered(api, cache.statusEntered, ticket.key, ticket.updated, ticket.status);
     } catch (error) {
       ticket.status_change = null;
-      errors.changelog = `${error.name}: ${error.message}`;
+      fail('changelog', error);
     }
   });
-  return { me: meName, tickets, comments, ticket_base: `${base}/browse/`, errors };
+  return { me: meName, tickets, comments, ticket_base: `${base}/browse/`, errors, failures };
 };
 
 /** The Jira Cloud source under connector contract 1. */

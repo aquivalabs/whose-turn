@@ -3,6 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { toIsoUtc, expandHome } from '../lib/text.mjs';
 import { Adapter } from '../lib/adapter.mjs';
+import { SetupError } from '../lib/failure.mjs';
 
 const FIELDS = [
   { key: 'path', label: 'File', hint: 'a .md task list or a .json list of tickets; ~ is your home directory', required: true },
@@ -75,7 +76,10 @@ const poll = async ({ settings, cache, keyOf }) => {
   const path = expandHome(settings.path);
   const me = String(settings.me || 'me');
   const [source, info] = await Promise.all([readFile(path, 'utf8'), stat(path)]).catch((error) => {
-    throw new Error(`Cannot read ${settings.path}: ${error.code === 'ENOENT' ? 'no such file' : error.message}`);
+    if (error.code === 'ENOENT') {
+      throw new SetupError('NO_FILE', `Cannot read ${settings.path}: no such file`);
+    }
+    throw new Error(`Cannot read ${settings.path}: ${error.message}`, { cause: error });
   });
   const items = (/\.json$/i.test(path) ? parseJson : parseMarkdown)(source, { keyOf, me });
   cache.seen = cache.seen || new Map();
