@@ -61,7 +61,7 @@ words the window reads it with: `name` for the noun, `says` for a boolean's true
 | `pr.open`, `pr.merged` | boolean | `github`; `false` when the ticket has no PR |
 | `pr.number` | number | `github` |
 | `pr.checks` | `passing`, `failing`, `running`, `none` | `github` |
-| `pr.review` | `approved`, `changes_requested`, `none` | `github` |
+| `pr.review` | `approved`, `changes_requested`, `none` | `github`: from each reviewer's latest verdict, leaving out reviewers requested again (RMA-468) |
 | `pr.base` | text | `github`: the branch the PR goes into |
 | `pr.unanswered` | boolean | `github`: a human commented after your last comment, and it is not an approval |
 | `pr.commenter` | text | `github`: the author of that comment |

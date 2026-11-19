@@ -142,7 +142,7 @@ Restart after a self-update: launchd names its job in `XPC_SERVICE_NAME` and res
 
 On a 403 or 429 rate limit the poll delay doubles up to 15 minutes, then returns to `poll_seconds`.
 
-The reviewers of an open PR are the still requested (users and teams) as plain names, then those who reviewed, with their latest state. A comment-only review shows the name without a mark and never replaces an approval or a request for changes, a dismissed review takes that person's state away, and you, the author and bots are left out (RMA-315).
+The reviewers of an open PR are the still requested (users and teams) as plain names, then those who reviewed, with their latest state. A comment-only review shows the name without a mark and never replaces an approval or a request for changes, a dismissed review takes that person's state away, and you, the author and bots are left out (RMA-315). The PR counts as approved or as changes requested only from reviewers who are not requested again: asking an approver to review once more after new commits makes it their turn (RMA-468).
 
 ## Rules: whose turn
 
