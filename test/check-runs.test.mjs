@@ -62,6 +62,13 @@ test('a check that passed in one suite reads passing though a later re-run in an
   assert.deepEqual(checks.failed, []);
 });
 
+test('a check that passed in one suite reads passing while another suite on the same commit is still running it (RMA-466)', () => {
+  // Setup
+  const runs = [run(1, 'check', 'success', '2026-11-18T10:00:00Z', 15368, 7), { ...run(2, 'check', null, '2026-11-18T10:20:00Z', 15368, 8), status: 'in_progress' }];
+  // Exercise + Verify
+  assert.equal(checksState(runs).state, 'passing');
+});
+
 test('a check that failed in every suite reads failing and lists the newest failed attempt', () => {
   // Setup
   const runs = [run(1, 'check', 'failure', '2026-11-18T10:00:00Z', 15368, 7), run(2, 'check', 'failure', '2026-11-18T10:20:00Z', 15368, 8)];
