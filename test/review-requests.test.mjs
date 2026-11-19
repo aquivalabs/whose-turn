@@ -108,4 +108,27 @@ test('a polled PR whose approver is requested again reads not approved (RMA-468)
   // Verify
   assert.equal(approved.prs[0].review, 'APPROVED');
   assert.equal(asked.prs[0].review, '');
+const mention = { id: 'n7', reason: 'mention', updated_at: '2026-11-05T10:00:00Z', repository: { full_name: 'acme/app' }, subject: { type: 'PullRequest', title: 'PROJ-7 x', url: 'https://api.github.com/repos/acme/app/pulls/7' } };
+const asking = (login) => ({ user: { login }, created_at: '2026-11-05T09:00:00Z', html_url: 'https://github.com/acme/app/pull/7#c', body: '@pat can you check?' });
+
+test('a mention on an open PR asks you, and the same mention stops asking once the PR is merged (RMA-433)', async () => {
+  // Setup
+  const comments = { '/repos/acme/app/issues/7/comments': [asking('sam')] };
+  const open = fakeGh({ notes: [mention], replies: { ...comments, '/repos/acme/app/issues/7': { pull_request: { merged_at: null } } } });
+  const merged = fakeGh({ notes: [mention], replies: { ...comments, '/repos/acme/app/issues/7': { pull_request: { merged_at: '2026-11-06T10:00:00Z' } } } });
+  // Exercise
+  const before = await pollOnce(open.http);
+  const after = await pollOnce(merged.http);
+  // Verify
+  assert.deepEqual(before.asks.map((ask) => [ask.kind, ask.who]), [['mentioned you', 'sam']]);
+  assert.deepEqual(after.asks, []);
+});
+
+test('your own comment that mentions you is not something waiting on you (RMA-433)', async () => {
+  // Setup
+  const { http } = fakeGh({ notes: [mention], replies: { '/repos/acme/app/issues/7/comments': [asking('pat')] } });
+  // Exercise
+  const result = await pollOnce(http);
+  // Verify
+  assert.deepEqual(result.asks, []);
 });
