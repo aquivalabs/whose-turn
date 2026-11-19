@@ -4,6 +4,8 @@ What changed for you in each version of Whose Turn. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.0.0-beta.10] - 2026-11-19
+
 ### Changed
 
 - What changed keeps one ticket and one event open at a time: opening another folds the one before, and folding a ticket folds the events inside it, so nothing piles up to close one by one. RMA-472.
