@@ -1,7 +1,7 @@
 // docs/mechanisms/storybook.md
 import { snapshot } from '@/store.ts';
 
-type Handler = (body: Record<string, unknown>) => unknown;
+type Handler = (body: Record<string, unknown>, method: string) => unknown;
 
 const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
@@ -21,7 +21,7 @@ export const resetServer = () => {
   offline = false;
 };
 
-/** Answers `path` with `handler` for the story being rendered. */
+/** Answers `path` with `handler(body, method)` for the story being rendered. */
 export const answer = (path: string, handler: Handler) => {
   routes.set(path, handler);
 };
@@ -44,6 +44,6 @@ export const installFakeServer = () => {
       throw new TypeError('unreachable');
     }
     const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {};
-    return json(routes.get(url.pathname)?.(body) ?? {});
+    return json(routes.get(url.pathname)?.(body, (init?.method || 'GET').toUpperCase()) ?? {});
   };
 };

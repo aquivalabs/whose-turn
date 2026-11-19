@@ -1,5 +1,7 @@
 // docs/mechanisms/storybook.md
 import type { Preview } from '@storybook/vue3';
+import { computed } from 'vue';
+import type { Component } from 'vue';
 import { setup } from '@storybook/vue3';
 import '../web/src/styles/tokens.css';
 import '../web/src/styles/base.css';
@@ -18,6 +20,15 @@ document.body.classList.add('page');
 installScheme();
 
 const preview: Preview = {
+  render: (args, { component }) => ({
+    components: { Component: component as Component },
+    setup: () => {
+      const names = Object.keys((component as { props?: object } | undefined)?.props ?? {});
+      const props = computed(() => Object.fromEntries(Object.entries(args).filter(([name]) => names.includes(name) || /^on[A-Z]/.test(name))));
+      return { props };
+    },
+    template: '<Component v-bind="props" />',
+  }),
   globalTypes: {
     scheme: {
       description: 'Colour scheme',
