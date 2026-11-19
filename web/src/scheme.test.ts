@@ -43,6 +43,16 @@ test('the switch moves System, Light, Dark and back to System, and keeps the cho
   expect(scheme.schemeChoice.value).toBe('system');
 });
 
+test('setScheme stores the one choice it is given, as the Storybook scheme switch uses it', async () => {
+  const scheme = await loadWith('');
+  scheme.setScheme('dark');
+  expect([scheme.schemeChoice.value, scheme.isDark()]).toEqual(['dark', true]);
+  await nextTick();
+  expect(localStorage.getItem('wt-scheme')).toBe('dark');
+  scheme.setScheme('light');
+  expect(scheme.schemeChoice.value).toBe('light');
+});
+
 test('pinning turns the colour-scheme rules on and off, and System gives them back to the system', async () => {
   const media = sheetWith(BOTH);
   const scheme = await loadWith('');
